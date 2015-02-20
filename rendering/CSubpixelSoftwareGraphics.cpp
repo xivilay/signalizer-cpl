@@ -272,7 +272,7 @@ namespace cpl
 			}
 			
 			LinearGammaScale<std::uint8_t> gammaScale;
-			gammaScale.setGammaCorrection(colour.getBrightness(), 1.8 /*currentMonitor.fontGamma*/);
+			gammaScale.setGammaCorrection(colour.getBrightness(), 1.8f /*currentMonitor.fontGamma*/);
 
 			// create the correct renderer
 			switch (matrixOrder)

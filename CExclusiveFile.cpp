@@ -171,7 +171,7 @@ namespace cpl
 			return (ret != FALSE) && (dwRead == dwSize);
 		#elif defined(__UNIXC__)
 			if (isOpen)
-				return ::read(handle, src, bufsiz) == bufsiz;
+				return ::read(handle, src, (std::size_t)bufsiz) == bufsiz;
 			#endif
 		return false;
 	}
@@ -190,7 +190,7 @@ namespace cpl
 			return (ret != FALSE) && (dwWritten == dwSize);
 		#elif defined(__UNIXC__)
 			if (isOpen)
-				return ::write(handle, src, bufsiz) == bufsiz;
+				return ::write(handle, src, (std::size_t)bufsiz) == bufsiz;
 		#endif
 		return false;
 	}
@@ -222,7 +222,7 @@ namespace cpl
 
 	bool CExclusiveFile::write(const char * src)
 	{
-		return this->write(src, std::strlen(src));
+		return this->write(src, (std::int64_t)std::strlen(src));
 	}
 
 	bool CExclusiveFile::isOpened()

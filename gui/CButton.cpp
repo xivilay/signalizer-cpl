@@ -96,7 +96,7 @@ namespace cpl
 	{
 		const float cornerSize = 5.5f;
 		const int lengthToCorner = static_cast<int>(ceil(cornerSize / 2));
-		juce::Colour c = cpl::GetColour(ColourEntry::activated).brighter(0.1);
+		juce::Colour c = cpl::GetColour(ColourEntry::activated).brighter(0.1f);
 		auto bias = 0.0f;
 		const bool isPressed = isButtonDown || getToggleState();
 		// button becomes darker if pressed

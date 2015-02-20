@@ -137,7 +137,8 @@ namespace cpl
 			{
 				child = parent;
 				
-				if (cpl::TopView * const top = dynamic_cast<cpl::TopView*>(child))
+				// break if it is a TopView
+				if (dynamic_cast<cpl::TopView*>(child))
 					break;
 				if (CToolTipClient* const ttc = dynamic_cast <CToolTipClient*> (child))
 					if (!child->isCurrentlyBlockedByAnotherModalComponent())
@@ -154,7 +155,7 @@ namespace cpl
 							return ttc->bGetToolTip();
 						}
 					}
-			} while (parent = parent->getParentComponent());
+			} while ((parent = parent->getParentComponent()));
 		}
 		
 		return String::empty;

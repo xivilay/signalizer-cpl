@@ -97,7 +97,7 @@
 					DelayedCall(long numMs, Functor functionToRun)
 						: func(functionToRun)
 					{
-						startTimer(numMs);
+						startTimer((int)numMs);
 					}
 					void timerCallback() override
 					{

@@ -463,7 +463,7 @@
 					auto basicBounds = base->getBounds();
 					GraphicComponent * parentPointer = base;
 					
-					while (parentPointer = parentPointer->getParentComponent())
+					while ((parentPointer = parentPointer->getParentComponent()))
 					{
 						// skip the top level, ie.
 						// keep the returned position relative to top-most window

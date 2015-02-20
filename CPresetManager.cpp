@@ -127,7 +127,7 @@ namespace cpl
 
 		auto content = archive.compile();
 
-		if (file.write(content.getBlock(), content.getSize()))
+		if (file.write(content.getBlock(), (std::int64_t)content.getSize()))
 		{
 			location = path;
 			return true;
@@ -145,7 +145,7 @@ namespace cpl
 				return false;
 
 			std::vector<std::uint8_t> data;
-			std::size_t size = file.getFileSize();
+			std::size_t size = (std::size_t)file.getFileSize();
 			data.resize(size);
 
 			if (!file.read(data.data(), size))

@@ -42,7 +42,7 @@
 	#include "ComponentContainers.cpp"
 
 	
-	#include "fonts/tahoma.cpp"
+	//#include "fonts/tahoma.cpp"
 
 	// gui elements
 	#include "gui/DesignBase.cpp"

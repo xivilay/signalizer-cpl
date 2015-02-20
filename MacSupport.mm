@@ -30,7 +30,7 @@
 #include "Misc.h"
 // i dont know why. i seriously dont.
 // but all hell breaks loose if this is not here.
-#define Point CarbonDummyPointName
+//#define Point CarbonDummyPointName
 
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/NSString.h>
@@ -57,7 +57,7 @@ int MacBox(void * hwndParent, const char *text, const char *caption, int type)
 	
 	if ((type & 0xF) == sYesNoCancel)
 	{
-		ret= NSRunAlertPanel(tit, @"%@", @"Yes", @"No", @"Cancel",text2);
+		ret = (int)NSRunAlertPanel(tit, @"%@", @"Yes", @"No", @"Cancel",text2);
 		switch(ret)
 		{
 			case -1:
@@ -76,7 +76,7 @@ int MacBox(void * hwndParent, const char *text, const char *caption, int type)
 	}
 	else if ((type & 0xF) == sConTryCancel)
 	{
-		ret=NSRunAlertPanel(tit,@"%@",@"Continue",@"Try Again",@"Cancel",text2);
+		ret = (int)NSRunAlertPanel(tit,@"%@",@"Continue",@"Try Again",@"Cancel",text2);
 		switch(ret)
 		{
 			case -1:
@@ -121,15 +121,15 @@ int MacBox(void * hwndParent, const char *text, const char *caption, int type)
 	Broken? If called, causes segv fault in another thread at objc_release after autoreleasepoolpage()
  
  *********************************************************************************************/
-int GetBundlePath(char * buf, int bufSize)
+std::size_t GetBundlePath(char * buf, std::size_t bufSize)
 {
 	// bundleForClass retrieves a reference to the bundle that holds the definition
 	// for dummyObject. We then call bundlePath on the bundle to retrieve the path of
 	// the bundle.
 	NSString * path = [[NSBundle bundleForClass:[[dummyObject alloc] class]]bundlePath];
 	const char * intString = [path UTF8String];
-	int length = strlen(intString);
-	int smallestLength = length > bufSize ? bufSize : length;
+	auto length = strlen(intString);
+	auto smallestLength = length > bufSize ? bufSize : length;
 	memcpy(buf, intString, smallestLength);
 	[path release];
 	return smallestLength;
@@ -159,7 +159,7 @@ bool GetExtendedScreenInfo(long x, long y, OSXExtendedScreenInfo * info)
 {
 	if(!info)
 		return false;
-	int baseLineY = [[NSScreen mainScreen] frame].size.height;
+	auto baseLineY = [[NSScreen mainScreen] frame].size.height;
 	
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	{

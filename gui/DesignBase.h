@@ -53,7 +53,7 @@
 			{
 				struct BoundingRect
 				{
-					long width, height;
+					int width, height;
 				};
 
 				extern BoundingRect Square;

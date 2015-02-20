@@ -151,8 +151,6 @@ namespace cpl
 				
 				bool thisIndexUsesSubpixels = false;
 				auto displayOrigin = display.userArea.getPosition();
-				auto otherDisplayOrigin = display.totalArea.getPosition();
-				double rotation;
 				// default to RGB...
 				LCDMatrixOrientation displayOrientation = LCDMatrixOrientation::RGB;
 				#ifdef __WINDOWS__

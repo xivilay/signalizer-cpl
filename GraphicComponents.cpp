@@ -662,7 +662,7 @@ namespace cpl
 									virtualContainer->getHeight());
 	}
 	
-	CScrollableContainer:: ~CScrollableContainer()
+	CScrollableContainer:: ~CScrollableContainer() noexcept
 	{
 		if (virtualContainer)
 			delete virtualContainer;

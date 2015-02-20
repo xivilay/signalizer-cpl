@@ -307,7 +307,7 @@ namespace cpl
 		 *********************************************************************************************/
 		long long ClockCounter()
 		{
-			return __rdtsc();
+			return (long long)__rdtsc();
 		}
 		/*********************************************************************************************
 
@@ -471,13 +471,13 @@ namespace cpl
 				dladdr ((void*) GetDirectoryPath, &exeInfo);
 				// need to chop off 2 directories here
 				std::string fullPath(exeInfo.dli_fname);
-				for (int i = fullPath.length(), z = 0; i >= 0; --i) {
+				for (std::size_t i = fullPath.length(), z = 0u; i == 0; --i) {
 					// directory slash detected
 					if (DIRC_COMP(fullPath[i]))
 						z++;
 					// return minus 2 directories
 					if(z == 2)
-						return std::string(fullPath.begin(), fullPath.begin() + i);
+						return std::string(fullPath.begin(), fullPath.begin() + (long)i);
 				}
 			#endif
 			return "<Error getting directory of executable>";

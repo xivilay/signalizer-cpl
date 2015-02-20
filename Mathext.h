@@ -262,9 +262,9 @@
 						unsigned mantissa : 24;
 						unsigned exponent : 7;
 						unsigned sign : 1;
-					};
+					} binary;
 				};
-				((binary_float*)(&x))->sign = 0;
+				((binary_float*)(&x))->binary.sign = 0;
 
 				return x;
 
@@ -274,7 +274,7 @@
 
 			inline int fastabs(int x)
 			{
-				return x & ~0x80000000;
+				return (unsigned)x & ~0x80000000u;
 			}
 
 			inline float fastsine(float x)

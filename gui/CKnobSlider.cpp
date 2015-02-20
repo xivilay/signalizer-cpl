@@ -223,12 +223,12 @@ namespace cpl
 		else
 		{
 			
-			g.fillAll(cpl::GetColour(cpl::ColourEntry::activated).darker(0.6));
+			g.fillAll(cpl::GetColour(cpl::ColourEntry::activated).darker(0.6f));
 
 
 			auto bounds = getBounds();
 			auto rem = CRect(1, 1, bounds.getWidth() - 2, bounds.getHeight() - 2);
-			g.setColour(cpl::GetColour(cpl::ColourEntry::activated).darker(0.1));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::activated).darker(0.1f));
 			g.fillRect(rem.withLeft(cpl::Math::round<int>(rem.getX() + rem.getWidth() * bGetValue())));
 
 			g.setColour(cpl::GetColour(cpl::ColourEntry::separator));

@@ -203,7 +203,7 @@
 				// make constexpr some day.
 				//static const std::uint8_t lut[5];
 				static const std::size_t centerIndex = 5 >> 1;
-				static const std::size_t size = 5;
+				static const IntType size = 5;
 
 				inline void addIntensityToMap(std::uint_fast16_t alphaLevel) noexcept
 				{
@@ -249,7 +249,7 @@
 				// make constexpr some day.
 				//static const std::uint8_t lut[5];
 				static const std::size_t centerIndex = 5 >> 1;
-				static const std::size_t size = 5;
+				static const IntType size = 5;
 
 				inline void addIntensityToMap(std::uint_fast16_t alphaLevel) noexcept
 				{
@@ -308,7 +308,7 @@
 				// make constexpr some day.
 				//static const std::uint8_t lut[5];
 				static const std::size_t centerIndex = 3 >> 1;
-				static const std::size_t size = 3;
+				static const IntType size = 3;
 
 				inline void addIntensityToMap(std::uint_fast16_t alphaLevel) noexcept
 				{

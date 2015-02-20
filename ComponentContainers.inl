@@ -116,8 +116,9 @@
 		{
 			setColour(outlineColourId, juce::Colours::orange.withMultipliedBrightness(0.5));
 			setColour(textColourId, juce::Colours::orange.withMultipliedBrightness(0.7));
-			setSize(100, 25 + names.size() * 17);
-			for (unsigned i = 0; i < names.size(); ++i)
+			auto size = (int)names.size();
+			setSize(100, 25 + size * 17);
+			for (int i = 0; i < size; ++i)
 			{
 				int block = (getHeight() - 25) / names.size();
 				int xpoint = block * i + 17;

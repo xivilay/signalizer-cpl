@@ -282,6 +282,7 @@
 			class Serializable
 			{
 			public:
+				virtual ~Serializable() {};
 				virtual void save(Archiver & ar, long long int version) {};
 				virtual void load(Builder & ar, long long int version) {};
 			};

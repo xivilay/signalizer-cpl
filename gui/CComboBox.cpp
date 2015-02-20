@@ -193,12 +193,12 @@ namespace cpl
 	/*********************************************************************************************/
 	void CComboBox::bSetValue(iCtrlPrec_t val)
 	{
-		box.setSelectedId(floatToInt(val, values.size()));
+		box.setSelectedId(floatToInt(val, (int)values.size()));
 	}
 	/*********************************************************************************************/
 	void CComboBox::bSetInternal(iCtrlPrec_t val)
 	{
-		box.setSelectedId(floatToInt(val, values.size()), juce::dontSendNotification);
+		box.setSelectedId(floatToInt(val, (int)values.size()), juce::dontSendNotification);
 	}
 	/*********************************************************************************************/
 	void CComboBox::onValueChange()
@@ -207,13 +207,13 @@ namespace cpl
 	/*********************************************************************************************/
 	iCtrlPrec_t CComboBox::bGetValue() const
 	{
-		return intToFloat(box.getSelectedId(), values.size());
+		return intToFloat(box.getSelectedId(), (int)values.size());
 	}
 	/*********************************************************************************************/
 	bool CComboBox::bValueToString(std::string & valueString, iCtrlPrec_t val) const
 	{
-		std::size_t idx = floatToInt(Math::confineTo<iCtrlPrec_t>(val, 0.0, 1.0), values.size());
-		valueString = values[idx - 1];
+		int idx = floatToInt(Math::confineTo<iCtrlPrec_t>(val, 0.0, 1.0), (int)values.size());
+		valueString = values[(unsigned)idx - 1];
 		return true;
 	}
 
@@ -226,7 +226,7 @@ namespace cpl
 			{
 				// can never divide by zero here, since the for loop won't enter in that case
 				//val = iCtrlPrec_t(i) / (values.size() > 1 ? values.size() - 1 : 1);
-				val = intToFloat(i + 1, values.size());
+				val = intToFloat((int)i + 1, (int)values.size());
 				return true;
 			}
 		}

@@ -182,15 +182,15 @@ namespace cpl
 			// components
 			//std::uint8_t a, r, g, b; <- big endian
 			std::uint8_t b, g, r, a;
-		};
+		} c;
 		// data access
 		std::uint8_t d[4];
 		// complete pixel
 		std::uint32_t p;
 		ARGBPixel() : p(0) {}
 		ARGBPixel(std::uint32_t pixel) : p(pixel) {}
-		ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) : r(red), g(green), b(blue) {}
-		ARGBPixel(std::uint8_t alpha, std::uint8_t red, std::uint8_t green, std::uint8_t blue) : a(alpha), r(red), g(green), b(blue) {}
+		ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, 0} {}
+		ARGBPixel(std::uint8_t alpha, std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, alpha} {}
 	};
 
 	/*********************************************************************************************
@@ -255,7 +255,7 @@ namespace cpl
 		case RGB:
 		{
 			// set alpha to max anyway
-			ownColour.r = ownColour.b = ownColour.g = 0;
+			ownColour.c.r = ownColour.c.b = ownColour.c.g = 0;
 			auto a1 = static_cast<decltype(colour)>(val * 0x00FFFFFF);
 			auto a2 = ownColour.p;
 			auto a3 = a1 | a2;
@@ -268,7 +268,7 @@ namespace cpl
 			return ownColour.p;
 		case GreyTone:
 
-			ownColour.r = ownColour.g = ownColour.b = static_cast<decltype(ownColour.r)>(val * 0xFF);
+			ownColour.c.r = ownColour.c.g = ownColour.c.b = static_cast<decltype(ownColour.c.r)>(val * 0xFF);
 			return ownColour.p;
 		default:
 			return static_cast<decltype(colour)>(val * 0xFFFFFFFF);
@@ -293,7 +293,7 @@ namespace cpl
 		{
 			ARGBPixel pixel;
 			pixel.p = val;
-			double sum = pixel.r + pixel.g + pixel.b;
+			double sum = pixel.c.r + pixel.c.g + pixel.c.b;
 			return sum / (3 * 0xFF);
 		}
 		default:

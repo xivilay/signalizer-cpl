@@ -253,11 +253,11 @@
 				if (orientation == Vertical)
 				{
 					g.setFont(TextSize::normalText);
-					auto size = getHeight() / buttons.size();
-					juce::Rectangle<int> textRectangle(5, 0, getWidth(), size - (int)triangleSize);
-					for (unsigned index = 0; index < buttons.size(); ++index)
+					auto size = float(getHeight()) / buttons.size();
+					juce::Rectangle<int> textRectangle(5, 0, getWidth(), cpl::Math::round<int>(size - triangleSize));
+					for (auto index = 0; index < (int)buttons.size(); ++index)
 					{
-						textRectangle.setY(size * index);
+						textRectangle.setY(cpl::Math::round<int>(size * index));
 						auto color = selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::activated) : cpl::GetColour(cpl::ColourEntry::deactivated);
 						Colour textColour = (selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::selfont) : cpl::GetColour(cpl::ColourEntry::auxfont));
 						// enhance brightness
@@ -281,7 +281,7 @@
 					for (unsigned line = 1; line < buttons.size(); ++line)
 					{
 						float pos = float(line) / (buttons.size());
-						g.drawHorizontalLine(pos * getHeight(), (float)0, (float)getWidth());
+						g.drawHorizontalLine(cpl::Math::round<int>(pos * getHeight()), (float)0, (float)getWidth());
 					}
 					if (selectedIndex != 0)
 						g.drawVerticalLine(getWidth() - 1, 0.f, (float)selectedIndex * size);
@@ -295,7 +295,7 @@
 					g.setFont(TextSize::normalText);
 					auto size = (float)ceil(double(getWidth()) / buttons.size());
 					juce::Rectangle<int> textRectangle(cornerOffset, 0, cpl::Math::round<int>(size - triangleSize * 2.5), getHeight());
-					for (unsigned index = 0; index < buttons.size(); ++index)
+					for (auto index = 0; index < (int)buttons.size(); ++index)
 					{
 						textRectangle.setX(cpl::Math::round<int>(cornerOffset + size * index));
 						auto color = selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::activated) : cpl::GetColour(cpl::ColourEntry::deactivated);
@@ -366,7 +366,7 @@
 			}
 			void setSelectedTab(int index)
 			{
-				int size = buttons.size();
+				int size = (int)buttons.size();
 				if (size > 1 && index >= 0 && index < size && index != selectedIndex)
 				{
 					selectedIndex = index;
@@ -501,7 +501,7 @@
 				{
 					if (panelIsClosed)
 					{
-						triangleVertices.applyTransform(AffineTransform::identity.rotated(M_PI / 2, originCenter.getX(), originCenter.getY()));
+						triangleVertices.applyTransform(AffineTransform::identity.rotated((float)M_PI / 2, originCenter.getX(), originCenter.getY()));
 						//triangleVertices.applyTransform(AffineTransform::identity.rotated(rotation, originCenter.getX(), originCenter.getY()));
 					}
 					else
@@ -536,7 +536,7 @@
 						fraction = double(mouseCoords[1]) / getHeight();
 					else
 						fraction = double(mouseCoords[0]) / getWidth();
-					return std::min<int>(int(buttons.size() * fraction), buttons.size() - 1);
+					return std::min<int>(int(buttons.size() * fraction), (int)buttons.size() - 1);
 				}
 			}
 			static const int cornerOffset = 5;
@@ -638,7 +638,7 @@
 				auto cornerOffset = 5;
 
 				auto hoverButton = getMouseHoverButton();
-				auto height = (getHeight()) / buttons.size();
+				auto height = (getHeight()) / (int)buttons.size();
 				auto iconHeight = height - cornerOffset * 2;
 				//g.getCurrentFont().getHeight() / 2 + height / 2
 				juce::Rectangle<int> iconRectangle(cornerOffset, cornerOffset, getWidth() - cornerOffset * 2, iconHeight);
@@ -662,7 +662,7 @@
 
 					//auto const & image = vectors[index].getImage();
 					g.setOpacity(isSelectedIndex ? 1 : 0.5f);
-					g.drawImageAt(vectors[index].getImage(), cornerOffset, height * index + cornerOffset);
+					g.drawImageAt(vectors[(unsigned)index].getImage(), cornerOffset, height * index + cornerOffset);
 					g.setOpacity(1.f);
 					/*g.drawImage
 					(
@@ -698,7 +698,7 @@
 					return;
 				//auto hoverButton = getMouseHoverButton();
 
-				auto height = (getHeight()) / buttons.size();
+				auto height = (getHeight()) / (int)buttons.size();
 				auto iconHeight = height - cornerOffset * 2;
 				//g.getCurrentFont().getHeight() / 2 + height / 2
 				juce::Rectangle<float> iconRectangle((float)cornerOffset, (float)cornerOffset, (float)getWidth() - cornerOffset * 2.0f, (float)iconHeight);

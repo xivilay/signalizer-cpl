@@ -141,40 +141,40 @@
 						// load bitset with flags for function 0x00000001
 						if (nIds_ >= 1)
 						{
-							f_1_ECX_ = data_[1][2];
-							f_1_EDX_ = data_[1][3];
+							f_1_ECX_ = (unsigned)data_[1][2];
+							f_1_EDX_ = (unsigned)data_[1][3];
 						}
 
 						// load bitset with flags for function 0x00000007
 						if (nIds_ >= 7)
 						{
-							f_7_EBX_ = data_[7][1];
-							f_7_ECX_ = data_[7][2];
+							f_7_EBX_ = (unsigned)data_[7][1];
+							f_7_ECX_ = (unsigned)data_[7][2];
 						}
 
 						// Calling __cpuid with 0x80000000 as the function_id argument
 						// gets the number of the highest valid extended ID.
-						cpl::cpuid(cpui.data(), 0x80000000);
+						cpl::cpuid(cpui.data(), (int)0x80000000);
 						nExIds_ = cpui[0];
 
 						char brand[0x40];
 						memset(brand, 0, sizeof(brand));
 
-						for (int i = 0x80000000; i <= nExIds_; ++i)
+						for (int i = (int)0x80000000; i <= nExIds_; ++i)
 						{
 							cpl::cpuidex(cpui.data(), i, 0);
 							extdata_.push_back(cpui);
 						}
 
 						// load bitset with flags for function 0x80000001
-						if (nExIds_ >= 0x80000001)
+						if (nExIds_ >= (int)0x80000001)
 						{
-							f_81_ECX_ = extdata_[1][2];
-							f_81_EDX_ = extdata_[1][3];
+							f_81_ECX_ = (unsigned)extdata_[1][2];
+							f_81_EDX_ = (unsigned)extdata_[1][3];
 						}
 
 						// Interpret CPU brand string if reported
-						if (nExIds_ >= 0x80000004)
+						if (nExIds_ >= (int)0x80000004)
 						{
 							memcpy(brand, extdata_[2].data(), sizeof(cpui));
 							memcpy(brand + 16, extdata_[3].data(), sizeof(cpui));

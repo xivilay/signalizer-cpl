@@ -171,7 +171,7 @@
 		#define APE_API _cdecl
 		#define APE_STD_API _cdecl
 		#define APE_API_VARI _cdecl
-		#ifndef APE_ALL_WARNINGS
+		#ifndef CPL_ALL_WARNINGS
 			#pragma warning(disable:4482) // qualified names
 			#pragma warning(disable:4005) // redefinition of macros
 			#pragma warning(disable:4201) // nameless structs/unions
@@ -201,6 +201,10 @@
 			#define __CPP11__
 		#endif
 		#define __LLVM__
+		#ifndef CPL_ALL_WARNINGS
+			#pragma clang diagnostic ignored "-Wreorder"
+			#pragma clang diagnostic ignored "-Wswitch"
+		#endif
 		// a bug in current apple llvm emits an error message on derived
 		// classes constructors/destructors if they don't have this specifier
 		#define __llvm_DummyNoExcept noexcept

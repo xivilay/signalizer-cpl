@@ -112,7 +112,7 @@ namespace cpl
 
 	inline int getBorder(int size, int maxSize)
 	{
-
+		return 0;
 	}
 
 	void CCtrlEditSpace::paint(juce::Graphics & g)
@@ -277,7 +277,7 @@ namespace cpl
 
 			// note: we use the value from the editor, because the label may not
 			// have been updated yet.
-			if (inputValueWasValid = interpretAndSet(editor.getText().toStdString()))
+			if ((inputValueWasValid = interpretAndSet(editor.getText().toStdString())))
 			{
 				animateSucces(&fmtValueLabel);
 			}

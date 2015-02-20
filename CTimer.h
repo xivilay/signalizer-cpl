@@ -114,7 +114,7 @@
 					if (events.size())
 					{
 
-						for (int i = events.size() - 1; i; --i)
+						for (auto i = events.size() - 1; i; --i)
 						{
 							sum += (events[i] - events[i - 1] - delta).getTime();
 						}
@@ -133,7 +133,7 @@
 					if (events.size())
 					{
 
-						for (int i = events.size() - 1; i; --i)
+						for (auto i = events.size() - 1; i; --i)
 						{
 							sum += (events[i] - events[i - 1] - delta).getClocks();
 						}

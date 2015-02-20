@@ -31,8 +31,12 @@
 #ifndef _MACSUPPORT_H
 	#define _MACSUPPORT_H
 
+	#include <cstdlib>
+
 	struct OSXExtendedScreenInfo
 	{
+		// true if display is confirmable digital
+		bool displayIsDigital;
 		// gamma correction values for each channel, 1.2 .. 2.2
 		double redGamma, blueGamma, greenGamma;
 		// average colour gamma, 1.2 .. 2.2
@@ -50,6 +54,6 @@
 	bool GetExtendedScreenInfo(long x, long y, OSXExtendedScreenInfo * info);
 
 	int MacBox(void * hwndParent, const char *text, const char *caption, int type);
-	int GetBundlePath(char * buf, int bufsize);
+	std::size_t GetBundlePath(char * buf, std::size_t bufsize);
 
 #endif
