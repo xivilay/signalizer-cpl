@@ -1,32 +1,38 @@
 /*************************************************************************************
- 
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
-	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
-	 
-	 This program is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 3 of the License, or
-	 (at your option) any later version.
-	 
-	 This program is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
-	 
-	 You should have received a copy of the GNU General Public License
-	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	 
-	 See \licenses\ for additional details on licenses associated with this program.
- 
- **************************************************************************************
 
-	file:Common.h
+	cpl - cross-platform library - v. 0.1.0.
+
+	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	See \licenses\ for additional details on licenses associated with this program.
+
+**************************************************************************************
+
+	file:LibraryOptions.h
 	
-		Implements common constants, types & macroes used throughout the program.
-		Compilier specific tunings.
-		Also #includes commonly used headers.
-
+		Compile-time switches for the library.
+ 
+		#define CPL_HINT_FONT:
+			if application is GUI, includes FreeType and uses
+			it for getting outlines for glyphs.
+		#define CPL_THROW_ON_NO_RESOURCE:
+			if set, will throw an exception if cpl cannot find
+			a needed resource.
+ 
+ 
 *************************************************************************************/
 
 #ifndef _LIBRARYOPTIONS_H

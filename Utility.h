@@ -1,8 +1,8 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
+	 cpl - cross platform library - v. 0.1.0.
 	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	 Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
 	 
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by

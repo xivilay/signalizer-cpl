@@ -1,3 +1,34 @@
+/*************************************************************************************
+
+	cpl - cross-platform library - v. 0.1.0.
+
+	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	See \licenses\ for additional details on licenses associated with this program.
+
+**************************************************************************************
+
+	file:SysStats.h
+
+		Gives access to stats of the system, like supported cpu instruction sets
+		and such.
+
+*************************************************************************************/
+
+
 #ifndef _SYSSTATS_H
 	#define _SYSSTATS_H
 	#include "MacroConstants.h"
@@ -38,14 +69,14 @@
 				std::size_t getNumOptimalThreads() const
 				{
 					auto numCores = getNumCores();
-#if 0
-					if (msdn::InstructionSet::isIntel)
-						return numCores + numCores - 1;
-					else
-						return numCores;
-#else
-					return numCores > 1 ? numCores - 1 : numCores;
-#endif
+					#if 0
+						if (msdn::InstructionSet::isIntel)
+							return numCores + numCores - 1;
+						else
+							return numCores;
+					#else
+						return numCores > 1 ? numCores - 1 : numCores;
+					#endif
 				}
 				/*
 					http://stackoverflow.com/a/150971/1287254
@@ -130,7 +161,7 @@
 						RegQueryValueEx(hKey, _T("~MHz"), NULL, NULL, (LPBYTE)&dwMHz, &dwSize);
 						frequency = dwMHz;
 					#else
-#warning dirty fix here
+						#warning dirty fix here
 						frequency = 2700;
 					#endif
 				}

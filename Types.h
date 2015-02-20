@@ -1,8 +1,8 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
+	 cpl - cross-platform library - v. 0.3.0.
 	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	 Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
 	 
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by
@@ -21,11 +21,9 @@
  
  **************************************************************************************
 
-	file:Common.h
+	file:Types.h
 	
-		Implements common constants, types & macroes used throughout the program.
-		Compilier specific tunings.
-		Also #includes commonly used headers.
+		Implements common types and typedefs, together with sse support.
 
 *************************************************************************************/
 
@@ -83,7 +81,7 @@
 			{
 				typedef T type;
 			};
-
+			// basically, ::type is an integer with double the storage size in bits.
 			template<> struct mul_promotion < std::uint8_t > { typedef std::uint16_t type; };
 			template<> struct mul_promotion < std::uint16_t > { typedef std::uint32_t type; };
 			template<> struct mul_promotion < std::uint32_t > { typedef std::uint64_t type; };
