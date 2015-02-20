@@ -112,7 +112,8 @@ namespace cpl
 		juce::Colour lightShadow(c.withMultipliedBrightness(1.1f + 0.65f * bias));
 		juce::Colour darkShadow(c.withMultipliedBrightness(0.25f * (1.f + bias)));
 
-		juce::ColourGradient gradient(!isPressed ? fill.brighter(0.15f) : fill.darker(0.15f), 0.f, 0.f, !isPressed ? fill.darker(0.15f) : fill.brighter(0.2f), getWidth(), getHeight(), false);
+		juce::ColourGradient gradient(!isPressed ? fill.brighter(0.15f) : fill.darker(0.15f), 0.f, 
+			0.f, !isPressed ? fill.darker(0.15f) : fill.brighter(0.2f), (float)getWidth(), (float)getHeight(), false);
 
 		if (isPressed)
 		{

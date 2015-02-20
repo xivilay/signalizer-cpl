@@ -167,6 +167,9 @@
 		#if _MSC_VER >= 1700
 			#define __CPP11__
 		#endif
+		#if _MSC_VER >= 2100
+			#define CPL_HAS_CONSTEXPR
+		#endif
 		#define __MSVC__
 		#define APE_API _cdecl
 		#define APE_STD_API _cdecl
@@ -180,6 +183,12 @@
 			#pragma warning(disable:4996) // std::copy with pointers
 			#pragma warning(disable:4752) // avx-instructions without /arch:AVX
 			#pragma warning(disable:4351) // member array default initialization
+			#pragma warning(disable:4706) // assignment within conditional expression
+			#pragma warning(disable:4324) // structure was deliberately padded
+			#pragma warning(disable:4512) // assignment-operator could not be generated. 
+			#ifndef CPL_HAS_CONSTEXPR
+				#pragma warning(disable:4127) // conditional expression is constant
+			#endif
 		#endif
 		#define __llvm_DummyNoExcept
 		#define __alignas(x) __declspec(align(x))

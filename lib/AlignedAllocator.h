@@ -31,6 +31,7 @@
 	#define _ALIGNED_ALLOCATOR_H
 
 	#include <cstdlib>
+	#include <vector>
 	#include "../Misc.h"
 
 	namespace cpl
@@ -98,9 +99,12 @@
 				// Returns true if and only if storage allocated from *this
 				// can be deallocated from other, and vice versa.
 				// Always returns true for stateless allocators.
-				bool operator==(const AlignmentAllocator<T, N>& other) const {
+				bool operator==(const CAlignedAllocator<T, N>& other) const {
 					return true;
 				}
 			};
+
+		template<class Ty, std::size_t alignment>
+			using aligned_vector = std::vector < Ty, CAlignedAllocator<Ty, alignment> > ;
 	};
 #endif

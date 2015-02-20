@@ -71,7 +71,7 @@ namespace cpl
 	{
 		if (boxThatChanged == &iface)
 		{
-			parent->setIsKnob(!static_cast<bool>(iface.getSelectedId() - 1));
+			parent->setIsKnob(!(iface.getSelectedId() - 1 > 0 ? true : false));
 			animateSucces(&iface);
 		}
 	}

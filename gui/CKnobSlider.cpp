@@ -271,6 +271,7 @@ namespace cpl
 		ar >> vel;
 		ar >> sens;
 		ar >> style;
+		setIsKnob(isKnob);
 		this->setVelocityBasedMode(vel);
 		this->setMouseDragSensitivity(sens);
 		this->setSliderStyle(style);
@@ -295,7 +296,7 @@ namespace cpl
 	}	
 	void CKnobSlider::setCtrlType(ControlType newType)
 	{
-		if(newType > 0 && newType <= ControlType::ms);
+		if(newType > 0 && newType <= ControlType::ms)
 			type = newType;
 	}
 

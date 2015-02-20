@@ -33,6 +33,7 @@
 #include "CCtrlEditSpace.h"
 #include "NewStuffAndLook.h"
 #include "GUIUtils.h"
+#include "gui/Controls.h"
 #include <exception>
 #include <typeinfo>
 #include "SysStats.h"
@@ -41,20 +42,46 @@ namespace cpl
 {
 	void CCtrlEditSpace::valueChanged(const CBaseControl * ctrl)
 	{
-		resetToControl();
+		if (ctrl == parentControl)
+		{
+			resetToControl();
+		}
+		else if (ctrl == switchWithOld.get())
+		{
+			CSerializer newValue;
+			parentControl->save(newValue, 1);
+			parentControl->load(oldValue, 1);
+			parentControl->bForceEvent();
+			oldValue = newValue;
+
+		}
 	}
 
 	CCtrlEditSpace::CCtrlEditSpace(cpl::CBaseControl * parent)
 		: parentControl(parent), hasBeenInitialized(false), exitAfterAnimation(false), inputValueWasValid(false),
 		toolTip("Control Edit Space: Interface for editing the values of controls precisely."),
 		expanderButton(new CTriangleButton()),
-		compactWidth(100),
+		compactWidth(120),
 		compactHeight(25),
 		fullWidth(200),
-		fullHeight(100),
+		fullHeight(120),
 		compactMode(true)
 
 	{
+		if (!parent)
+		{
+			throw std::runtime_error(
+				std::string(__func__) + std::string(": Null pointer passed to constructor - trying to control non-existant control")
+			);
+		}
+
+		// store old value of control:
+		parent->save(oldValue, 1);
+		switchWithOld.reset(new CButton("Switch to A", "Switch to B"));
+		switchWithOld->setToggleable(true);
+		switchWithOld->bSetDescription("Switch back to the other settings (A/B compare).");
+		switchWithOld->enableTooltip(true);
+		switchWithOld->bAddPassiveChangeListener(this);
 
 		iconSucces.setImage(CVectorResource::renderSVGToImage("icons/svg/succestick.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::success)));
 		iconError.setImage(CVectorResource::renderSVGToImage("icons/svg/errorcross.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::error)));
@@ -62,46 +89,36 @@ namespace cpl
 		iconSucces.setAlpha(0);
 		iconError.setOpaque(false);
 		iconError.setAlpha(0);
-		addAndMakeVisible(iconSucces);
-		addAndMakeVisible(iconError);
-		if (!parent)
-		{
-			throw std::runtime_error(
-				std::string(__func__) + std::string(": Null pointer passed to constructor - trying to control non-existant control")
-			);
-		}
-		//addAndMakeVisible(intValueLabel);
-		setBounds(0, 0, compactWidth, compactHeight);
-		addAndMakeVisible(fmtValueLabel);
+
+
 		fmtValueLabel.setEditable(true);
 		fmtValueLabel.setFont(CLookAndFeel_CPL::defaultLook().getStdFont());
-/*		fmtValueLabel.setColour(fmtValueLabel.textColourId, colourAuxFont);
-		fmtValueLabel.setColour(juce::TextEditor::focusedOutlineColourId, colourAux);
-		fmtValueLabel.setColour(juce::TextEditor::outlineColourId, colourActivated);
-		fmtValueLabel.setColour(juce::TextEditor::textColourId, colourAuxFont);
-		fmtValueLabel.setColour(juce::TextEditor::highlightedTextColourId, colourSelFont);
-		fmtValueLabel.setColour(CaretComponent::caretColourId, colourAux.brighter(0.2f));*/
+
 		fmtValueLabel.addListener(this);
 
-		//intValueLabel.setFont(cpl::systemFont); EDIT_TYPE_NEWFONTS
 		intValueLabel.setEditable(true);
 		intValueLabel.setFont(CLookAndFeel_CPL::defaultLook().getStdFont());
-		/*intValueLabel.setColour(fmtValueLabel.textColourId, colourAuxFont);
-		intValueLabel.setColour(juce::TextEditor::focusedOutlineColourId, colourAux);
-		intValueLabel.setColour(juce::TextEditor::outlineColourId, colourActivated);
-		intValueLabel.setColour(juce::TextEditor::textColourId, colourAuxFont);
-		intValueLabel.setColour(juce::TextEditor::highlightedTextColourId, colourSelFont);
-		intValueLabel.setColour(CaretComponent::caretColourId, colourAux.brighter(0.2f));*/
+
 		intValueLabel.addListener(this);
 
-		addChildComponent(intValueLabel);
+
 		//setWantsKeyboardFocus(true);
 		parentControl->bAddPassiveChangeListener(this);
-		addAndMakeVisible(errorVisualizer);
+
 		getAnimator().addChangeListener(this);
-		addAndMakeVisible(expanderButton.get());
+
 		expanderButton->addListener(this);
 
+
+
+		setBounds(0, 0, compactWidth, compactHeight);
+		addChildComponent(intValueLabel);
+		addChildComponent(switchWithOld.get());
+		addAndMakeVisible(iconSucces);
+		addAndMakeVisible(iconError);
+		addAndMakeVisible(fmtValueLabel);
+		addAndMakeVisible(errorVisualizer);
+		addAndMakeVisible(expanderButton.get());
 	}
 
 
@@ -170,13 +187,15 @@ namespace cpl
 		{
 			fmtValueLabel.setBounds(1, 1, getWidth() - compactHeight, elementHeight);
 			intValueLabel.setVisible(false);
+			switchWithOld->setVisible(false);
 		}
 		else
 		{
+			switchWithOld->setVisible(true);
 			auto badCodingStyleConst = elementHeight - 5;
 			fmtValueLabel.setBounds(5, badCodingStyleConst + elementHeight, getWidth() - (compactHeight + 5), elementHeight);
 			intValueLabel.setBounds(5, fmtValueLabel.getBounds().getY() + badCodingStyleConst * 2, getWidth() - (compactHeight + 5), elementHeight);
-
+			switchWithOld->setTopLeftPosition(5, intValueLabel.getBottom() + 5);
 
 			iconError.setBounds(getWidth() - 20, intValueLabel.getBounds().getY() + 3, 15, 15);
 

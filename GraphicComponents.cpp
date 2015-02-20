@@ -78,6 +78,17 @@ namespace cpl
 	{
 		if (auto c = dynamic_cast<cpl::CBaseControl *>(e.eventComponent))
 		{
+			// check if control is owned by a current edit space
+			// - in which case we dont want to destroy the current.
+
+			if (auto parent = e.eventComponent->getParentComponent())
+			{
+				if (auto editspace = dynamic_cast<cpl::CCtrlEditSpace *>(parent))
+				{
+					return;
+				}
+			}
+
 			currentEditSpace = c->bCreateEditSpace();
 			if (currentEditSpace)
 			{

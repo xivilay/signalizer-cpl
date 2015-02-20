@@ -264,7 +264,5 @@
 		};
 
 	};
-	typedef std::vector<cpl::CAudioBuffer::CChannelBuffer, 
-		cpl::AlignmentAllocator<cpl::CAudioBuffer::CChannelBuffer, 32>> 
-			AudioBuffer;
+	typedef cpl::aligned_vector<cpl::CAudioBuffer::CChannelBuffer, 32> AudioBuffer;
 #endif

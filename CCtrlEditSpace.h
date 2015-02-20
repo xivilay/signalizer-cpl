@@ -42,6 +42,7 @@
 	{
 
 		class CTriangleButton;
+		class CButton;
 		/*
 			The base class used to represent edit spaces for controls.
 			Controls deriving from base controls should derive a class from this,
@@ -149,7 +150,9 @@
 
 		private:
 			juce::Point<int> maximumSize;
+			std::unique_ptr<cpl::CButton> switchWithOld;
 			cpl::CBaseControl * parentControl;
+			cpl::CSerializer oldValue;
 			juce::Label intValueLabel;
 			bool compactMode;
 			volatile bool inputValueWasValid;

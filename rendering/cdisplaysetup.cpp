@@ -119,7 +119,7 @@ namespace cpl
 
 			bool systemUsesSubpixelSmoothing = false;
 			double finalGamma = defaultFontGamma;
-
+			double rotation;
 			#ifdef __WINDOWS__
 				BOOL systemSmoothing = FALSE;
 				// antialiased text set?
@@ -137,7 +137,7 @@ namespace cpl
 						// collect gamma correction
 						if (SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0, &systemGamma, 0))
 						{
-							systemGamma = cpl::Math::confineTo<std::uint16_t>(systemGamma, 1000, 2200);
+							systemGamma = cpl::Math::confineTo<std::uint16_t>((std::uint16_t)systemGamma, 1000, 2200);
 							finalGamma = systemGamma / 1000.0;
 						}
 					}

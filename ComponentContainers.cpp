@@ -320,10 +320,10 @@ namespace cpl
 		else
 		{
 			// draw bounding rectangle
-			g.drawLine(0, 0, 0, getHeight(),5);
-			g.drawLine(0, 0, getWidth(),0, 5);
-			g.drawLine(getWidth(), 0, getWidth(), getHeight(), 5);
-			g.drawLine(0, getHeight(), getWidth(), getHeight(), 5);
+			g.drawLine(0.f, 0.f, 0.f, (float)getHeight(),5.f);
+			g.drawLine(0.f, 0.f, (float)getWidth(), 0.f, 5.f);
+			g.drawLine((float)getWidth(), 0.f, (float)getWidth(), (float)getHeight(), 5.f);
+			g.drawLine(0.f, (float)getHeight(), (float)getWidth(), (float)getHeight(), 5.f);
 		}
 	}
 	/*********************************************************************************************/
@@ -369,16 +369,16 @@ namespace cpl
 		// draw triangle
 		if(orientation)
 		{
-			p.startNewSubPath(0, getHeight());
-			p.lineTo(getWidth() / 2, 0);
-			p.lineTo(getWidth(), getHeight());
-			p.lineTo(0, getHeight());
+			p.startNewSubPath(0.f, (float)getHeight());
+			p.lineTo(getWidth() / 2.f, 0.f);
+			p.lineTo((float)getWidth(), (float)getHeight());
+			p.lineTo(0.f, (float)getHeight());
 		}
 		else
 		{
 			p.startNewSubPath(0.f, 0.f);
-			p.lineTo(getWidth(), 0.f);
-			p.lineTo(getWidth() / 2.f, getHeight());
+			p.lineTo((float)getWidth(), 0.f);
+			p.lineTo((float)getWidth() / 2.f, (float)getHeight());
 			p.lineTo(0.f, 0.f);
 		}
 		g.fillPath(p);

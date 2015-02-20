@@ -44,13 +44,44 @@ namespace cpl
 
 	};
 
+	class CustomColourSelector
+	:
+		public juce::ColourSelector
+	{
+	public:
+		CustomColourSelector(int flags = (showAlphaChannel | showColourAtTop | showSliders | showColourspace),
+			int edgeGap = 4,
+			int gapAroundColourSpaceComponent = 7)
+			: juce::ColourSelector(flags, edgeGap, gapAroundColourSpaceComponent)
+		{
+
+		}
+
+		void shrinkLabels()
+		{
+			for (int i = 0; i < getNumChildComponents(); ++i)
+			{
+				auto currentChild = getChildComponent(i);
+				if (juce::Slider * s = dynamic_cast<juce::Slider*>(currentChild))
+				{
+					auto currentWidth = s->getTextBoxWidth();
+					auto currentHeight = s->getTextBoxWidth();
+					auto currentPos = s->getTextBoxPosition();
+					s->setTextBoxStyle(currentPos, false, currentWidth / 3, currentHeight);
+				}
+			}
+		}
+
+	};
+
 	class ColourEditor 
 	: 
 		public CKnobSliderEditor
 	{
 	public:
 		ColourEditor(CColourControl * parentControl)
-			: CKnobSliderEditor(parentControl), parent(parentControl), selector(15, 5, 5), recursionFlagWeChanged(false), recursionFlagTheyChanged(false)
+			: CKnobSliderEditor(parentControl), parent(parentControl), selector(15, 5, 5), 
+			recursionFlagWeChanged(false), recursionFlagTheyChanged(false)
 		{
 			oldHeight = fullHeight;
 			oldWidth = fullWidth;
@@ -147,7 +178,9 @@ namespace cpl
 		{
 			if (!newMode)
 			{
+				selector.setCurrentColour(juce::Colour(parent->getColour()));
 				addAndMakeVisible(&selector);
+				selector.shrinkLabels();
 			}
 			else
 			{
@@ -156,13 +189,13 @@ namespace cpl
 			CKnobSliderEditor::setMode(newMode);
 		}
 	private:
-		static const int extraHeight = 180;
-		static const int extraWidth = 30;
+		static const int extraHeight = 210;
+		static const int extraWidth = 10;
 		bool recursionFlagWeChanged;
 		bool recursionFlagTheyChanged;
 		int oldHeight, oldWidth;
 		CColourControl * parent;
-		juce::ColourSelector selector;
+		CustomColourSelector selector;
 		juce::ComboBox argbSelector;
 	};
 
@@ -189,8 +222,25 @@ namespace cpl
 		std::uint32_t p;
 		ARGBPixel() : p(0) {}
 		ARGBPixel(std::uint32_t pixel) : p(pixel) {}
-		ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, 0} {}
-		ARGBPixel(std::uint8_t alpha, std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, alpha} {}
+		#ifdef __MSVC__
+			ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) 
+			{
+				c.a = 0;
+				c.r = red;
+				c.g = green;
+				c.b = blue;
+			}
+			ARGBPixel(std::uint8_t alpha, std::uint8_t red, std::uint8_t green, std::uint8_t blue)
+			{
+				c.r = red;
+				c.g = green;
+				c.b = blue;
+				c.a = alpha;
+			}
+		#else
+			ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, 0} {}
+			ARGBPixel(std::uint8_t alpha, std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, alpha} {}
+		#endif
 	};
 
 	/*********************************************************************************************
