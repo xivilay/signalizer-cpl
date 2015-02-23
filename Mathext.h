@@ -355,7 +355,7 @@
 			template<typename Scalar>
 				inline Scalar dbToFraction(Scalar dBValue)
 				{
-					return std::pow<Scalar>(10, dBValue / Scalar(20.0));
+					return std::pow((Scalar)10, dBValue / Scalar(20.0));
 				}
 
 			template<typename Scalar, typename Input>

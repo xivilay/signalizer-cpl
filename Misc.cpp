@@ -471,7 +471,7 @@ namespace cpl
 				dladdr ((void*) GetDirectoryPath, &exeInfo);
 				// need to chop off 2 directories here
 				std::string fullPath(exeInfo.dli_fname);
-				for (std::size_t i = fullPath.length(), z = 0u; i == 0; --i) {
+				for (int i = fullPath.length(), z = 0; i != 0; --i) {
 					// directory slash detected
 					if (DIRC_COMP(fullPath[i]))
 						z++;

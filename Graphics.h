@@ -31,7 +31,8 @@
 	#define _GRAPHICS_H
 
 	#include <cstdint>
-
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glext.h>
 	namespace cpl
 	{
 		// it should be called Graphics, but has n-dimensions appended to avoid 
@@ -68,11 +69,14 @@
 					void applyToOpenGL()
 					{
 						glPushMatrix();
-							glTranslatef(static_cast<GLfloat>(position.x), static_cast<GLfloat>(position.y), static_cast<GLfloat>(position.z));
-							glScalef(1, 1, 0.1);
+						// move first - bad
+						glTranslatef(static_cast<GLfloat>(position.x), static_cast<GLfloat>(position.y), static_cast<GLfloat>(position.z));
+						// to avoid clipping. this is probably not how it is done.
+						glScalef(1, 1, 0.1);
 						glRotatef(static_cast<GLfloat>(rotation.x), 1.0f, 0.0f, 0.0f);
 						glRotatef(static_cast<GLfloat>(rotation.y), 0.0f, 1.0f, 0.0f);
 						glRotatef(static_cast<GLfloat>(rotation.z), 0.0f, 0.0f, 1.0f);
+						// do the actual scaling
 						glScalef(static_cast<GLfloat>(scale.x), static_cast<GLfloat>(scale.y), static_cast<GLfloat>(scale.z));
 
 					}
@@ -312,8 +316,11 @@
 				{
 
 					auto r = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
-
+#ifdef __MSVC__
 					return r.m128i_u32[0];
+#else
+					return r[0];
+#endif
 				}
 
 
@@ -322,8 +329,11 @@
 
 					auto r = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
 
+#ifdef __MSVC__
 					p = r.m128i_u32[0];
-
+#else
+					p = r[0];
+#endif
 					return *this;
 				}
 

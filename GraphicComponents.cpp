@@ -278,7 +278,15 @@ namespace cpl
 	DrawableWithLock CResourceManager::getResource(const std::string & name)
 	{
 		loadResources();
-		return DrawableWithLock(resources[name].getDrawable(), &resources[name]);
+		
+		auto entry = resources.find(name);
+		#ifdef CPL_THROW_ON_NO_RESOURCE
+			if(entry == resources.end())
+			{
+				throw new std::runtime_error("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
+			}
+		#endif
+		return DrawableWithLock(entry->second.getDrawable(), &resources[name]);
 	}
 	
 	const juce::Image & CResourceManager::getImage(const std::string & name)
