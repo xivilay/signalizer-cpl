@@ -242,9 +242,15 @@
 			virtual void resume() {  };
 			virtual void freeze() {};
 			virtual void unfreeze() {};
-			virtual void attachToOpenGL(juce::OpenGLContext & ctx) { oglc = &ctx; }
-			virtual void detachFromOpenGL(juce::OpenGLContext & ctx) { ctx.detach(); oglc = nullptr; }
-
+			virtual void attachToOpenGL(juce::OpenGLContext & ctx) { detachFromOpenGL();  oglc = &ctx; }
+			virtual void detachFromOpenGL(juce::OpenGLContext & ctx) 
+			{ 
+				if (oglc)
+					jassert(&ctx == oglc);
+				ctx.detach(); 
+				oglc = nullptr; 
+			}
+			void detachFromOpenGL() { if (oglc) oglc->detach(); oglc = nullptr; }
 			virtual std::unique_ptr<GraphicComponent> createEditor() { return nullptr; }
 
 			bool isOpenGL() { return oglc != nullptr; }

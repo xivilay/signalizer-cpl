@@ -52,6 +52,15 @@ namespace cpl
 		enableTooltip(true);
 		addListener(this);
 	}
+
+	CButton::CButton()
+		: juce::Button("CButton"), CBaseControl(this), toggle(false)
+	{
+		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
+		enableTooltip(true);
+		addListener(this);
+	}
+
 	CButton::~CButton() {};
 
 	std::string CButton::bGetTitle() const
@@ -167,7 +176,7 @@ namespace cpl
 		//g.setFont(lol);
 
 
-		auto & text = texts[1].length() || toggle ? texts[getToggleState()] : texts[0];
+		auto & text = texts[1].length() ? ( toggle ? texts[getToggleState()] : texts[0]) : texts[0];
 		if (isButtonDown)
 			g.drawText(text, 6, 2, getWidth() - 5, getHeight() - 2, juce::Justification::centred);
 		else

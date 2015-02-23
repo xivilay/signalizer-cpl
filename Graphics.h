@@ -34,10 +34,55 @@
 
 	namespace cpl
 	{
-		namespace Graphics
+		// it should be called Graphics, but has n-dimensions appended to avoid 
+		// name clashes.
+		namespace GraphicsND
 		{
-			using namespace std;
-			
+
+			template<typename T>
+				union Transform3D
+				{
+					Transform3D(T defaultValue)
+					{
+						for (auto & c : data)
+								c = defaultValue;
+					}
+					struct component
+					{
+						T x, y, z;
+					};
+
+					T data[9];
+					struct
+					{
+						component position;
+						component rotation;
+						component scale;
+					};
+
+					T & element(int x, int y)
+					{
+						return data[x * 3 + y];
+					}
+
+					void applyToOpenGL()
+					{
+						glPushMatrix();
+							glTranslatef(static_cast<GLfloat>(position.x), static_cast<GLfloat>(position.y), static_cast<GLfloat>(position.z));
+							glScalef(1, 1, 0.1);
+						glRotatef(static_cast<GLfloat>(rotation.x), 1.0f, 0.0f, 0.0f);
+						glRotatef(static_cast<GLfloat>(rotation.y), 0.0f, 1.0f, 0.0f);
+						glRotatef(static_cast<GLfloat>(rotation.z), 0.0f, 0.0f, 1.0f);
+						glScalef(static_cast<GLfloat>(scale.x), static_cast<GLfloat>(scale.y), static_cast<GLfloat>(scale.z));
+
+					}
+					static void revert()
+					{
+						glPopMatrix();
+					}
+				};
+
+
 			/*
 			http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
 			plots lines fast, but unaliased

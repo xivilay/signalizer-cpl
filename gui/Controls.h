@@ -34,4 +34,5 @@
 	#include "CValueControl.h"
 	#include "CComboBox.h"
 	#include "CButton.h"
+	#include "CTransformWidget.h"
 #endif

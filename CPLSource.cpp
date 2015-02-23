@@ -53,6 +53,7 @@
 	#include "gui/CValueControl.cpp"
 	#include "gui/CComboBox.cpp"
 	#include "gui/CButton.cpp"
+	#include "gui/CTransformWidget.cpp"
 	// rendering
 	#include "rendering/CSubpixelSoftwareGraphics.cpp"
 	#include "rendering/CDisplaySetup.cpp"

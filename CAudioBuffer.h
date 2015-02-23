@@ -262,7 +262,7 @@
 
 
 		};
-
+		typedef cpl::aligned_vector<cpl::CAudioBuffer::CChannelBuffer, 32> AudioBuffer;
 	};
-	typedef cpl::aligned_vector<cpl::CAudioBuffer::CChannelBuffer, 32> AudioBuffer;
+
 #endif

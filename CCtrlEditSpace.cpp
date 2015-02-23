@@ -154,9 +154,9 @@ namespace cpl
 			g.setFont(TextSize::normalText);
 			g.setColour(cpl::GetColour(cpl::ColourEntry::auxfont));
 			auto titleRect = getBounds().withPosition(5, 1).withHeight(elementHeight);
-			g.drawText("Editing ", titleRect.withRight(50), juce::Justification::centredLeft);
+			g.drawText("Editing ", titleRect.withRight(47), juce::Justification::centredLeft);
 			g.setColour(cpl::GetColour(cpl::ColourEntry::selfont));
-			g.drawText(typeid(*parentControl).name(), titleRect.withLeft(52), juce::Justification::centredLeft);
+			g.drawText(typeid(*parentControl).name(), titleRect.withLeft(50), juce::Justification::centredLeft);
 
 			// draw insides, starting with internal value
 			auto elementPos = titleRect.withY(titleRect.getY() + elementHeight);

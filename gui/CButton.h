@@ -46,6 +46,7 @@
 			bool toggle;
 		public:
 			CButton(const std::string & text, const std::string & textToggled = "");
+			CButton();
 			~CButton();
 
 			void setToggleable(bool isAble);

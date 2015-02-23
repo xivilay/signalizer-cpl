@@ -844,6 +844,7 @@
 
 			inline CSerializer & operator >> (Serializable * object)
 			{
+				
 				object->load(*this, version);
 				return *this;
 			}
