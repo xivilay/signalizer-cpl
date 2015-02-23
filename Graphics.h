@@ -31,8 +31,8 @@
 	#define _GRAPHICS_H
 
 	#include <cstdint>
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glext.h>
+	#include "PlatformSpecific.h"
+
 	namespace cpl
 	{
 		// it should be called Graphics, but has n-dimensions appended to avoid 

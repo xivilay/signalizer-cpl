@@ -54,6 +54,8 @@
 			#include "MacSupport.h"
 			#define __CSTATE_USE_SIGACTION
 			#include <IOKit/graphics/IOGraphicsLib.h>
+			#include <OpenGL/gl.h>
+			#include <OpenGL/glext.h>
 
 		#endif
 	#endif

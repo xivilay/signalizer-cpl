@@ -41,38 +41,61 @@ namespace cpl
 		CEditSpaceSpawner
 
 	*********************************************************************************************/
+
+	CEditSpaceSpawner::CEditSpaceSpawner(juce::Component & parentToControl)
+		: parent(parentToControl), recursionEdit(false)
+	{
+		parent.addMouseListener(this, true);
+		dialog.setName(programInfo.name + " edit space");
+		dialog.addToDesktop(juce::ComponentPeer::StyleFlags::windowHasDropShadow);
+		dialog.setVisible(false);
+	}
+
 	void CEditSpaceSpawner::onObjectDestruction(const CCtrlEditSpace::ObjectProxy & dyingSpace)
 	{
 		if (dyingSpace == currentEditSpace.get())
 		{
 			currentEditSpace.release();
 			currentEditSpace = nullptr;
+			disappear();
 		}
 	}
 	void CEditSpaceSpawner::componentMovedOrResized(Component &component, bool wasMoved, bool wasResized)
 	{
 		// when we move a component, we recieve a callback again (possibly recursive).
 		// this avoids the infinite chain of resizing.
+		// -- condition removed since we don't move them actually
 		if (recursionEdit)
 		{
 			recursionEdit = false;
 		}
-		else if (&component == currentEditSpace.get())
+		/*else */if (&component == currentEditSpace.get() && !wasMoved)
 		{
 			auto bounds = currentEditSpace->getBaseControl()->bGetAbsSize();
-			auto x = std::min
-			(
-				parent.getWidth() - (currentEditSpace->getWidth() + 5),
-				std::max(bounds.getX(), 5)
-			);
-			auto y = std::min
-			(
-				parent.getHeight() - (currentEditSpace->getHeight() + 5),
-				std::max(bounds.getY() + bounds.getHeight(), 5)
-			);
+			auto topleft = currentEditSpace->getBaseControl()->bGetView()->getScreenPosition();
+
 			recursionEdit = true;
-			currentEditSpace->setTopLeftPosition(x, y);
+
+			dialog.setBounds(topleft.getX(), topleft.getY() + bounds.getHeight(), 
+				currentEditSpace->getWidth(), currentEditSpace->getHeight());
 		}
+	}
+
+	void CEditSpaceSpawner::appearWith(juce::Component & component)
+	{
+		disappear();
+		component.setTopLeftPosition(0, 0);
+		dialog.setSize(component.getBounds().getWidth(), component.getBounds().getHeight());
+		dialog.addChildComponent(component);
+		component.setVisible(true);
+		dialog.setVisible(true);
+		//dialog
+	}
+
+	void CEditSpaceSpawner::disappear()
+	{
+		dialog.removeAllChildren();
+		dialog.setVisible(false);
 	}
 	void CEditSpaceSpawner::mouseDoubleClick(const juce::MouseEvent & e)
 	{
@@ -95,26 +118,11 @@ namespace cpl
 				currentEditSpace->addClientDestructor(this);
 
 				auto bounds = c->bGetAbsSize();
-				auto x = std::min
-				(
-					parent.getWidth() - currentEditSpace->getWidth() + 5,
-					std::max(bounds.getX(), 5)
-				);
-				auto y = std::min
-				(
-					parent.getHeight() - currentEditSpace->getHeight() + 5,
-					std::max(bounds.getY() + bounds.getHeight(), 5)
-				);
-				/*
-				calculate suitable bounds.
-				*/
+				auto topleft = c->bGetView()->getScreenPosition();
 
-				//bounds.setWidth()
-
-
-				currentEditSpace->setTopLeftPosition(x, y);
-				parent.addAndMakeVisible(currentEditSpace.get());
 				currentEditSpace->addComponentListener(this);
+				dialog.setTopLeftPosition(topleft.getX(), topleft.getY() + bounds.getHeight());
+				appearWith(*currentEditSpace.get());
 			}
 		}
 	}
@@ -134,6 +142,7 @@ namespace cpl
 			{
 				currentEditSpace->looseFocus();
 				currentEditSpace = nullptr;
+				disappear();
 			}
 		}
 	}

@@ -219,6 +219,8 @@ namespace cpl
 			editor.addListener(this);
 		if (curLabel == &intValueLabel)
 			editor.addListener(this);
+		editor.setScrollToShowCursor(false);
+
 	}
 	void CCtrlEditSpace::animateSucces(juce::Component * objectThatWasModified)
 	{

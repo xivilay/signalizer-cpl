@@ -291,17 +291,16 @@
 			public juce::ComponentListener
 		{
 		public:
-			CEditSpaceSpawner(juce::Component & parentToControl)
-				: parent(parentToControl), recursionEdit(false)
-			{
-				parent.addMouseListener(this, true);
-			}
+			CEditSpaceSpawner(juce::Component & parentToControl);
+
 		protected:
 
+			void appearWith(juce::Component & component);
+			void disappear();
 			virtual void onObjectDestruction(const CCtrlEditSpace::ObjectProxy & dyingSpace) override;
 			virtual void componentMovedOrResized(Component &component, bool wasMoved, bool wasResized) override;
 			virtual void mouseDoubleClick(const juce::MouseEvent & e) override;
-
+			
 			virtual void mouseDown(const juce::MouseEvent & e) override;
 
 			bool isEditSpacesOn;
@@ -311,7 +310,7 @@
 
 		private:
 			CEditSpaceSpawner(const CEditSpaceSpawner &) = delete;
-
+			juce::Component dialog;
 		};
 
 		/*
@@ -323,7 +322,7 @@
 
 		public:
 			TopView(juce::Component * parent)
-				: isTooltipsOn(false), tipWindow(parent), editSpawner(*parent)
+				: isTooltipsOn(false), tipWindow(nullptr), editSpawner(*parent)
 			{
 				//setInterceptsMouseClicks(true, false);
 
