@@ -259,7 +259,7 @@
 			bool shouldSynchronize() { return isSynced; }
 			void setSyncing(bool shouldSync) { isSynced = shouldSync; }
 			void setApproximateRefreshRate(int ms) { refreshRate = ms; }
-
+			void setSwapInterval(int interval) { bufferSwapInterval = interval; }
 		protected:
 
 			void notifyDestruction()
@@ -270,7 +270,13 @@
 
 			bool isFullScreen;
 			bool isSynced;
+			// the rate at which the 2D ui gets refreshed (called from repaintMainContent)
 			int refreshRate;
+			// -1 == no swap buffer interval defined, all opengl rendering
+			// should be triggered through repaintMainContent()
+			// 0 == no cap on framerate, 1 = vsync, 2 and over are reciprocals of
+			// current monitor refresh rate.
+			int bufferSwapInterval;
 			std::set<EventListener *> eventListeners;
 			juce::OpenGLContext * oglc;
 			
