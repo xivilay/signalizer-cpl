@@ -38,13 +38,23 @@
 	//#include "Common.h"
 	#include "PlatformSpecific.h"
 	#include "Types.h"
-
+	#include <typeinfo>
 	namespace cpl
 	{
 		namespace Misc 
 		{
 
 			std::string GetTime ();
+			std::string DemangleRawName(const std::string & name);
+			
+			
+			template<class T>
+				std::string DemangledTypeName(const T & object)
+				{
+					return DemangleRawName(typeid(object).name());
+				}
+			
+
 			long long ClockCounter();
 			long long TimeCounter();
 			double TimeDifference(long long);

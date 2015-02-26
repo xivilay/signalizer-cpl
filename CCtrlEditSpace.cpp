@@ -156,7 +156,7 @@ namespace cpl
 			auto titleRect = getBounds().withPosition(5, 1).withHeight(elementHeight);
 			g.drawText("Editing ", titleRect.withRight(47), juce::Justification::centredLeft);
 			g.setColour(cpl::GetColour(cpl::ColourEntry::selfont));
-			g.drawText(typeid(*parentControl).name(), titleRect.withLeft(50), juce::Justification::centredLeft);
+			g.drawText(Misc::DemangledTypeName(*parentControl), titleRect.withLeft(50), juce::Justification::centredLeft);
 
 			// draw insides, starting with internal value
 			auto elementPos = titleRect.withY(titleRect.getY() + elementHeight);
@@ -363,8 +363,8 @@ namespace cpl
 	void CCtrlEditSpace::focusOfChildComponentChanged(FocusChangeType cause)
 	{
 		// commit suicide
-		//if(!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
-		//	delete this;
+		if(!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
+			delete this;
 	}
 	
 	void CCtrlEditSpace::visibilityChanged()

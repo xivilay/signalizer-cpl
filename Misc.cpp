@@ -37,7 +37,11 @@
 #include <cstdarg>
 #include "Types.h"
 #include "stdext.h"
-
+#ifdef __GNUG__
+	#include <cstdlib>
+	#include <memory>
+	#include <cxxabi.h>
+#endif
 
 namespace cpl
 {
@@ -50,6 +54,29 @@ namespace cpl
 		static int GetInstanceCounter();
 		static int __unusedInitialization = addHandler();
 
+		
+		#ifdef __GNUG__
+
+			std::string DemangleRawName(const std::string & name) {
+				//http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
+				int status = -4; // some arbitrary value to eliminate the compiler warning
+				
+				// enable c++11 by passing the flag -std=c++11 to g++
+				std::unique_ptr<char, void(*)(void*)> res {
+					abi::__cxa_demangle(name.c_str(), NULL, NULL, &status),
+					std::free
+				};
+				
+				return (status==0) ? res.get() : name ;
+			}
+			
+		#else
+			std::string DemangleRawName(const std::string & name) {
+				return name;
+			}
+			
+		#endif
+		
 		/*********************************************************************************************
 
 			This function allows the user/programmer to attach a debugger on fatal errors.
