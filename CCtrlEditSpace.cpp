@@ -354,8 +354,19 @@ namespace cpl
 		return parentControl->bGetValue();
 	}
 
+	void CCtrlEditSpace::focusLost(FocusChangeType cause)
+	{
+		// commit suicide
+		delete this;
+	}
 
-
+	void CCtrlEditSpace::focusOfChildComponentChanged(FocusChangeType cause)
+	{
+		// commit suicide
+		//if(!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
+		//	delete this;
+	}
+	
 	void CCtrlEditSpace::visibilityChanged()
 	{
 

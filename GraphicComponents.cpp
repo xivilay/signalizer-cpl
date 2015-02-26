@@ -45,10 +45,13 @@ namespace cpl
 	CEditSpaceSpawner::CEditSpaceSpawner(juce::Component & parentToControl)
 		: parent(parentToControl), recursionEdit(false)
 	{
+		//DBG_BREAK();
 		parent.addMouseListener(this, true);
 		dialog.setName(programInfo.name + " edit space");
+		dialog.setOpaque(true);
 		dialog.addToDesktop(juce::ComponentPeer::StyleFlags::windowHasDropShadow);
 		dialog.setVisible(false);
+		
 	}
 
 	void CEditSpaceSpawner::onObjectDestruction(const CCtrlEditSpace::ObjectProxy & dyingSpace)
@@ -83,12 +86,15 @@ namespace cpl
 
 	void CEditSpaceSpawner::appearWith(juce::Component & component)
 	{
+		//DBG_BREAK();
 		disappear();
 		component.setTopLeftPosition(0, 0);
 		dialog.setSize(component.getBounds().getWidth(), component.getBounds().getHeight());
 		dialog.addChildComponent(component);
 		component.setVisible(true);
 		dialog.setVisible(true);
+		dialog.toFront(true);
+		dialog.setAlwaysOnTop(true);
 		//dialog
 	}
 
@@ -103,7 +109,8 @@ namespace cpl
 		{
 			// check if control is owned by a current edit space
 			// - in which case we dont want to destroy the current.
-
+			//DBG_BREAK();
+			
 			if (auto parent = e.eventComponent->getParentComponent())
 			{
 				if (auto editspace = dynamic_cast<cpl::CCtrlEditSpace *>(parent))
@@ -284,6 +291,14 @@ namespace cpl
 	{
 	};
 	
+	CResourceManager::~CResourceManager()
+	{
+		internalInstance = nullptr;
+		isResourcesLoaded = false;
+	}
+	
+	CResourceManager * CResourceManager::internalInstance = nullptr;
+	
 	DrawableWithLock CResourceManager::getResource(const std::string & name)
 	{
 		loadResources();
@@ -314,10 +329,9 @@ namespace cpl
 	{
 		// note we HAVE to heap allocate this - because we might contain components, which must be deleted before the main app quits
 		// and that is before static storage duration ends!!
-		static CResourceManager * ins = nullptr;
-		if (ins == nullptr)
-			ins = new CResourceManager();
-		return *ins;
+		if (internalInstance == nullptr)
+			internalInstance = new CResourceManager();
+		return *internalInstance;
 	}
 	/*********************************************************************************************
 	 

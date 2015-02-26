@@ -33,6 +33,13 @@
 namespace cpl
 {
 	
+	juce::Colour ColourFromPixelARGB(juce::PixelARGB pixel)
+	{
+		return juce::Colour(pixel.getRed(), pixel.getGreen(), pixel.getBlue(), pixel.getAlpha());
+	}
+	
+	
+	
 	const char * argbTypes[] = 
 	{
 		"RGB",
@@ -59,6 +66,10 @@ namespace cpl
 
 		void shrinkLabels()
 		{
+			// default juce::Slider layouts have enourmous labels
+			// compared to the actual slider.
+			// for this widget, we only need to display two characters,
+			// so we shrink them a little bit.
 			for (int i = 0; i < getNumChildComponents(); ++i)
 			{
 				auto currentChild = getChildComponent(i);
@@ -90,7 +101,8 @@ namespace cpl
 
 			addAndMakeVisible(argbSelector);
 			selector.addChangeListener(this);
-			selector.setCurrentColour(juce::Colour(parent->getColour()));
+
+			selector.setCurrentColour(ColourFromPixelARGB(parent->getControlColour()));
 			toolTip = "Colour editor space - adjust ARGB values of controls precisely.";
 
 			juce::StringArray choices;
@@ -157,7 +169,12 @@ namespace cpl
 			else if (source == &selector)
 			{
 				recursionFlagWeChanged = true;
-				parent->setColour(selector.getCurrentColour().getARGB());
+				
+				auto colour = selector.getCurrentColour();
+				juce::PixelARGB p(colour.getAlpha(), colour.getRed(), colour.getGreen(), colour.getBlue());
+				
+				//std::cout << std::hex << "Component: broadcasting " << p.getARGB() << std::endl;
+				parent->setControlColour(p);
 			}
 			CKnobSliderEditor::changeListenerCallback(source);
 		}
@@ -170,7 +187,7 @@ namespace cpl
 			else if (!recursionFlagWeChanged)
 			{
 				recursionFlagTheyChanged = true;
-				selector.setCurrentColour(juce::Colour(parent->getColour()));
+				selector.setCurrentColour(ColourFromPixelARGB(parent->getControlColour()));
 			}
 			CKnobSliderEditor::valueChanged(ctrl);
 		}
@@ -178,7 +195,7 @@ namespace cpl
 		{
 			if (!newMode)
 			{
-				selector.setCurrentColour(juce::Colour(parent->getColour()));
+				selector.setCurrentColour(ColourFromPixelARGB(parent->getControlColour()));
 				addAndMakeVisible(&selector);
 				selector.shrinkLabels();
 			}
@@ -207,8 +224,9 @@ namespace cpl
 			return nullptr;
 	}
 
-
-	union ARGBPixel
+	// endian-less pixel interface.
+	// slow and a PITA but the only solution!
+	struct ARGBPixel
 	{
 		struct
 		{
@@ -216,12 +234,10 @@ namespace cpl
 			//std::uint8_t a, r, g, b; <- big endian
 			std::uint8_t b, g, r, a;
 		} c;
-		// data access
-		std::uint8_t d[4];
-		// complete pixel
-		std::uint32_t p;
-		ARGBPixel() : p(0) {}
-		ARGBPixel(std::uint32_t pixel) : p(pixel) {}
+		
+		juce::PixelARGB toPixelARGB() { return juce::PixelARGB(c.a, c.r, c.g, c.b); }
+		void fromPixelARGB(juce::PixelARGB p) { c.b = p.getBlue(); c.g = p.getGreen(); c. r = p.getRed(); c.a = p.getAlpha(); }
+		ARGBPixel() : c() {}
 		#ifdef __MSVC__
 			ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) 
 			{
@@ -242,14 +258,25 @@ namespace cpl
 			ARGBPixel(std::uint8_t alpha, std::uint8_t red, std::uint8_t green, std::uint8_t blue) : c{ red, green, blue, alpha} {}
 		#endif
 	};
+	
+	/*
+	 
+	 How to fix this:
+		All setting / getting of colours happens through juce::PixelARGB / juce::Colour.
+			Internally (including serialization) happens through ARGBPixel which is the same
+			across endianness and platforms.
+	 
+	 
+	 */
+	
 
 	/*********************************************************************************************
 
 	CKnobEx
 
 	*********************************************************************************************/
-	CColourControl::CColourControl(const std::string & name, ColourType typeToUse, int channel)
-		: CKnobSlider(name), colourType(typeToUse), colour(ARGBPixel(0xFF, 0, 0, 0).p), channel(channel % 3)
+	CColourControl::CColourControl(const std::string & name, ColourType typeToUse)
+		: CKnobSlider(name), colourType(typeToUse), colour(0xFF, 0, 0, 0), channel(Channels::Red)
 	{
 		//bForceEvent();
 		isEditSpacesAllowed = true;
@@ -261,23 +288,28 @@ namespace cpl
 	void CColourControl::save(CSerializer::Archiver & ar, long long int version)
 	{
 		CKnobSlider::save(ar, version);
-		ar << getColour();
+		
+		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
+		ar << a; ar << r; ar << g; ar << b;
 		ar << getType();
 	}
 	void CColourControl::load(CSerializer::Builder & ar, long long int version)
 	{
 		CKnobSlider::load(ar, version);
-		decltype(getColour()) newColour(0);
 		decltype(getType()) newType;
-		ar >> newColour;
+		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
+		ar >> a; ar >> r; ar >> g; ar >> b;
 		ar >> newType;
 		setType(newType);
-		setColour(newColour);
+		colour = juce::PixelARGB(a, r, g, b);
+		setControlColour(colour);
 	}
 
 	void CColourControl::onValueChange()
 	{
 		colour = floatToInt(bGetValue());
+		
+		//std::cout << "final colour = " << colour.getARGB() << std::endl;
 	}
 	void CColourControl::setType(ColourType typeToUse)
 	{
@@ -296,72 +328,127 @@ namespace cpl
 	{
 		return channel;
 	}
-	std::uint32_t CColourControl::floatToInt(iCtrlPrec_t val) const
+	
+#if JUCE_BIG_ENDIAN
+	#error rewrite the two lower functions!
+#endif
+	
+	juce::PixelARGB CColourControl::floatToInt(iCtrlPrec_t val) const
 	{
-		ARGBPixel ownColour;
-		ownColour.p = colour;
+
 		switch (colourType) 
 		{
 		case RGB:
 		{
-			// set alpha to max anyway
-			ownColour.c.r = ownColour.c.b = ownColour.c.g = 0;
-			auto a1 = static_cast<decltype(colour)>(val * 0x00FFFFFF);
-			auto a2 = ownColour.p;
-			auto a3 = a1 | a2;
-			return a3;
+
+			std::uint32_t intensity = static_cast<std::uint32_t>(val * 0xFFFFFF);
+			
+			std::uint8_t red, green, blue;
+			red = (intensity & 0xFF0000) >> 16;
+			green = (intensity & 0xFF00) >> 8;
+			blue = (intensity & 0xFF);
+			
+			
+			juce::PixelARGB newRet(colour.getAlpha(), red, green, blue);
+
+			return newRet;
 		}
 		case ARGB:
-			return static_cast<decltype(colour)>(val * 0xFFFFFFFF);
-		case SingleChannel:
-			ownColour.d[2 - channel] = static_cast<std::uint8_t>(val * 0xFF);
-			return ownColour.p;
-		case GreyTone:
+		{
+			// copy alpha and preserve it, even though we are
+			// in RGB mode.
+			
+			std::size_t intensity = static_cast<std::size_t>(val * 0xFFFFFFFF);
+			
+			std::uint8_t red, green, blue, alpha;
+			alpha = (intensity & 0xFF000000) >> 24;
+			red = (intensity & 0xFF0000) >> 16;
+			green = (intensity & 0xFF00) >> 8;
+			blue = (intensity & 0xFF);
 
-			ownColour.c.r = ownColour.c.g = ownColour.c.b = static_cast<decltype(ownColour.c.r)>(val * 0xFF);
-			return ownColour.p;
+			
+			juce::PixelARGB newRet(alpha, red, green, blue);
+			
+			return newRet.getARGB();
+		}
+		case SingleChannel:
+		{
+			auto colourCopy = colour;
+			switch(channel)
+			{
+				case Red:	colourCopy.getRed() = static_cast<std::uint8_t>(val * 0xFF); break;
+				case Green: colourCopy.getGreen() = static_cast<std::uint8_t>(val * 0xFF); break;
+				case Blue:	colourCopy.getBlue() = static_cast<std::uint8_t>(val * 0xFF); break;
+				case Alpha: colourCopy.getAlpha() = static_cast<std::uint8_t>(val * 0xFF); break;
+			}
+			return colourCopy;
+		}
+		case GreyTone:
+		{
+			auto intensity = static_cast<std::uint8_t>(val * 0xFF);
+			juce::PixelARGB newRet(colour.getAlpha(), intensity, intensity, intensity);
+			
+			return newRet;
+		}
 		default:
-			return static_cast<decltype(colour)>(val * 0xFFFFFFFF);
+			return juce::PixelARGB(static_cast<std::uint32_t>(val * 0xFFFFFFFF));
 		};
 	}
 
-	iCtrlPrec_t CColourControl::intToFloat(std::uint32_t val) const
+	iCtrlPrec_t CColourControl::intToFloat(juce::PixelARGB val) const
 	{
 		switch (colourType)
 		{
 		case RGB:
-			return double(val & 0x00FFFFFF) / (double)0xFFFFFF;
+		{
+			std::uint32_t components = std::uint32_t(val.getARGB()) & std::uint32_t(0xFFFFFF);
+				
+			return double(components) / (double)0xFFFFFF;
+		}
 		case ARGB:
-			return double(val) / (double)0xFFFFFFFF;
+			return double(val.getARGB()) / (double)0xFFFFFFFF;
 		case SingleChannel:
 		{
-			ARGBPixel pixel;
-			pixel.p = val;
-			return double(pixel.d[2 -channel]) / (double)0xFF;
+			std::uint8_t intensity = 0;
+			switch(channel)
+			{
+				case Red:	intensity = colour.getRed(); break;
+				case Green: intensity = colour.getGreen(); break;
+				case Blue:	intensity = colour.getBlue(); break;
+				case Alpha: intensity = colour.getAlpha(); break;
+			}
+
+			return intensity / (double)0xFF;
 		}
 		case GreyTone:
 		{
-			ARGBPixel pixel;
-			pixel.p = val;
-			double sum = pixel.c.r + pixel.c.g + pixel.c.b;
+			double sum = val.getRed() + val.getGreen() + val.getBlue();
 			return sum / (3 * 0xFF);
 		}
 		default:
 			return 0;
 		};
 	}
-	std::uint32_t CColourControl::getColour()
+	juce::PixelARGB CColourControl::getControlColour()
 	{
-
 		return colour;
 	}
-
-	void CColourControl::setColour(std::uint32_t newColour)
+	juce::Colour CColourControl::getControlColourAsColour()
 	{
-		bSetValue(intToFloat(newColour));
+		return ColourFromPixelARGB(colour);
+	}
+	void CColourControl::setControlColour(juce::PixelARGB newColour)
+	{
+
+		auto floatingRepresentation = intToFloat(newColour);
+		colour = floatToInt(floatingRepresentation);
+		//std::cout << "Value " << std::hex << newColour.getARGB()  << "set to " <<  colour.getARGB() << std::endl;
+		setValue(floatingRepresentation * (getMaximum() - getMinimum()) + getMinimum(), juce::NotificationType::sendNotificationSync);
 	}
 	bool CColourControl::bStringToValue(const std::string & valueString, iCtrlPrec_t & value) const
 	{
+		juce::Colour g;
+		g.getARGB();
 		std::uint32_t result(0);
 		char * endPtr = nullptr;
 		result = static_cast<std::uint32_t>(strtoul(valueString.c_str(), &endPtr, 0));
@@ -376,7 +463,7 @@ namespace cpl
 	bool CColourControl::bValueToString(std::string & valueString, iCtrlPrec_t value) const
 	{
 		char text[30];
-		sprintf_s(text, "0x%.8X", floatToInt(value));
+		sprintf_s(text, "0x%.8X", floatToInt(value).getARGB());
 		valueString = text;
 		return true;
 	}
@@ -384,8 +471,7 @@ namespace cpl
 	void CColourControl::paint(juce::Graphics & g)
 	{
 		CKnobSlider::paint(g);
-		auto c = juce::Colour(colour); 
-		g.setColour(c);
+		g.setColour(ColourFromPixelARGB(colour));
 		auto b = getTextRect().toFloat();
 
 		g.fillRoundedRectangle(b.withTrimmedRight(5).withTrimmedBottom(2), 5.f);

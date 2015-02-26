@@ -105,7 +105,8 @@
 			virtual void valueChanged(const CBaseControl * ctrl) override;
 			virtual juce::String bGetToolTip() const override;
 			virtual void buttonClicked(juce::Button *) override;
-
+			virtual void focusOfChildComponentChanged(FocusChangeType cause);
+			virtual void focusLost(FocusChangeType cause) override;
 			virtual void createSimpleViewEditor();
 			virtual juce::String bGetToolTipForChild(const Component * c) const override;
 			virtual void onObjectDestruction(const CBaseControl::ObjectProxy & object) override;

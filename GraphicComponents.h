@@ -118,8 +118,10 @@
 			static CResourceManager & instance();
 
 		private:
+			static CResourceManager * internalInstance;
 			std::map<std::string, CImage> resources;
 			bool isResourcesLoaded;
+			~CResourceManager();
 			CResourceManager();
 		};
 
@@ -291,6 +293,7 @@
 			public juce::ComponentListener
 		{
 		public:
+			// http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
 			CEditSpaceSpawner(juce::Component & parentToControl);
 
 		protected:
@@ -310,7 +313,20 @@
 
 		private:
 			CEditSpaceSpawner(const CEditSpaceSpawner &) = delete;
-			juce::Component dialog;
+			
+			class OpaqueComponent
+				: public juce::Component
+			{
+				void paint(juce::Graphics & g) override
+				{
+					g.fillAll(GetColour(ColourEntry::deactivated));
+					
+				}
+				
+				
+			};
+			
+			OpaqueComponent dialog;
 		};
 
 		/*

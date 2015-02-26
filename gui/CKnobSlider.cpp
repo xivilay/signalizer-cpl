@@ -54,6 +54,7 @@ namespace cpl
 	CKnobSlider::CKnobSlider(const std::string & name, ControlType typeToUse)
 		: Slider("CKnobSlider"), knobGraphics(CResourceManager::instance().getImage("knob.png")), CBaseControl(this), title(name), type(typeToUse)
 	{
+		Slider::setRange(0.0, 1.0);
 		isEditSpacesAllowed = true;
 		this->addListener(this);
 		numFrames = knobGraphics.getHeight() / knobGraphics.getWidth();
