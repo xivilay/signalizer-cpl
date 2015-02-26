@@ -32,7 +32,7 @@
 *************************************************************************************/
 
 #include "GraphicComponents.h"
-
+#include "CViews.h"
 namespace cpl
 {
 	CToolTipWindow::CToolTipWindow (Component* const parentComp, const int delayMs)
@@ -138,7 +138,7 @@ namespace cpl
 				child = parent;
 				
 				// break if it is a TopView
-				if (dynamic_cast<cpl::TopView*>(child))
+				if (dynamic_cast<cpl::CTopView*>(child))
 					break;
 				if (CToolTipClient* const ttc = dynamic_cast <CToolTipClient*> (child))
 					if (!child->isCurrentlyBlockedByAnotherModalComponent())
