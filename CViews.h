@@ -156,7 +156,7 @@
 
 			void newOpenGLContextCreated() override
 			{
-				if (bufferSwapInterval > 0)
+				if (bufferSwapInterval >= 0)
 					oglc->setSwapInterval(bufferSwapInterval);
 			}
 			void openGLContextClosing() override
