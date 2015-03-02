@@ -570,7 +570,9 @@ namespace cpl
 		inline static int _mbx(void * systemData, const char * text, const char * title, int nStyle = 0)
 		{
 			#ifdef __WINDOWS__ 
-				return (int) MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
+				if (!systemData)
+					nStyle |=  MB_DEFAULT_DESKTOP_ONLY;
+				return (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
 			#elif defined(__MAC__)
 				return MacBox(systemData, text, title, nStyle);
 			#else

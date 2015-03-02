@@ -84,9 +84,10 @@ namespace cpl
 		setToggleState(newValue > 0.5f ? true : false, juce::NotificationType::dontSendNotification);
 		addListener(this);
 	}
-	void CButton::bSetValue(iCtrlPrec_t newValue)
+	void CButton::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		setToggleState(newValue > 0.5f ? true : false, juce::NotificationType::sendNotificationSync);
+		setToggleState(newValue > 0.5f ? true : false, 
+			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}
 	iCtrlPrec_t CButton::bGetValue() const
 	{

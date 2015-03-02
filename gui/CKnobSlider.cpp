@@ -66,6 +66,7 @@ namespace cpl
 		setPopupMenuEnabled(true);
 	}
 
+
 	CKnobSlider::~CKnobSlider()
 	{
 
@@ -276,7 +277,7 @@ namespace cpl
 		this->setVelocityBasedMode(vel);
 		this->setMouseDragSensitivity(sens);
 		this->setSliderStyle(style);
-		bSetValue(value);
+		bSetValue(value, true);
 	}
 
 	void CKnobSlider::bSetText(const std::string & in)
@@ -291,9 +292,10 @@ namespace cpl
 	{
 		title = in;
 	}
-	void CKnobSlider::bSetValue(iCtrlPrec_t newValue)
+	void CKnobSlider::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		setValue(newValue * (getMaximum() - getMinimum()) + getMinimum());
+		setValue(newValue * (getMaximum() - getMinimum()) + getMinimum(), 
+			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}	
 	void CKnobSlider::setCtrlType(ControlType newType)
 	{

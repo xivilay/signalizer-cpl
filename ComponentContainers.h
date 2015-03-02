@@ -172,7 +172,7 @@
 			void resized() override;
 			void paint(juce::Graphics & g) override;
 			iCtrlPrec_t bGetValue() const override;
-			void bSetValue(iCtrlPrec_t param) override;
+			void bSetValue(iCtrlPrec_t param, bool sync = false) override;
 		private:
 
 			class TriangleButton : public juce::Button

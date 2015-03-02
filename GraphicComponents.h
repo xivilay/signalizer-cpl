@@ -265,7 +265,7 @@
 			void paintOverChildren(juce::Graphics & g) override;
 			void setMultiToggle(bool toggle);
 			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue) override;
+			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 			iCtrlPrec_t bGetValue() const override;
 		};
 		
@@ -281,7 +281,7 @@
 			
 			void setToggleable(bool isAble);
 			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue) override;
+			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 			iCtrlPrec_t bGetValue() const override;
 			void setUntoggledText(const std::string &);
 			void setToggledText(const std::string &);
@@ -308,7 +308,7 @@
 			void paint(juce::Graphics & g) override;
 			iCtrlPrec_t bGetValue() const override;
 			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue) override;
+			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 			void bSetText(const std::string & in) override;
 		};
 		/*********************************************************************************************

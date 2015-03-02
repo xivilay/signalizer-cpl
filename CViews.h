@@ -74,7 +74,8 @@
 			}
 
 			virtual juce::Component * getWindow() = 0;
-			virtual bool setFullScreenMode(bool toggle) { return false; }
+			virtual bool setFullScreenMode(bool toggle) { isFullScreen = toggle; return false; }
+			bool getIsFullScreen() const { return isFullScreen; }
 			virtual void addEventListener(EventListener * el) { eventListeners.insert(el); }
 			virtual void removeEventListenerr(EventListener * el) { eventListeners.erase(el); }
 			virtual void repaintMainContent() {};

@@ -1,0 +1,38 @@
+juce_win32_windowing.cpp:
+            case WM_ACTIVATEAPP:
+                // Windows does weird things to process priority when you swap apps,
+                // so this forces an update when the app is brought to the front
+                if (wParam != FALSE)
+                    juce_repeatLastProcessPriority();
+                //else --- allow kiosk modes to stay in focus. why not?
+                //    Desktop::getInstance().setKioskModeComponent (nullptr); // turn kiosk mode off if we lose focus
+
+		
+            case WM_PAINT:
+                handlePaintMessage();
+		// returning this allows messages boxes to be spawned
+		// that would otherwise hang applications.
+		return DefWindowProcW(h, message, wParam, lParam);
+
+
+void Desktop::setKioskComponent(Component* kioskModeComponent, bool enableOrDisable, bool /*allowMenusAndBars*/)
+{
+	if (TopLevelWindow* tlw = dynamic_cast<TopLevelWindow*> (kioskModeComponent))
+		tlw->setUsingNativeTitleBar(!enableOrDisable);
+
+	if (enableOrDisable)
+	{	// fullscreen kiosk in current display, instead of main display, always.
+
+		RECT windowPos = { 0 };
+		HWND child = static_cast<HWND>(kioskModeComponent->getWindowHandle());
+
+
+		if (GetWindowRect(child, &windowPos))
+		{
+				kioskModeComponent->setBounds(
+					getDisplays().getDisplayContaining(juce::Point<int>(windowPos.left, windowPos.top)).totalArea);
+
+		}
+
+	}
+}

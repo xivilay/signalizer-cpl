@@ -338,7 +338,7 @@
 				Input must be between 0.0f and 1.0f, inclusive
 
 			*********************************************************************************************/
-			virtual void bSetValue(iCtrlPrec_t val)
+			virtual void bSetValue(iCtrlPrec_t val, bool synchronizedEvent = false)
 			{
 
 			}
@@ -649,7 +649,7 @@
 				iCtrlPrec_t value(0);
 
 				ar >> value;
-				bSetValue(value);
+				bSetValue(value, true);
 			}
 
 

@@ -63,7 +63,7 @@
 			virtual std::string bGetTitle() const override;
 	
 			virtual iCtrlPrec_t bGetValue() const override;
-			virtual void bSetValue(iCtrlPrec_t val) override;
+			virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
 			virtual void bSetInternal(iCtrlPrec_t val) override;
 			virtual void paint(juce::Graphics & g) override;
 

@@ -140,15 +140,18 @@
 				std::size_t numDisplays() const { return displays.size(); }
 
 				void update();
-
+				void * getSystemHook() { return systemHook; }
 			private:
-
+				void installMessageHook();
+				void removeMessageHook();
 				DisplayData defaultDevice;
 				static void Deleter();
+				~CDisplaySetup();
 				CDisplaySetup();
 				std::vector<DisplayData> displays;
 				static CDisplaySetup * internalInstance;
 				double defaultFontGamma;
+				void * systemHook;
 			};
 
 		}; // {} rendering

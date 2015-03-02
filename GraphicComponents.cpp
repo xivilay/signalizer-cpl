@@ -262,7 +262,8 @@ namespace cpl
 		"icons/svg/succestick.svg",
 		"icons/svg/errorcross.svg",
 		"icons/svg/idle.svg",
-		"icons/svg/save.svg"
+		"icons/svg/save.svg",
+		"icons/svg/fullscreen.svg"
 	};
 	
 	bool CResourceManager::loadResources()
@@ -391,9 +392,10 @@ namespace cpl
 	{
 		return getToggleState() ? 1.f : 0.f;
 	}
-	void CButton2::bSetValue(iCtrlPrec_t newValue)
+	void CButton2::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		getToggleStateValue().setValue(newValue > 0.1f ? true : false);
+		setToggleState(newValue > 0.1f ? true : false, 
+			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}
 	
 	void CButton2::bSetInternal(iCtrlPrec_t newValue)
@@ -447,9 +449,10 @@ namespace cpl
 		setToggleState(newValue > 0.1f ? true : false, juce::NotificationType::dontSendNotification);
 		addListener(this);
 	}
-	void CRenderButton::bSetValue(iCtrlPrec_t newValue)
+	void CRenderButton::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		setToggleState(newValue > 0.1f ? true : false, juce::NotificationType::sendNotificationSync);
+		setToggleState(newValue > 0.1f ? true : false, 
+			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}
 	iCtrlPrec_t CRenderButton::bGetValue() const
 	{
@@ -597,9 +600,10 @@ namespace cpl
 		addListener(this);
 	}
 	
-	void CToggle::bSetValue(iCtrlPrec_t newValue)
+	void CToggle::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		getToggleStateValue().setValue(newValue > 0.1f ? true : false);
+		setToggleState(newValue > 0.1f ? true : false, 
+			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}
 	/*********************************************************************************************
 	 

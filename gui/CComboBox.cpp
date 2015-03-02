@@ -191,9 +191,10 @@ namespace cpl
 		//bSetInternal(bGetValue());
 	}
 	/*********************************************************************************************/
-	void CComboBox::bSetValue(iCtrlPrec_t val)
+	void CComboBox::bSetValue(iCtrlPrec_t val, bool sync)
 	{
-		box.setSelectedId(floatToInt(val, (int)values.size()));
+		box.setSelectedId(floatToInt(val, (int)values.size()), 
+			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}
 	/*********************************************************************************************/
 	void CComboBox::bSetInternal(iCtrlPrec_t val)

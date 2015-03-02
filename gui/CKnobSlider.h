@@ -68,7 +68,7 @@
 			virtual void bSetInternal(iCtrlPrec_t) override;
 			virtual void bSetText(const std::string & in) override;
 			virtual void bSetTitle(const std::string & in) override;
-			virtual void bSetValue(iCtrlPrec_t newValue) override;
+			virtual void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 			virtual std::string bGetText() const override;
 			virtual std::string bGetTitle() const override;
 			virtual void onValueChange() override;

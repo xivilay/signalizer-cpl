@@ -224,7 +224,7 @@ namespace cpl
 		return collapsed ? 1.f : 0.f;
 	}
 	/*********************************************************************************************/
-	void CControlPanel::bSetValue(iCtrlPrec_t param)
+	void CControlPanel::bSetValue(iCtrlPrec_t param, bool sync)
 	{
 		if (param > 0.5f)
 		{

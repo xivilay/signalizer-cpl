@@ -258,10 +258,19 @@
 					for (auto index = 0; index < (int)buttons.size(); ++index)
 					{
 						textRectangle.setY(cpl::Math::round<int>(size * index));
-						auto color = selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::activated) : cpl::GetColour(cpl::ColourEntry::deactivated);
-						Colour textColour = (selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::selfont) : cpl::GetColour(cpl::ColourEntry::auxfont));
+						juce::Colour textColour, color;
+						if (!isIndeterminateState && selectedIndex == index)
+						{
+							color = cpl::GetColour(cpl::ColourEntry::activated);
+							textColour = cpl::GetColour(cpl::ColourEntry::selfont);
+						}
+						else
+						{
+							color = cpl::GetColour(cpl::ColourEntry::deactivated);
+							textColour = cpl::GetColour(cpl::ColourEntry::auxfont);
+						}
 						// enhance brightness
-						if (index == hoverButton)
+						if (!isIndeterminateState && index == hoverButton)
 						{
 							textColour = textColour.darker();
 						}
@@ -298,11 +307,19 @@
 					for (auto index = 0; index < (int)buttons.size(); ++index)
 					{
 						textRectangle.setX(cpl::Math::round<int>(cornerOffset + size * index));
-						auto color = selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::activated) : cpl::GetColour(cpl::ColourEntry::deactivated);
-						Colour textColour = (selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::selfont) : cpl::GetColour(cpl::ColourEntry::auxfont));
-
+						juce::Colour textColour, color;
+						if (!isIndeterminateState && selectedIndex == index)
+						{
+							color = cpl::GetColour(cpl::ColourEntry::activated);
+							textColour = cpl::GetColour(cpl::ColourEntry::selfont);
+						}
+						else
+						{
+							color = cpl::GetColour(cpl::ColourEntry::deactivated);
+							textColour = cpl::GetColour(cpl::ColourEntry::auxfont);
+						}
 						// enhance brightness
-						if (index == hoverButton)
+						if (!isIndeterminateState && index == hoverButton)
 						{
 							textColour = textColour.brighter(0.2f);
 						}
@@ -332,8 +349,8 @@
 					else
 						g.setOpacity(0.6f);
 
-
-					g.fillPath(triangleVertices);
+					if (!isIndeterminateState)
+						g.fillPath(triangleVertices);
 
 					//p.addTriangle()
 
@@ -351,7 +368,7 @@
 			}
 			CTextTabBar()
 				: selectedIndex(0), maxTabHeight(25), CBaseControl(this), isMouseInside(false),
-				orientation(Vertical), triangleSize(5), isTriangleHovered(false)
+				orientation(Vertical), triangleSize(5), isTriangleHovered(false), isIndeterminateState(true)
 			{
 				setRepaintsOnMouseActivity(true);
 				mouseCoords[0] = mouseCoords[1] = 0;
@@ -367,8 +384,9 @@
 			void setSelectedTab(int index)
 			{
 				int size = (int)buttons.size();
-				if (size > 1 && index >= 0 && index < size && index != selectedIndex)
+				if (isIndeterminateState || size > 1 && index >= 0 && index < size && index != selectedIndex)
 				{
+					isIndeterminateState = false;
 					selectedIndex = index;
 					bSetValue(double(index) / (buttons.size() - 1));
 					renderTriangle();
@@ -543,7 +561,8 @@
 			int selectedIndex;
 			int hoverIndex;
 			std::vector<std::string> buttons;
-
+			// tabs at start doesn't have a selected index.
+			bool isIndeterminateState;
 			juce::Colour colours[2];
 			Type orientation;
 			bool isMouseInside;
@@ -825,9 +844,10 @@
 				return getToggleState() ? 1.0f : 0.f;
 			}
 
-			void bSetValue(iCtrlPrec_t val) override
+			void bSetValue(iCtrlPrec_t val, bool sync = false) override
 			{
-				setToggleState(val > 0.5, juce::NotificationType::sendNotification);
+				setToggleState(val > 0.5, 
+					sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification );
 			}
 
 			void bSetInternal(iCtrlPrec_t val) override

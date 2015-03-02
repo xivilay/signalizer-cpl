@@ -28,6 +28,7 @@
  *************************************************************************************/
 
 #include "../MacroConstants.h"
+#include "../GUIUtils.h"
 #include "CDisplaySetup.h"
 
 #ifdef __WINDOWS__
@@ -108,9 +109,52 @@ namespace cpl
 		}
 
 		CDisplaySetup::CDisplaySetup()
-			: defaultFontGamma(1.2)
+			: defaultFontGamma(1.2), systemHook(nullptr)
 		{
 			update();
+			// set the hooking to happen in the main thread when its ready and set
+			GUIUtils::FutureMainEvent(100, [&]() { installMessageHook(); });
+		}
+
+		CDisplaySetup::~CDisplaySetup()
+		{
+			if (systemHook)
+			{
+				removeMessageHook();
+			}
+		}
+
+		#ifdef __WINDOWS__
+
+			LRESULT CALLBACK MessageHook(int code, WPARAM wParam, LPARAM lParam)
+			{
+				auto & displayInstance = CDisplaySetup::instance();
+				if (code == HC_ACTION)
+				{
+					jassertfalse;
+				}
+				return CallNextHookEx((HHOOK)displayInstance.getSystemHook(), code, wParam, lParam);
+			}
+		#endif
+
+
+		void CDisplaySetup::installMessageHook()
+		{
+			#ifdef __WINDOWS__
+				systemHook = SetWindowsHookEx(
+					WH_CALLWNDPROCRET,
+					MessageHook,
+					GetModuleHandle(0),
+					GetCurrentThreadId()
+				);
+			#endif
+		}
+
+		void CDisplaySetup::removeMessageHook()
+		{
+			#ifdef __WINDOWS__
+				UnhookWindowsHookEx((HHOOK)systemHook);
+			#endif
 		}
 
 		void CDisplaySetup::update()

@@ -51,7 +51,7 @@
 
 			void setToggleable(bool isAble);
 			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue) override;
+			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 			iCtrlPrec_t bGetValue() const override;
 			void setUntoggledText(const std::string &);
 			void setToggledText(const std::string &);
