@@ -80,7 +80,7 @@
 				int floatToIndex(float val);
 				float indexToFloat(int index);
 				// overrides
-				void bSetValue(iCtrlPrec_t val) override;
+				void bSetValue(iCtrlPrec_t val, bool sync = false) override;
 				void bSetInternal(iCtrlPrec_t val) override;
 				iCtrlPrec_t bGetValue() const override;
 				int getToggledIndex();

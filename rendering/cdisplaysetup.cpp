@@ -27,13 +27,15 @@
 
  *************************************************************************************/
 
+#include "CDisplaySetup.h"
 #include "../MacroConstants.h"
 #include "../GUIUtils.h"
-#include "CDisplaySetup.h"
+
 
 #ifdef __WINDOWS__
 	#include "DisplayOrientationWindows.cpp"
-#else
+#elif defined(__MAC__)
+	#include <CoreGraphics/CGDisplayConfiguration.h>
 	// add linux, osx, android, ios here.
 	//#error "Update displayorientations to your current platform!"
 #endif
@@ -109,7 +111,7 @@ namespace cpl
 		}
 
 		CDisplaySetup::CDisplaySetup()
-			: defaultFontGamma(1.2), systemHook(nullptr)
+			: defaultFontGamma(1.2), systemHook()
 		{
 			update();
 			// set the hooking to happen in the main thread when its ready and set
@@ -118,7 +120,7 @@ namespace cpl
 
 		CDisplaySetup::~CDisplaySetup()
 		{
-			if (systemHook)
+			if (systemHook.hook)
 			{
 				removeMessageHook();
 			}
@@ -133,8 +135,50 @@ namespace cpl
 				{
 					jassertfalse;
 				}
-				return CallNextHookEx((HHOOK)displayInstance.getSystemHook(), code, wParam, lParam);
+				
+				// code doesn't really matter, we dont want to interfere with anything
+				// just be notified on display actions.
+				// wParam also doesn't matter (whether the event is posted by this thread)
+				
+				CWPRETSTRUCT * msg = reinterpret_cast<CWPRETSTRUCT>(lParam);
+				
+				switch(msg->message)
+				{
+					case WM_SETTINGSCHANGE:
+					case WM_DISPLAYCHANGE:
+						if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
+						{
+							// avoid posting it multiple times:
+							CDisplaySetup::instance().getSystemHook().eventHasBeenPosted = true;
+							
+							// spawn the event
+							GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); });
+						}
+					default:
+						break;
+						
+				}
+				
+				return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook, code, wParam, lParam);
 			}
+		#elif defined(__MAC__)
+		
+			void MessageHook( CGDirectDisplayID display, CGDisplayChangeSummaryFlags flags, void *userInfo )
+			{
+				// https://developer.apple.com/library/mac/documentation/GraphicsImaging/Reference/Quartz_Services_Ref/index.html#//apple_ref/c/tdef/CGDisplayReconfigurationCallBack
+				if (flags & kCGDisplayBeginConfigurationFlag) {
+					// first iteration; ignore. -- displays not changed yet.
+				}
+				else if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
+				{
+					// avoid posting it multiple times:
+					CDisplaySetup::instance().getSystemHook().eventHasBeenPosted = true;
+					
+					// spawn the event
+					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); });
+				}
+			}
+		
 		#endif
 
 
@@ -147,6 +191,8 @@ namespace cpl
 					GetModuleHandle(0),
 					GetCurrentThreadId()
 				);
+			#elif defined(__MAC__)
+				CGDisplayRegisterReconfigurationCallback(&MessageHook, nullptr);
 			#endif
 		}
 
@@ -154,6 +200,8 @@ namespace cpl
 		{
 			#ifdef __WINDOWS__
 				UnhookWindowsHookEx((HHOOK)systemHook);
+			#elif defined(__MAC__)
+				CGDisplayRemoveReconfigurationCallback(&MessageHook, nullptr);
 			#endif
 		}
 
@@ -302,6 +350,9 @@ namespace cpl
 					}
 				}
 			}
+			
+			// clear message post flag:
+			systemHook.eventHasBeenPosted = false;
 		}
 
 

@@ -43,6 +43,13 @@
 			class CDisplaySetup
 			{
 			public:
+				
+				struct DisplayEvent
+				{
+					void * hook;
+					bool eventHasBeenPosted;
+				} systemHook;
+				
 				struct DisplayData
 				{
 					friend class CDisplaySetup;
@@ -140,7 +147,7 @@
 				std::size_t numDisplays() const { return displays.size(); }
 
 				void update();
-				void * getSystemHook() { return systemHook; }
+				DisplayEvent & getSystemHook() { return systemHook; }
 			private:
 				void installMessageHook();
 				void removeMessageHook();
@@ -151,7 +158,8 @@
 				std::vector<DisplayData> displays;
 				static CDisplaySetup * internalInstance;
 				double defaultFontGamma;
-				void * systemHook;
+				
+
 			};
 
 		}; // {} rendering

@@ -219,7 +219,7 @@
 		}
 		/*********************************************************************************************/
 		template<class Button>
-		void CButtonGroup<Button>::bSetValue(iCtrlPrec_t val)
+		void CButtonGroup<Button>::bSetValue(iCtrlPrec_t val, bool sync)
 		{
 
 			return toggleIndex(floatToIndex(val));
