@@ -68,7 +68,6 @@
 
 					void applyToOpenGL()
 					{
-						glPushMatrix();
 						// move first - bad
 						glTranslatef(static_cast<GLfloat>(position.x), static_cast<GLfloat>(position.y), static_cast<GLfloat>(position.z));
 						// to avoid clipping. this is probably not how it is done.
@@ -80,10 +79,7 @@
 						glScalef(static_cast<GLfloat>(scale.x), static_cast<GLfloat>(scale.y), static_cast<GLfloat>(scale.z));
 
 					}
-					static void revert()
-					{
-						glPopMatrix();
-					}
+
 				};
 
 

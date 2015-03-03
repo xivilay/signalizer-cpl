@@ -131,20 +131,17 @@ namespace cpl
 			LRESULT CALLBACK MessageHook(int code, WPARAM wParam, LPARAM lParam)
 			{
 				auto & displayInstance = CDisplaySetup::instance();
-				if (code == HC_ACTION)
-				{
-					jassertfalse;
-				}
+
 				
 				// code doesn't really matter, we dont want to interfere with anything
 				// just be notified on display actions.
 				// wParam also doesn't matter (whether the event is posted by this thread)
 				
-				CWPRETSTRUCT * msg = reinterpret_cast<CWPRETSTRUCT>(lParam);
+				const CWPRETSTRUCT * msg = reinterpret_cast<const CWPRETSTRUCT*>(lParam);
 				
 				switch(msg->message)
 				{
-					case WM_SETTINGSCHANGE:
+					case WM_SETTINGCHANGE:
 					case WM_DISPLAYCHANGE:
 						if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
 						{
@@ -185,7 +182,7 @@ namespace cpl
 		void CDisplaySetup::installMessageHook()
 		{
 			#ifdef __WINDOWS__
-				systemHook = SetWindowsHookEx(
+				systemHook.hook = SetWindowsHookEx(
 					WH_CALLWNDPROCRET,
 					MessageHook,
 					GetModuleHandle(0),
@@ -199,7 +196,7 @@ namespace cpl
 		void CDisplaySetup::removeMessageHook()
 		{
 			#ifdef __WINDOWS__
-				UnhookWindowsHookEx((HHOOK)systemHook);
+				UnhookWindowsHookEx((HHOOK)systemHook.hook);
 			#elif defined(__MAC__)
 				CGDisplayRemoveReconfigurationCallback(&MessageHook, nullptr);
 			#endif
@@ -208,7 +205,7 @@ namespace cpl
 		void CDisplaySetup::update()
 		{
 			displays.clear();
-
+			DBG("Updated displays...");
 			bool systemUsesSubpixelSmoothing = false;
 			double finalGamma = defaultFontGamma;
 			double rotation;
