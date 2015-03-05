@@ -231,9 +231,9 @@
 				#undef AddSimdOperatorps
 				#undef AddSimdCOperatorps
 				#undef AddSimdOperatorpd
-				//#undef AddSimdCOperatorpd
-				//#undef AddOperatorForArchs
-				//#undef AddComparisonForArchs
+				#undef AddSimdCOperatorpd
+				#undef AddOperatorForArchs
+				#undef AddComparisonForArchs
 			#endif
 			template<class T>
 			class NotSupported;
@@ -557,6 +557,14 @@
  				}
 
 			template<typename V>
+				inline typename std::enable_if<std::is_same < V, v4sf >::value, V>::type
+					abs(V val)
+				{
+					static const V sign_mask = set1<V>(-0.0f); // -0.f = 1 << 31
+					return _mm_andnot_ps(sign_mask, val);
+				}
+
+			template<typename V>
 				struct suitable_container;
 			
 			// alignment-properties must be number-literals STILL in msvc. Grrr
@@ -569,7 +577,7 @@
 			template<typename V>
 				struct suitable_container;
 
-#warning fix alignment of this type.
+#pragma cwarn( "fix alignment of this type.")
 			template<typename V>
 				struct simd_alignment_of(V) suitable_container
 				{

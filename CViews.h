@@ -154,15 +154,9 @@
 					oglc->triggerRepaint();
 			}
 
+			virtual void initOpenGL() {}
+			virtual void closeOpenGL() {}
 
-			void newOpenGLContextCreated() override
-			{
-				if (bufferSwapInterval >= 0)
-					oglc->setSwapInterval(bufferSwapInterval);
-			}
-			void openGLContextClosing() override
-			{
-			}
 			void attachToOpenGL(juce::OpenGLContext & ctx) override
 			{
 				ctx.setRenderer(this);
@@ -176,6 +170,19 @@
 			}
 
 		protected:
+
+			void newOpenGLContextCreated() override
+			{
+				if (bufferSwapInterval >= 0)
+					oglc->setSwapInterval(bufferSwapInterval);
+
+				initOpenGL();
+			}
+			void openGLContextClosing() override
+			{
+				closeOpenGL();
+			}
+
 			virtual ~COpenGLView()
 			{
 				CView::detachFromOpenGL();

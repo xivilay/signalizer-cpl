@@ -35,6 +35,50 @@
 	{
 		namespace OpenGLEngine
 		{
+
+			class ImageDrawer
+			:
+				public COpenGLStack::Rasterizer
+			{
+			public:
+				ImageDrawer(COpenGLStack & parentStack, const juce::OpenGLTexture & texture)
+					: Rasterizer(parentStack)
+				{
+					texture.bind();
+					glBegin(GL_QUADS);
+					setColour(juce::Colours::white);
+				}
+
+				inline void drawAt(OpenGLEngine::Vertex x1, OpenGLEngine::Vertex y1, OpenGLEngine::Vertex x2, OpenGLEngine::Vertex y2)
+				{
+					glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+					glTexCoord2f(0, 1); glVertex3f(0, 1, 0);
+					glTexCoord2f(1, 1); glVertex3f(1, 1, 0);
+					glTexCoord2f(1, 0); glVertex3f(1, 0, 0);
+				}
+
+				inline void setColour(const juce::Colour & colour)
+				{
+					glColor4f(colour.getFloatRed(), colour.getFloatGreen(), colour.getFloatBlue(), colour.getFloatAlpha());
+				}
+
+				inline void drawAt(juce::Rectangle<OpenGLEngine::Vertex> area)
+				{
+					glTexCoord2f(0, 0); glVertex3f(area.getX(), area.getY(), 0);
+					glTexCoord2f(0, 1); glVertex3f(area.getX(), area.getY() + area.getHeight(), 0);
+					glTexCoord2f(1, 1); glVertex3f(area.getX() + area.getWidth(), area.getY() + area.getHeight(), 0);
+					glTexCoord2f(1, 0); glVertex3f(area.getX() + area.getWidth(), area.getY(), 0);
+				}
+
+				~ImageDrawer()
+				{
+					glEnd();
+					glBindTexture(GL_TEXTURE_2D, 0);
+				}
+			protected:
+				
+			};
+
 			template<std::size_t vertexBufferSize = 1024>			
 				class PrimitiveDrawer
 				:

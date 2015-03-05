@@ -147,8 +147,19 @@
 						glGetIntegerv(GL_BLEND_DST, &oldDestinationBlend);
 						glGetIntegerv(GL_BLEND_SRC, &oldSourceBlend);
 					}
+					glGetFloatv(GL_POINT_SIZE, &oldPointSize);
+					glGetFloatv(GL_LINE_WIDTH, &oldLineSize);
 				}
 
+				void setPointSize(GLfloat newPointSize)
+				{
+					glPointSize(newPointSize);
+				}
+
+				void setLineSize(GLfloat newLineSize)
+				{
+					glLineWidth(newLineSize);
+				}
 
 				~COpenGLStack()
 				{
@@ -170,6 +181,8 @@
 					{
 						glDisable(*it);
 					}
+					glPointSize(oldPointSize);
+					glLineWidth(oldLineSize);
 
 				}
 
@@ -250,6 +263,7 @@
 				std::vector<GLFeatureType> features;
 				Rasterizer * ras;
 				GLSetting oldDestinationBlend, oldSourceBlend;
+				GLfloat oldPointSize, oldLineSize;
 			};
 
 		}; // {} rendering
