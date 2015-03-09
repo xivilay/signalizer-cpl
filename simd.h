@@ -56,10 +56,10 @@
 				struct is_simd<v2sd> : public std::true_type {};
 
 			template<>
-				struct is_simd<v128si> : public std::true_type{};
+				struct is_simd<v128si> : public std::true_type {};
 
 			template<>
-				struct is_simd<v256si> : public std::true_type{};
+				struct is_simd<v256si> : public std::true_type {};
 
 			template<typename V>
 				struct only_simd : public std::false_type {};
@@ -556,6 +556,9 @@
 					return V1 & mask;
  				}
 
+				// functional operators
+			
+			
 				inline v4sf abs(v4sf val)
 				{
 					static const v4sf sign_mask = set1<v4sf>(-0.0f); // -0.f = 1 << 31
@@ -579,30 +582,47 @@
 					static const v4sd sign_mask = set1<v4sd>(-0.0); // -0.f = 1 << 63
 					return _mm256_andnot_pd(sign_mask, val);
 				}
-
+			
+				// bitor
+				inline v4sf vor(v4sf a, v4sf b) { return _mm_or_ps(a, b);}
+				inline v8sf vor(v8sf a, v8sf b) { return _mm256_or_ps(a, b); }
+				inline v4sd vor(v4sd a, v4sd b) { return _mm256_or_pd(a, b); }
+				inline v2sd vor(v2sd a, v2sd b) { return _mm_or_pd(a, b); }
+			
+				// bitxor
+				inline v4sf vxor(v4sf a, v4sf b) { return _mm_xor_ps(a, b); }
+				inline v8sf vxor(v8sf a, v8sf b) { return _mm256_xor_ps(a, b); }
+				inline v4sd vxor(v4sd a, v4sd b) { return _mm256_xor_pd(a, b); }
+				inline v2sd vxor(v2sd a, v2sd b) { return _mm_xor_pd(a, b); }
+			
+				// bitand
+				inline v4sf vand(v4sf a, v4sf b) { return _mm_and_ps(a, b); }
+				inline v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
+				inline v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
+				inline v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
 
 				inline v4sf sign(v4sf val)
 				{
 					static const v4sf sign_mask = set1<v4sf>(-0.0f); // -10.f = 1 << 31
-					return _mm_and_ps(sign_mask, val) | set1<v4sf>(1.0f);
+					return _mm_or_ps(_mm_and_ps(sign_mask, val), set1<v4sf>(1.0f));
 				}
 
 				inline v8sf sign(v8sf val)
 				{
 					static const v8sf sign_mask = set1<v8sf>(-0.0f); // -10.f = 1 << 31
-					return _mm256_and_ps(sign_mask, val) | set1<v8sf>(1.0f);
+					return _mm256_or_ps(_mm256_and_ps(sign_mask, val), set1<v8sf>(1.0f));
 				}
 
 				inline v2sd sign(v2sd val)
 				{
 					static const v2sd sign_mask = set1<v2sd>(-0.0); // -10.f = 1 << 63
-					return _mm_and_pd(sign_mask, val) | set1<v2sd>(1.0f);
+					return _mm_or_pd(_mm_and_pd(sign_mask, val), set1<v2sd>(1.0f));
 				}
 
 				inline v4sd sign(v4sd val)
 				{
 					static const v4sd sign_mask = set1<v4sd>(-0.0); // -10.f = 1 << 63
-					return _mm256_and_pd(sign_mask, val) | set1<v4sd>(1.0f);
+					return _mm256_or_pd(_mm256_and_pd(sign_mask, val), set1<v4sd>(1.0f));
 				}
 
 
