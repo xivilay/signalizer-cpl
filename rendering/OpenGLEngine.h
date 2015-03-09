@@ -139,7 +139,7 @@
 				friend class Rasterizer;
 
 				COpenGLStack()
-
+					: ras(nullptr)
 				{
 					// store the old blending functions.
 					if (glIsEnabled(GL_BLEND))
@@ -237,7 +237,7 @@
 
 				void attachRasterizer(Rasterizer * rasterizer)
 				{
-					if (!ras || !rasterizer)
+					if (ras || !rasterizer)
 					{
 						// adding a rasterizer before removing old one!
 						jassertfalse;

@@ -68,11 +68,6 @@
 		{
 		public:
 
-
-
-
-
-
 			struct __alignas(16) CChannelBuffer : public CAudioSource, public cpl::CMutex::Lockable
 			{
 
@@ -86,6 +81,57 @@
 				double sampleRate;
 				__alignas(16) floatType buffer[buf_size];
 
+				template<std::size_t alignment>
+					struct BufferIterator
+					{
+
+						BufferIterator(const Type * bufferPointer, std::size_t positionInBuffer, std::size_t lengthOfBuffer)
+							: basePointer(bufferPointer), start(positionInBuffer), length(lengthOfBuffer)
+						{
+							firstSize = length - start;
+							secondSize = start;
+						}
+						
+						union
+						{
+							struct
+							{
+								std::size_t firstSize, secondSize;
+							};
+							std::size_t sizes[2];
+						};
+
+						inline const Type * getIndex(std::size_t index) const noexcept
+						{
+							return basePointer + (index ? 0 : secondSize);
+						}
+
+						inline const Type * getFirst() const noexcept
+						{
+							return basePointer + secondSize;
+						}
+
+						inline const Type * getSecond() const noexcept
+						{
+							return basePointer;
+						}
+
+					private:
+						std::size_t start;
+						std::size_t length;
+						const Type * basePointer;
+					};
+
+				template<std::size_t alignment>
+					inline BufferIterator<alignment> getIterator() const noexcept
+					{
+						// the modulo is a REALLY bad fix for multithreaded crashes
+						// (cases where the UI thread updates the size parameter
+						// and something else reads the buffer BEFORE the audio
+						// thread wraps the start around again)... 
+						return BufferIterator<alignment>(buffer, start % size, size);
+
+					}
 
 				CChannelBuffer()
 					: isCircular(true), size(buf_size), start(0), isProcessing(false)
@@ -101,14 +147,16 @@
 						listener->sourceIsDying();
 				}
 
-				void setNextSample(floatType sample)
+				void setNextSample(floatType sample) noexcept
 				{
 					buffer[start] = sample;
 					start++;
 					start %= size;
 				}
+
+
 				
-				Type * getCopy()
+				inline Type * getCopy() const noexcept
 				{
 					Type * buf = new Type[size];
 					// this can be optimized into two memcpy's
@@ -120,7 +168,7 @@
 					return buf;
 				}
 				
-				void clone(CChannelBuffer & other)
+				void clone(CChannelBuffer & other) const noexcept
 				{
 					std::memcpy(other.buffer, buffer, buf_size * sizeof(floatType));
 					other.size = size;
@@ -162,7 +210,7 @@
 					return true;
 				}
 
-				void copyTo(float * buf)
+				void copyTo(float * buf) const noexcept
 				{
 					std::size_t firstChunk = size - start;
 					std::memcpy(buf, buffer + start, firstChunk);
@@ -170,25 +218,25 @@
 					
 				}
 
-				void setSampleRate(double newRate)
+				void setSampleRate(double newRate) noexcept
 				{
 					sampleRate = newRate;
 
 				}
 
-				bool setLength(double miliseconds)
+				inline bool setLength(double miliseconds) noexcept
 				{
 
 					auto newLength = cpl::Math::round<std::size_t>((sampleRate / 1000) * miliseconds);
 					return setSize(newLength);
 
 				}
-				std::size_t maxSize()
+				inline std::size_t maxSize() const noexcept
 				{
 					return buf_size;
 
 				}
-				bool setSize(std::size_t newSize)
+				inline bool setSize(std::size_t newSize) noexcept
 				{
 					if (newSize >= buf_size || newSize <= 0)
 						return false;
@@ -197,7 +245,7 @@
 					return true;
 				}
 
-				floatType & operator[] (std::size_t index)
+				inline floatType & operator[] (std::size_t index)
 				{
 					// no need to check range, the modulo automagically wraps around
 					#ifdef _DEBUG
@@ -207,7 +255,7 @@
 					return buffer[(start + index) % size];
 
 				}
-				floatType & singleCheckAccess(std::size_t index)
+				inline floatType & singleCheckAccess(std::size_t index) noexcept
 				{
 					
 					std::size_t offset = start + index;
@@ -218,7 +266,7 @@
 					return buffer[offset];
 				}
 				
-				floatType & directAccess(std::size_t index)
+				inline floatType & directAccess(std::size_t index) noexcept
 				{
 					return buffer[index];
 				}

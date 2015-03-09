@@ -54,7 +54,23 @@
 					return DemangleRawName(typeid(object).name());
 				}
 			
+			int ObtainUniqueInstanceID();
+			void ReleaseUniqueInstanceID(int ID);
+			bool IsBeingDebugged();
 
+			const std::string & DirectoryPath();
+
+			enum ExceptionStatus {
+				Undefined,
+				CSubsystem
+
+			};
+			long Round(double number);
+			long Delay(int ms);
+			unsigned int QuickTime();
+			int GetSizeRequiredFormat(const char * fmt, va_list pargs);
+
+			std::string StringFromVersion(unsigned int version);
 			long long ClockCounter();
 			long long TimeCounter();
 			double TimeDifference(long long);
@@ -65,6 +81,8 @@
 			Types::OSError GetLastOSError();
 			Types::tstring GetLastOSErrorMessage();
 			Types::tstring GetLastOSErrorMessage(Types::OSError errorToPrint);
+			
+
 
 			template<class Type, size_t alignment = 32>
 				Type * alignedMalloc(std::size_t numObjects)
@@ -123,23 +141,7 @@
 				}
 
 
-			int ObtainUniqueInstanceID();
-			void ReleaseUniqueInstanceID(int ID);
-			bool IsBeingDebugged();
-			
-			const std::string & DirectoryPath();
 
-			enum ExceptionStatus {
-				Undefined,
-				CSubsystem
-
-			};
-			long Round(double number);
-			long Delay(int ms);
-			unsigned int QuickTime();
-			int GetSizeRequiredFormat(const char * fmt, va_list pargs);
-
-			std::string StringFromVersion(unsigned int version);
 
 			class CStringFormatter
 			{

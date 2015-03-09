@@ -255,7 +255,7 @@
 					#endif
 					
 					std::vector<ScalarTy> result;
-					std::vector<CDFTData, cpl::AlignmentAllocator<CDFTData, 32U>> cdftData;
+					cpl::aligned_vector<CDFTData, 32u> cdftData;
 					volatile bool isComputing;
 					double sampleRate, oversamplingFactor;
 					int numChannels, numFilters, totalDataSize;

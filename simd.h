@@ -225,9 +225,9 @@
 				AddOperatorForArchs(sub, -);
 				AddOperatorForArchs(or, |);
 				AddOperatorForArchs(and, &);
-
-				AddComparisonForArchs(_CMP_LE_OQ, <= );
-
+				AddOperatorForArchs(xor, ^);
+				AddComparisonForArchs(_CMP_LE_OQ, <= ); // less than or equal, ordered, non-signaling
+				AddComparisonForArchs(_CMP_LT_OQ, < ); // less than, ordered, non-signaling
 				#undef AddSimdOperatorps
 				#undef AddSimdCOperatorps
 				#undef AddSimdOperatorpd
@@ -556,13 +556,55 @@
 					return V1 & mask;
  				}
 
-			template<typename V>
-				inline typename std::enable_if<std::is_same < V, v4sf >::value, V>::type
-					abs(V val)
+				inline v4sf abs(v4sf val)
 				{
-					static const V sign_mask = set1<V>(-0.0f); // -0.f = 1 << 31
+					static const v4sf sign_mask = set1<v4sf>(-0.0f); // -0.f = 1 << 31
 					return _mm_andnot_ps(sign_mask, val);
 				}
+
+				inline v8sf abs(v8sf val)
+				{
+					static const v8sf sign_mask = set1<v8sf>(-0.0f); // -0.f = 1 << 31
+					return _mm256_andnot_ps(sign_mask, val);
+				}
+
+				inline v2sd abs(v2sd val)
+				{
+					static const v2sd sign_mask = set1<v2sd>(-0.0); // -0.f = 1 << 63
+					return _mm_andnot_pd(sign_mask, val);
+				}
+
+				inline v4sd abs(v4sd val)
+				{
+					static const v4sd sign_mask = set1<v4sd>(-0.0); // -0.f = 1 << 63
+					return _mm256_andnot_pd(sign_mask, val);
+				}
+
+
+				inline v4sf sign(v4sf val)
+				{
+					static const v4sf sign_mask = set1<v4sf>(-0.0f); // -10.f = 1 << 31
+					return _mm_and_ps(sign_mask, val) | set1<v4sf>(1.0f);
+				}
+
+				inline v8sf sign(v8sf val)
+				{
+					static const v8sf sign_mask = set1<v8sf>(-0.0f); // -10.f = 1 << 31
+					return _mm256_and_ps(sign_mask, val) | set1<v8sf>(1.0f);
+				}
+
+				inline v2sd sign(v2sd val)
+				{
+					static const v2sd sign_mask = set1<v2sd>(-0.0); // -10.f = 1 << 63
+					return _mm_and_pd(sign_mask, val) | set1<v2sd>(1.0f);
+				}
+
+				inline v4sd sign(v4sd val)
+				{
+					static const v4sd sign_mask = set1<v4sd>(-0.0); // -10.f = 1 << 63
+					return _mm256_and_pd(sign_mask, val) | set1<v4sd>(1.0f);
+				}
+
 
 			template<typename V>
 				struct suitable_container;

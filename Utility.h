@@ -59,8 +59,73 @@
 
 		namespace Utility 
 		{
+			/*
+				Lazy pointers hold unique default constructed data objects,
+				constructing/allocating them on the first use.
+				They incur a overhead on dereferencing, however
+				they are usefull for data objects you don't want
+				to load immediately - only on use.
+				Follows semantics of std::unique_ptr (RAII as well)
+			*/
+			template<class T>
+				class LazyPointer
+				{
+				public:
+					// big five.
 
+					LazyPointer() : object(nullptr) {}
 
+					LazyPointer(LazyPointer && other)
+					{
+						object = other.object;
+						other.object = nullptr;
+					}
+
+					LazyPointer & operator == (LazyPointer && other)
+					{
+						object = other.object;
+						other.object = nullptr;
+					}
+
+					// this class is not copy constructible!
+					LazyPointer & operator == (const LazyPointer & other) = delete;
+					LazyPointer(const LazyPointer & other) = delete;
+
+					// operators.
+
+					T * operator -> ()
+					{
+						return get();
+					}
+
+					T * release()
+					{
+						T * o = get();
+						object = nullptr;
+						return o;
+					}
+
+					void reset(T * another)
+					{
+						if (object)
+							delete object;
+						object = another;
+					}
+
+					T * get()
+					{
+						if (!object)
+							object = new T();
+						return object;
+					}
+					~LazyPointer()
+					{
+						if (object)
+							delete object;
+					}
+				protected:
+					T * object;
+				};
 
 		/*	template<typename T, typename Enable = void>
 			struct elements_of;
