@@ -107,7 +107,7 @@
 		{
 			bool IsDebuggerPresent();
 		};
-		#define isDebugged() Misc::IsBeingDebugged()
+		#define isDebugged() cpl::Misc::IsBeingDebugged()
 		#define debug_out(x) (void*) 0
 	#endif
 	// intrinsic only to capi.cpp

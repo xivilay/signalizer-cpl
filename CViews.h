@@ -96,6 +96,7 @@
 			virtual std::unique_ptr<GraphicComponent> createEditor() { return nullptr; }
 
 			bool isOpenGL() { return oglc != nullptr; }
+			juce::OpenGLContext * getAttachedContext() const noexcept { return oglc; }
 			bool shouldSynchronize() { return isSynced; }
 			void setSyncing(bool shouldSync) { isSynced = shouldSync; }
 			void setApproximateRefreshRate(int ms) { refreshRate = ms; }
