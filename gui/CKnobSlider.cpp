@@ -177,7 +177,8 @@ namespace cpl
 		}
 		else
 		{
-			return CRect(sideLength + 5, getHeight() / 2, getWidth() - (sideLength + 5), getHeight() / 2);
+			auto sideKnobLength = ControlSize::Square.height / 2;
+			return CRect(sideKnobLength + 5, getHeight() / 2, getWidth() - (sideKnobLength + 5), getHeight() / 2);
 		}
 	}
 	juce::Rectangle<int> CKnobSlider::getTitleRect() const
@@ -188,7 +189,8 @@ namespace cpl
 		}
 		else
 		{
-			return CRect(sideLength + 5, 0, getWidth() - (sideLength + 5), getHeight() / 2);
+			auto sideKnobLength = ControlSize::Square.height / 2;
+			return CRect(sideKnobLength + 5, 0, getWidth() - (sideKnobLength + 5), getHeight() / 2);
 		}
 	}
 
@@ -198,7 +200,7 @@ namespace cpl
 		{
 			auto size = ControlSize::Square.height;
 			auto quarterSize = size / 4;
-
+			auto sideKnobLength = ControlSize::Square.height / 2;
 			// quantize
 			int value = Math::round<int>((getValue() - getMinimum()) / (getMaximum() - getMinimum()) * (numFrames - 1));
 			g.setFont(TextSize::smallerText);
@@ -208,13 +210,13 @@ namespace cpl
 			// if the size is greater or equal to standard square height, we draw the knob in the middle, and the text above and bottom.
 			if (getHeight() >= ControlSize::Square.height)
 			{
-				g.drawImage(knobGraphics, quarterSize, quarterSize, sideLength, sideLength, 0, value * sideLength, sideLength, sideLength);
+				g.drawImage(knobGraphics, quarterSize, quarterSize, sideKnobLength, sideKnobLength, 0, value * sideLength, sideLength, sideLength);
 				g.drawText(bGetTitle(), getTitleRect(), juce::Justification::horizontallyCentred, false);
 				g.drawText(bGetText(), getTextRect(), juce::Justification::centred, false);
 			}
 			else
 			{
-				g.drawImage(knobGraphics, 0, 0, sideLength, sideLength, 0, value * sideLength, sideLength, sideLength);
+				g.drawImage(knobGraphics, 0, 0, sideKnobLength, sideKnobLength, 0, value * sideLength, sideLength, sideLength);
 				g.drawText(bGetTitle(), getTitleRect(), juce::Justification::centredLeft, false);
 				g.drawText(bGetText(), getTextRect(), juce::Justification::centredLeft, false);
 			}

@@ -59,6 +59,8 @@
 
 			// sse-vector of 16/8/4/2 ints
 			typedef __m128i v128si;
+			typedef __m128i v128i;
+			typedef __m256i v256i;
 			// sse-vector of 32/16/8/4 ints
 			typedef __m256i v256si;
 
