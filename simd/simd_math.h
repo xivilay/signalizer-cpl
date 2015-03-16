@@ -79,18 +79,7 @@
 			inline v8sf sqrt(v8sf x) { return _mm256_sqrt_ps(x); }
 			inline v2sd sqrt(v2sd x) { return _mm_sqrt_pd(x); }
 
-			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
-				Vector max
-
-			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-
-			template<typename V>
-			inline V max(V a, V b)
-			{
-				auto mask = a > b;
-				return vor(vand(a, mask), vandnot(mask, b));
-			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -163,6 +152,16 @@
 				return _mm256_and_si256(ia, ib);
 			}
 
+			// does a integer and using floating point lines; usable for non-avx512 modes
+			template<typename V>
+			inline typename cpl::simd::to_integer<V>::type
+			vfloat_and(typename cpl::simd::to_integer<V>::type a, typename cpl::simd::to_integer<V>::type b)
+			{
+				return reinterpret_vector_cast<typename cpl::simd::to_integer<V>::type>(
+																						vand(reinterpret_vector_cast<V>(a), reinterpret_vector_cast<V>(b))
+																						);
+			}
+			
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector integer bit-ands
@@ -212,7 +211,18 @@
 			{
 				return _mm_andnot_pd(a, consts<v2sd>::all_bits);
 			}
-
+			/*///////////////////////////////////////////////////////////////////////////////////////////////////
+			 
+				Vector max
+			 
+			 ///////////////////////////////////////////////////////////////////////////////////////////////////*/
+			
+			template<typename V>
+				inline V max(V a, V b)
+				{
+					auto mask = a > b;
+					return vor(vand(a, mask), vandnot(mask, b));
+				}
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector floating point sign extraction (only the MSB is set)
@@ -626,12 +636,12 @@
 				sin(V x)
 			{ // any x
 				V  y;
-				typedef scalar_of<V>::type Ty;
+				typedef typename scalar_of<V>::type Ty;
 				using VConsts = cpl::simd::consts<V>;
 
 				auto const elements = elements_of<V>::value;
 
-				typedef to_integer<V>::type VInt;
+				typedef typename to_integer<V>::type VInt;
 
 				/* take the absolute value and extract the sign bit */
 				V sign_bit = simd::sign(x);
@@ -719,7 +729,7 @@
 				sin(V x)
 			{ // any x
 				V y;
-				typedef scalar_of<V>::type Ty;
+				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;
 				using VConsts = cpl::simd::consts<V>;
 
@@ -827,12 +837,12 @@
 		{
 
 			//typedef v4sf V;
-			typedef scalar_of<V>::type Ty;
+			typedef typename scalar_of<V>::type Ty;
 			using consts = cpl::simd::consts<V>;
 
 			auto const elements = elements_of<V>::value;
 
-			typedef to_integer<V>::type VInt;
+			typedef typename to_integer<V>::type VInt;
 
 
 			V sign_bit_sin, y;
@@ -943,7 +953,7 @@
 			{
 			
 				//typedef v4sf V;
-				typedef scalar_of<V>::type Ty;
+				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;
 				using VConsts = cpl::simd::consts<V>;
 

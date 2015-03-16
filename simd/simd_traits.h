@@ -240,64 +240,7 @@
 			template<typename V>
 				struct suitable_container;
 			
-			// alignment-properties must be number-literals STILL in msvc. Grrr
-			#ifdef __MSVC__
-				#define simd_alignment_of(V) __declspec(align(32))
-			#else
-				#define simd_alignment_of(V) __alignas(32) /* hack */
-			#endif
 
-			template<typename V>
-				struct suitable_container;
-
-#pragma cwarn( "fix alignment of this type.")
-			template<typename V>
-				struct simd_alignment_of(V) suitable_container
-				{
-					typedef typename scalar_of<V>::type Ty;
-					typedef V emulated_ty;
-				public:
-					
-					#ifndef __MSVC__
-						Ty & operator [] (unsigned idx) { return c[idx]; }
-					#endif
-					operator Ty* () { return c; }
-					Ty * data() { return c; }
-
-					static const size_t size = elements_of<V>::value;
-
-					operator emulated_ty () { return load<emulated_ty>(c); }
-					suitable_container & operator = (emulated_ty right) 
-					{ 
-						store(c, right); 
-						return *this;
-					}
-					
-					suitable_container() {};
-					suitable_container(emulated_ty right)
-					{
-						store(c, right);
-					}
-
-				private:
-					
-					Ty c[size];
-
-				};
-			
-			template<typename V>
-			typename std::enable_if<is_simd<V>::value, std::ostream &>::type
-				operator << (std::ostream & o, V v1)
-				{
-					suitable_container<V> vec;
-					store(vec, v1);
-					o << "(" << vec[0];
-					for (int i = 1; i < suitable_container<V>::size; ++i)
-					{
-						o << ", " << vec[i];
-					}
-					return o << ")";
-				}
 		}; // simd
 	}; // cpl
 #endif

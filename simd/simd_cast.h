@@ -39,46 +39,13 @@
 	{
 		namespace simd
 		{
-		/* 
-			v128i integer to v4sf vector
-		*/
-			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
-					static_vector_cast(v128i Vin)
-				{
-					return _mm_cvtepi32_ps(Vin);
-				}
 
-			/*
-				v256i integer to v8sf vector
-			*/
-			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
-					static_vector_cast(v256i Vin)
-				{
-					return _mm256_cvtepi32_ps(Vin);
-				}
-
-			/* 
-				v128i integer to v2sd vector
-			*/
-			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type
-					static_vector_cast(v128i Vin)
-				{
-					return _mm_cvtepi32_pd(Vin);
-				}
-
-			/*
-				v256i integer to v4sd vector
-			*/
-			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
-					static_vector_cast(v256i Vin)
-				{
-					return _mm256_cvtepi32_pd(Vin);
-				}
-
+			template<typename T>
+			struct delayed_error : std::false_type
+			{
+				
+			};
+			
 			//////////////////////////////////////
 
 			/*
@@ -89,7 +56,7 @@
 					static_vector_cast(v4sd Vin)
 				{
 #ifndef _CPL_HAS_AVX_512
-					static_assert(false, "Your compiler doesn't support AVX-512 intrinsics ('zmmintrin.h'), "
+					static_assert(delayed_error<Vdest>::value, "Your compiler doesn't support AVX-512 intrinsics ('zmmintrin.h'), "
 						"code not compilable.");
 					return zero<v128i>();
 #else
@@ -105,7 +72,7 @@
 					static_vector_cast(v2sd Vin)
 				{
 #ifndef _CPL_HAS_AVX_512
-					static_assert(false, "Your compiler doesn't support AVX-512 intrinsics ('zmmintrin.h'), "
+					static_assert(delayed_error<Vdest>::value, "Your compiler doesn't support AVX-512 intrinsics ('zmmintrin.h'), "
 						"code not compilable.");
 					return zero<v128i>();
 #else
@@ -256,7 +223,68 @@
 				{
 					return _mm256_castpd_ps(Vin);
 				}
+			
+			/*
+				bitwise-cast v256i vector to v128i
+			*/
+			template<typename Vdest>
+				inline typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
+					reinterpret_vector_cast(v256i Vin)
+				{
+					return _mm256_castsi256_si128(Vin);
+				}
+			
+			/*
+				bitwise-cast v256i vector to v128i
+			*/
+			template<typename Vdest>
+				inline typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
+					reinterpret_vector_cast(v128i Vin)
+				{
+					return _mm256_castsi128_si256(Vin);
+				}
+			
+			//////////////////////////////
+			
+			/* 
+				v128i integer to v4sf vector
+			*/
+			template<typename Vdest>
+				inline typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
+					static_vector_cast(v128i Vin)
+				{
+					return _mm_cvtepi32_ps(Vin);
+				}
 
+			/*
+				v256i integer to v8sf vector
+			*/
+			template<typename Vdest>
+				inline typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
+					static_vector_cast(v256i Vin)
+				{
+					return _mm256_cvtepi32_ps(Vin);
+				}
+
+			/* 
+				v128i integer to v2sd vector
+			*/
+			template<typename Vdest>
+				inline typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type
+					static_vector_cast(v128i Vin)
+				{
+					return _mm_cvtepi32_pd(Vin);
+				}
+
+			/*
+				v256i integer to v4sd vector
+			*/
+			template<typename Vdest>
+				inline typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
+					static_vector_cast(v256i Vin)
+				{
+					return _mm256_cvtepi32_pd(reinterpret_vector_cast<v128i>(Vin));
+				}
 			/*/////////////////////////////////////////////
 
 				Below functions are primarily used when writing

@@ -58,37 +58,37 @@
 			template<typename V>
 				inline V broadcast(const typename scalar_of<V>::type * );
 			
-				float zero()
+				inline float zero()
 				{
 					return 0;
 				}
 
-				float load(const float * V1)
+				inline float load(const float * V1)
 				{
 					return *V1;
 				}
 
-				double load(const double * V1)
+				inline double load(const double * V1)
 				{
 					return *V1;
 				}
 
-				float broadcast(const float * V1)
+				inline float broadcast(const float * V1)
 				{
 					return *V1;
 				}
 
-				double broadcast(const double * V1)
+				inline double broadcast(const double * V1)
 				{
 					return *V1;
 				}
 
-				float set1(const float V1)
+				inline float set1(const float V1)
 				{
 					return V1;
 				}
 
-				double set1(const double V1)
+				inline double set1(const double V1)
 				{
 					return V1;
 				}
@@ -201,7 +201,7 @@
 				}
 
 			template<typename V, class VectorPtrs>					
-				typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type 
+				inline typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
 					gather(VectorPtrs p)
 				{
 					return _mm_set_ps(*p[0], *p[1], *p[2], *p[3]);
@@ -214,7 +214,7 @@
 				}
 
 			template<typename V, class VectorPtrs>
-				typename std::enable_if<std::is_same<V, typename scalar_of<V>::type>::value, typename scalar_of<V>::type>::type
+				inline typename std::enable_if<std::is_same<V, typename scalar_of<V>::type>::value, typename scalar_of<V>::type>::type
 					gather(VectorPtrs p)
 				{
 
@@ -222,21 +222,21 @@
 				}
 
 			template<typename V, class VectorPtrs>
-				typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type 
+				inline typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type
 					gather(VectorPtrs p)
 				{
 					return _mm256_set_ps(*p[0], *p[1], *p[2], *p[3], *p[4], *p[5], *p[6], *p[7]);
 				}
 
 			template<typename V, class VectorPtrs>
-				typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type 
+				inline typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
 					setv(VectorPtrs p)
 				{
 					return _mm_set_ps(*p[0], *p[1], *p[2], *p[3]);
 				}
 
 			template<typename V, class VectorPtrs>
-				typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type 
+				inline typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type 
 					setv(VectorPtrs p)
 				{
 					return _mm256_set_ps(*p[0], *p[1], *p[2], *p[3], *p[4], *p[5], *p[6], *p[7]);
@@ -423,17 +423,10 @@
 			{
 				*in = out;
 			}
-
-			// does a integer and using floating point lines; usable for non-avx512 modes
-			template<typename V>
-				inline typename cpl::simd::to_integer<V>::type
-					vfloat_and(typename cpl::simd::to_integer<V>::type a, typename cpl::simd::to_integer<V>::type b)
-				{
-					return reinterpret_vector_cast<typename cpl::simd::to_integer<V>::type>(
-						vand(reinterpret_vector_cast<V>(a), reinterpret_vector_cast<V>(b))
-						);
-				}
-
+#ifndef __MSVC__
+			#define _mm256_set_m128i(hi, lo) (_mm256_inserti128_si256(_mm256_castsi128_si256(hi), lo, 1))
+			#define _mm256_set_m128(hi, lo) (_mm256_insertf128_ps(_mm256_castps128_ps256(hi), lo, 1))
+#endif
 			inline v128i viget_low_part(v256i ia)
 			{
 				return _mm256_extractf128_si256(ia, 0);
@@ -448,7 +441,66 @@
 			{
 				return _mm256_set_m128i(ib, ia);
 			}
+			
+			
+			// alignment-properties must be number-literals STILL in msvc. Grrr
+			#ifdef __MSVC__
+				#define simd_alignment_of(V) __declspec(align(32))
+			#else
+				#define simd_alignment_of(V) __alignas(32) /* hack */
+			#endif
 
+			template<typename V>
+				struct suitable_container;
+
+#pragma cwarn( "fix alignment of this type.")
+			template<typename V>
+				struct simd_alignment_of(V) suitable_container
+				{
+					typedef typename scalar_of<V>::type Ty;
+					typedef V emulated_ty;
+				public:
+					
+					#ifndef __MSVC__
+						Ty & operator [] (unsigned idx) { return c[idx]; }
+					#endif
+					operator Ty* () { return c; }
+					Ty * data() { return c; }
+
+					static const size_t size = elements_of<V>::value;
+
+					operator emulated_ty () { return load<emulated_ty>(c); }
+					suitable_container & operator = (emulated_ty right) 
+					{ 
+						store(c, right); 
+						return *this;
+					}
+					
+					suitable_container() {};
+					suitable_container(emulated_ty right)
+					{
+						store(c, right);
+					}
+
+				private:
+					
+					Ty c[size];
+
+				};
+			#undef simd_alignment_of
+			template<typename V>
+			typename std::enable_if<is_simd<V>::value, std::ostream &>::type
+				operator << (std::ostream & o, V v1)
+				{
+					suitable_container<V> vec;
+					store(vec, v1);
+					o << "(" << vec[0];
+					for (int i = 1; i < suitable_container<V>::size; ++i)
+					{
+						o << ", " << vec[i];
+					}
+					return o << ")";
+				}
 		}; // simd
 	}; // cpl
 #endif
