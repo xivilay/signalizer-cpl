@@ -87,7 +87,6 @@
 				)
 				:
 					data(data),
-					colour(colour),
 					y(0),
 					origin((int)cpl::Math::floorToNInf(where.x), cpl::Math::round<int>(where.y)),
 					alphaMap(),
@@ -268,7 +267,6 @@
 
 				// variables.
 				const juce::Image::BitmapData & data;
-				const juce::Colour colour;
 				const juce::Point<int> origin;
 				const juce::RectangleList<int> & rectClip;
 				const IntType subXOff;

@@ -440,7 +440,7 @@
 				// the data inside can be cast to a const KeyHeader *
 				ContentWrapper compile() const
 				{
-					BinaryBuilder data;
+					BinaryBuilder compiledData;
 					KeyHeader header;
 					// we dont carry the additional zero-terminating null, since the size is already given.
 					header.dataSize = isString ? stringKey.length() : 0;
@@ -448,11 +448,11 @@
 					header.info.isString = isString;
 					header.info.ID = intKey;
 
-					data.appendBytes(&header, sizeof(header));
+					compiledData.appendBytes(&header, sizeof(header));
 					if(isString)
-						data.appendBytes(stringKey.c_str(), stringKey.size());
+						compiledData.appendBytes(stringKey.c_str(), stringKey.size());
 
-					return ContentWrapper(data);
+					return ContentWrapper(compiledData);
 				}
 
 				// restores this object to the state found in kh.

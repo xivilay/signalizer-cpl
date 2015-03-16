@@ -42,7 +42,7 @@
 		{
 			
 			#define SQRT_TWO 1.4142135623730950488016887242097
-			#define SQRT_HALF 0.70710678118654752440084436210485
+			#define SQRT_HALF_TWO 0.70710678118654752440084436210485
 
 			#define FILL_8(val, ty) {static_cast<ty>(val), static_cast<ty>(val), static_cast<ty>(val), static_cast<ty>(val), \
 									static_cast<ty>(val), static_cast<ty>(val), static_cast<ty>(val), static_cast<ty>(val)}
@@ -77,8 +77,9 @@
 					static const V two;
 					static const V four;
 					static const V sqrt_two;
-					static const V sqrt_half;
+					static const V sqrt_half_two;
 					static const V sign_bit;
+					static const V sign_mask;
 					static const V epsilon;
 					static const V max;
 					static const V min;
@@ -111,6 +112,11 @@
 			struct bit_helper
 			{
 				static const std::uint64_t bits = 0xFFFFFFFFFFFFFFFFULL;
+				// 32-bit IEEE floating point sign mask
+				static const std::uint32_t fsm = 0x7FFFFFFFU;
+				// 64-bit IEEE floating point sign mask
+				static const std::uint64_t dsm = 0x7FFFFFFFFFFFFFFFULL;
+
 			};
 
 			// standards
@@ -129,7 +135,7 @@
 			DECLARE_SIMD_CONSTS(half, 0.5);
 			DECLARE_SIMD_CONSTS(quarter, 0.125);
 			DECLARE_SIMD_CONSTS(sqrt_two, SQRT_TWO);
-			DECLARE_SIMD_CONSTS(sqrt_half, SQRT_HALF);
+			DECLARE_SIMD_CONSTS(sqrt_half_two, SQRT_HALF_TWO);
 			DECLARE_SIMD_CONSTS(sign_bit, -0.0);
 
 			// cephes magic numbers
@@ -170,7 +176,6 @@
 			template<> const v4sd consts<v4sd>::max = FILL_4(DBL_MAX, double);
 
 
-
 			// all_bits - need a better solution here, that doesn't involve intrinsics.
 			template<> const v4sf consts<v4sf>::all_bits = { *(float*)&bit_helper::bits, *(float*)&bit_helper::bits, 
 															 *(float*)&bit_helper::bits, *(float*)&bit_helper::bits };
@@ -182,12 +187,24 @@
 			template<> const v4sd consts<v4sd>::all_bits = { *(double*)&bit_helper::bits, *(double*)&bit_helper::bits,
 															 *(double*)&bit_helper::bits, *(double*)&bit_helper::bits };
 
+			// sign mask - need a better solution here, that doesn't involve intrinsics.
+			template<> const v4sf consts<v4sf>::sign_mask = { *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm,
+															 *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm };
+			template<> const v8sf consts<v8sf>::sign_mask = { *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm,
+															 *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm,
+															 *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm,
+															 *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm };
+			template<> const v2sd consts<v2sd>::sign_mask = { *(double*)&bit_helper::dsm, *(double*)&bit_helper::dsm };
+			template<> const v4sd consts<v4sd>::sign_mask = { *(double*)&bit_helper::dsm, *(double*)&bit_helper::dsm,
+															 *(double*)&bit_helper::dsm, *(double*)&bit_helper::dsm };
+
 			#undef FILL_8
 			#undef FILL_4
 			#undef FILL_2
 			#undef SQRT_TWO
 			#undef SQRT_HALF
 			#undef DECLARE_SIMD_CONSTS
+
 		}; // simd
 	}; // cpl
 #endif

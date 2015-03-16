@@ -249,15 +249,15 @@
 				{
 					*this = other;
 				}
-				inline void setColour(uint8_t r, uint8_t g, uint8_t b)
+				inline void setColour(uint8_t red, uint8_t green, uint8_t blue)
 				{
-					this->r = r; this->g = g; this->b = b;
+					this->r = red; this->g = green; this->b = blue;
 				}
 				inline void setColour(uint32_t colour)
 				{
-					r = (colour & 0x00FF0000) >> 16;
-					g = (colour & 0x0000FF00) >> 8;
-					b = (colour & 0x000000FF);
+					r = std::uint8_t((colour & 0x00FF0000) >> 16);
+					g = std::uint8_t((colour & 0x0000FF00) >> 8);
+					b = std::uint8_t((colour & 0x000000FF));
 				}
 				inline void setColour(float colour)
 				{
@@ -268,8 +268,8 @@
 				{
 					auto p1 = data + channel + 1 % 2;
 					auto p2 = data + channel -1 % 2;
-					*p1 = static_cast<uint8_t>(*p1 + ((0xFF - *p1) >> 1)) * intensity;
-					*p2 = static_cast<uint8_t>(*p2 + ((0xFF - *p2) >> 1)) * intensity;
+					*p1 = static_cast<uint8_t>((*p1 + ((0xFF - *p1) >> 1)) * intensity);
+					*p2 = static_cast<uint8_t>((*p2 + ((0xFF - *p2) >> 1)) * intensity);
 				}
 				inline void blend(float intensity, uint8_t channel)
 				{
@@ -311,11 +311,11 @@
 				UPixel operator + (const UPixel & other)
 				{
 
-					auto r = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
+					auto newp = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
 #ifdef __MSVC__
-					return r.m128i_u32[0];
+					return newp.m128i_u32[0];
 #else
-					return r[0];
+					return newp[0];
 #endif
 				}
 
@@ -323,12 +323,12 @@
 				UPixel & operator += (const UPixel & other)
 				{
 
-					auto r = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
+					auto newp = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
 
 #ifdef __MSVC__
-					p = r.m128i_u32[0];
+					p = newp.m128i_u32[0];
 #else
-					p = r[0];
+					p = newp[0];
 #endif
 					return *this;
 				}
@@ -338,10 +338,10 @@
 
 					UPixel ret(*this);
 
-					ret.a *= scale;
-					ret.r *= scale;
-					ret.g *= scale;
-					ret.b *= scale;
+					ret.a = std::uint8_t(scale * ret.a);
+					ret.r = std::uint8_t(scale * ret.r);
+					ret.g = std::uint8_t(scale * ret.g);
+					ret.b = std::uint8_t(scale * ret.b);
 
 					return ret;
 				}

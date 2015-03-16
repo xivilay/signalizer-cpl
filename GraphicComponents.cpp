@@ -111,9 +111,9 @@ namespace cpl
 			// - in which case we dont want to destroy the current.
 			//DBG_BREAK();
 			
-			if (auto parent = e.eventComponent->getParentComponent())
+			if (auto parentComponent = e.eventComponent->getParentComponent())
 			{
-				if (auto editspace = dynamic_cast<cpl::CCtrlEditSpace *>(parent))
+				if (auto editspace = dynamic_cast<cpl::CCtrlEditSpace *>(parentComponent))
 				{
 					return;
 				}

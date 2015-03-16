@@ -178,13 +178,13 @@
 					other.sampleRate = sampleRate;
 				}
 				
-				bool raiseAudioEvent(float ** buffer, std::size_t numChannels, std::size_t numSamples)
+				bool raiseAudioEvent(float ** audioBuf, std::size_t numChannels, std::size_t numSamples)
 				{
 					cpl::CFastMutex lock(this);
 					unsigned mask(0);
 					for (auto & listener : listeners)
 					{
-						mask |= (unsigned)listener->audioCallback(buffer, numChannels, numSamples);
+						mask |= (unsigned)listener->audioCallback(audioBuf, numChannels, numSamples);
 					}
 					return mask ? true : false;
 				}

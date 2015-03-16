@@ -81,27 +81,40 @@
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
+				Vector max
+
+			///////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+			template<typename V>
+			inline V max(V a, V b)
+			{
+				auto mask = a > b;
+				return vor(vand(a, mask), vandnot(mask, b));
+			}
+
+			/*///////////////////////////////////////////////////////////////////////////////////////////////////
+
 				Vector floating point absolute values
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
 			inline v4sf abs(v4sf val)
 			{
-				return _mm_andnot_ps(val, consts<v4sf>::sign_bit);
+				return _mm_and_ps(val, consts<v4sf>::sign_mask);
 			}
 
 			inline v8sf abs(v8sf val)
 			{
-				return _mm256_andnot_ps(val, consts<v8sf>::sign_bit);
+				return _mm256_and_ps(val, consts<v8sf>::sign_mask);
 			}
 
 			inline v2sd abs(v2sd val)
 			{
-				return _mm_andnot_pd(val, consts<v2sd>::sign_bit);
+				return _mm_and_pd(val, consts<v2sd>::sign_mask);
 			}
 
 			inline v4sd abs(v4sd val)
 			{
-				return _mm256_andnot_pd(val, consts<v4sd>::sign_bit);
+				return _mm256_and_pd(val, consts<v4sd>::sign_mask);
 			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,6 +183,7 @@
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector floating point bit-andnots
+				ret = ~a & b
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 			inline v4sf vandnot(v4sf a, v4sf b) { return _mm_andnot_ps(a, b); }
