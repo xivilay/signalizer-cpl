@@ -431,6 +431,19 @@
 					return w + z + x_zero_PIO2 * (cf4_1 - y_zero - y_negativ_2)
 						+ y_zero *  x_neg_PI;
 				}
+
+
+
+				inline void sincos(float x, float * s, float * c)
+				{
+					*s = std::sin(x);
+					*c = std::cos(x);
+				}
+				inline void sincos(double x, double * s, double * c)
+				{
+					*s = std::sin(x);
+					*c = std::cos(x);
+				}
 #ifdef _CPL_HAS_AVX_512
 			template<typename V>
 				V sin(V x)
