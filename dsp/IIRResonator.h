@@ -28,13 +28,13 @@
 *************************************************************************************/
 #ifndef _IIRRESONATOR_H
 	#define _IIRRESONATOR_H
-	#include <cpl/CMutex.h>
-	#include <cpl/CAudioBuffer.h>
-	#include <cpl/simd.h>
-	#include <cpl/dsp/filterdesign.h>
-	#include <cpl/LibraryOptions.h>
+	#include "../CMutex.h"
+	#include "../CAudioBuffer.h"
+	#include "../simd.h"
+	#include "filterdesign.h"
+	#include "../LibraryOptions.h"
 	#include <vector>
-	#include <cpl/mathext.h>
+	#include "../mathext.h"
 
 	namespace cpl
 	{
