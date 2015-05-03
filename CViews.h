@@ -151,7 +151,7 @@
 			void repaintMainContent() override
 			{
 				repaint();
-				if (bufferSwapInterval < 0)
+				if (isOpenGL() && bufferSwapInterval < 0)
 					oglc->triggerRepaint();
 			}
 

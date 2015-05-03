@@ -30,6 +30,9 @@
 #ifndef _MATHEXT_H
 	#define _MATHEXT_H
 
+	// check this!
+	//http ://fastapprox.googlecode.com/svn/trunk/fastapprox/src/fastonebigheader.h
+
 	#include <math.h>
 	#include "MacroConstants.h"
 	#include <vector>
