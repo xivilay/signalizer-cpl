@@ -504,8 +504,8 @@
 
 
 			// unpacked xmm registers
-			float __alignas(16) unpreal[4];
-			float __alignas(16) unpimag[4];
+			float unpreal[4];
+			float  unpimag[4];
 
 			cpl::sse::v4sf
 				xmmsin, // the next 4 sines
@@ -734,8 +734,8 @@
 
 
 			// unpacked xmm registers
-			float __alignas(16) unpreal[4];
-			float __alignas(16) unpimag[4];
+			float  unpreal[4];
+			float  unpimag[4];
 
 			cpl::sse::v4sf 
 				xmmsin, // the next 4 sines

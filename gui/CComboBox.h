@@ -68,8 +68,21 @@
 			virtual void paint(juce::Graphics & g) override;
 
 			int getZeroBasedSelIndex() const;
-
+			
+			template<typename T>
+				T getZeroBasedSelIndex() const
+				{
+					return (T)(box.getSelectedId() - 1);
+				}
+			
+			template<typename T>
+				void setZeroBasedIndex(T input)
+				{
+					box.setSelectedId(((int)input) - 1);
+				}
 		protected:
+			
+			void setZeroBasedSelIndex(int index);
 			// overrides
 			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
