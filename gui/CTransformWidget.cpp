@@ -27,8 +27,9 @@
  
  *************************************************************************************/
 
-#include "CValueControl.h"
+#include "CTransformWidget.h"
 #include "../Mathext.h"
+#include "../LexicalConversion.h"
 
 namespace cpl
 {
@@ -36,12 +37,18 @@ namespace cpl
 	auto elementWidth = 50;
 
 	CTransformWidget::CTransformWidget()
-		: CBaseControl(this), transform(1.0f)
+	: 
+		CBaseControl(this), 
+		transform(1.0f),
+		horizontalDragCursor(juce::MouseCursor::LeftRightResizeCursor),
+		isAnyLabelBeingDragged(false),
+		cursorSwap([&]() { setMouseCursor(juce::MouseCursor::ParentCursor); }, [&]() { setMouseCursor(horizontalDragCursor); })
 	{
 
-		bSetDescription("Controls an objects transformation in a visual 3D space.");
+		bSetDescription("Controls an object's transformation in a visual 3D space.");
 		enableTooltip(true);
-
+		// otherwise, user can click anywhere in the program and focus will be given to the first label
+		setMouseClickGrabsKeyboardFocus(false);
 		for (auto & type : labels)
 		{
 			for (auto & label : type)
@@ -59,7 +66,6 @@ namespace cpl
 		syncEditor();
 		setSize((elementWidth + 15) * 3 , elementHeight * 6);
 
-		setViewport(getBounds());
 	}
 
 	void CTransformWidget::syncEditor()
@@ -77,9 +83,9 @@ namespace cpl
 
 	juce::String CTransformWidget::bGetToolTipForChild(const Component * c) const
 	{
-		juce::String ret = "Set the objects ";
+		juce::String ret = "Set the object's ";
 		const char * params[] = { "position (where {0, 0, 0} is the center, and {1, 1, 1} is upper right back corner)", 
-								  "rotation (in degrees)", "scale (where 1 = identity)" };
+								  "rotation (in degrees)", "scale (where 1 is identity)" };
 		const char * property[] = { "x-", "y-", "z-" };
 		for (unsigned y = 0; y < 3; ++y)
 		{
@@ -99,10 +105,8 @@ namespace cpl
 
 	void CTransformWidget::inputCommand(int x, int y, const String & data)
 	{
-		double input;
-		char * endPtr = nullptr;
-		input = strtod(data.getCharPointer(), &endPtr);
-		if (endPtr > data.getCharPointer())
+		float input;
+		if (lexicalConversion(data, input))
 		{
 			transform.element(x, y) = (float)input;
 			bForceEvent();
@@ -142,21 +146,77 @@ namespace cpl
 		if (e.eventComponent == this)
 		{
 			unfocusAllComponents();
+			if (e.mods.isLeftButtonDown())
+			{
+				currentlyDraggedLabel = getDraggableLabelAt(e.x, e.y);
+				if (currentlyDraggedLabel.second)
+				{
+					isAnyLabelBeingDragged = true;
+				}
+			}
+
 		}
-		Draggable3DOrientation::mouseDown(e.position);
+		lastMousePos = e.position;
 	}
+
+	void CTransformWidget::mouseUp(const juce::MouseEvent & e)
+	{
+		isAnyLabelBeingDragged = false;
+	}
+
 
 	void CTransformWidget::mouseDrag(const juce::MouseEvent & e)
 	{
-		Draggable3DOrientation::mouseDrag(e.position);
+		if (isAnyLabelBeingDragged)
+		{
+			auto deltaDifference = e.position - lastMousePos;
+			float scale = 0.005f;
+			if (e.mods.isCommandDown())
+			{
+				scale *= 0.05f;
+			}
 
-		auto & quat = getQuaternion();
 
-		transform.rotation.x = quat.vector.x * 90;
-		transform.rotation.y = quat.vector.y * 90;
-		transform.rotation.z = quat.vector.z * 90;
+			auto & now = transform.element(currentlyDraggedLabel.first.x, currentlyDraggedLabel.first.y);
 
-		syncEditor();
+			if (currentlyDraggedLabel.first.x == 1) // rotations
+			{
+				scale *= 0.3f * 360;
+				now = std::fmod(now + scale * deltaDifference.x, 360.0f);
+			}
+			else
+			{
+				now += scale * deltaDifference.x;
+			}
+			lastMousePos = e.position;
+			bForceEvent();
+			syncEditor();
+		}
+	}
+
+	void CTransformWidget::mouseMove(const juce::MouseEvent & e)
+	{
+		cursorSwap.setCondition(isAnyLabelBeingDragged || getDraggableLabelAt(e.x, e.y).second);
+	}
+
+
+	CTransformWidget::LabelDescriptor CTransformWidget::getDraggableLabelAt(int mouseX, int mouseY)
+	{
+		LabelDescriptor ret{ {0, 0}, nullptr };
+
+		juce::Rectangle<int> currentLabelBounds;
+		for (int y = 0; y < 3; ++y)
+		{
+			for (int x = 0; x < 3; ++x)
+			{
+				currentLabelBounds.setBounds(x * (elementWidth + 15), elementHeight + y * (elementHeight * 2), 10, elementHeight);
+				if (currentLabelBounds.contains(mouseX, mouseY))
+				{
+					return LabelDescriptor{ {y, x}, &labels[y][x] };
+				}
+			}
+		}
+		return ret;
 	}
 
 	void CTransformWidget::resized()
@@ -193,7 +253,6 @@ namespace cpl
 		{
 			for (unsigned x = 0; x < 3; ++x)
 			{
-
 				g.drawText(texts[x], x * (elementWidth + 15), elementHeight + y * (elementHeight * 2), 10, elementHeight, juce::Justification::centred);
 			}
 		}

@@ -43,7 +43,7 @@
 
 			}
 
-			virtual bool audioCallback(float ** buffer, std::size_t numChannels, std::size_t numSamples) = 0;
+			virtual bool audioCallback(CAudioSource & source, float ** buffer, std::size_t numChannels, std::size_t numSamples) = 0;
 
 			void listenToSource(CAudioSource & audioSource)
 			{
@@ -184,7 +184,7 @@
 					unsigned mask(0);
 					for (auto & listener : listeners)
 					{
-						mask |= (unsigned)listener->audioCallback(audioBuf, numChannels, numSamples);
+						mask |= (unsigned)listener->audioCallback(*this, audioBuf, numChannels, numSamples);
 					}
 					return mask ? true : false;
 				}

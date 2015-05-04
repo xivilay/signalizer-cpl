@@ -43,14 +43,14 @@
 		: 
 			public CBaseControl,
 			public juce::Component,
-			public juce::TextEditor::Listener,
-			public juce::Draggable3DOrientation
+			public juce::TextEditor::Listener
 		{
 
 		public:
-			CTransformWidget();
 
-			// list of |-seperated values
+			typedef std::pair<juce::Point<int>, juce::TextEditor *> LabelDescriptor;
+
+			CTransformWidget();
 
 			void resized() override;
 			void paint(juce::Graphics & g) override;
@@ -58,18 +58,26 @@
 			void textEditorFocusLost(TextEditor &) override;
 			void textEditorReturnKeyPressed(TextEditor &) override;
 			void mouseDown(const juce::MouseEvent & e) override;
+			void mouseUp(const juce::MouseEvent & e) override;
+			void mouseMove(const juce::MouseEvent & e) override;
 			void mouseDrag(const juce::MouseEvent & e) override;
 			GraphicsND::Transform3D<float> & getTransform3D() noexcept { return transform; }
 			juce::String bGetToolTipForChild(const Component *) const override;
 			void syncEditor();
+			// coordinates are boxes
 			void inputCommand(int x, int y, const String & data);
+			// coordinates are mouse/graphical
+			LabelDescriptor getDraggableLabelAt(int x, int y);
+			
 		protected:
 			
 			GraphicsND::Transform3D<float> transform;
 			juce::TextEditor labels[3][3];
-
-		private:
-
+			juce::MouseCursor horizontalDragCursor;
+			LabelDescriptor currentlyDraggedLabel;
+			Utility::ConditionalSwap cursorSwap;
+			bool isAnyLabelBeingDragged;
+			juce::Point<float> lastMousePos;
 		};
 	};
 #endif

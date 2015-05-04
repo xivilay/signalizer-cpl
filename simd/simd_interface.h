@@ -469,7 +469,8 @@
 
 					static const size_t size = elements_of<V>::value;
 
-					operator emulated_ty () { return load<emulated_ty>(c); }
+					operator emulated_ty const () { return toType(); }
+					emulated_ty toType() const { return load<emulated_ty>(c); }
 					suitable_container & operator = (emulated_ty right) 
 					{ 
 						store(c, right); 

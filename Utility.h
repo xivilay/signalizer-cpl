@@ -60,12 +60,56 @@
 		namespace Utility 
 		{
 			/*
+				Use this code inside frequently run code, where you dont want to pollute the code with conditional
+				check swapping.
+				usage:
+
+				void runOften()
+				{
+					// some code will automatically run if the condition swaps.
+					// virtually free otherwise.
+					condition.setCondition(getSomething());
+				}
+			*/
+			class ConditionalSwap
+			{
+			public:
+
+				ConditionalSwap(std::function<void()> falseCode, std::function<void()> trueCode, bool initialValue = false, bool runConditionNow = false)
+					: falseFunctor(falseCode), trueFunctor(trueCode), oldCondition(initialValue)
+				{
+					if (runConditionNow)
+						runCondition(initialValue);
+				}
+
+				inline void setCondition(bool newCondition)
+				{
+					if (newCondition != oldCondition)
+					{
+						runCondition(newCondition);
+						oldCondition = newCondition;
+					}
+				}
+
+				void runCondition(bool condition)
+				{
+					condition ? trueFunctor() : falseFunctor();
+				}
+
+			private:
+				bool oldCondition;
+				std::function<void()> falseFunctor;
+				std::function<void()> trueFunctor;
+			};
+
+			/*
 				Lazy pointers hold unique default constructed data objects,
 				constructing/allocating them on the first use.
 				They incur a overhead on dereferencing, however
 				they are usefull for data objects you don't want
 				to load immediately - only on use.
-				Follows semantics of std::unique_ptr (RAII as well)
+				Follows semantics of std::unique_ptr (RAII as well).
+				Not thread-safe.
 			*/
 			template<class T>
 				class LazyPointer

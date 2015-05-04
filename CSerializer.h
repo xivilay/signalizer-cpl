@@ -345,8 +345,8 @@
 			template<typename ExtraHeader>
 				struct __alignas(8) BinaryHeader
 				{
-					std::size_t headerSize;
-					std::size_t dataSize;
+					std::uint64_t headerSize;
+					std::uint64_t dataSize;
 					HeaderType type;
 					ExtraHeader info;
 
@@ -369,14 +369,14 @@
 
 			struct MasterHeaderInfo
 			{
-				std::size_t totalSize;
-				long long versionID;
+				std::uint64_t totalSize;
+				std::int64_t versionID;
 			};
 
 			struct KeyHeaderInfo
 			{
 				bool isString;
-				long long ID;
+				std::int64_t ID;
 			};
 
 			struct DataHeaderInfo
