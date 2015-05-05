@@ -467,6 +467,9 @@
 					operator Ty* () { return c; }
 					Ty * data() { return c; }
 
+					Ty * begin() { return c; }
+					Ty * end() { return c + size; }
+
 					static const size_t size = elements_of<V>::value;
 
 					operator emulated_ty const () { return toType(); }
@@ -504,4 +507,6 @@
 				}
 		}; // simd
 	}; // cpl
+
+
 #endif
