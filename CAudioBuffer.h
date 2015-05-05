@@ -255,6 +255,17 @@
 					return buffer[(start + index) % size];
 
 				}
+				
+				inline floatType singleConstAccess(std::size_t index) const noexcept
+				{
+					std::size_t offset = start + index;
+					bool mask = offset > (size - 1);
+					
+					offset -= size * mask;
+					
+					return buffer[offset];
+				}
+				
 				inline floatType & singleCheckAccess(std::size_t index) noexcept
 				{
 					
