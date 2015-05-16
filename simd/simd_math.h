@@ -118,6 +118,19 @@
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
+				Select elements from two vectors depending on a third.
+					output[n] = mask[n] ? a[n] : b[n] 
+						(return (a & mask) | (b & ~mask))
+
+					note that mask should strictly be either all 0 or 1 bits (like, from comparisons)
+			///////////////////////////////////////////////////////////////////////////////////////////////////*/
+			inline v4sf vselect(v4sf a, v4sf b, v4sf mask) { return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b)); }
+			inline v8sf vselect(v8sf a, v8sf b, v8sf mask) { return _mm256_or_ps(_mm256_and_ps(mask, a), _mm256_andnot_ps(mask, b)); }
+			inline v4sd vselect(v4sd a, v4sd b, v4sd mask) { return _mm256_or_pd(_mm256_and_pd(mask, a), _mm256_andnot_pd(mask, b)); }
+			inline v2sd vselect(v2sd a, v2sd b, v2sd mask) { return _mm_or_pd(_mm_and_pd(mask, a), _mm_andnot_pd(mask, b)); }
+
+			/*///////////////////////////////////////////////////////////////////////////////////////////////////
+
 				Vector floating point bit exclusive-or
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -741,6 +754,7 @@
 			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value, V>::type 
 				sin(V x)
 			{ // any x
+#pragma cwarn("Seems to return cosines. Output of 4.71 == ~0");
 				V y;
 				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;
@@ -840,6 +854,10 @@
 		template<typename V>
 			inline V cos(V x)
 			{
+				/*V s, c;
+				sincos(x, &s, &c);
+				return c;*/
+
 				return sin(x + consts<V>::pi_half);
 			}
 

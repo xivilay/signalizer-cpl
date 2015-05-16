@@ -53,6 +53,8 @@ namespace cpl
 				template<> const v8sf consts<v8sf>::name = FILL_8(value, float); \
 				template<> const v2sd consts<v2sd>::name = FILL_2(value, double); \
 				template<> const v4sd consts<v4sd>::name = FILL_4(value, double); \
+				template<> const float consts<float>::name = (float)(value); \
+				template<> const double consts<double>::name = value; 
 				//template<> const v128si consts<v128si>::name = FILL_4(value, std::int32_t);
 
 
@@ -90,11 +92,12 @@ namespace cpl
 			DECLARE_SIMD_CONSTS(four, 4.0);
 			DECLARE_SIMD_CONSTS(one, 1.0);
 			DECLARE_SIMD_CONSTS(minus_one, -1.0);
-			DECLARE_SIMD_CONSTS(minus_two, -1.0);
+			DECLARE_SIMD_CONSTS(minus_two, -2.0);
 			DECLARE_SIMD_CONSTS(half, 0.5);
 			DECLARE_SIMD_CONSTS(quarter, 0.125);
 			DECLARE_SIMD_CONSTS(sqrt_two, SQRT_TWO);
 			DECLARE_SIMD_CONSTS(sqrt_half_two, SQRT_HALF_TWO);
+			DECLARE_SIMD_CONSTS(sqrt_half_two_minus, -SQRT_HALF_TWO);
 			DECLARE_SIMD_CONSTS(sign_bit, -0.0);
 
 			// cephes magic numbers

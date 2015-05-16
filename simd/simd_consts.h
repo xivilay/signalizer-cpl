@@ -62,6 +62,7 @@
 					static const V four;
 					static const V sqrt_two;
 					static const V sqrt_half_two;
+					static const V sqrt_half_two_minus;
 					static const V sign_bit;
 					static const V sign_mask;
 					static const V epsilon;

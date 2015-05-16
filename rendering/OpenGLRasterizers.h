@@ -29,6 +29,7 @@
 
 #ifndef _OPENGLRASTERIZERS_H
 	#define _OPENGLRASTERIZERS_H
+	#include "../common.h"
 	#include "OpenGLEngine.h"
 
 	namespace cpl
@@ -125,6 +126,66 @@
 					//__alignas(32) Vertex vertices[vertexBufferSize * dimensions];
 				};
 
+
+			template<std::size_t vertexBufferSize = 128>
+				class RectangleDrawer2D
+				:
+					public COpenGLStack::Rasterizer,
+					public juce::Rectangle<GLfloat>
+				{
+				public:
+
+					RectangleDrawer2D(COpenGLStack & parentStack)
+						: Rasterizer(parentStack)
+					{
+						glGetFloatv(GL_LINE_WIDTH, &oldLineSize);
+					}
+
+
+					~RectangleDrawer2D()
+					{
+						glLineWidth(oldLineSize);
+					}
+					inline void renderOutline(GLfloat outlineSize = 1.f)
+					{
+						glLineWidth(outlineSize);
+						glBegin(GL_LINE_LOOP);
+						applyColour();
+						glVertex2f(getX(), getY());
+						glVertex2f(getX() + getWidth(), getY());
+						glVertex2f(getX() + getWidth(), getY() + getHeight());
+						glVertex2f(getX(), getY() + getHeight());
+
+						glEnd();
+					}
+
+					inline void fill()
+					{
+						glBegin(GL_POLYGON);
+						applyColour();
+						glVertex2f(getX(), getY());
+						glVertex2f(getX() + getWidth(), getY());
+						glVertex2f(getX() + getWidth(), getY() + getHeight());
+						glVertex2f(getX(), getY() + getHeight());
+						glEnd();
+					}
+
+					inline void setColour(const juce::Colour & c)
+					{
+						red = c.getFloatRed(); green = c.getFloatGreen(); blue = c.getFloatBlue(); alpha = c.getFloatAlpha();
+					}
+					inline void setColour(ColourType r, ColourType g, ColourType b, ColourType a = (ColourType)1)
+					{
+						red = r; green = g; blue = b; alpha = a;
+					}
+				private: 
+					inline void applyColour()
+					{
+						glColor4f(red, green, blue, alpha);
+					}
+					GLfloat oldLineSize;
+					GLfloat red, green, blue, alpha;
+				};
 
 			template<std::size_t vertexBufferSize = 1024>			
 				class ConnectedLineDrawer
