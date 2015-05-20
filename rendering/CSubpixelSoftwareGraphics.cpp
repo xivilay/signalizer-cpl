@@ -268,7 +268,7 @@ namespace cpl
 			// it isn't really used (and the code doesn't work yet) we just create a simple
 			// gamma correction here - the same used in JUCE, albeit adjusts itself to the system setting...
 			{
-				auto & gammaScale = currentMonitor.gammaScale;
+				//auto & gammaScale = currentMonitor.gammaScale;
 			}
 			
 			LinearGammaScale<std::uint8_t> gammaScale;

@@ -344,9 +344,9 @@ namespace cpl
 			std::uint32_t intensity = static_cast<std::uint32_t>(val * 0xFFFFFF);
 			
 			std::uint8_t red, green, blue;
-			red = (intensity & 0xFF0000) >> 16;
-			green = (intensity & 0xFF00) >> 8;
-			blue = (intensity & 0xFF);
+			red = std::uint8_t((intensity & 0xFF0000) >> 16);
+			green = std::uint8_t((intensity & 0xFF00) >> 8);
+			blue = std::uint8_t((intensity & 0xFF));
 			
 			
 			juce::PixelARGB newRet(colour.getAlpha(), red, green, blue);
@@ -361,10 +361,10 @@ namespace cpl
 			std::size_t intensity = static_cast<std::size_t>(val * 0xFFFFFFFF);
 			
 			std::uint8_t red, green, blue, alpha;
-			alpha = (intensity & 0xFF000000) >> 24;
-			red = (intensity & 0xFF0000) >> 16;
-			green = (intensity & 0xFF00) >> 8;
-			blue = (intensity & 0xFF);
+			alpha = std::uint8_t((intensity & 0xFF000000) >> 24);
+			red = std::uint8_t((intensity & 0xFF0000) >> 16);
+			green = std::uint8_t((intensity & 0xFF00) >> 8);
+			blue = std::uint8_t((intensity & 0xFF));
 
 			
 			juce::PixelARGB newRet(alpha, red, green, blue);

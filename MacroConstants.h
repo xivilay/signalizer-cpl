@@ -105,7 +105,7 @@
         // forward declare it
 		namespace Misc
 		{
-			bool IsDebuggerPresent();
+			bool IsBeingDebugged();
 		};
 		#define isDebugged() cpl::Misc::IsBeingDebugged()
 		#define debug_out(x) (void*) 0
@@ -186,6 +186,15 @@
 			#pragma warning(disable:4706) // assignment within conditional expression
 			#pragma warning(disable:4324) // structure was deliberately padded
 			#pragma warning(disable:4512) // assignment-operator could not be generated. 
+			// declaration hides something else in enclosing scope:
+			#pragma warning(disable:4458)
+			#pragma warning(disable:4457)
+			#pragma warning(disable:4459)
+			#pragma warning(disable:4456)
+			//#pragma warning(disable:2228) // typedef ignored on left
+			#pragma warning(disable:4091) // same
+
+
 			#ifndef CPL_HAS_CONSTEXPR
 				#pragma warning(disable:4127) // conditional expression is constant
 			#endif

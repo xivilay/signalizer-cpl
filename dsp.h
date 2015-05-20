@@ -234,7 +234,7 @@
 
 		typedef std::uint_fast32_t inttype;
 
-		void seperateTransforms(const double * tsf, double * real, double * imag, std::size_t N)
+		inline void seperateTransforms(const double * tsf, double * real, double * imag, std::size_t N)
 		{
 			N <<= 1;
 			double x1, x2, y1, y2;
@@ -254,7 +254,7 @@
 			imag[0] = tsf[1];
 		}
 
-		void seperateTransformsIPL(double * tsf, std::size_t N)
+		inline void seperateTransformsIPL(double * tsf, std::size_t N)
 		{
 			auto N2 = N >> 1; // N = total size, N2 = half size
 			double x1, x2, y1, y2;

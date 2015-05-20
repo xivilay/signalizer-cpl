@@ -90,6 +90,8 @@
 						return ret;
 					}
 
+
+				
 				template<type f, size_t order, typename T>
 					typename std::enable_if < f == type::resonator && order == 3,  coefficients<type::resonator, order, T>>::type
 						design(T rads, T bandWidth, T QinDBs)

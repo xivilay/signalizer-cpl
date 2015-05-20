@@ -36,7 +36,14 @@
 
 	namespace cpl
 	{
-		template<typename From, typename To>
+		/// <summary>
+		/// Converts from f to t, lexically, using a stringstream.
+		/// Returns success.
+		/// </summary>
+		/// <param name="f"></param>
+		/// <param name="t"></param>
+		/// <returns></returns>
+		template<typename From, typename To> 
 			bool lexicalConversion(const From & f, To & t)
 			{
 				std::stringstream ss;
