@@ -32,9 +32,14 @@
 	#include "../Common.h"
 	#include "../Graphics.h"
 	#include <vector>
+
 	#ifndef GL_MULTISAMPLE
 		#define GL_MULTISAMPLE  0x809D
 	#endif
+
+	#define CPL_DEBUGCHECKGL() cpl::OpenGLEngine::DebugCheckGLErrors(__FILE__, __LINE__, __FUNCTION__)
+
+
 	namespace cpl
 	{
 		namespace OpenGLEngine
@@ -44,6 +49,46 @@
 			typedef GLfloat Vertex;
 			typedef GLfloat ColourType;
 
+
+			inline const char* getGLErrorMessage(const GLenum e)
+			{
+				switch (e)
+				{
+				case GL_INVALID_ENUM:                   return "GL_INVALID_ENUM";
+				case GL_INVALID_VALUE:                  return "GL_INVALID_VALUE";
+				case GL_INVALID_OPERATION:              return "GL_INVALID_OPERATION";
+				case GL_OUT_OF_MEMORY:                  return "GL_OUT_OF_MEMORY";
+#ifdef GL_STACK_OVERFLOW
+				case GL_STACK_OVERFLOW:                 return "GL_STACK_OVERFLOW";
+#endif
+#ifdef GL_STACK_UNDERFLOW
+				case GL_STACK_UNDERFLOW:                return "GL_STACK_UNDERFLOW";
+#endif
+#ifdef GL_INVALID_FRAMEBUFFER_OPERATION
+				case GL_INVALID_FRAMEBUFFER_OPERATION:  return "GL_INVALID_FRAMEBUFFER_OPERATION";
+#endif
+				default: break;
+				}
+
+				return "Unknown error";
+			}
+
+
+
+			inline void DebugCheckGLErrors(const char * file, int line, const char * function)
+			{
+				bool debugger = isDebugged();
+				GLenum e; 
+				while ((e = glGetError()) != GL_NO_ERROR)
+				{
+					if (debugger)
+					{
+						BreakIfDebugged();
+					}
+					DBG("OpenGL Error at " << function << " (" << file << ":" << line << "): " << cpl::OpenGLEngine::getGLErrorMessage(e));
+				}
+
+			}
 
 			class MatrixModification
 			{

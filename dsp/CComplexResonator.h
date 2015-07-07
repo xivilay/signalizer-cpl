@@ -95,118 +95,41 @@
 
 
 				template<typename V, class MultiVector>
-				void wresonate(const MultiVector & data, std::size_t numDataChannels, std::size_t numSamples)
+				inline void wresonate(const MultiVector & data, std::size_t numDataChannels, std::size_t numSamples)
 				{
-
-					using namespace cpl;
-					using namespace cpl::simd;
 					CFastMutex lock(this);
 
-					auto const vfactor = suitable_container<V>::size;
-					V t0;
-
-
-
-
-					for (Types::fint_t filter = 0; filter < numFilters; filter += vfactor)
+					switch (numDataChannels)
 					{
-
-						// pointer to current sample
-						auto audioInput = &data[0][0];
-
-						// load coefficients
-						const V
-							p_m1_r = load<V>(realCoeff[0] + filter), // coeff: e^i*omega-q (real)
-							p_m1_i = load<V>(imagCoeff[0] + filter), // coeff: e^i*omega-q (imag)
-							p_m_r = load<V>(realCoeff[1] + filter), // coeff: e^i*omega (real)
-							p_m_i = load<V>(imagCoeff[1] + filter), // coeff: e^i*omega (imag)
-							p_p1_r = load<V>(realCoeff[2] + filter), // coeff: e^i*omega+q (real)
-							p_p1_i = load<V>(imagCoeff[2] + filter); // coeff: e^i*omega+q (imag)
-						// load states
-
-						V
-							s_m1_r[numChannels],
-							s_m1_i[numChannels],
-							s_m_r[numChannels],
-							s_m_i[numChannels],
-							s_p1_r[numChannels],
-							s_p1_i[numChannels];
-
-						for (Types::fint_t c = 0; c < numChannels; ++c)
-						{
-							s_m1_r[c] = load<V>(realState[c][0] + filter); // cos: e^i*omega-q (real)
-							s_m1_i[c] = load<V>(imagState[c][0] + filter); // sin: e^i*omega-q (imag)
-							s_m_r[c] = load<V>(realState[c][1] + filter); // cos: e^i*omega (real)
-							s_m_i[c] = load<V>(imagState[c][1] + filter); // sin: e^i*omega (imag)
-							s_p1_r[c] = load<V>(realState[c][2] + filter); // cos: e^i*omega+q (real)
-							s_p1_i[c] = load<V>(imagState[c][2] + filter); // sin: e^i*omega+q (imag)
-						}
-
-
-
-						for (Types::fint_t sample = 0; sample < numSamples; ++sample)
-						{
-
-
-
-
-
-							for (Types::fint_t c = 0; c < numChannels; ++c)
-							{
-								// combing stage
-								V input = broadcast<V>(audioInput);
-
-								// -1 stage (m1)
-								t0 = s_m1_r[c] * p_m1_r - s_m1_i[c] * p_m1_i;
-								s_m1_i[c] = s_m1_r[c] * p_m1_i + s_m1_i[c] * p_m1_r;
-								s_m1_r[c] = t0 + input;
-
-								// 0 stage (m)
-
-								t0 = s_m_r[c] * p_m_r - s_m_i[c] * p_m_i;
-								s_m_i[c] = s_m_r[c] * p_m_i + s_m_i[c] * p_m_r;
-								s_m_r[c] = t0 + input;
-
-								// +1 stage (p1)
-
-								t0 = s_p1_r[c] * p_p1_r - s_p1_i[c] * p_p1_i;
-								s_p1_i[c] = s_p1_r[c] * p_p1_i + s_p1_i[c] * p_p1_r;
-								s_p1_r[c] = t0 + input;
-							}
-
-
-							audioInput++;
-
-						}
-						for (Types::fint_t c = 0; c < numChannels; ++c)
-						{
-							store(realState[c][0] + filter, s_m1_r[c]); // state: e^i*omega-q (real)
-							store(imagState[c][0] + filter, s_m1_i[c]); // state: e^i*omega-q (imag)
-							store(realState[c][1] + filter, s_m_r[c]); // state: e^i*omega (real)
-							store(imagState[c][1] + filter, s_m_i[c]); // state: e^i*omega (imag)
-							store(realState[c][2] + filter, s_p1_r[c]); // state: e^i*omega+q (real)
-							store(imagState[c][2] + filter, s_p1_i[c]); // state: e^i*omega+q (imag)
-						}
+					case 1:
+						internalWindowResonate<V, MultiVector, 1>(data, numSamples); break;
+					case 2:
+						internalWindowResonate<V, MultiVector, 2>(data, numSamples); break;
+					default:
+						CPL_RUNTIME_EXCEPTION("Unsupported number of channels.");
 					}
+
 				}
 
-				inline std::complex<Scalar> getResonanceAt(std::size_t resonator)
+
+
+				inline std::complex<Scalar> getResonanceAt(std::size_t resonator, std::size_t channel)
 				{
-					auto const gainCoeff = N.at(resonator); // bounds checking here.
+					auto const gainCoeff = N.at(resonator) * 0.5; // bounds checking here.
 					return std::complex<Scalar>
 					(
-						realState[centerFilter][resonator] / gainCoeff, 
-						imagState[centerFilter][resonator] / gainCoeff
+						realState[channel][centerFilter][resonator] / gainCoeff, 
+						imagState[channel][centerFilter][resonator] / gainCoeff
 					);
 				}
 
 				template<WindowTypes win, bool lazy = false>
 					inline std::complex<Scalar> getWindowedResonanceAt(std::size_t resonator, std::size_t channel)
 					{
-						Scalar gainCoeff = N.at(resonator) * 1.0 / 20.0; // bounds checking here.
+						Scalar gainCoeff = N.at(resonator) * 1.0 / 8.0; // 2^-3 (3 vectors)
 						Scalar real(0), imag(0);
 
-						typedef typename windowFromEnum<Scalar, win>::type window;
+						typedef typename Windows::windowFromEnum<Scalar, win>::type window;
 
 						if (lazy)
 						{
@@ -306,7 +229,7 @@
 						for (i = 0; i < vSize; ++i)
 						{
 
-							auto const k = i + 1 >= numFilters ? numFilters - 2 : i;
+							auto const k = std::size_t(i + 1) >= numFilters ? numFilters - 2 : i;
 							auto hDiff = std::abs((double)mappedHz[k + 1] - mappedHz[k]);
 							auto bandWidth = sampleRate / hDiff;
 							const bool qIsFree = false;
@@ -317,8 +240,8 @@
 
 							hDiff = (sampleRate) / bandWidth;
 
-							auto const r = exp(Bq * -M_PI * hDiff / sampleRate);
-
+							//auto const r = exp(Bq * -M_PI * hDiff / sampleRate); OLD
+							auto const r = exp(-M_PI * hDiff / sampleRate);
 							N[i] = 1.0/(1 - r);
 							//auto const theta = 2 * M_PI * mappedHz[i] / sampleRate;
 
@@ -328,7 +251,10 @@
 							for (int z = 0; z < numVectors; ++z)
 							{
 
-								auto const omega = (2 * M_PI * (mappedHz[i] + Bq * Math::mapAroundZero<Scalar>(z, numVectors) * hDiff)) / sampleRate;
+								//auto const omega = (2 * M_PI * (mappedHz[i] + Bq * Math::mapAroundZero<Scalar>(z, numVectors) * hDiff)) / sampleRate; OLD
+								// so basically, for doing frequency-domain windowing using DFT-coefficients of the windows, we need filters that are linearly 
+								// spaced around the frequency like the FFT. DFT bins are spaced linearly like 0.5 / N.
+								auto const omega = (2 * M_PI * (mappedHz[i] + Math::mapAroundZero<Scalar>(z, numVectors) * hDiff * 0.5)) / sampleRate;
 
 								//auto const coeff = filters::design<filters::type::resonator, 3, Scalar>(theta, 2 * M_PI * hDiff / sampleRate, qDBs);
 								auto const real = r * cos(omega);
@@ -369,19 +295,113 @@
 				}
 					Scalar * realState[Channels][Vectors];
 					Scalar * imagState[Channels][Vectors];
-				private:
+			private:
 
-					Scalar * realCoeff[Vectors];
-					Scalar * imagCoeff[Vectors];
+				template<typename V, class MultiVector, std::size_t inputDataChannels>
+				void internalWindowResonate(const MultiVector & data, std::size_t numSamples)
+				{
+
+					using namespace cpl;
+					using namespace cpl::simd;
+
+					auto const vfactor = suitable_container<V>::size;
+					V t0;
 
 
-					std::size_t numFilters, numResonators;
-					double maxWindowSize;
-					double minWindowSize;
-					double qDBs;
-					double vectorDist;
-					std::vector<Scalar, cpl::AlignmentAllocator<Scalar, 32u>> buffer;
-					std::vector<Scalar> N;
+					for (Types::fint_t filter = 0; filter < numFilters; filter += vfactor)
+					{
+
+						// pointer to current sample
+						auto audioInput = &data[0][0];
+
+						// load coefficients
+						const V
+							p_m1_r = load<V>(realCoeff[0] + filter), // coeff: e^i*omega-q (real)
+							p_m1_i = load<V>(imagCoeff[0] + filter), // coeff: e^i*omega-q (imag)
+							p_m_r = load<V>(realCoeff[1] + filter), // coeff: e^i*omega (real)
+							p_m_i = load<V>(imagCoeff[1] + filter), // coeff: e^i*omega (imag)
+							p_p1_r = load<V>(realCoeff[2] + filter), // coeff: e^i*omega+q (real)
+							p_p1_i = load<V>(imagCoeff[2] + filter); // coeff: e^i*omega+q (imag)
+																	 // load states
+
+						V
+							s_m1_r[inputDataChannels],
+							s_m1_i[inputDataChannels],
+							s_m_r[inputDataChannels],
+							s_m_i[inputDataChannels],
+							s_p1_r[inputDataChannels],
+							s_p1_i[inputDataChannels];
+
+						for (Types::fint_t c = 0; c < inputDataChannels; ++c)
+						{
+							s_m1_r[c] = load<V>(realState[c][0] + filter); // cos: e^i*omega-q (real)
+							s_m1_i[c] = load<V>(imagState[c][0] + filter); // sin: e^i*omega-q (imag)
+							s_m_r[c] = load<V>(realState[c][1] + filter); // cos: e^i*omega (real)
+							s_m_i[c] = load<V>(imagState[c][1] + filter); // sin: e^i*omega (imag)
+							s_p1_r[c] = load<V>(realState[c][2] + filter); // cos: e^i*omega+q (real)
+							s_p1_i[c] = load<V>(imagState[c][2] + filter); // sin: e^i*omega+q (imag)
+						}
+
+
+
+						for (Types::fint_t sample = 0; sample < numSamples; ++sample)
+						{
+
+
+
+
+
+							for (Types::fint_t c = 0; c < inputDataChannels; ++c)
+							{
+								// combing stage
+								V input = broadcast<V>(audioInput);
+
+								// -1 stage (m1)
+								t0 = s_m1_r[c] * p_m1_r - s_m1_i[c] * p_m1_i;
+								s_m1_i[c] = s_m1_r[c] * p_m1_i + s_m1_i[c] * p_m1_r;
+								s_m1_r[c] = t0 + input;
+
+								// 0 stage (m)
+
+								t0 = s_m_r[c] * p_m_r - s_m_i[c] * p_m_i;
+								s_m_i[c] = s_m_r[c] * p_m_i + s_m_i[c] * p_m_r;
+								s_m_r[c] = t0 + input;
+
+								// +1 stage (p1)
+
+								t0 = s_p1_r[c] * p_p1_r - s_p1_i[c] * p_p1_i;
+								s_p1_i[c] = s_p1_r[c] * p_p1_i + s_p1_i[c] * p_p1_r;
+								s_p1_r[c] = t0 + input;
+							}
+
+
+							audioInput++;
+
+						}
+						for (Types::fint_t c = 0; c < inputDataChannels; ++c)
+						{
+							store(realState[c][0] + filter, s_m1_r[c]); // state: e^i*omega-q (real)
+							store(imagState[c][0] + filter, s_m1_i[c]); // state: e^i*omega-q (imag)
+							store(realState[c][1] + filter, s_m_r[c]); // state: e^i*omega (real)
+							store(imagState[c][1] + filter, s_m_i[c]); // state: e^i*omega (imag)
+							store(realState[c][2] + filter, s_p1_r[c]); // state: e^i*omega+q (real)
+							store(imagState[c][2] + filter, s_p1_i[c]); // state: e^i*omega+q (imag)
+						}
+					}
+				}
+
+
+				Scalar * realCoeff[Vectors];
+				Scalar * imagCoeff[Vectors];
+
+
+				std::size_t numFilters, numResonators;
+				double maxWindowSize;
+				double minWindowSize;
+				double qDBs;
+				double vectorDist;
+				cpl::aligned_vector<Scalar, 32u> buffer;
+				std::vector<Scalar> N;
 
 			};
 

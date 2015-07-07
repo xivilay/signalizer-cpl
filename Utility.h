@@ -197,7 +197,7 @@
 						Scalar bottom;
 					};
 
-					Scalar dist() const { return std::abs(left - bottom); }
+					Scalar dist() const { return std::abs(left - right); }
 				};
 
 			template <class T> struct maybe_delete

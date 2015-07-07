@@ -100,6 +100,45 @@
 
 
 			template<typename V, std::size_t rank = 4>
+				struct vector_of;
+
+			template<>
+				struct vector_of<float, 4>
+				{
+					typedef v4sf type;
+				};
+
+			template<>
+				struct vector_of<float, 8>
+				{
+					typedef v8sf type;
+				};
+
+			template<>
+				struct vector_of<float, 1>
+				{
+					typedef float type;
+				};
+
+			template<>
+				struct vector_of<double, 2>
+				{
+					typedef v2sd type;
+				};
+
+			template<>
+				struct vector_of<double, 4>
+				{
+					typedef v4sd type;
+				};
+
+			template<>
+				struct vector_of<double, 1>
+				{
+					typedef double type;
+				};
+
+			template<typename V, std::size_t rank = 4>
 				struct scalar_of;
 
 

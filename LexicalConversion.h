@@ -44,7 +44,7 @@
 		/// <param name="t"></param>
 		/// <returns></returns>
 		template<typename From, typename To> 
-			bool lexicalConversion(const From & f, To & t)
+			inline bool lexicalConversion(const From & f, To & t)
 			{
 				std::stringstream ss;
 				if ((ss << f) && (ss >> t))
@@ -53,7 +53,13 @@
 			}
 
 		#ifdef CPL_JUCE
-			bool lexicalConversion(const juce::String & from, double & to)
+			/// <summary>
+			/// Optimized for JUCE-strings
+			/// </summary>
+			/// <param name="from"></param>
+			/// <param name="to"></param>
+			/// <returns></returns>
+			inline bool lexicalConversion(const juce::String & from, double & to)
 			{
 				double output;
 				char * endPtr = nullptr;
@@ -66,8 +72,13 @@
 				return false;
 			}
 		#endif
-
-		bool lexicalConversion(const std::string & from, double & to)
+		/// <summary>
+		/// Optimized for std::strings
+		/// </summary>
+		/// <param name="from"></param>
+		/// <param name="to"></param>
+		/// <returns></returns>
+		inline bool lexicalConversion(const std::string & from, double & to)
 		{
 			double output;
 			char * endPtr = nullptr;

@@ -73,7 +73,7 @@
 				const Utility::Bounds<double> view, // view are the zoomed coords the graph should span, ie. a subset 
 				double maxFrequency, // the maximum frequency of the graph to show. typically sampleRate / 2
 				double startDecade = 10.0) // starting decade of the graph. for logarithmic graphs, it cannot be zero.
-				: bounds(bounds), view(view), startDecade(startDecade), stopFreq(maxFrequency), scaling(Linear)
+				: bounds(bounds), view(view), startDecade(startDecade), stopFreq(maxFrequency), scaling(Linear), minSpaceForDivision(1000000000000)
 			{
 				setup();
 			}
@@ -85,8 +85,22 @@
 			{
 				bounds = newBounds;
 				setup(); 
-				retransform();
+				//retransform();
 				// should also recompute lines - if more space is given, more lines may be visible?
+			}
+
+
+			/// <summary>
+			/// Sets the upper limit of the frequency graph.
+			/// </summary>
+			/// <param name="frequency"></param>
+			void setMaxFrequency(double frequency)
+			{
+				if (frequency != stopFreq)
+				{
+					stopFreq = frequency;
+					setup();
+				}
 			}
 
 			/*
@@ -99,16 +113,16 @@
 				{
 					scaling = s;
 					setup();
-					compileGraph();
+					//compileGraph();
 				}
 			}
 			/*
 				change the amount of pixels needed to trigger a recursive inclusion of divisions.
-				the smaller the value, the more divisions!
+				the smaller the value, the more divisions! Capped at 1.
 			*/
 			void setDivisionLimit(double size)
 			{
-				minSpaceForDivision = size;
+				minSpaceForDivision = std::max(1.0, size);
 			}
 			/*
 				sets the view coordinates.
@@ -118,7 +132,7 @@
 			{
 				view = newView;
 				setup();
-				retransform();
+				//retransform();
 			}
 			/*
 				converts view-coordinates to world coordinates
@@ -205,7 +219,7 @@
 				like 10, 100, 1000 etc.
 				they also carry the corrosponding frequency with them.
 			*/
-			const std::vector<MajorDivision> & getDivisions() { return titles; }
+			const std::vector<MajorDivision> & getDivisions() { return transTitles; }
 
 			/*
 				transforms a world fraction into a view-coordinate
@@ -244,11 +258,23 @@
 			{
 				// reset raw data buffer
 				untrans.clear();
+				titles.clear();
+				lowerFreq = frequencyForCoord(bounds.left);
+				higherFreq = frequencyForCoord(bounds.right);
+
+				double minStartDecade = 0, minStopDecade = 0;
+
+				double nextLowPow10 = std::pow(10, std::ceil(std::log10(lowerFreq)));
+				double nextHighPow10 = std::pow(10, std::ceil(std::log10(higherFreq)));
+
+				minStartDecade = std::max(startDecade, nextLowPow10 / 10);
+				minStopDecade = std::min(lastDecade * 10, nextHighPow10);
+
 
 				// loop each decade
-				for (double curDecade = startDecade;
-					curDecade < lastDecade * 10.0;
-					curDecade *= 10) // wonder if these 10s are correctly accumulated, or one should use pow
+				for (double curDecade = minStartDecade;
+					curDecade < minStopDecade;
+					curDecade *= 10)
 				{
 					// check if drawing divisions of decades would be too small
 					if (spaceForDecade * boundsWidth > scale(minSpaceForDivision))
@@ -257,7 +283,10 @@
 						// calculating divisions inside the powers of 10's
 						for (int div = 1; div < numDivisions; ++div)
 						{
-
+							if (curDecade * (div + 2) < lowerFreq)
+								continue;
+							if (curDecade * (div - 1) > higherFreq)
+								break;
 							// see if we can print a subdivision - the function checks it itself. 
 							// if it returned true, it printed the lines and we dont have to print this line,
 							// since it is included.
@@ -290,7 +319,7 @@
 			inline double scaleFractionToFrequency(double fraction)
 			{
 				if (scaling == Scaling::Logarithmic)
-					return std::pow(10, fraction * (std::log10(stopFreq) - 1.0) + 1);
+					return Math::UnityScale::exp(fraction, startDecade, stopFreq);
 				else if (scaling == Scaling::Linear)
 					return fraction * stopFreq;
 
@@ -309,7 +338,7 @@
 				lastDecade = std::pow(10.0 /* startDecade? */, std::floor(std::log10(stopFreq)));
 				boundsWidth = bounds.right - bounds.left;
 				viewWidth = view.right - view.left;
-				minSpaceForDivision = boundsWidth * this->spaceForDecade;
+				//minSpaceForDivision = boundsWidth * this->spaceForDecade;
 			}
 			/*
 				recursive function that computes subdivisions of decades for logarithmic scaling
@@ -318,8 +347,12 @@
 			bool compileLogSubDecade(double offset, double step)
 			{
 				// the amount of space it would take to draw numDivision subdivions.
-				auto const higherFreq = offset + step * numDivisions;
-				double spaceForSub = (std::log10(higherFreq) - std::log10(offset)) * spaceForDecade;
+				auto const nextHigherFreq = offset + step * numDivisions;
+
+				if (nextHigherFreq < lowerFreq)
+					return true;
+				
+				double spaceForSub = (std::log10(nextHigherFreq) - std::log10(offset)) * spaceForDecade;
 				spaceForSub *= boundsWidth;
 				// due to the logarithmic nature of spacing, if the recursing fails once, everything forward will fail.
 				// this is a small optimization.
@@ -332,6 +365,8 @@
 					for (int i = 0; i < numDivisions; ++i)
 					{
 						double localOffset = i * step;
+						if (offset + localOffset > nextHigherFreq)
+							return false;
 						if (dontRecurse || !compileLogSubDecade(offset + localOffset, step / 10.0))
 						{
 							dontRecurse = true;
@@ -359,8 +394,8 @@
 				// in that case, dont bother doing this
 				if (printNextLine)
 				{
-					auto const coord = (std::log10(higherFreq) - 1) * spaceForDecade;
-					saveDivision(coord, higherFreq);
+					auto const coord = (std::log10(nextHigherFreq) - 1) * spaceForDecade;
+					saveDivision(coord, nextHigherFreq);
 				}
 				return true;
 			}
@@ -370,6 +405,8 @@
 			*/
 			void transformLines()
 			{
+				trans.clear();
+				transTitles.clear();
 
 				for (unsigned i = 0; i < untrans.size(); i++)
 				{
@@ -383,9 +420,17 @@
 
 				}
 
+				std::sort(titles.begin(), titles.end(), [](MajorDivision & l, MajorDivision & r) { return l.coord < r.coord; });
+
 				for (unsigned i = 0; i < titles.size(); i++)
 				{
-					titles[i].coord = transform(titles[i].coord);
+					auto const transformedCoord = transform(titles[i].coord);
+					if (bounds.left > transformedCoord) // not yet in scope
+						continue;
+					if (transformedCoord > bounds.right) // everything from this point is out of scope
+						break;
+
+					transTitles.push_back({ transformedCoord, titles[i].frequency });
 				}
 			}
 
@@ -395,6 +440,7 @@
 			std::vector<double> untrans;
 			std::vector<double> trans;
 			std::vector<MajorDivision> titles;
+			std::vector<MajorDivision> transTitles;
 			// the bounds of the window
 			Utility::Bounds<double> bounds;
 			Utility::Bounds<double> view;
@@ -406,6 +452,8 @@
 				startDecade,
 				lastDecade,
 				stopFreq;
+
+			double lowerFreq, higherFreq;
 			const int numDivisions = 10; // divisions of the graph, ie. 10, 20, 30,
 			Scaling scaling;
 		};

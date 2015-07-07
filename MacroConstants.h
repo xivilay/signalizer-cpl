@@ -99,7 +99,7 @@
 	#define CPL_NOOP while(false){}
 
 	#if defined(_WIN32) || defined (_WIN64)
-		#define isDebugged() IsDebuggerPresent()
+		#define isDebugged() !!IsDebuggerPresent()
 		#define debug_out(x) OutputDebugString(x)
 	#else
         // forward declare it
@@ -163,6 +163,7 @@
 	#define _rgb_get_blue(rgb)	(lower_byte((rgb)>>16))
 
 	#if defined(_MSC_VER) 
+		// oh god
 		#define NOMINMAX
 		#if _MSC_VER >= 1700
 			#define __CPP11__
@@ -209,6 +210,8 @@
 		#ifndef __func__
 			#define __func__ __FUNCTION__
 		#endif
+
+		#define __RESTRICT__ __restrict
 
 	#elif defined(__llvm__)
 		#define APE_API __cdecl
@@ -269,7 +272,17 @@
 		#error "Compiler not supported."
 	#endif
 
+	#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname) \
+		do \
+		{ \
+			std::string message = std::string("Runtime exception in ") + cpl::programInfo.name + " (" + cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + std::to_string(line) + " -> " + funcname; \
+			DBG(message); \
+			throw std::runtime_error(message); \
+		} while(0) 
 
+
+	#define CPL_RUNTIME_EXCEPTION(msg) \
+		CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__)
 
 	#if defined(__LLVM__) || defined(__GCC__)
 		// sets a standard for packing structs.
