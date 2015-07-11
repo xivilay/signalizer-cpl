@@ -295,6 +295,7 @@
 				#endif
 				return y;
 			}
+			
 			inline float fastcosine(float x)
 			{
 				const float B = static_cast<float>(4 / M_PI);
@@ -311,6 +312,18 @@
 				#endif
 				return y;
 			}
+
+			
+			template<typename Scalar>
+				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
+					nextPow2Inc(Scalar x)
+				{
+					if ((x & (x - 1)) == 0)
+						return x;
+					else
+						return nextPow2(x);
+				}
+
 			template<typename Scalar>
 				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
 				nextPow2(Scalar x)

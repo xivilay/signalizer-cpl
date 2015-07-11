@@ -50,7 +50,7 @@
 				Blackman,
 				Triangular,
 				Parzen,
-				Nutall,
+				Nuttall,
 				BlackmanNutall,
 				BlackmanHarris,
 				Gaussian,
@@ -58,6 +58,7 @@
 				DolphChebyshev,
 				Kaiser,
 				Ultraspherical,
+				End
 			};
 
 			class Window
@@ -197,48 +198,76 @@
 						static_cast<Scalar>(-9240.0/18608.0),
 						static_cast<Scalar>(-1430.0/18608.0)
 					};
-			};
+
 		
 
 
 
-			std::unique_ptr<Window> windowFromString(const std::string &);
-			//std::unique_ptr<Window> windowFromEnum(WindowTypes);
+				std::unique_ptr<Window> windowFromString(const std::string &);
 
-
-		/*	template<WindowTypes T>
-				struct windowFromEnum
+				inline const char * stringFromEnum(WindowTypes w)
 				{
-					static_assert(false, "cpl::dsp::windowFromEnum<T>: T is not a supported window.");
+					switch (w)
+					{
+					case cpl::dsp::WindowTypes::Hann: return "Hann";
+					case cpl::dsp::WindowTypes::Rectangular: return "Rectangular";
+					case cpl::dsp::WindowTypes::Hamming: return "Hamming";
+					case cpl::dsp::WindowTypes::FlatTop: return "Flat Top";
+					case cpl::dsp::WindowTypes::Blackman: return "Blackman";
+					case cpl::dsp::WindowTypes::Triangular: return "Triangular";
+					case cpl::dsp::WindowTypes::Parzen: return "Parzen";
+					case cpl::dsp::WindowTypes::Nuttall: return "Nuttall";
+					case cpl::dsp::WindowTypes::BlackmanNutall: return "Blackman-Nuttall";
+					case cpl::dsp::WindowTypes::BlackmanHarris: return "Blackman-Harris";
+					case cpl::dsp::WindowTypes::Gaussian: return "Gaussian";
+					case cpl::dsp::WindowTypes::Slepian: return "Slepian";
+					case cpl::dsp::WindowTypes::DolphChebyshev: return "Dolph-Chebyshev";
+					case cpl::dsp::WindowTypes::Kaiser: return "Kaiser";
+					case cpl::dsp::WindowTypes::Ultraspherical: return "Ultra spherical";
+					case cpl::dsp::WindowTypes::End:
+						break;
+					default:
+						break;
+					}
+
+					return "Errorneous window";
+				}
+				//std::unique_ptr<Window> windowFromEnum(WindowTypes);
+
+
+			/*	template<WindowTypes T>
+					struct windowFromEnum
+					{
+						static_assert(false, "cpl::dsp::windowFromEnum<T>: T is not a supported window.");
+					};*/
+
+				template<typename Scalar, WindowTypes win>
+					struct windowFromEnum;
+
+				template<typename Scalar>
+					struct windowFromEnum <Scalar, WindowTypes::Hann>
+					{
+						using type = Windows::Hann < Scalar > ;
+					};
+
+				template<typename Scalar>
+					struct windowFromEnum <Scalar, WindowTypes::Hamming>
+					{
+						using type = Windows::Hamming < Scalar > ;
+					};
+
+				template<typename Scalar>
+					struct windowFromEnum <Scalar, WindowTypes::Blackman>
+					{
+						using type = Windows::Blackman < Scalar > ;
+					};
+
+				/*template<typename Scalar>
+				struct windowFromEnum < Scalar, WindowTypes::Hann >
+				{
+
 				};*/
-
-			template<typename Scalar, WindowTypes win>
-				struct windowFromEnum;
-
-			template<typename Scalar>
-				struct windowFromEnum <Scalar, WindowTypes::Hann>
-				{
-					using type = Windows::Hann < Scalar > ;
-				};
-
-			template<typename Scalar>
-				struct windowFromEnum <Scalar, WindowTypes::Hamming>
-				{
-					using type = Windows::Hamming < Scalar > ;
-				};
-
-			template<typename Scalar>
-				struct windowFromEnum <Scalar, WindowTypes::Blackman>
-				{
-					using type = Windows::Blackman < Scalar > ;
-				};
-
-			/*template<typename Scalar>
-			struct windowFromEnum < Scalar, WindowTypes::Hann >
-			{
-
-			};*/
-
+			};
 		};
 	};
 #endif

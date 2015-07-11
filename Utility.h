@@ -197,7 +197,7 @@
 						Scalar bottom;
 					};
 
-					Scalar dist() const { return std::abs(left - bottom); }
+					Scalar dist() const { return std::abs(left - right); }
 				};
 
 			template <class T> struct maybe_delete
@@ -291,6 +291,7 @@
 					{
 						// ((Derived*)this) is actually deconstructed at this point...
 						// UB happens if the pointer is dereferenced
+						// this cast can only fail at compile-time
 						if (Derived * derivedServer = static_cast<Derived *>(this))
 						{
 							for (Client * client : clients)
@@ -298,14 +299,14 @@
 								client->onDestruction(derivedServer);
 							}
 						}
-						else
+						/*else --- null pointer handling?
 						{
 							// in fact, this shouldn't work, as well?
 							throw std::runtime_error(
 								std::string("Fatal error: ") + typeid(this).name() +
 								" doesn't derive from " + typeid(DestructionServer<Derived> *).name()
 							);
-						}
+						}*/
 					}
 				protected:
 					// make it impossible to construct this without deriving from this class.

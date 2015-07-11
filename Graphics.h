@@ -71,7 +71,7 @@
 						// move first - bad
 						glTranslatef(static_cast<GLfloat>(position.x), static_cast<GLfloat>(position.y), static_cast<GLfloat>(position.z));
 						// to avoid clipping. this is probably not how it is done.
-						glScalef(1, 1, 0.1);
+						glScalef(1, 1, 0.1f);
 						glRotatef(static_cast<GLfloat>(rotation.x), 1.0f, 0.0f, 0.0f);
 						glRotatef(static_cast<GLfloat>(rotation.y), 0.0f, 1.0f, 0.0f);
 						glRotatef(static_cast<GLfloat>(rotation.z), 0.0f, 0.0f, 1.0f);
@@ -274,7 +274,7 @@
 				inline void blend(float intensity, uint8_t channel)
 				{
 					auto p1 = data + channel;
-					*p1 = static_cast<uint8_t>(*p1 + ((0xFF - *p1) >> 1)) * intensity;
+					*p1 = static_cast<uint8_t>((*p1 + ((0xFF - *p1) >> 1)) * intensity);
 				}
 				inline void blendOtherChannels(uint8_t channel)
 				{

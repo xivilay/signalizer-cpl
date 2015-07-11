@@ -125,7 +125,7 @@
 
 					double sizeFraction = 1.0 / std::log(upperFrac / lowerFrac);
 
-					Types::v4sf invDivisor = _mm_set1_ps(static_cast<float>((sizeFraction));
+					Types::v4sf invDivisor = _mm_set1_ps(static_cast<float>(sizeFraction));
 					Types::v4sf minDivisor = _mm_set1_ps(static_cast<float>(1.0 / lowerFrac));
 					Types::v4sf scale = _mm_set1_ps(static_cast<float>(bounds.dist()));
 					Types::v4sf input;

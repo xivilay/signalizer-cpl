@@ -149,6 +149,20 @@
 			public CSubView,
 			juce::OpenGLRenderer
 		{
+
+		public:
+			
+			COpenGLView()
+			{
+				graphicsStamp = juce::Time::getHighResolutionTicks();
+				openGLStamp = juce::Time::getHighResolutionTicks();
+				graphicsDelta = openGLDelta = 0.0;
+			}
+
+			/// <summary>
+			/// Repaints the main content. Use this for updating the 2D graphics juce system,
+			/// or periodically, if the view isn't continously repainting.
+			/// </summary>
 			void repaintMainContent() override
 			{
 				repaint();
@@ -158,20 +172,62 @@
 
 			virtual void initOpenGL() {}
 			virtual void closeOpenGL() {}
+			virtual void onOpenGLRendering() {}
+			virtual void onGraphicsRendering(juce::Graphics & g) {}
 
+			/// <summary>
+			/// Instructs the OpenGLContext to render this view, along with some other
+			/// work behind the scenes. Drop-in replacement for OpenGLContext::attachTo()
+			/// </summary>
+			/// <param name="ctx"></param>
 			void attachToOpenGL(juce::OpenGLContext & ctx) override
 			{
 				ctx.setRenderer(this);
 				CView::attachToOpenGL(ctx);
 				ctx.attachTo(*this);
 			}
+
 			void detachFromOpenGL(juce::OpenGLContext & ctx) override
 			{
 				CView::detachFromOpenGL(ctx);
 				ctx.setRenderer(nullptr);
 			}
+			/// <summary>
+			/// Returns the time it took from the last frame started rendering, till this frame started rendering
+			/// This can be used as a fraction of how much time you should proceed in this frame.
+			/// Time is in seconds.
+			/// </summary>
+			/// <returns></returns>
+			inline double graphicsDeltaTime() const
+			{
+				return graphicsDelta;
+			}
+			/// <summary>
+			/// Returns the time it took from the last frame started rendering, till this frame started rendering
+			/// This can be used as a fraction of how much time you should proceed in this frame.
+			/// Time is in seconds.
+			/// </summary>
+			/// <returns></returns>
+			inline double openGLDeltaTime() const
+			{
+				return openGLDelta;
+			}
 
 		protected:
+			
+			void renderOpenGL() override final
+			{
+				openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);
+				onOpenGLRendering();
+				openGLStamp = juce::Time::getHighResolutionTicks();
+			}
+
+			void paint(juce::Graphics & g) override final
+			{
+				graphicsDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - graphicsStamp);
+				onGraphicsRendering(g);
+				graphicsStamp = juce::Time::getHighResolutionTicks();
+			}
 
 			void newOpenGLContextCreated() override
 			{
@@ -189,6 +245,13 @@
 			{
 				CView::detachFromOpenGL();
 			}
+
+		protected:
+			double graphicsDelta;
+			double openGLDelta;
+
+			decltype(juce::Time::getHighResolutionTicks()) graphicsStamp;
+			decltype(juce::Time::getHighResolutionTicks()) openGLStamp;
 		};
 
 		/*

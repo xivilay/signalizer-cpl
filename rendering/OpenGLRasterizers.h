@@ -52,10 +52,10 @@
 
 				inline void drawAt(OpenGLEngine::Vertex x1, OpenGLEngine::Vertex y1, OpenGLEngine::Vertex x2, OpenGLEngine::Vertex y2)
 				{
-					glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
-					glTexCoord2f(0, 1); glVertex3f(0, 1, 0);
-					glTexCoord2f(1, 1); glVertex3f(1, 1, 0);
-					glTexCoord2f(1, 0); glVertex3f(1, 0, 0);
+					glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
+					glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 1.0f, 0.0f);
+					glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+					glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 0.0f, 0.0f);
 				}
 
 				inline void setColour(const juce::Colour & colour)

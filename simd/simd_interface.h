@@ -176,29 +176,9 @@
 				}*/
 
 
-			template<unsigned i>
-				inline __m256 broadcast(__m256 v)
-				{
-					return _mm256_permute_ps(_mm256_permute2f128_ps(v, v, (i >> 2) | ((i >> 2) << 4)), _MM_SHUFFLE(i & 3, i & 3, i & 3, i & 3));
-				}
-	
-			template<unsigned i>
-				inline __m128 broadcast(__m128 v)
-				{
-					return _mm_shuffle_ps(v, v, _MM_SHUFFLE(i, i, i, i));
-				}
-			
-			template<>
-				inline v8sf broadcast(const float * _in)
-				{
-					return _mm256_broadcast_ss(_in);
-				}					
 
-			template<>
-				inline v4sd broadcast(const double * _in)
-				{
-					return _mm256_set1_pd(*_in);
-				}
+
+
 
 			template<typename V, class VectorPtrs>					
 				inline typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
@@ -207,11 +187,7 @@
 					return _mm_set_ps(*p[0], *p[1], *p[2], *p[3]);
 				}
 
-			template<>
-				inline v2sd broadcast(const double * _in)
-				{
-					return _mm_set1_pd(*_in);
-				}
+
 
 			template<typename V, class VectorPtrs>
 				inline typename std::enable_if<std::is_same<V, typename scalar_of<V>::type>::value, typename scalar_of<V>::type>::type
@@ -320,12 +296,7 @@
 					return _mm256_set1_pd(in);
 				}
 
-			template<>
-				inline v4sf broadcast(const float * _in)
-				{
-					return set1<v4sf>(*_in);
-				}
-			
+
 			template<>
 				inline v8sf loadu(const float *  in)
 				{
@@ -336,6 +307,18 @@
 				inline v8sf load(const float * in)
 				{
 					return _mm256_load_ps(in);
+				}
+
+			template<>
+				inline float load(const float * in)
+				{
+					return *in;
+				}
+
+			template<>
+				inline double load(const double * in)
+				{
+					return *in;
 				}
 
 			template<>
@@ -360,6 +343,57 @@
 				inline v4sf loadu(const float * in)
 				{
 					return _mm_loadu_ps(in);
+				}
+
+
+			// broadcasts has to be declared after set1<>'s because the broadcasts may explicitly initialize the templates
+
+			template<>
+				inline float broadcast(const float * _in)
+				{
+					return *_in;
+				}
+
+			template<>
+				inline double broadcast(const double * _in)
+				{
+					return *_in;
+				}
+
+			template<unsigned i>
+				inline __m256 broadcast(__m256 v)
+				{
+					return _mm256_permute_ps(_mm256_permute2f128_ps(v, v, (i >> 2) | ((i >> 2) << 4)), _MM_SHUFFLE(i & 3, i & 3, i & 3, i & 3));
+				}
+	
+			template<unsigned i>
+				inline __m128 broadcast(__m128 v)
+				{
+					return _mm_shuffle_ps(v, v, _MM_SHUFFLE(i, i, i, i));
+				}
+			
+			template<>
+				inline v8sf broadcast(const float * _in)
+				{
+					return _mm256_broadcast_ss(_in);
+				}					
+
+			template<>
+				inline v4sd broadcast(const double * _in)
+				{
+					return _mm256_set1_pd(*_in);
+				}
+
+			template<>
+				inline v4sf broadcast(const float * _in)
+				{
+					return set1<v4sf>(*_in);
+				}
+
+			template<>
+				inline v2sd broadcast(const double * _in)
+				{
+					return _mm_set1_pd(*_in);
 				}
 
 			// ps
