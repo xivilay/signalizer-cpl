@@ -132,6 +132,7 @@
 			public CView,
 			public juce::Component
 		{
+		public:
 			juce::Component * getWindow() override { return this; }
 
 		};
