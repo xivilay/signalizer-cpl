@@ -72,6 +72,7 @@
 			template<bool scale = true, bool testInfinity = false>
 				double transform(double fraction)
 				{
+					double point = 0;
 					using namespace cpl::Math;
 					if (scale)
 					{
@@ -96,24 +97,27 @@
 					{
 						switch (scaling)
 						{
-						case Linear:
-							return UnityScale::Inv::linear<double>(fraction, lowerFrac, upperFrac);
-						case Logarithmic:
-							if (testInfinity)
+							case Linear:
+								return UnityScale::Inv::linear<double>(fraction, lowerFrac, upperFrac);
+							case Logarithmic:
 							{
-								double point = UnityScale::Inv::exp<double>(fraction, lowerFrac, upperFrac);
-								if (std::isinf(point))
-									return 0;
+
+								if (testInfinity)
+								{
+									point = UnityScale::Inv::exp<double>(fraction, lowerFrac, upperFrac);
+									if (std::isinf(point))
+										return 0;
+									else
+										return point;
+								}
 								else
 									return point;
 							}
-							else
-								return point;
 						}
 					}
 				}
 
-			template<class Vector, bool aligned = false, bool scale = true, bool testInfinity = false>
+			template<class Vector, bool aligned = false, bool doScale = true, bool testInfinity = false>
 				void transformRangef(Vector & fractions, std::size_t size)
 				{
 
@@ -121,7 +125,7 @@
 					// log10(y / _min) / log10(_max / _min);
 					// except we use the natural logarithm here, which incurs no change
 
-					std::size_t remainer = size % 4; // quadruple-vectorized
+					std::size_t remainder = size % 4; // quadruple-vectorized
 
 					double sizeFraction = 1.0 / std::log(upperFrac / lowerFrac);
 
@@ -141,7 +145,7 @@
 						input = _mm_mul_ps(input, minDivisor);
 						input = cpl::sse::log_ps(input);
 						input = _mm_mul_ps(input, invDivisor);
-						if (scale)
+						if (doScale)
 							input = _mm_mul_ps(input, scale);
 						if (aligned)
 							_mm_store_ps(&fractions[i], input);

@@ -313,16 +313,6 @@
 				return y;
 			}
 
-			
-			template<typename Scalar>
-				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
-					nextPow2Inc(Scalar x)
-				{
-					if ((x & (x - 1)) == 0)
-						return x;
-					else
-						return nextPow2(x);
-				}
 
 			template<typename Scalar>
 				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
@@ -341,6 +331,16 @@
 					while (x >>= 1) 
 						power <<= 1;
 					return power;
+				}
+
+			template<typename Scalar>
+				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
+				nextPow2Inc(Scalar x)
+				{
+					if ((x & (x - 1)) == 0)
+						return x;
+					else
+						return nextPow2(x);
 				}
 
 			template<typename Scalar = double>
