@@ -238,6 +238,8 @@
 		#define __alignas(x) alignas(x)
 		#define __alignof(x) alignof(x)
 
+		#define __RESTRICT__ __restrict
+
 		// Enable inclusion of all simd headers.
 		#ifndef __SSE__
 			#define __SSE__

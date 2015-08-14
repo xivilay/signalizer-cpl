@@ -52,7 +52,10 @@
 			typedef __m128 v4sf;
 			// avx-vector of 8 floats
 			typedef __m256 v8sf;
-			// sse-vector of 2 doubles
+#ifdef __LLVM__
+
+#endif
+
 			typedef __m128d v2sd;
 			// avx-vector of 4 doubles
 			typedef __m256d v4sd;

@@ -68,7 +68,7 @@
 
 				void calculatePole()
 				{
-					pole = static_cast<ScalarTy>(std::pow<double>(decay, 1.0 / (sampleRate * fractionateMul)));
+					pole = static_cast<ScalarTy>(std::pow(decay, (Scalar)(1.0) / (sampleRate * fractionateMul)));
 
 				}
 
@@ -86,6 +86,7 @@
 				template<class Vector>
 				void processRange(Vector & oldFilters, Vector newFilters, std::size_t size)
 				{
+#if 0
 					auto remainder = size % 4;
 					Types::v4sf pole = _mm_set1_ps(pole);
 					Types::v4sf input, output, mask, theta;
@@ -106,6 +107,7 @@
 						_mm_store_ps(of + t, theta);
 
 					}
+#endif
 				}
 
 				
