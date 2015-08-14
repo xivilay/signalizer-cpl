@@ -80,10 +80,27 @@
 			virtual void removeEventListenerr(EventListener * el) { eventListeners.erase(el); }
 			virtual void repaintMainContent() {};
 			virtual void visualize() {};
+			/// <summary>
+			/// The view should stop any processing.
+			/// </summary>
 			virtual void suspend() {};
+			/// <summary>
+			/// Indicates the view should resume any previous processing
+			/// </summary>
 			virtual void resume() {  };
+			/// <summary>
+			/// Indicates that the view should not react to new audio
+			/// </summary>
 			virtual void freeze() {};
+			/// <summary>
+			/// Inverse of freeze
+			/// </summary>
 			virtual void unfreeze() {};
+			/// <summary>
+			/// Called when process-specific buffers (delay-lines etc.) and variables should be reset to a default state.
+			/// It doesn't indicate to reset the program or settings.
+			/// </summary>
+			virtual void resetState() {};
 			virtual void attachToOpenGL(juce::OpenGLContext & ctx) { detachFromOpenGL();  oglc = &ctx; }
 			virtual void detachFromOpenGL(juce::OpenGLContext & ctx) 
 			{ 
@@ -95,12 +112,14 @@
 			void detachFromOpenGL() { if (oglc) oglc->detach(); oglc = nullptr; }
 			virtual std::unique_ptr<GraphicComponent> createEditor() { return nullptr; }
 
-			bool isOpenGL() { return oglc != nullptr; }
+			bool isOpenGL() const noexcept { return oglc != nullptr; }
 			juce::OpenGLContext * getAttachedContext() const noexcept { return oglc; }
 			bool shouldSynchronize() { return isSynced; }
 			void setSyncing(bool shouldSync) { isSynced = shouldSync; }
 			void setApproximateRefreshRate(int ms) { refreshRate = ms; }
 			void setSwapInterval(int interval) { bufferSwapInterval = interval; }
+			int getSwapInterval() const noexcept { return isOpenGL() ? oglc->getSwapInterval() : 1; }
+			
 		protected:
 
 			void notifyDestruction()
@@ -217,6 +236,10 @@
 			
 			void renderOpenGL() override final
 			{
+				/// <summary>
+				///  if the stack gets corrupted, the next variable should not have been overwritten.
+				/// </summary>
+				volatile thread_local COpenGLView * _stackSafeThis = this;
 				openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);
 				onOpenGLRendering();
 				openGLStamp = juce::Time::getHighResolutionTicks();

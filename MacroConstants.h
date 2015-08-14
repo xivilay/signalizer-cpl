@@ -43,12 +43,12 @@
 	#endif
 
 	#if defined(_WIN64) || defined(__x86_64__)
-		typedef unsigned long long XWORD;
+		typedef std::uint64_t XWORD;
 		#define __M_64BIT_ 1
 		#define _ARCH_STRING "64-bit"
 	#else
 		#define __M_32BIT_
-		typedef unsigned long XWORD;
+		typedef std::uint32_t XWORD;
 		#define _ARCH_STRING "32-bit"
 	#endif
 
@@ -74,7 +74,7 @@
 	#else
 
     #endif
-    #define cwarn(text) message("[" __FILE__ "] (" __tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
+    //#define cwarn(text) message("[" __FILE__ "] (" __tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
 
 	// an 'operator' that retrieves the unqualified type of the expression x
 	// useful when you want to create a lvalue-type from any expression 
@@ -84,11 +84,7 @@
 		#define __INTEL_ASSEMBLY_
 		// gcc or msvc assembly syntax?
 		#ifdef _MSC_VER
-			#ifdef __M_64BIT_
-				#define DBG_BREAK() DebugBreak();
-			#else
-				#define DBG_BREAK() __asm int 3
-			#endif
+			#define DBG_BREAK() DebugBreak();
 		#else
 			#define DBG_BREAK() __asm__("int $0x3")
 		#endif
@@ -201,8 +197,11 @@
 			#endif
 		#endif
 		#define __llvm_DummyNoExcept
-		#define __alignas(x) __declspec(align(x))
-
+		#if _MSC_VER >= 1900
+			#define __alignas(x) alignas(x)
+		#else
+			#define __alignas(x) __declspec(align(x))
+		#endif
 		#define __thread_local __declspec(thread)
 		#define siginfo_t void
 		#define __noexcept
@@ -213,7 +212,13 @@
 
 		#define __RESTRICT__ __restrict
 
+		#define FILE_LINE_LINK __FILE__ "(" __tostring(__LINE__) ") : "
+		#define cwarn(exp) (FILE_LINE_LINK  " -> " __FUNCTION__ ": warning: " exp)
+
+
 	#elif defined(__llvm__)
+		#define __C99__
+		#define __C11__
 		#define APE_API __cdecl
 		#define APE_STD_API __cdecl
 		#define APE_API_VARI __cdecl
@@ -258,6 +263,9 @@
 		#ifndef __AVX2__
 			#define __AVX2__
 		#endif
+		
+		#define cwarn(exp) ("warning: " exp)
+
 	#elif defined(__GNUG__)
 		#if __GNUG__ >= 4
 
@@ -268,6 +276,10 @@
 		#define APE_API_VARI __cdecl
 		#define __GCC__
 		#define __llvm_DummyNoExcept
+
+		#define cwarn(exp) ("warning: " exp)
+
+
 	#else
 		#error "Compiler not supported."
 	#endif
@@ -275,8 +287,9 @@
 	#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname) \
 		do \
 		{ \
-			std::string message = std::string("Runtime exception in ") + cpl::programInfo.name + " (" + cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + std::to_string(line) + " -> " + funcname; \
+			std::string message = std::string("Runtime exception in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
 			DBG(message); \
+			if(isDebugged()) DBG_BREAK(); \
 			throw std::runtime_error(message); \
 		} while(0) 
 

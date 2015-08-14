@@ -262,6 +262,144 @@
 				lowerFreq = frequencyForCoord(bounds.left);
 				higherFreq = frequencyForCoord(bounds.right);
 
+				if (scaling == Scaling::Logarithmic)
+					compileLogGraph();
+				else
+					compileLinearGraph();
+
+				transformLines();
+			}
+
+		protected:
+
+			/*
+				recursive function that computes subdivisions of decades for linear scaling
+				- do not call directly!
+			*/
+			bool compileLinearSubDecade(double offset, double step)
+			{
+				// the amount of space it would take to draw numDivision subdivions.
+				auto const nextHigherFreq = offset + step * numDivisions;
+
+				if (nextHigherFreq < lowerFreq)
+					return true;
+
+				double spaceForSub = (nextHigherFreq - offset) / stopFreq;
+				spaceForSub *= boundsWidth;
+				// due to the logarithmic nature of spacing, if the recursing fails once, everything forward will fail.
+				// this is a small optimization.
+				bool dontRecurse = false;
+				bool printNextLine = true;
+
+				if (spaceForSub > scale(minSpaceForDivision))
+				{
+
+					for (int i = 0; i < numDivisions; ++i)
+					{
+						double localOffset = i * step;
+						if (offset + localOffset > nextHigherFreq)
+							return false;
+						if (dontRecurse || !compileLinearSubDecade(offset + localOffset, step / 10.0))
+						{
+							dontRecurse = true;
+							if (printNextLine && i > 0) // quirky..
+								saveLine((offset + localOffset) / stopFreq);
+						}
+						else
+						{
+							// a bit arcane logic here. this has to be here to prevent the last part of this
+							// function overwriting the last possible subdivision.
+							// another method to all this logic is sorting and removing duplicate entries in
+							// this->untrans and this->titles
+							printNextLine = false;
+							continue;
+						}
+						printNextLine = true;
+					}
+
+				}
+				else
+				{
+					return false;
+				}
+				// this part gets excluded if the last part of these subdivisions was printed using a recursive call
+				// in that case, dont bother doing this
+				if (printNextLine)
+				{
+					auto const coord = nextHigherFreq / stopFreq;
+					saveDivision(coord, nextHigherFreq);
+				}
+				return true;
+			}
+
+			void compileLinearGraph()
+			{
+
+				// loop each decade
+
+				double curDecade = lastDecade;
+				double minSpace = scale(minSpaceForDivision);
+				double scaledBounds = boundsWidth / stopFreq;
+				while(true)
+				{
+					// to avoid painting smaller divisions onto major.
+					bool subDivsWillBeDivisions = false;
+
+					// check if drawing divisions of decades would be too small
+					if (curDecade * scaledBounds > minSpace)
+					{
+						if (curDecade * scaledBounds > minSpace * 10)
+							subDivsWillBeDivisions = true;
+
+						auto currentFreq = cpl::Math::roundToNextMultiplier(lowerFreq, curDecade);
+
+						while (currentFreq < higherFreq)
+						{
+							if (std::fmod(currentFreq, curDecade * 10.0) != 0.0)
+							{
+								saveDivision(currentFreq / stopFreq, currentFreq);
+
+							}
+
+							currentFreq += curDecade;
+
+						}
+						
+
+					}
+					else
+					{
+						break;
+					}
+
+					auto subDivSpace = curDecade / 10.0;
+
+
+					// draw subdivisions of this decade.
+					if (!subDivsWillBeDivisions && (subDivSpace * scaledBounds > (minSpace * 0.25))) // trigger subdivisions before major divisions
+					{
+
+
+						auto currentSubFreq = cpl::Math::roundToNextMultiplier(lowerFreq, subDivSpace);
+						while (currentSubFreq < higherFreq)
+						{
+							// avoid submitting lines our 'parent' may have done
+							if (std::fmod(currentSubFreq, curDecade) != 0.0)
+							{
+								saveLine(currentSubFreq / stopFreq);
+
+							}
+							currentSubFreq += subDivSpace;
+						}
+
+					}
+
+					curDecade /= 10.0;
+				}
+			}
+
+			void compileLogGraph()
+			{
 				double minStartDecade = 0, minStopDecade = 0;
 
 				double nextLowPow10 = std::pow(10, std::ceil(std::log10(lowerFreq)));
@@ -273,7 +411,7 @@
 
 				// loop each decade
 				for (double curDecade = minStartDecade;
-					curDecade < minStopDecade;
+				curDecade < minStopDecade;
 					curDecade *= 10)
 				{
 					// check if drawing divisions of decades would be too small
@@ -308,11 +446,8 @@
 					// mark current decade
 					saveDivision((std::log10(curDecade / 10.0)) * spaceForDecade, curDecade);
 				}
-
-				transformLines();
 			}
 
-		protected:
 			/*
 				Maps transformed fraction to a frequency
 			*/
@@ -334,12 +469,16 @@
 			{
 				// the fractionate space for each decade, a general scaling factor
 				spaceForDecade = 1.0 / (std::log10(stopFreq) - 1.0);
+
 				// this is where to start the graph
 				lastDecade = std::pow(10.0 /* startDecade? */, std::floor(std::log10(stopFreq)));
 				boundsWidth = bounds.right - bounds.left;
 				viewWidth = view.right - view.left;
 				//minSpaceForDivision = boundsWidth * this->spaceForDecade;
 			}
+
+
+
 			/*
 				recursive function that computes subdivisions of decades for logarithmic scaling
 				- do not call directly!
@@ -399,6 +538,7 @@
 				}
 				return true;
 			}
+
 			/*
 				transforms the computed lines into coordinates, only storing those that are inside
 				of the bounds.

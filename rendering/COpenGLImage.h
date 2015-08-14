@@ -39,6 +39,8 @@
 		{
 			class COpenGLImage
 			{
+				static const GLenum oglFormat = GL_RGBA;
+				static const juce::Image::PixelFormat juceFormat = juce::Image::PixelFormat::ARGB;
 
 			public:
 
@@ -53,7 +55,7 @@
 					OpenGLImageDrawer(COpenGLImage & img, COpenGLStack & s)
 						: Rasterizer(s), image(img)
 					{
-						image.text.bind();
+						img.bind();
 						glBegin(GL_QUADS);
 						glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 					}
@@ -73,16 +75,19 @@
 						float width = float(image.width) / image.textureWidth;
 						float height = float(image.height) / image.textureHeight;
 
-						glTexCoord2f(xoffset * width, 0.0f); glVertex2f(-1.0f, -1.0f);
-						glTexCoord2f(xoffset * width, height); glVertex2f(-1.0f, 1.0f);
-						glTexCoord2f(width, height); glVertex2f(1.0f - xoffset * 2, 1.0f);
-						glTexCoord2f(width, 0.0f); glVertex2f(1.0f - xoffset * 2, -1.0f);
+						float onePixel = 1.0f / image.width;
 
+						glTexCoord2f(0, 0.0f);					glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, -1.0f);
+						glTexCoord2f(0, height);				glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, 1.0f);
+						glTexCoord2f(xoffset * width - onePixel, height);	glVertex2f(1.0f, 1.0f);
+						glTexCoord2f(xoffset * width - onePixel, 0.0f);	glVertex2f(1.0f, -1.0f);
 
-						glTexCoord2f(0, 0.0f); glVertex2f(1.0f - xoffset * 2, -1.0f);
-						glTexCoord2f(0, height); glVertex2f(1.0f - xoffset * 2, 1.0f);
-						glTexCoord2f(xoffset * width, height); glVertex2f(1.0f, 1.0f);
-						glTexCoord2f(xoffset * width, 0.0f); glVertex2f(1.0f, -1.0f);
+						xoffset -= onePixel *0.5f;
+
+						glTexCoord2f(xoffset * width, 0.0f);	glVertex2f(-1.0f, -1.0f);
+						glTexCoord2f(xoffset * width, height);	glVertex2f(-1.0f, 1.0f);
+						glTexCoord2f(width, height);			glVertex2f(1.0f - xoffset * 2, 1.0f);
+						glTexCoord2f(width, 0.0f);				glVertex2f(1.0f - xoffset * 2, -1.0f);
 
 					}
 
@@ -112,7 +117,7 @@
 					~OpenGLImageDrawer()
 					{
 						glEnd();
-						image.text.unbind();
+						image.unbind();
 					}
 
 				private:
@@ -121,7 +126,9 @@
 				};
 
 				COpenGLImage()
-					: preserveAcrossContexts(false), height(), width(), textureHeight(), textureWidth()
+				: 
+					preserveAcrossContexts(false), height(), width(), textureHeight(), textureWidth(), textureID(),
+					fillColour(juce::Colours::black)
 				{
 
 				}
@@ -142,26 +149,40 @@
 						return false;*/
 
 					const bool flip = true;
-					const bool offset = true;
-					juce::Image newContents(juce::Image::ARGB, textureWidth, textureHeight, false);
+					const bool offset = false;
+					/*juce::Image newContents(juce::Image::RGB, textureWidth, textureHeight, false);
 					{
 						juce::Graphics g(newContents);
 						g.setOpacity(1.0f);
 						g.fillAll(Colours::blue);
 						// copy and rescale the subsection onto the new image
 						
-						g.drawImage(oldContents, 0, offset ? textureHeight - height : 0, width, height, 0, 0, oldContents.getWidth(), oldContents.getHeight());
-					}
+						g.drawImage(oldContents, 
+							0, offset ? textureHeight - height : 0, width, height, 
+							0, 0, oldContents.getWidth(), oldContents.getHeight());
+					}*/
 
-					text.loadImage(newContents);
+					loadImageInternal(oldContents);
 
 					return true;
 				}
 
 				void createEmptyImage()
 				{
-					juce::Image newContents(juce::Image::ARGB, textureWidth, textureHeight, false);
-					text.loadImage(newContents);
+					if (fillColour.getPixelARGB().getInRGBAMemoryOrder() == 0) // background colour is black.
+					{
+						juce::Image newContents(juceFormat, textureWidth, textureHeight, true);
+						loadImageInternal(newContents);
+					}
+					else
+					{
+						juce::Image newContents(juceFormat, textureWidth, textureHeight, false);
+						{
+							juce::Graphics g(newContents);
+							g.fillAll(fillColour);
+						}
+						loadImageInternal(newContents);
+					}
 
 				}
 
@@ -171,7 +192,7 @@
 				/// </summary>
 				void load()
 				{
-					text.loadImage(currentContents);
+					loadImageInternal(currentContents);
 					currentContents = juce::Image::null;
 				}
 
@@ -181,35 +202,17 @@
 				/// </summary>
 				bool offload()
 				{
-					text.bind();
-
-					// copy texture into memory
-					
-					juce::Image offloaded(juce::Image::PixelFormat::RGB, textureWidth, textureHeight, false);
+					if (hasContent())
 					{
-						juce::Image::BitmapData data(offloaded, juce::Image::BitmapData::readWrite);
+						bind();
 
-						glGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data.data);
-
-						
-						
-						if (glGetError() != GL_NO_ERROR)
+						if (!transferToMemory())
 							return false;
+						// release the texture.
+						releaseTexture();
+						return true;
 					}
-
-					// chop off irrelvant sections.
-					// can use a memory copy operation here instead, but this is fail safe.
-					// can also directly assign if width == actualWidth and height == actualHeight
-					currentContents = juce::Image(juce::Image::PixelFormat::ARGB, width, height, false);
-					{
-						juce::Graphics g(currentContents);
-						g.setOpacity(1.0f);
-						g.fillAll(Colours::green);
-						g.drawImage(offloaded, 0, 0, width, height, 0, 0, width, height, false);
-					}
-					// release the texture.
-					text.release();
-					return true;
+					return false;
 				}
 
 				/// <summary>
@@ -219,38 +222,31 @@
 				void release()
 				{
 					currentContents = juce::Image::null;
-					text.release();
+					releaseTexture();
 				}
 
-				void loadImageInternal(const juce::Image & oldContents)
+				void releaseTexture()
 				{
-					
-				}
-
-
-				bool internalResize(std::size_t newWidth, std::size_t newHeight)
-				{
-					std::size_t newActualWidth(newWidth), newActualHeight(newHeight);
-
-					if (newWidth == 0 || newHeight == 0)
-						return false;
-
-					if (!text.isValidSize(newWidth, newHeight))
+					if (textureID != 0)
 					{
-						newActualWidth = Math::nextPow2(newWidth);
-						newActualHeight = Math::nextPow2(newWidth);
-					}
+						glDeleteTextures(1, &textureID);
 
-					// changes sizes, so the new load will rescale it.
-					width = newWidth; height = newHeight; textureWidth = newActualWidth; textureHeight = newActualHeight;
+						textureID = 0;
+						//width = 0;
+						//height = 0;
+					}
 				}
+
+
+
 				
 				/// <summary>
 				/// 'Zooms' in/out vertically. Needs the active context.
 				/// </summary>
 				bool scaleTextureVertically(float amount)
 				{
-					offload();
+					if (!transferToMemory())
+						return false;
 
 					
 					float upscale = std::min(1.0f, amount);
@@ -260,11 +256,14 @@
 					float sourceY = (height - sourceHeight) * 0.5f;
 					float destY = (height - destHeight) * 0.5f;
 
-					juce::Image upload(juce::Image::PixelFormat::RGB, width, height, true);
+					juce::Image upload(juceFormat, width, height, false);
 					{
 						juce::Graphics g(upload);
-						g.fillAll(Colours::blue);
-						g.drawImage(currentContents, 0, destY, width, destHeight, 0, sourceY, width, sourceHeight, false);
+						g.fillAll(fillColour);
+						g.drawImage(currentContents, 
+							0, destY, width, destHeight,
+							0, sourceY, width, sourceHeight,
+							false);
 					}
 
 					loadImage(upload);
@@ -272,31 +271,76 @@
 					return true;
 				}
 
-				bool resize(std::size_t newWidth, std::size_t newHeight, bool copyOldContents = true)
+				bool freeLinearVerticalTranslation(cpl::Utility::Bounds<double> oldRect, cpl::Utility::Bounds<double> newRect)
+				{
+					if (hasContent() && !transferToMemory())
+						return false;
+					auto oldHeight = std::abs(oldRect.bottom - oldRect.top);
+
+					if (oldHeight == 0.0)
+						CPL_RUNTIME_EXCEPTION("Height is 0!");
+
+					auto topDiff = (oldRect.top - newRect.top) / oldHeight;
+					auto botDiff = (newRect.bottom - oldRect.bottom) / oldHeight;
+
+					// y-offset into image
+					auto sourceTop = std::abs(std::min(0.0, topDiff * height));
+					auto destTop = std::abs(std::max(0.0, topDiff * height));
+					auto sourceBot = height - std::abs(std::min(0.0, botDiff * height));
+					auto destBot = height - std::abs(std::max(0.0, botDiff * height));
+
+					auto destHeight = destBot - destTop;
+					auto sourceHeight = sourceBot - sourceTop;
+
+
+					auto r = [](double in) { return cpl::Math::round<int, double>(in); };
+					juce::Image upload(juceFormat, width, height, false);
+					{
+						juce::Graphics g(upload);
+						g.setImageResamplingQuality(juce::Graphics::ResamplingQuality::mediumResamplingQuality);
+						g.setOpacity(1.0f);
+						g.fillAll(fillColour);
+						g.drawImage(currentContents, 
+							0, r(destTop), r(width), r(destHeight), 
+							0, r(sourceTop), r(width), r(sourceHeight), 
+							false);
+					}
+
+					loadImage(upload);
+
+					return true;
+				}
+
+				virtual bool resize(std::size_t newWidth, std::size_t newHeight, bool copyOldContents = true)
 				{
 					std::size_t newActualWidth(newWidth), newActualHeight(newHeight);
 
-					if (newWidth == width && newHeight == height)
+					if (textureID != 0 && (newWidth == width && newHeight == height))
 						return true;
 
 					if (newWidth == 0 || newHeight == 0)
 						return false;
 
-					if (!text.isValidSize(newWidth, newHeight))
+					if (!juce::isPowerOfTwo(newWidth) || !juce::isPowerOfTwo(newHeight))
 					{
 						newActualWidth = Math::nextPow2Inc(newWidth);
 						newActualHeight = Math::nextPow2Inc(newHeight);
 					}
 
-					// maybe too large?
+					/*// maybe too large?
 					if (!text.isValidSize(newActualWidth, newActualHeight))
+						return false;*/
+
+					if (CPL_DEBUGCHECKGL())
 						return false;
 
-					if (copyOldContents && text.getTextureID() != 0)
+					if (copyOldContents && textureID != 0)
 					{
 						// copy the contents to memory.
-						offload();
+						transferToMemory();
 					}
+					if (CPL_DEBUGCHECKGL())
+						return false;
 
 					// changes sizes, so the new load will rescale it.
 					width = newWidth; height = newHeight; textureWidth = newActualWidth; textureHeight = newActualHeight;
@@ -315,30 +359,214 @@
 				/// The input vector shall support []-operator with contigous access, and must have a length of 
 				/// height() * 3 unsigned chars.
 				/// </summary>
-				template<typename ArgbPixelVector, bool bind = true>
-					inline void updateSingleColumn(int x, ArgbPixelVector & pixels)
+				template<typename PixelVector, bool doBind = true>
+					inline void updateSingleColumn(int x, PixelVector & pixels, GLenum format = GL_RGB)
 					{
-						if(bind)
-							text.bind();
+						if(doBind)
+							bind();
+
+						CPL_DEBUGCHECKGL();
+
 						glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0,
-							1, height, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
-						if(bind)
-							text.unbind();
+							1, height, format, GL_UNSIGNED_BYTE, &pixels[0]);
+
+						CPL_DEBUGCHECKGL();
+
+						if(doBind)
+							unbind();
 					}
 
-				GLint getTextureID()
+				GLuint getTextureID()
 				{
-					return text.getTextureID();
+					return textureID;
 				}
 
-			private:
+				void bind()
+				{
+					if (textureID == 0)
+					{
+						CPL_RUNTIME_EXCEPTION("Invalid texture.");
+					}
+					else
+					{
+						glBindTexture(GL_TEXTURE_2D, textureID);
+					}
+				}
+
+				void unbind()
+				{
+					if (textureID == 0)
+					{
+						CPL_RUNTIME_EXCEPTION("Invalid texture.");
+					}
+					else
+					{
+						glBindTexture(GL_TEXTURE_2D, 0);
+					}
+				}
+
+				/// <summary>
+				/// Sets the colour to fill areas with no content.
+				/// </summary>
+				/// <param name="c"></param>
+				/// <returns></returns>
+				void setFillColour(juce::Colour c) noexcept
+				{
+					using namespace cpl::GraphicsND;
+
+					UPixel<ComponentOrder::Native> host(c);
+
+
+					fillColour = component_cast<ComponentOrder::OpenGL>(host).toJuceColour();
+				}
+
+				bool hasContent() const noexcept
+				{
+					return textureID != 0;
+				}
+
+			protected:
+
+
+				virtual void loadImageInternal(const juce::Image & oldContents)
+				{
+					if (oldContents.isNull())
+						return;
+					if (!oldContents.isARGB())
+						CPL_RUNTIME_EXCEPTION("Image to-be-loaded isn't ARGB!");
+
+					std::size_t imgWidth = oldContents.getWidth();
+					std::size_t imgHeight = oldContents.getHeight();
+
+
+					// can copy image without problems.
+					if (imgWidth == width && imgHeight == height)
+					{
+						juce::Image::BitmapData bmp(oldContents, juce::Image::BitmapData::readOnly);
+						transferToOpenGL(width, height, bmp.data, oglFormat);
+					}
+					else
+					{
+						// needs to be rescaled.
+						juce::Image rescaled(juceFormat, width, height, false);
+						{
+							juce::Graphics g(rescaled);
+							g.setOpacity(1.0f);
+							g.fillAll(fillColour);
+							g.setImageResamplingQuality(juce::Graphics::mediumResamplingQuality);
+							g.drawImage(oldContents,
+								0, 0, width, height,
+								0, 0, imgHeight, imgWidth,
+								false);
+						}
+						juce::Image::BitmapData bmp(rescaled, juce::Image::BitmapData::readOnly);
+						transferToOpenGL(width, height, bmp.data, oglFormat);
+					}
+				}
+
+				virtual bool transferToMemory()
+				{
+					// copy texture into memory
+
+
+
+					bind();
+
+					juce::Image offloaded(juceFormat, textureWidth, textureHeight, false);
+					{
+						juce::Image::BitmapData data(offloaded, juce::Image::BitmapData::readWrite);
+
+						CPL_DEBUGCHECKGL();
+						
+						//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+						Texture::Copy2DTextureToMemory(textureID, data.data, textureWidth * textureHeight, oglFormat, GL_UNSIGNED_BYTE);
+
+						if (CPL_DEBUGCHECKGL())
+							return false;
+					}
+
+					// chop off irrelvant sections.
+					// can use a memory copy operation here instead, but this is fail safe.
+					// can also directly assign if width == actualWidth and height == actualHeight
+					currentContents = juce::Image(juceFormat, width, height, false);
+					{
+#pragma message cwarn("Needs to take the circular position into account, such that images doesn't wrap around. This requires this class to know about the circular position, though.")
+						juce::Graphics g(currentContents);
+						g.setOpacity(1.0f);
+						g.fillAll(fillColour);
+						g.drawImage(offloaded,
+							0, 0, width, height,
+							0, 0, width, height,
+							false);
+					}
+					return true;
+				}
+
+				virtual void transferToOpenGL(const int w, const int h, const void* pixels, GLenum type)
+				{
+
+					bool topLeft = false;
+
+					if (textureID == 0)
+					{
+						CPL_DEBUGCHECKGL();
+						glGenTextures(1, &textureID);
+						glBindTexture(GL_TEXTURE_2D, textureID);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+						CPL_DEBUGCHECKGL();
+					}
+					else
+					{
+						glBindTexture(GL_TEXTURE_2D, textureID);
+						CPL_DEBUGCHECKGL();
+					}
+
+					//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+					CPL_DEBUGCHECKGL();
+
+					auto nwidth = cpl::Math::nextPow2Inc(w);
+					auto nheight = cpl::Math::nextPow2Inc(h);
+
+
+					if (nwidth != w || nheight != h)
+					{
+						auto bounds = Texture::GetBounds(textureID);
+						if (bounds.first != nwidth || bounds.second != nheight)
+						{
+							// resize image
+							glTexImage2D(GL_TEXTURE_2D, 0, oglFormat,
+								nwidth, nheight, 0, type, GL_UNSIGNED_BYTE, nullptr);
+						}
+
+
+						glTexSubImage2D(GL_TEXTURE_2D, 0, 0, topLeft ? (height - h) : 0, w, h,
+							type, GL_UNSIGNED_BYTE, pixels);
+						CPL_DEBUGCHECKGL();
+					}
+					else
+					{
+						glTexImage2D(GL_TEXTURE_2D, 0, oglFormat,
+							w, h, 0, type, GL_UNSIGNED_BYTE, pixels);
+						CPL_DEBUGCHECKGL();
+					}
+
+
+				}
+
 				// the size of the image
 				std::size_t width, height;
 				// the actual size, may be larger than width and height (next power of two)
 				std::size_t textureWidth, textureHeight;
 				bool preserveAcrossContexts;
-				juce::OpenGLTexture text;
+				//juce::OpenGLTexture text;
 				juce::Image currentContents;
+				juce::Colour fillColour;
+				GLuint textureID;
+
 			};
 		};
 	}; // {} cpl

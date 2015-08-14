@@ -315,6 +315,13 @@
 
 			
 			template<typename Scalar>
+				typename std::enable_if<std::is_floating_point<Scalar>::value, Scalar>::type
+					roundToNextMultiplier(Scalar x, Scalar mul)
+				{
+					return x - std::fmod(x, mul);
+				}
+
+			template<typename Scalar>
 				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
 					nextPow2Inc(Scalar x)
 				{

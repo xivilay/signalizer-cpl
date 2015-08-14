@@ -37,6 +37,9 @@
 		#define GL_MULTISAMPLE  0x809D
 	#endif
 
+	/// <summary>
+	/// returns true if any errors were caught. 
+	/// </summary>
 	#define CPL_DEBUGCHECKGL() cpl::OpenGLEngine::DebugCheckGLErrors(__FILE__, __LINE__, __FUNCTION__)
 
 
@@ -75,52 +78,105 @@
 
 
 
-			inline void DebugCheckGLErrors(const char * file, int line, const char * function)
+			inline bool DebugCheckGLErrors(const char * file, int line, const char * function)
 			{
-				bool debugger = isDebugged();
+				bool shallDebug = false;
 				GLenum e; 
 				while ((e = glGetError()) != GL_NO_ERROR)
 				{
-					if (debugger)
-					{
-						BreakIfDebugged();
-					}
-					DBG("OpenGL Error at " << function << " (" << file << ":" << line << "): " << cpl::OpenGLEngine::getGLErrorMessage(e));
+					shallDebug = true;
+					DBG("OpenGL Error at " << function << " (" << file << ":" << line << "): " << e << " > " << cpl::OpenGLEngine::getGLErrorMessage(e));
+				}
+				if (shallDebug)
+				{
+					BreakIfDebugged();
+				}
+				return shallDebug;
+			}
+
+			namespace Colour
+			{
+
+
+			};
+
+			namespace Texture
+			{
+				/// <summary>
+				/// .first = width
+				/// .second = height
+				/// 
+				/// Note: binds the texture.
+				/// </summary>
+				/// <param name="textureID"></param>
+				/// <returns></returns>
+				inline std::pair<int, int> GetBounds(GLuint textureID)
+				{
+					glBindTexture(GL_TEXTURE_2D, textureID);
+					std::pair<int, int> bounds;
+					glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &bounds.first);
+					glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &bounds.second);
+					return bounds;
+				}
+
+				/// <summary>
+				/// Note: binds the texture.
+				/// </summary>
+
+				inline void Copy2DTextureToMemory(GLuint textureID, unsigned char * pixels, std::size_t pixelBufferSize, GLenum format = GL_RGB, GLenum type = GL_UNSIGNED_BYTE)
+				{
+					auto bounds = GetBounds(textureID);
+
+					CPL_DEBUGCHECKGL();
+
+					if (std::size_t(bounds.first) * bounds.second != pixelBufferSize)
+						CPL_RUNTIME_EXCEPTION("Invalid buffer size for copying texture to main memory!");
+
+					glGetTexImage(GL_TEXTURE_2D, 0, format, type, pixels);
+
+
 				}
 
 			}
+
+			class MatrixModeModification
+			{
+			public:
+				MatrixModeModification()
+				{
+					glGetIntegerv(GL_MATRIX_MODE, &previousMode);
+				}
+
+				~MatrixModeModification()
+				{
+
+					glMatrixMode(previousMode);
+				}
+			private:
+				GLint previousMode = 0;
+			};
 
 			class MatrixModification
 			{
 			public:
 
+				MatrixModification()
+				{
+					saveMatrix();
+				}
 				void translate(GLfloat x, GLfloat y, GLfloat z)
 				{
-					if (!matrixPushed)
-					{
-						matrixPushed = true;
-						glPushMatrix();
-					}
+
 					glTranslatef(x, y, z);
 				}
 
 				void scale(GLfloat x, GLfloat y, GLfloat z)
 				{
-					if (!matrixPushed)
-					{
-						matrixPushed = true;
-						glPushMatrix();
-					}
 					glScalef(x, y, z);
 				}
 
 				void rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 				{
-					if (!matrixPushed)
-					{
-						matrixPushed = true;
-						glPushMatrix();
-					}
 					glRotatef(angle, x, y, z);
 				}
 
@@ -130,34 +186,36 @@
 
 					appliedTransform = &tsf;
 
-					if (!matrixPushed)
-					{
-						matrixPushed = true;
-						glPushMatrix();
-					}
 					appliedTransform->applyToOpenGL();
 
 				}
 
 				void loadIdentityMatrix()
 				{
+					glLoadIdentity();
+				}
+
+				void saveMatrix()
+				{
 					if (!matrixPushed)
 					{
 						matrixPushed = true;
 						glPushMatrix();
 					}
-					glLoadIdentity();
 				}
 
 				~MatrixModification()
 				{
 					if (matrixPushed)
+					{
 						glPopMatrix();
+					}
 				}
 
 			private:
 				bool matrixPushed = false;
 				GraphicsND::Transform3D<Vertex> * appliedTransform = nullptr;
+
 			};
 
 			class COpenGLStack
@@ -186,6 +244,7 @@
 				COpenGLStack()
 					: ras(nullptr)
 				{
+					CPL_DEBUGCHECKGL();
 					// store the old blending functions.
 					if (glIsEnabled(GL_BLEND))
 					{

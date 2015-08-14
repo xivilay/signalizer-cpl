@@ -290,28 +290,98 @@
 				}
 			};
 
+			enum class ComponentOrder
+			{
+				RGB,
+				BGR,
+				ARGB,
+				RGBA,
+				BGRA,
+#ifdef CPL_BIGENDIAN
+				Native = ARGB,
+#else
+				Native = BGRA,
+#endif
+				OpenGL = RGBA
+			};
+
+			template<ComponentOrder>
+			union PixelData;
+
+			template<>
+			union PixelData<ComponentOrder::Native>
+			{
+				struct
+				{
+					uint8_t b, g, r, a;
+				};
+				uint32_t p;
+				uint8_t data[4];
+			};
+
+			template<>
+			union PixelData<ComponentOrder::OpenGL>
+			{
+				struct
+				{
+					uint8_t r, g, b, a;
+				};
+				uint32_t p;
+				uint8_t data[4];
+			};
+
+
+			/// <summary>
+			/// Unpremultiplied 32-bit ARGB pixel consisting of unsigned bytes, in correct endianness.
+			/// No payload.
+			/// </summary>
+			template<ComponentOrder order>
 			struct UPixel
 			{
-				union
-				{
-					struct
-					{
-						uint8_t a, r, g, b;
-					};
-					uint32_t p;
-					uint8_t data[4];
-				};
+				PixelData<order> pixel;
 
-				UPixel(unsigned int pixel)
+				UPixel() noexcept
+				{
+				}
+
+				UPixel(std::uint32_t pixel) noexcept
 					: p(pixel)
 				{
 
 				}
 
-				UPixel operator + (const UPixel & other)
+				UPixel(std::uint8_t a, std::uint8_t r, std::uint8_t b, std::uint8_t g) noexcept
+				{
+					pixel.a = a;
+					pixel.r = r;
+					pixel.g = g;
+					pixel.b = b;
+				}
+
+				UPixel(juce::PixelARGB pa)
+				{
+					pa.unpremultiply();
+					pixel.a = pa.getAlpha();
+					pixel.r = pa.getRed();
+					pixel.g = pa.getGreen();
+					pixel.b = pa.getBlue();
+				}
+
+				UPixel(const juce::Colour & c)
+					: UPixel(c.getPixelARGB())
 				{
 
-					auto newp = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
+				}
+
+				/// <summary>
+				/// Saturated addition
+				/// </summary>
+				/// <param name="other"></param>
+				/// <returns></returns>
+				UPixel operator + (const UPixel & other) const noexcept
+				{
+
+					auto newp = _mm_adds_epu8(_mm_set1_epi32(pixel.p), _mm_set1_epi32(other.pixel.p));
 #ifdef __MSVC__
 					return newp.m128i_u32[0];
 #else
@@ -319,21 +389,25 @@
 #endif
 				}
 
-
-				UPixel & operator += (const UPixel & other)
+				/// <summary>
+				/// Saturated addition
+				/// </summary>
+				/// <param name="other"></param>
+				/// <returns></returns>
+				UPixel & operator += (const UPixel & other) noexcept
 				{
 
-					auto newp = _mm_adds_epu8(_mm_set1_epi32(p), _mm_set1_epi32(other.p));
+					auto newp = _mm_adds_epu8(_mm_set1_epi32(pixel.p), _mm_set1_epi32(other.pixel.p));
 
 #ifdef __MSVC__
-					p = newp.m128i_u32[0];
+					pixel.p = newp.m128i_u32[0];
 #else
-					p = newp[0];
+					pixel.p = newp[0];
 #endif
 					return *this;
 				}
 
-				UPixel operator * (float scale)
+				UPixel operator * (float scale) const noexcept
 				{
 
 					UPixel ret(*this);
@@ -345,9 +419,22 @@
 
 					return ret;
 				}
-
-
+#ifdef CPL_JUCE
+				juce::Colour toJuceColour() const noexcept
+				{
+					return juce::Colour(pixel.r, pixel.g, pixel.b, pixel.a);
+				}
+#endif
 			};
+
+
+			template<ComponentOrder to, ComponentOrder from>
+			inline UPixel<to> component_cast(const UPixel<from> & other)
+			{
+				UPixel<to> ret;
+				ret.pixel.p = other.pixel.p;
+				return ret;
+			}
 
 		}; // Graphics
 	}; // cpl

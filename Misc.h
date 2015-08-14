@@ -67,6 +67,8 @@
 			};
 			long Round(double number);
 			long Delay(int ms);
+			void PreciseDelay(double msecs);
+
 			unsigned int QuickTime();
 			int GetSizeRequiredFormat(const char * fmt, va_list pargs);
 
@@ -247,9 +249,12 @@
 						const bool bBlocking = true);
 			
 
-			/*
-				This is not a true 'acuqire' spinlock. See CMutex for this functionality
-			*/
+			/// <summary>
+			/// Waits on some boolean flag to become false. Be careful with using this in case of deadlocks.
+			/// </summary>
+			/// <param name="ms"></param>
+			/// <param name="bVal"></param>
+			/// <returns></returns>
 			template<typename T> 
 				bool SpinLock(unsigned int ms, T & bVal) {
 					unsigned start;
@@ -279,7 +284,49 @@
 						bVal = !bVal; // flipping val, and it's a reference so should release resource.
 						return false;
 					case MsgButton::bCancel:
-	#pragma cwarn("Find a more gentle way to exit...")
+	#pragma message cwarn("Find a more gentle way to exit...")
+						exit(-1);
+					}
+					// not needed (except for warns)
+					return false;
+				}
+
+			/// <summary>
+			/// Waits on the functor to return true for at least ms miliseconds.
+			/// If condition has not returned true yet, it prompts the user to 
+			/// either continue anyway, wait some more, or exit the application.
+			/// </summary>
+			/// <param name="ms"></param>
+			/// <param name="cond"></param>
+			/// <returns></returns>
+			template<typename Condition> 
+				bool WaitOnCondition(unsigned int ms, Condition cond) 
+				{
+					unsigned start;
+					int ret;
+				loop:
+					start = QuickTime();
+					while(!cond()) {
+						if((QuickTime() - start) > ms)
+							goto time_out;
+						Delay(0);
+					}
+					// normal exitpoint
+					return true;
+					// deadlock occurs
+
+				time_out:
+
+					ret = MsgBox("Deadlock detected in conditional wait: Protected resource is not released after max interval. "
+							"Wait again (try again), continue anyway (continue) - can create async issues - or exit (cancel)?", 
+							_PROGRAM_NAME_ABRV " Error!", 
+							sConTryCancel | iStop);
+					switch(ret) 
+					{
+					case MsgButton::bTryAgain:
+						goto loop;
+					case MsgButton::bCancel:
+	#pragma message cwarn("Find a more gentle way to exit...")
 						exit(-1);
 					}
 					// not needed (except for warns)

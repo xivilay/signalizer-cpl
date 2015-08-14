@@ -54,6 +54,7 @@
 	#include "gui/CComboBox.cpp"
 	#include "gui/CButton.cpp"
 	#include "gui/CTransformWidget.cpp"
+	#include "gui/CPresetWidget.cpp"
 	// rendering
 	#include "rendering/CSubpixelSoftwareGraphics.cpp"
 	#include "rendering/CDisplaySetup.cpp"

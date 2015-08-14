@@ -167,12 +167,12 @@
 				delete func;
 				return ret;
 			}
-			static unsigned long __threadh_win_call win_target(void * imp)
+			static DWORD __threadh_win_call win_target(void * imp)
 			{
 				args * func = reinterpret_cast<args *>(imp);
 				auto ret = func->addr(func->arg);
 				delete func;
-				return reinterpret_cast<unsigned long>(ret);
+				return reinterpret_cast<DWORD>(ret);
 			}
 			static void * posix_target(void * imp)
 			{

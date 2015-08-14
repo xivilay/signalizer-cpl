@@ -112,6 +112,24 @@ namespace cpl
 			}
 			return 0;
 		}
+		/*********************************************************************************************
+
+			Delays the execution for at least msecs. Should have good precision bar context-switches,
+			may spin.
+
+		*********************************************************************************************/
+		void PreciseDelay(double msecs)
+		{
+			#ifdef CPL_JUCE
+				auto start = juce::Time::getHighResolutionTicks();
+				double factor = 1.0 / juce::Time::getHighResolutionTicksPerSecond();
+				msecs /= 1000;
+				while ((juce::Time::getHighResolutionTicks() - start) * factor < msecs)
+					;
+			#else
+				#error Needs implementation
+			#endif
+		}
 
 		/*********************************************************************************************
 		 
@@ -435,6 +453,8 @@ namespace cpl
 
 		static std::string GetDirectoryPath()
 		{
+			if (programInfo.hasCustomDirectory)
+				return programInfo.customDirectory();
 			#ifdef __WINDOWS__
 				// change to MAX_PATH on all supported systems
 				char path[MAX_PATH + 2];

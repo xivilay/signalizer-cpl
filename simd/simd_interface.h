@@ -478,16 +478,17 @@
 			
 			
 			// alignment-properties must be number-literals STILL in msvc. Grrr
-			#ifdef __MSVC__
+			#if defined(__MSVC__) && _MSC_VER < 1900
+				#pragma message cwarn( "fix alignment of this type.")
 				#define simd_alignment_of(V) __declspec(align(32))
 			#else
-				#define simd_alignment_of(V) __alignas(32) /* hack */
+				#define simd_alignment_of(V) __alignas(sizeof(V)) /* hack */
 			#endif
 
 			template<typename V>
 				struct suitable_container;
 
-#pragma cwarn( "fix alignment of this type.")
+
 			template<typename V>
 				struct simd_alignment_of(V) suitable_container
 				{

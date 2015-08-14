@@ -107,6 +107,7 @@
 		private:
 			void release(Lockable * l)
 			{
+				// default value
 				l->ownerThread = std::thread::id();
 				if (l)
 					l->flag.clear();
@@ -121,7 +122,7 @@
 			loop:
 				
 				start = QuickTime();
-				while (bVal->flag.test_and_set()) {
+				while (bVal->flag.test_and_set(std::memory_order_relaxed)) {
 					if ((QuickTime() - start) > ms)
 						goto time_out;
 					Delay(0);
@@ -186,7 +187,8 @@
 			}
 			void acquire(Lockable * l)
 			{
-				if(l->ownerThread == std::this_thread::get_id())
+				auto this_id = std::this_thread::get_id();
+				if(l->ownerThread == this_id)
 					return;
 				
 				if (!resource)
@@ -194,7 +196,7 @@
 				if (!spinLock(resource))
 					//explode here
 					return;
-				l->ownerThread = std::this_thread::get_id();
+				l->ownerThread = this_id;
 			}
 			void acquire(Lockable & l)
 			{

@@ -271,8 +271,63 @@
 			owned_ptr<byte[]> memory;
 		};
 
+		class ContentWrapper
+		{
+		public:
+			//ContentWrapper(std::string filePath);
 
-		class CSerializer
+			ContentWrapper(BinaryBuilder & b)
+			{
+				contentSize = b.getSize();
+				contents.reset(b.acquirePointer().release());
+			}
+
+			ContentWrapper(BinaryBuilder::owned_ptr<BinaryBuilder::byte[]> memory, std::size_t size)
+				: contents(memory.release()), contentSize(size)
+			{
+
+			}
+
+			const char * getBlock() const { return static_cast<const char*>(contents.get()); }
+			std::size_t getSize() const { return contentSize; }
+			ContentWrapper(ContentWrapper && cw)
+				: contents(cw.contents.release()), contentSize(cw.contentSize)
+			{
+
+			}
+
+		private:
+			std::unique_ptr<char[]> contents;
+			std::size_t contentSize;
+		};
+
+		class WeakContentWrapper
+		{
+		public:
+			WeakContentWrapper(const BinaryBuilder::byte * c, std::size_t size) : contents(c), contentSize(size) {}
+			WeakContentWrapper(const void * c, std::size_t size)
+				: contents(static_cast<const BinaryBuilder::byte *>(c)), contentSize(size) {}
+			WeakContentWrapper(const ContentWrapper & cw) : contents(cw.getBlock()), contentSize(cw.getSize()) {}
+
+			const char * getBlock() const { return contents; }
+			std::size_t getSize() const { return contentSize; }
+
+		private:
+			const BinaryBuilder::byte * contents;
+			std::size_t contentSize;
+		};
+
+		class ISerializerSystem
+		{
+		public:
+			virtual bool build(const WeakContentWrapper & cr) = 0;
+			virtual ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const = 0;
+			virtual void clear() = 0;
+			virtual bool isEmpty() const noexcept = 0;
+			virtual ~ISerializerSystem() {};
+		};
+
+		class CSerializer : public ISerializerSystem
 		{
 		public:
 
@@ -287,60 +342,16 @@
 				virtual void load(Builder & ar, long long int version) {};
 			};
 
-			class ContentWrapper
-			{
-			public:
-				//ContentWrapper(std::string filePath);
-				
-				ContentWrapper(BinaryBuilder & b)
-				{
-					contentSize = b.getSize();
-					contents.reset(b.acquirePointer().release());
-				}
-				
-				ContentWrapper(BinaryBuilder::owned_ptr<BinaryBuilder::byte[]> memory, std::size_t size)
-					: contents(memory.release()), contentSize(size)
-				{
 
-				}
-
-				const char * getBlock() const { return static_cast<const char*>(contents.get()); }
-				std::size_t getSize() const { return contentSize; }
-				ContentWrapper(ContentWrapper && cw)
-					: contents(cw.contents.release()), contentSize(cw.contentSize)
-				{
-
-				}
-			
-			private:
-				std::unique_ptr<char[]> contents;
-				std::size_t contentSize;
-			};
-
-			class WeakContentWrapper
-			{
-			public:
-				WeakContentWrapper(const BinaryBuilder::byte * c, std::size_t size) : contents(c), contentSize(size) {}
-				WeakContentWrapper(const void * c, std::size_t size) 
-					: contents(static_cast<const BinaryBuilder::byte *>(c)), contentSize(size) {}
-				WeakContentWrapper(const ContentWrapper & cw) : contents(cw.getBlock()), contentSize(cw.getSize()) {}
-
-				const char * getBlock() const { return contents; }
-				std::size_t getSize() const { return contentSize; }
-
-			private:
-				const BinaryBuilder::byte * contents;
-				std::size_t contentSize;
-			};
-
-			enum class HeaderType : short
+			enum class HeaderType : std::uint16_t
 			{
 				Start = 0x10, // some sentinel value makes debugging easier
 				Key, 
 				Data,
 				Child,
 				End,
-				Invalid
+				CheckedHeader,
+				Invalid // always add new types before invalid, such that old programs identify new serializable data as invalid
 			};
 			template<typename ExtraHeader>
 				struct __alignas(8) BinaryHeader
@@ -387,6 +398,7 @@
 			using MasterHeader = BinaryHeader < MasterHeaderInfo > ;
 			using KeyHeader = BinaryHeader < KeyHeaderInfo > ;
 			using StdHeader = BinaryHeader < int > ;
+			using MD5CheckedHeader = BinaryHeader <uint8_t[16]>;
 			class Key
 			{
 			public:
@@ -480,13 +492,13 @@
 
 
 			CSerializer(Key k)
-				: key(k), version(0)
+				: key(k), version(0), throwOnExhaustion(true)
 			{
 
 			}
 
 			CSerializer()
-				: key(1), version(0)
+				: key(1), version(0), throwOnExhaustion(true)
 			{
 
 			}
@@ -494,12 +506,23 @@
 			{
 				clear();
 			}
-			void clear()
+			void clear() override
 			{
 				content.clear();
 				data.reset();
 			}
-			bool isEmpty() const noexcept
+
+			void setThrowsOnExhaustion(bool toggle) noexcept
+			{
+				throwOnExhaustion = toggle;
+			}
+
+			bool getThrowsOnExhaustion() const noexcept
+			{
+				return throwOnExhaustion;
+			}
+
+			bool isEmpty() const noexcept override
 			{
 				return !content.size() && !data.getSize();
 			}
@@ -511,9 +534,9 @@
 				}
 				data.reset();
 			}
-			void setMasterVersion(long long int v) { version = v; }
-			long long int getMasterVersion() { return version; } const
-			bool build(const WeakContentWrapper & cr)
+			void setMasterVersion(long long int v) noexcept { version = v; }
+			long long int getMasterVersion() const noexcept { return version; }
+			virtual bool build(const WeakContentWrapper & cr) override
 			{
 				const StdHeader * start = (const StdHeader *) cr.getBlock();
 
@@ -634,7 +657,7 @@
 								);
 							}
 							default:
-								throw std::runtime_error("Unrecoginized HeaderType (" 
+								throw std::runtime_error("Unrecognized HeaderType (" 
 									+ std::to_string(static_cast<int>(current->type)) + ") at "
 									+ std::to_string(cr.getBlock()) + " + "
 									+ std::to_string((char*)current - cr.getBlock())
@@ -741,7 +764,7 @@
 				
 			}
 
-			ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const
+			virtual ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const override
 			{
 				BinaryBuilder dataOut;
 				// write the master header.
@@ -837,7 +860,8 @@
 					operator >> ( T & object)
 				{
 
-					data.readBytes(&object, sizeof(T));
+					if (!data.readBytes(&object, sizeof(T)) && throwOnExhaustion)
+						throw std::runtime_error("CSerializer exhausted; probably incompatible serialized object.");
 
 					return *this;
 				}
@@ -907,7 +931,15 @@
 				//return getKey(k);
 			}
 
+			const CSerializer * findForKey(const Key & k) const noexcept
+			{
+				const CSerializer * ret = nullptr;
+				auto it = content.find(k);
+				if (it != content.end())
+					ret = &it->second;
 
+				return ret;
+			}
 
 		private:
 			
@@ -915,7 +947,7 @@
 			//std::vector<std::pair<Key, CSerializer>> content;
 			std::map<Key, CSerializer> content;
 			Key key;
-
+			bool throwOnExhaustion;
 			long long version;
 
 			// iterator interface. must be placed after declaration in MSVC
@@ -931,6 +963,115 @@
 			}
 		};
 
+		class CCheckedSerializer : public ISerializerSystem
+		{
+		public:
+			CCheckedSerializer(const std::string & uniqueNameReference)
+				: nameReference(uniqueNameReference)
+			{
+				if (!nameReference.size())
+					CPL_RUNTIME_EXCEPTION("CheckedSerializer needs to have a non-null name!");
+			}
 
+
+			virtual ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const override
+			{
+				BinaryBuilder b;
+
+				const CSerializer * contentEntry = internalSerializer.findForKey("Content");
+
+				if (contentEntry)
+				{
+					const std::uint64_t md5SizeInBytes = 16;
+
+					auto cw = contentEntry->compile(addMasterHeader, version);
+
+					auto md5 = juce::MD5(cw.getBlock(), cw.getSize());
+					
+					CSerializer::MD5CheckedHeader header;
+
+					std::memcpy(header.info, md5.getChecksumDataArray(), md5SizeInBytes);
+					header.dataSize = nameReference.size() + 1;
+					header.type = CSerializer::HeaderType::CheckedHeader;
+
+					b.appendBytes(&header, sizeof(header));
+					b.appendBytes(nameReference.c_str(), nameReference.size() + 1);
+					b.appendBytes(cw.getBlock(), cw.getSize());
+
+					auto totalSize = b.getSize();
+
+					return { b.acquirePointer(), totalSize };
+
+				}
+				
+				CPL_RUNTIME_EXCEPTION("Checked header compilation failed since no \'Content\' entry was found.");
+			}
+
+			virtual bool build(const WeakContentWrapper & cr) override
+			{
+				const std::uint64_t md5SizeInBytes = 16;
+
+				std::uint64_t nameSize = nameReference.size() + 1;
+
+				const CSerializer::MD5CheckedHeader * startHeader 
+					= reinterpret_cast<const CSerializer::MD5CheckedHeader*>(cr.getBlock());
+
+				if (startHeader->dataSize != nameSize)
+					CPL_RUNTIME_EXCEPTION("Checked header's name size is different from this (" + nameReference + ")");
+
+				if (startHeader->type != CSerializer::HeaderType::CheckedHeader)
+					CPL_RUNTIME_EXCEPTION("Header was expected to contain MD5 checksum, but is unrecognizable "
+						"(expected type " + std::to_string((std::uint16_t)CSerializer::HeaderType::CheckedHeader) + ", was " + std::to_string((std::uint16_t)startHeader->type) + ".");
+
+				if(startHeader->headerSize != CSerializer::MD5CheckedHeader().headerSize)
+					CPL_RUNTIME_EXCEPTION("Checked header has invalid size.");
+
+				if(std::memcmp(startHeader->getData<char>(), nameReference.c_str(), nameSize) != 0)
+					CPL_RUNTIME_EXCEPTION(
+						std::string("Checked header's name \'") + startHeader->getData<char>() + "\' is different from expected \'" + nameReference + "\'."
+				);
+
+				const void * dataBlock = startHeader->next();
+				std::size_t dataSize = cr.getSize() - ((const char *)startHeader->next() - (const char *)startHeader);
+
+				auto md5 = juce::MD5(dataBlock, dataSize);
+
+				if (std::memcmp(startHeader->info, md5.getChecksumDataArray(), md5SizeInBytes) != 0)
+					CPL_RUNTIME_EXCEPTION("Checked header for " + nameReference + "'s MD5 checksum is wrong!");
+
+				// build self
+				auto ret = internalSerializer.getKey("Content").build({ dataBlock, dataSize });
+
+				// must contain 'content'
+				return ret && internalSerializer.findForKey("Content");
+
+			}
+
+			void clear() override
+			{
+				internalSerializer.clear();
+			}
+
+			bool isEmpty() const noexcept override
+			{
+				return internalSerializer.isEmpty();
+			}
+
+			CSerializer::Archiver & getArchiver()
+			{
+				return internalSerializer.getKey("Content");
+			}
+
+			CSerializer::Builder & getBuilder()
+			{
+				return internalSerializer.getKey("Content");
+			}
+
+		private:
+
+			CSerializer internalSerializer;
+
+			std::string nameReference;
+		};
 	};
 #endif

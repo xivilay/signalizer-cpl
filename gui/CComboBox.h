@@ -69,6 +69,11 @@
 
 			int getZeroBasedSelIndex() const;
 			
+			const std::string & valueFor(std::size_t idx) const noexcept
+			{
+				return values.at(idx);
+			}
+
 			template<typename T>
 				T getZeroBasedSelIndex() const
 				{

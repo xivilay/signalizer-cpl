@@ -46,15 +46,17 @@
 			static CPresetManager & instance();
 
 			// these functions pops up file selectors
-			bool savePresetAs(const CSerializer::Archiver & archive, juce::File & location);
-			bool loadPresetAs(CSerializer::Builder & builder, juce::File & location);
+			bool savePresetAs(const ISerializerSystem & serializer, juce::File & location, const std::string & uniqueExt = "");
+			bool loadPresetAs(ISerializerSystem & serializer, juce::File & location, const std::string & uniqueExt = "");
 
 			// these functions saves/loads directly
-			bool savePreset(const std::string & name, const CSerializer::Archiver & archive, juce::File & location);
-			bool loadPreset(const std::string & name, CSerializer::Builder & builder, juce::File & location);
+			bool savePreset(const std::string & name, const ISerializerSystem & serializer, juce::File & location);
+			bool loadPreset(const std::string & name, ISerializerSystem & serializer, juce::File & location);
 			const std::vector<juce::File> & getPresets();
-			bool saveDefaultPreset(const CSerializer::Archiver & archive, juce::File & location);
-			bool loadDefaultPreset(CSerializer::Builder & builder, juce::File & location);
+			bool saveDefaultPreset(const ISerializerSystem & serializer, juce::File & location);
+			bool loadDefaultPreset(ISerializerSystem & serializer, juce::File & location);
+			std::string getPresetDirectory() const noexcept;
+
 			juce::File getCurrentPreset();
 		private:
 			std::vector<juce::File> currentPresets;

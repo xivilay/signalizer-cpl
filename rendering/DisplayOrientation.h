@@ -95,8 +95,7 @@
 			
 			inline bool IsQuantizedRads(double rads)
 			{
-				rads = std::fmod(rads, 2 * M_PI);
-				return rads == 0.0 || rads == M_PI / 2 || rads == M_PI || rads == M_PI * 1.5;
+				return std::fmod(rads, M_PI / 2) == 0.0;
 			}
 			
 			inline bool IsQuantizedDegrees(double degrees)

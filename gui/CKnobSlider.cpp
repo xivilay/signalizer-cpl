@@ -279,6 +279,7 @@ namespace cpl
 		this->setVelocityBasedMode(vel);
 		this->setMouseDragSensitivity(sens);
 		this->setSliderStyle(style);
+#pragma message cwarn("NOTE: This MAY not send any notification, if the current value is equal to this!")
 		bSetValue(value, true);
 	}
 

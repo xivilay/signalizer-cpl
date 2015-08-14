@@ -35,4 +35,5 @@
 	#include "../Misc.h"
 	#include "CKnobSlider.h"
 	#include "CKnobSliderEditor.h"
+	#include "WidgetContainers.h"
 #endif

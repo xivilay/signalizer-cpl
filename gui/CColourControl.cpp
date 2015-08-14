@@ -443,6 +443,7 @@ namespace cpl
 		auto floatingRepresentation = intToFloat(newColour);
 		colour = floatToInt(floatingRepresentation);
 		//std::cout << "Value " << std::hex << newColour.getARGB()  << "set to " <<  colour.getARGB() << std::endl;
+
 		setValue(floatingRepresentation * (getMaximum() - getMinimum()) + getMinimum(), juce::NotificationType::sendNotificationSync);
 	}
 	bool CColourControl::bStringToValue(const std::string & valueString, iCtrlPrec_t & value) const

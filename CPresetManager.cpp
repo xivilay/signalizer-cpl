@@ -42,20 +42,32 @@ namespace cpl
 		return ins;
 	}
 
-	bool CPresetManager::savePresetAs(const CSerializer::Archiver & archive, juce::File & location)
+	std::string CPresetManager::getPresetDirectory() const noexcept
+	{
+		return ::cpl::presetDirectory();
+	}
+
+	bool CPresetManager::savePresetAs(const ISerializerSystem & archive, juce::File & location, const std::string & uniqueExt)
 	{
 		// should we really save empty files?
 		if (archive.isEmpty())
 			return false;
 
+		std::string extension = uniqueExt.length() ? uniqueExt + "." + programInfo.programAbbr : programInfo.programAbbr;
+
 		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...", 
-			juce::File(presetDirectory()), "*." + programInfo.programAbbr);
+			juce::File(presetDirectory()), "*." + extension);
 
 		if (fileChooser.browseForFileToSave(true))
 		{
 			auto result = fileChooser.getResult();
 
-			std::string path = result.withFileExtension(programInfo.programAbbr.c_str()).getFullPathName().toStdString();
+			bool hasExt = result.hasFileExtension(extension.c_str());
+
+			std::string path = 
+				hasExt ? 
+					result.getFullPathName().toStdString() : 
+					result.withFileExtension(extension.c_str()).getFullPathName().toStdString();
 
 			if (!savePreset(path, archive, location))
 			{
@@ -63,23 +75,28 @@ namespace cpl
 					programInfo.name + "Error saving preset to file...", Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning);
 				if (userAnswer == Misc::MsgButton::bYes)
 				{
-					return savePresetAs(archive, location);
+					return savePresetAs(archive, location, uniqueExt);
 				}
 				else
 				{
 					return false;
 				}
 			}
-
+			else
+			{
+				return true;
+			}
 		}
 
-		return true;
+		return false;
 	}
-	bool CPresetManager::loadPresetAs(CSerializer::Builder & builder, juce::File & location)
+	bool CPresetManager::loadPresetAs(ISerializerSystem & builder, juce::File & location, const std::string & uniqueExt)
 	{
 
+		std::string extension = uniqueExt.length() ? uniqueExt + "." + programInfo.programAbbr : programInfo.programAbbr;
+
 		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...",
-			juce::File(presetDirectory()), "*." + programInfo.programAbbr);
+			juce::File(presetDirectory()), "*." + extension);
 
 		if (fileChooser.browseForFileToOpen())
 		{
@@ -88,7 +105,7 @@ namespace cpl
 			// no need to check.
 			std::string path = result.getFullPathName().toStdString();
 
-			if (!result.existsAsFile() || !loadPreset(path, builder, location))
+			if (!result.existsAsFile())
 			{
 				auto userAnswer = Misc::MsgBox("Error opening file:\n" + path + "\nTry another location?",
 					programInfo.name + "Error loading preset from file...", Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning);
@@ -103,7 +120,7 @@ namespace cpl
 			}
 			else
 			{
-				return true;
+				return loadPreset(path, builder, location);
 			}
 
 		}
@@ -112,7 +129,7 @@ namespace cpl
 	}
 
 		// these functions saves/loads directly
-	bool CPresetManager::savePreset(const std::string & path, const CSerializer::Archiver & archive, juce::File & location)
+	bool CPresetManager::savePreset(const std::string & path, const ISerializerSystem & archive, juce::File & location)
 	{
 		CExclusiveFile file;
 		
@@ -135,7 +152,7 @@ namespace cpl
 
 		return false;
 	}
-	bool CPresetManager::loadPreset(const std::string & path, CSerializer::Builder & builder, juce::File & location)
+	bool CPresetManager::loadPreset(const std::string & path, ISerializerSystem & builder, juce::File & location)
 	{
 		try
 		{
@@ -152,7 +169,7 @@ namespace cpl
 				return false;
 
 			builder.clear();
-			if (builder.build(CSerializer::WeakContentWrapper(data.data(), size)))
+			if (builder.build(WeakContentWrapper(data.data(), size)))
 			{
 				location = path;
 				return true;
@@ -167,6 +184,7 @@ namespace cpl
 	const std::vector<juce::File> & CPresetManager::getPresets()
 	{
 		currentPresets.clear();
+
 		juce::DirectoryIterator iter(File(presetDirectory()), false, "*." + programInfo.programAbbr);
 		while (iter.next())
 		{
@@ -176,12 +194,12 @@ namespace cpl
 
 		return currentPresets;
 	}
-	bool CPresetManager::saveDefaultPreset(const CSerializer::Archiver & archive, juce::File & location)
+	bool CPresetManager::saveDefaultPreset(const ISerializerSystem & archive, juce::File & location)
 	{
 		return savePreset(presetDirectory() + "default." + programInfo.programAbbr, archive, location);
 	}
 
-	bool CPresetManager::loadDefaultPreset(CSerializer::Builder & builder, juce::File & location)
+	bool CPresetManager::loadDefaultPreset(ISerializerSystem & builder, juce::File & location)
 	{
 		auto path = presetDirectory() + "default." + programInfo.programAbbr;
 		if (!loadPreset(path, builder, location))

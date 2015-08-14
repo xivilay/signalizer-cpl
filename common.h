@@ -45,8 +45,8 @@
 		// you can specify your own here - will affect filechoosers, temporary files, resources etc.
 		// set this to true if you specify your own.
 		bool hasCustomDirectory; 
-		// the path (or relative offset) to your custom directory.
-		std::string customDirectory;
+		// a function returning the path (or relative offset) to your custom directory.
+		std::string (*customDirectory)();
 
 	};
 

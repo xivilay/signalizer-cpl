@@ -198,6 +198,16 @@
 					};
 
 					Scalar dist() const { return std::abs(left - right); }
+
+					bool operator == (const Bounds<Scalar> & right) const noexcept
+					{
+						return left == right.left && this->right == right.right;
+					}
+
+					bool operator != (const Bounds<Scalar> & right) const noexcept
+					{
+						return !(this->operator ==(right));
+					}
 				};
 
 			template <class T> struct maybe_delete

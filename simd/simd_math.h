@@ -754,7 +754,7 @@
 			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value, V>::type 
 				sin(V x)
 			{ // any x
-#pragma cwarn("Seems to return cosines. Output of 4.71 == ~0");
+#pragma message cwarn("Seems to return cosines. Output of 4.71 == ~0");
 				V y;
 				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;

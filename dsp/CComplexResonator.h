@@ -63,7 +63,7 @@
 
 
 				CComplexResonator()
-					: minWindowSize(8), maxWindowSize(8), numFilters(0), qDBs(3), vectorDist(1)
+					: minWindowSize(8), maxWindowSize(8), numFilters(0), qDBs(3), vectorDist(1), numResonators()
 				{
 					for (int v = 0; v < numVectors; ++v)
 					{
@@ -80,6 +80,11 @@
 					minWindowSize = std::min(minSize, maxSize);
 					maxWindowSize = std::max(minSize, maxSize);
 					
+				}
+
+				std::size_t getNumFilters() const noexcept
+				{
+					return numFilters;
 				}
 
 				void setQ(double dBs)
@@ -110,8 +115,28 @@
 					}
 
 				}
+				/// <summary>
+				/// Locks. O(n)
+				/// </summary>
+				/// <returns></returns>
+				inline bool isCompletelyZero() const noexcept
+				{
+					CFastMutex lock(this);
 
+					for (int c = 0; c < numChannels; ++c)
+					{
+						for (int z = 0; z < numVectors; ++z)
+						{
+							for (int i = 0; i < numResonators; ++i)
+							{
+								if(realState[c][z][i] != 0.0 || imagState[c][z][i] != 0.0);
+									return false;
+							}
+						}
+					}
 
+					return true;
+				}
 
 				inline std::complex<Scalar> getResonanceAt(std::size_t resonator, std::size_t channel)
 				{
@@ -126,6 +151,8 @@
 				template<WindowTypes win, bool lazy = false>
 					inline std::complex<Scalar> getWindowedResonanceAt(std::size_t resonator, std::size_t channel)
 					{
+						if (resonator >= N.size())
+							BreakIfDebugged();
 						Scalar gainCoeff = N.at(resonator) * 1.0 / 8.0; // 2^-3 (3 vectors)
 						Scalar real(0), imag(0);
 
@@ -157,44 +184,36 @@
 					return N.at(resonator);
 				}
 
-				bool reallocBuffers(int minimumSize)
+				/// <summary>
+				/// Resets the filters state to zero. Coefficients are untouched, reset them (indirectly) through mapSystemHz.
+				/// Blocks the processing.
+				/// </summary>
+				void resetState()
 				{
-					numFilters = minimumSize;
-					// quantize to next multiple of 8, to ensure vectorization
-					numResonators = numFilters + (8 - numFilters & 0x7);
-					auto const dataSize = numBuffers * numResonators;
-					bool newData = false;
-					/*
-					consider creating a copy of buffer (or, the states)
-					if the buffer is resized / rads are different, interpolate the old points to the new positions.
-					*/
-					if (dataSize != buffer.size())
+					CMutex lock(this);
+					for (int c = 0; c < numChannels; ++c)
 					{
-						newData = true;
-						buffer.resize(dataSize);
-						N.resize(numResonators);
-						for (std::size_t i = 0; i < numVectors; ++i)
+						for (int z = 0; z < numVectors; ++z)
 						{
-							realCoeff[i] = buffer.data() + numResonators * i * numBuffersPerVector;
-							imagCoeff[i] = buffer.data() + numResonators * i * numBuffersPerVector + numResonators;
-							for (std::size_t c = 0; c < numChannels; ++c)
-							{
-								realState[c][i] = buffer.data() + numResonators * i * numBuffersPerVector + numResonators * (2 + c * 2);
-								imagState[c][i] = buffer.data() + numResonators * i * numBuffersPerVector + numResonators * (3 + c * 2);
-							}
+							std::memset(realState[c][z], 0, numFilters * sizeof(T));
+							std::memset(imagState[c][z], 0, numFilters * sizeof(T));
 						}
-
 					}
-					return newData;
 				}
 
-				template<typename Vector>
-				void mapSystemHz(const Vector & mappedHz, int vSize, double sampleRate)
-				{
 
+				/// <summary>
+				/// For completely correct behaviour, this needs to be called on the audio thread.
+				/// Otherwise, some filters might become unstable for one frame. This call is SAFE, however
+				/// on any thead. If the size is different, it may acquire a mutex and reallocate memory. Otherwise,
+				/// it won't.
+				/// </summary>
+				template<typename Vector>
+				void mapSystemHz(const Vector & mappedHz, std::size_t vSize, double sampleRate)
+				{
+					CMutex lock(this);
 					// 7 == state size of all members
 					using namespace cpl;
-					CMutex lock(this);
 
 					auto const newData = reallocBuffers(vSize);
 
@@ -233,30 +252,24 @@
 							auto hDiff = std::abs((double)mappedHz[k + 1] - mappedHz[k]);
 							auto bandWidth = sampleRate / hDiff;
 							const bool qIsFree = false;
-							//auto oldBw = bandWidth;
+
 							if(!qIsFree)
 								bandWidth = cpl::Math::confineTo<double>(bandWidth, minWindowSize, maxWindowSize);
 
 
 							hDiff = (sampleRate) / bandWidth;
 
-							//auto const r = exp(Bq * -M_PI * hDiff / sampleRate); OLD
+							// 3 dB law bandwidth of complex resonator
 							auto const r = exp(-M_PI * hDiff / sampleRate);
+
 							N[i] = 1.0/(1 - r);
-							//auto const theta = 2 * M_PI * mappedHz[i] / sampleRate;
-
-
-							//auto const hDiffRads = 2 * M_PI * hDiff / sampleRate;
 
 							for (int z = 0; z < numVectors; ++z)
 							{
-
-								//auto const omega = (2 * M_PI * (mappedHz[i] + Bq * Math::mapAroundZero<Scalar>(z, numVectors) * hDiff)) / sampleRate; OLD
 								// so basically, for doing frequency-domain windowing using DFT-coefficients of the windows, we need filters that are linearly 
 								// spaced around the frequency like the FFT. DFT bins are spaced linearly like 0.5 / N.
 								auto const omega = (2 * M_PI * (mappedHz[i] + Math::mapAroundZero<Scalar>(z, numVectors) * hDiff * 0.5)) / sampleRate;
 
-								//auto const coeff = filters::design<filters::type::resonator, 3, Scalar>(theta, 2 * M_PI * hDiff / sampleRate, qDBs);
 								auto const real = r * cos(omega);
 								auto const imag = r * sin(omega);
 								realCoeff[z][i] = real; // coeffs.c[0].real()
@@ -280,22 +293,49 @@
 					{
 						for (int z = 0; z < numVectors; ++z)
 						{
-							realCoeff[z][i] = imagCoeff[z][i];
+							realCoeff[z][i] = imagCoeff[z][i] = (Scalar) 0;
 						}
 					}
-				}
-
-
-
-				template<typename Vector>
-				void mapSystemRads(const Vector & mappedRads, int vSize)
-				{
-
 
 				}
-					Scalar * realState[Channels][Vectors];
-					Scalar * imagState[Channels][Vectors];
+
 			private:
+
+				bool reallocBuffers(int minimumSize)
+				{
+					// the locals here are to ensure we dont change fields before locking (if needed)
+					auto numFiltersInt = minimumSize;
+					// quantize to next multiple of 8, to ensure vectorization
+					auto numResonatorsInt = numFiltersInt + (8 - numFiltersInt & 0x7);
+					auto const dataSize = numBuffers * numResonatorsInt;
+					bool newData = false;
+					/*
+					consider creating a copy of buffer (or, the states)
+					if the buffer is resized / rads are different, interpolate the old points to the new positions.
+					*/
+					if (dataSize != buffer.size())
+					{
+						// change fields now.
+						numFilters = numFiltersInt;
+						numResonators = numResonatorsInt;
+
+						newData = true;
+						buffer.resize(dataSize);
+						N.resize(numResonators);
+						for (std::size_t i = 0; i < numVectors; ++i)
+						{
+							realCoeff[i] = buffer.data() + numResonators * i * numBuffersPerVector;
+							imagCoeff[i] = buffer.data() + numResonators * i * numBuffersPerVector + numResonators;
+							for (std::size_t c = 0; c < numChannels; ++c)
+							{
+								realState[c][i] = buffer.data() + numResonators * i * numBuffersPerVector + numResonators * (2 + c * 2);
+								imagState[c][i] = buffer.data() + numResonators * i * numBuffersPerVector + numResonators * (3 + c * 2);
+							}
+						}
+
+					}
+					return newData;
+				}
 
 				template<typename V, class MultiVector, std::size_t inputDataChannels>
 				void internalWindowResonate(const MultiVector & data, std::size_t numSamples)
@@ -307,12 +347,12 @@
 					auto const vfactor = suitable_container<V>::size;
 					V t0;
 
-
+					//  iterate over each filter for each sample for each channel.
 					for (Types::fint_t filter = 0; filter < numFilters; filter += vfactor)
 					{
 
 						// pointer to current sample
-						auto audioInput = &data[0][0];
+						typename scalar_of<V>::type * audioInputs[numChannels];
 
 						// load coefficients
 						const V
@@ -322,8 +362,8 @@
 							p_m_i = load<V>(imagCoeff[1] + filter), // coeff: e^i*omega (imag)
 							p_p1_r = load<V>(realCoeff[2] + filter), // coeff: e^i*omega+q (real)
 							p_p1_i = load<V>(imagCoeff[2] + filter); // coeff: e^i*omega+q (imag)
-																	 // load states
 
+						// create states
 						V
 							s_m1_r[inputDataChannels],
 							s_m1_i[inputDataChannels],
@@ -332,8 +372,10 @@
 							s_p1_r[inputDataChannels],
 							s_p1_i[inputDataChannels];
 
+						// and load them
 						for (Types::fint_t c = 0; c < inputDataChannels; ++c)
 						{
+							audioInputs[c] = &data[c][0];
 							s_m1_r[c] = load<V>(realState[c][0] + filter); // cos: e^i*omega-q (real)
 							s_m1_i[c] = load<V>(imagState[c][0] + filter); // sin: e^i*omega-q (imag)
 							s_m_r[c] = load<V>(realState[c][1] + filter); // cos: e^i*omega (real)
@@ -342,40 +384,31 @@
 							s_p1_i[c] = load<V>(imagState[c][2] + filter); // sin: e^i*omega+q (imag)
 						}
 
-
-
 						for (Types::fint_t sample = 0; sample < numSamples; ++sample)
 						{
-
-
-
-
-
 							for (Types::fint_t c = 0; c < inputDataChannels; ++c)
 							{
 								// combing stage
-								V input = broadcast<V>(audioInput);
+								V input = broadcast<V>(audioInputs[c]);
 
-								// -1 stage (m1)
+								// -1 stage (m1) (fc - bw)
 								t0 = s_m1_r[c] * p_m1_r - s_m1_i[c] * p_m1_i;
 								s_m1_i[c] = s_m1_r[c] * p_m1_i + s_m1_i[c] * p_m1_r;
 								s_m1_r[c] = t0 + input;
 
-								// 0 stage (m)
-
+								// 0 stage (m) (fc)
 								t0 = s_m_r[c] * p_m_r - s_m_i[c] * p_m_i;
 								s_m_i[c] = s_m_r[c] * p_m_i + s_m_i[c] * p_m_r;
 								s_m_r[c] = t0 + input;
 
-								// +1 stage (p1)
-
+								// +1 stage (p1) (fc + bw)
 								t0 = s_p1_r[c] * p_p1_r - s_p1_i[c] * p_p1_i;
 								s_p1_i[c] = s_p1_r[c] * p_p1_i + s_p1_i[c] * p_p1_r;
 								s_p1_r[c] = t0 + input;
+
+								audioInputs[c]++;
 							}
 
-
-							audioInput++;
 
 						}
 						for (Types::fint_t c = 0; c < inputDataChannels; ++c)
@@ -393,7 +426,8 @@
 
 				Scalar * realCoeff[Vectors];
 				Scalar * imagCoeff[Vectors];
-
+				Scalar * realState[Channels][Vectors];
+				Scalar * imagState[Channels][Vectors];
 
 				std::size_t numFilters, numResonators;
 				double maxWindowSize;

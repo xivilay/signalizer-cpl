@@ -180,7 +180,7 @@
 		{
 			R resonance = 0;
 			signed start = static_cast<signed int>(floor(x));
-			for (signed int i = start - wsize + 1; i < start + wsize; ++i)
+			for (signed int i = start - wsize + 1; i < (start + wsize + 1); ++i)
 			{
 				if (i >= 0 && i < asize)
 				{
@@ -190,6 +190,35 @@
 				}
 			}
 			return resonance;
+		}
+
+		template<typename R, bool precise = true, typename T>
+		inline auto lanczosFilter(T * vec, std::size_t asize, double x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
+		{
+			R resonance = 0;
+			Types::fsint_t start = static_cast<Types::fsint_t>(x);
+			for (Types::fsint_t i = start - wsize + 1; i < (start + wsize + 1); ++i)
+			{
+				if (i >= 0 && i < asize)
+				{
+					auto impulse = vec[i];
+					auto response = fresponse<precise>(x - i, wsize);
+					resonance += impulse * response;
+				}
+			}
+			return resonance;
+		}
+
+		template<typename R, typename T>
+		inline auto linearFilter(T * vec, Types::fsint_t asize, double x) -> typename std::remove_reference<decltype(vec[0])>::type
+		{
+			Types::fsint_t x1 = static_cast<Types::fsint_t>(x);
+			Types::fsint_t x2 = std::min(asize - 1, x1 + 1);
+
+			auto frac = x - x1;
+
+			return vec[x1] * (1 - frac) + vec[x2] * frac;
+
 		}
 
 		template<typename T>
