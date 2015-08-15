@@ -57,7 +57,7 @@
 		class CThread
 		{
 			typedef void * (__cdecl * func_sig)(void*);
-			
+			typedef std::uint32_t winret;
 			Thread_t thread;
 			func_sig func;
 			
@@ -167,12 +167,12 @@
 				delete func;
 				return ret;
 			}
-			static DWORD __threadh_win_call win_target(void * imp)
+			static XWORD __threadh_win_call win_target(void * imp)
 			{
 				args * func = reinterpret_cast<args *>(imp);
 				auto ret = func->addr(func->arg);
 				delete func;
-				return reinterpret_cast<DWORD>(ret);
+				return reinterpret_cast<XWORD>(ret);
 			}
 			static void * posix_target(void * imp)
 			{

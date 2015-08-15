@@ -36,9 +36,11 @@
 	#include "../Utility.h"
 	#include <atomic>
 
-	#ifdef __C11__
-		#include <stdatomic>
-	#endif
+#pragma message cwarn("Uncomment when compilers are more conforming.")
+
+	/*#ifdef __C11__
+		#include <stdatomic.h>
+	#endif*/
 
 	#if ATOMIC_LLONG_LOCK_FREE != 2
 		#pragma message cwarn("warning: Atomic integer operations are not lock-free for this platform!") 

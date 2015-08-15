@@ -85,7 +85,7 @@
 				while ((e = glGetError()) != GL_NO_ERROR)
 				{
 					shallDebug = true;
-					DBG("OpenGL Error at " << function << " (" << file << ":" << line << "): " << e << " > " << cpl::OpenGLEngine::getGLErrorMessage(e));
+					DBG("OpenGL Error at " << function << " (" << file << ":" << line << "): " << (int)e << " > " << cpl::OpenGLEngine::getGLErrorMessage(e));
 				}
 				if (shallDebug)
 				{

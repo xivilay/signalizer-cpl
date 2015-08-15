@@ -345,9 +345,8 @@
 				}
 
 				UPixel(std::uint32_t pixel) noexcept
-					: p(pixel)
 				{
-
+					this->pixel.p = pixel;
 				}
 
 				UPixel(std::uint8_t a, std::uint8_t r, std::uint8_t b, std::uint8_t g) noexcept

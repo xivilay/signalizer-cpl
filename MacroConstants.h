@@ -268,6 +268,14 @@
 		
 		#define cwarn(exp) ("warning: " exp)
 
+#pragma message cwarn("Update this to actually check llvm version")
+
+	#if 0
+		#define CPL_LLVM_SUPPORTS_AVX
+	#else
+		#pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")
+	#endif
+
 	#elif defined(__GNUG__)
 		#if __GNUG__ >= 4
 
