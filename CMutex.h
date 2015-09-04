@@ -87,6 +87,9 @@
 			}
 			void acquire(Lockable * l)
 			{
+				auto this_id = std::this_thread::get_id();
+				if (l->ownerThread == this_id)
+					return;
 				if (!resource)
 					resource = l;
 				if (!spinLock(2000, resource))

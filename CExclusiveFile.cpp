@@ -67,6 +67,7 @@ namespace cpl
 			// if we're opening in writemode, we always create a new, empty file
 			// if it's reading mode, we only open existing files.
 			auto openMode = fileMode & writeMode ? CREATE_ALWAYS : OPEN_EXISTING;
+			auto start = Misc::QuickTime();
 			do
 			{
 				handle = ::CreateFile(path.c_str(),
@@ -78,6 +79,11 @@ namespace cpl
 					nullptr);
 				if (handle != INVALID_HANDLE_VALUE)
 					break;
+
+				// timed out.
+				if (Misc::QuickTime() > start + 2000)
+					return false;
+
 				Misc::Delay(0); // yield to other threads.
 			} while (waitForLock);
 			if (handle != INVALID_HANDLE_VALUE)
