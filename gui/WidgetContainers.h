@@ -45,9 +45,14 @@
 		public:
 
 			MatrixSection()
-				: suggestedWidth(), suggestedHeight()
+				: suggestedWidth(), suggestedHeight(), spaceAfterLargest(false), xSpacing(5), ySpacing(5)
 			{
 
+			}
+
+			void setSpacesAfterLargestElement(bool trigger = true) noexcept
+			{
+				spaceAfterLargest = trigger;
 			}
 
 			cpl::CBaseControl * operator [](const std::string & name) const
@@ -71,38 +76,65 @@
 				arrange();
 			}
 
+			void setXSpacing(int spacing) { xSpacing = spacing; }
+			void setYSpacing(int spacing) { ySpacing = spacing;}
+			int getXSpacing() const noexcept { return xSpacing; }
+			int getySpacing()  const noexcept { return ySpacing; }
+
 			void arrange(bool fromResized = true)
 			{
 				// the general amount of separation between elements
-				const std::size_t sepY(5), sepX(5);
+				const int sepY(ySpacing), sepX(xSpacing);
 				// current x,y offsets
-				std::size_t offX(0), offY(0);
+				int offX(5), offY(0);
 				suggestedHeight = 0;
 				suggestedWidth = 0;
-				std::size_t maxHeightInPrevRow = 0;
+				int maxHeightInPrevRow = 0;
 				for (std::size_t y = 0; y < controls.size(); ++y)
 				{
 					maxHeightInPrevRow = 0;
 					offX = 0;
-					offY += sepY;
 
+					// go from left to right, ie. iterate through rows.
 					for (std::size_t x = 0; x < controls[y].size(); ++x)
 					{
 						// get max height for next row
 						auto bounds = controls[y][x].first->bGetView()->getBounds();
-						maxHeightInPrevRow = std::max<std::size_t>(maxHeightInPrevRow, bounds.getHeight());
+						maxHeightInPrevRow =
+							spaceAfterLargest ? std::max<int>(maxHeightInPrevRow, bounds.getHeight()) : bounds.getHeight();
+						// if we don't space vertically after the highest control in the last row,
+						// we position ourselves after the bottom of the control above us (if there is one).
+						auto const ypos = (spaceAfterLargest || y == 0) ? offY : controls[y - 1][x].first->bGetView()->getBottom() + sepY;
+						controls[y][x].first->bGetView()->setTopLeftPosition(offX, ypos);
 						offX += sepX;
-
-						controls[y][x].first->bGetView()->setTopLeftPosition(offX, offY);
 						offX += bounds.getWidth();
 					}
+
+					offY += sepY;
 
 					offY += maxHeightInPrevRow;
 
 					suggestedWidth = std::max(suggestedWidth, offX);
 				}
-				suggestedHeight += offY;
-				suggestedHeight += sepY;
+
+				if (spaceAfterLargest)
+				{
+					suggestedHeight += offY;
+					suggestedHeight += sepY;
+				}
+				else
+				{
+					// if we dont space after largest, we have to scan through columns to see the actual bottom
+					int bot = controls.size() ? controls.size() - 1 : 0;
+					int maxBot = 0;
+					for (std::size_t x = 0; x < controls[bot].size(); x++)
+					{
+						maxBot = std::max(maxBot, (int) controls[bot][x].first->bGetView()->getBottom());
+					}
+
+					suggestedHeight = maxBot + sepY;
+				}
+
 				suggestedWidth += sepX;
 				if (!fromResized)
 				{
@@ -110,15 +142,15 @@
 				}
 			}
 
-			void addControl(cpl::CBaseControl * c, std::size_t row, bool takeOwnerShip = false)
+			void addControl(cpl::CBaseControl * c, int row, bool takeOwnerShip = false)
 			{
 				if (!c)
 					return;
 				// check if it already exists
 
-				controls.resize(std::max(row + 1, controls.size()));
+				controls.resize(std::max(row + 1, (int) controls.size()));
 
-				for (unsigned x = 0; x < controls[row].size(); ++x)
+				for (std::size_t x = 0; x < controls[row].size(); ++x)
 				{
 					if (c == controls[row][x].first)
 					{
@@ -149,7 +181,9 @@
 			}
 		private:
 			std::vector<std::vector<std::pair<cpl::CBaseControl *, bool>>> controls;
-			std::size_t suggestedHeight, suggestedWidth;
+			int suggestedHeight, suggestedWidth;
+			int xSpacing, ySpacing;
+			bool spaceAfterLargest;
 		};
 	};
 

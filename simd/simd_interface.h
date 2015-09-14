@@ -32,6 +32,7 @@
 	#define _SIMD_INTERFACE_H
 	
 	#include "simd_traits.h"
+	#include "../SysStats.h"
 
 	namespace cpl
 	{
@@ -282,6 +283,18 @@
 				inline v4sf set1(const float in)
 				{
 					return _mm_set1_ps(in);
+				}
+
+			template<>
+				inline float set1(const float in)
+				{
+					return in;
+				}
+
+			template<>
+				inline double set1(const double in)
+				{
+					return in;
 				}
 
 			template<>
@@ -540,6 +553,24 @@
 					}
 					return o << ")";
 				}
+			template<typename Scalar>
+				inline typename std::enable_if<std::is_floating_point<Scalar>::value, std::size_t>::type 
+					max_vector_capacity()
+				{
+					const auto factor = 8 / sizeof(Scalar);
+					auto & cpuinfo = SysStats::CProcessorInfo::instance();
+					if (cpuinfo.test(cpuinfo.AVX))
+					{
+						return factor * 4;
+					}
+					else if (cpuinfo.test(cpuinfo.SSE2))
+					{
+						return factor * 2;
+					}
+
+					return 1;
+				}
+
 		}; // simd
 	}; // cpl
 

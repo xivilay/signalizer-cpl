@@ -731,6 +731,8 @@
 			{
 				if (name.size())
 				{
+					if (std::contains(buttons, name))
+						CPL_RUNTIME_EXCEPTION("Multiple tabs with same unique name!");
 					buttons.push_back(name);
 					vectors.emplace_back(name);
 					resized();

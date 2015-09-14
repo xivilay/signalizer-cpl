@@ -31,12 +31,13 @@
 #include "../CPresetManager.h"
 namespace cpl
 {
-	CPresetWidget::CPresetWidget(CSerializer::Serializable * content, const std::string & uName)
+	CPresetWidget::CPresetWidget(CSerializer::Serializable * content, const std::string & uName, Setup s)
 	: 
 		CBaseControl(this), 
 		name(uName), 
 		parent(content),
-		ext(uName + "." + programInfo.programAbbr)
+		ext(uName + "." + programInfo.programAbbr),
+		layoutSetup(s)
 
 	{
 		initControls();
@@ -76,7 +77,7 @@ namespace cpl
 			updatePresetList();
 			if (result)
 			{
-				setSelectedPreset(location);
+				setDisplayedPreset(location);
 			}
 
 		}
@@ -89,7 +90,33 @@ namespace cpl
 			if (result)
 			{
 				parent->load(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
-				setSelectedPreset(location);
+				setDisplayedPreset(location);
+			}
+		}
+		else if (c == &ksaveDefault)
+		{
+			CCheckedSerializer serializer(name);
+			parent->save(serializer.getArchiver(), programInfo.versionInteger);
+			juce::File location;
+			bool result = CPresetManager::instance().savePreset(fullPathToPreset("default"), serializer, location);
+			// update list anyway; user may delete files in dialog etc.
+			updatePresetList();
+			if (result)
+			{
+				setDisplayedPreset(location);
+			}
+
+		}
+		else if (c == &kloadDefault)
+		{
+			CCheckedSerializer serializer(name);
+			juce::File location;
+			bool result = CPresetManager::instance().loadPreset(fullPathToPreset("default"), serializer, location);
+			updatePresetList();
+			if (result)
+			{
+				parent->load(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+				setDisplayedPreset(location);
 			}
 		}
 		else if (c == &kpresetList)
@@ -111,6 +138,16 @@ namespace cpl
 		}
 	}
 
+	bool CPresetWidget::loadDefaultPreset()
+	{
+		if (layoutSetup & WithDefault)
+		{
+			return setSelectedPreset((juce::File)fullPathToPreset("default"));
+		}
+		
+		return false;
+	}
+
 	void CPresetWidget::onValueChange()
 	{
 	}
@@ -122,6 +159,12 @@ namespace cpl
 	const std::string & CPresetWidget::getName() const noexcept
 	{
 		return name;
+	}
+
+	void CPresetWidget::setDisplayedPreset(juce::File location)
+	{
+		std::string newValue = presetWithoutExtension(location);
+		kpresetList.bInterpretAndSet(newValue, false);
 	}
 
 	bool CPresetWidget::setSelectedPreset(juce::File location)
@@ -158,19 +201,40 @@ namespace cpl
 		kloadPreset.bAddPassiveChangeListener(this);
 		ksavePreset.bAddPassiveChangeListener(this);
 		kpresetList.bAddPassiveChangeListener(this);
+		kloadDefault.bAddPassiveChangeListener(this);
+		ksaveDefault.bAddPassiveChangeListener(this);
 
-		kloadPreset.bSetTitle("Load preset");
-		ksavePreset.bSetTitle("Save preset");
+
+		kloadPreset.bSetTitle("Load preset...");
+		ksavePreset.bSetTitle("Save current...");
+		kloadDefault.bSetTitle("Load default");
+		ksaveDefault.bSetTitle("Save as default");
 		kpresetList.bSetTitle("Preset list");
 
 
 		bSetDescription("The preset widget allows you to save and load the state of the current local parent view.");
 		kloadPreset.bSetDescription("Load a preset from a location.");
 		ksavePreset.bSetDescription("Save the current state to a location.");
+		kloadDefault.bSetDescription("Load the default preset.");
+		ksaveDefault.bSetDescription("Save the current state as the default.");
 
-		layout.addControl(&kpresetList, 0, false);
-		layout.addControl(&kloadPreset, 1, false);
-		layout.addControl(&ksavePreset, 2, false);
+		if(layoutSetup & WithDefault)
+		{
+			layout.setSpacesAfterLargestElement(false);
+			layout.setXSpacing(layout.getXSpacing() * 3);
+			layout.addControl(&ksavePreset, 0, false);
+			layout.addControl(&ksaveDefault, 1, false);
+			layout.addControl(&kloadPreset, 2, false);
+			layout.addControl(&kloadDefault, 3, false);
+			layout.addControl(&kpresetList, 0, false);
+		}
+		else
+		{
+			layout.addControl(&kpresetList, 0, false);
+			layout.addControl(&kloadPreset, 1, false);
+			layout.addControl(&ksavePreset, 2, false);
+		}
+
 
 		setSize(layout.getSuggestedSize().first, layout.getSuggestedSize().second);
 	}

@@ -861,7 +861,7 @@
 				{
 
 					if (!data.readBytes(&object, sizeof(T)) && throwOnExhaustion)
-						throw std::runtime_error("CSerializer exhausted; probably incompatible serialized object.");
+						CPL_RUNTIME_EXCEPTION("CSerializer exhausted; probably incompatible serialized object.");
 
 					return *this;
 				}
