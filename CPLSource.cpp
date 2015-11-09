@@ -32,6 +32,7 @@
 
 #include "Common.h"
 #include "Misc.cpp"
+
 #ifdef CPL_JUCE
 
 	#include "GraphicComponents.cpp"
@@ -75,10 +76,9 @@
 #include "InstructionSet.cpp"
 #include "CTimer.cpp"
 #include "simd/simd_consts.cpp"
+
 #if defined(CPL_HINT_FONT)
-#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
-
-#include "FreeType\FreeTypeAmalgam.h"
-#include "FreeType\FreeTypeAmalgam.cpp"
-
+	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
+	#include "FreeType\FreeTypeAmalgam.h"
+	#include "FreeType\FreeTypeAmalgam.cpp"
 #endif
