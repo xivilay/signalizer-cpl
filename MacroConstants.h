@@ -159,6 +159,10 @@
 	#define _rgb_get_blue(rgb)	(lower_byte((rgb)>>16))
 
 	#if defined(_MSC_VER) 
+
+		// cross-platform size_t specifier for printf-families
+		#define CPL_FMT_SZT "%Iu"
+
 		// oh god
 		#define NOMINMAX
 		#if _MSC_VER >= 1700
@@ -217,6 +221,10 @@
 
 
 	#elif defined(__llvm__)
+
+		// cross-platform size_t specifier for printf-families
+		#define CPL_FMT_SZT "%zu"
+
 		#define __C99__
 		#define __C11__
 		#define APE_API __cdecl

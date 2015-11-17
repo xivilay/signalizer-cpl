@@ -82,3 +82,8 @@
 	#include "FreeType\FreeTypeAmalgam.h"
 	#include "FreeType\FreeTypeAmalgam.cpp"
 #endif
+
+#if !defined(CPL_LEAN)
+	#include "CPLTests.cpp"
+
+#endif

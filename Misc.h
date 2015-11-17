@@ -296,11 +296,12 @@
 			/// If condition has not returned true yet, it prompts the user to 
 			/// either continue anyway, wait some more, or exit the application.
 			/// </summary>
-			/// <param name="ms"></param>
-			/// <param name="cond"></param>
-			/// <returns></returns>
-			template<typename Condition> 
-				bool WaitOnCondition(unsigned int ms, Condition cond) 
+			/// <param name="ms">How many miliseconds to wait</param>
+			/// <param name="cond">Functor returning true if condition is met</param>
+			/// <param name="delay">Optional delay between invocations (0, default, will yield the thread)</param>
+			/// <returns>True if functor returned true, false if user chose to continue anyway.</returns>
+			template<typename Condition, bool presentUserOption = true> 
+				bool WaitOnCondition(unsigned int ms, Condition cond, unsigned int delay = 0) 
 				{
 					unsigned start;
 					int ret;
@@ -309,21 +310,25 @@
 					while(!cond()) {
 						if((QuickTime() - start) > ms)
 							goto time_out;
-						Delay(0);
+						Delay(delay);
 					}
 					// normal exitpoint
 					return true;
 					// deadlock occurs
 
 				time_out:
-
+					if (!presentUserOption)
+					{
+						return false;
+					}
 					ret = MsgBox("Deadlock detected in conditional wait: Protected resource is not released after max interval. "
-							"Wait again (try again), continue anyway (continue) - can create async issues - or exit (cancel)?", 
+							"Wait again (try again, breaks if debugged), continue anyway (continue) - can create async issues - or exit (cancel)?", 
 							_PROGRAM_NAME_ABRV " Error!", 
 							sConTryCancel | iStop);
 					switch(ret) 
 					{
 					case MsgButton::bTryAgain:
+						BreakIfDebugged();
 						goto loop;
 					case MsgButton::bCancel:
 	#pragma message cwarn("Find a more gentle way to exit...")

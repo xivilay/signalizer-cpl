@@ -21,11 +21,13 @@
  
  **************************************************************************************
 
-	file:CAudioStream.h
+	file:ConcurrentServices.h
+
+		A set of multithreaded services enabling otherwise complex operations, like 
+		atomic data swaps of larger structures in lock-free fashion,
+		making the services suitable for real-time multithreaded programming.
 		
-		A bridge system allowing effecient data processing between threads that mustn't
-		suffer from priority inversion, but still handle locking.
-		TODO: Implement growable listener queue
+
 *************************************************************************************/
 
 #ifndef _CONCURRENTSERVICES_H
@@ -38,6 +40,65 @@
 
 	namespace cpl
 	{
+		/// <summary>
+		/// atomic_flag with reversed conditions.
+		/// Usage:
+		///		thread 1:
+		///			abf = true;
+		///		thread 2:
+		///			if(abf.cas())
+		///			{
+		///				// ...
+		///			}
+		/// </summary>
+		class ABoolFlag
+		{
+		public:
+			ABoolFlag() : flag(false) {}
+
+			ABoolFlag & operator = (bool val)
+			{
+				if (!val)
+				{
+					CPL_RUNTIME_EXCEPTION("Atomic bool flag reset through operator = .");
+				}
+				flag.store(val);
+				return *this;
+			}
+
+			operator bool() const noexcept
+			{
+				// TODO: figure out less strict ordering possible.
+				return flag.load();
+			}
+
+			/// <summary>
+			/// Resets the flag to the input value, if it were set.
+			/// Returns true if flag was set and reset.
+			/// </summary>
+			/// <param name="newVal"></param>
+			/// <returns></returns>
+			bool cas(bool newVal = false)
+			{
+				bool expected = true;
+				// TODO: figure out less strict ordering possible.
+				return flag.compare_exchange_strong(expected, newVal);
+			}
+
+		private:
+			std::atomic<bool> flag;
+		};
+
+		/// <summary>
+		/// A helper class that permits swapping in objects in a producer-consumer situation,
+		/// where the 'consumer' is considered the thread, that actively uses the object, while
+		/// the producer thread allows inserting new objects the consumer will use, obliviously.
+		/// Example usage: Real-time thread has a list of listeners it calls each loop, however
+		/// it cannot resize these (cause of memory allocations).
+		/// The producer, or non-real time thread swaps in a larger copy
+		/// of the listeners any time it wants.
+		/// All consumer operations are guaranteed real-time suitable (lock-free)
+		/// </summary>
 		template<class Object, class Delete = typename std::default_delete<Object>>
 		class ConcurrentObjectSwapper : Utility::CNoncopyable
 		{
@@ -53,7 +114,7 @@
 
 				}
 
-				Object * obj;
+				std::atomic<Object *> obj;
 				std::atomic_bool flag;
 
 				static_assert(ATOMIC_BOOL_LOCK_FREE, "Atomic bools need to be lock free.");
@@ -61,13 +122,20 @@
 
 				void signalInUse() { flag.store(true); }
 				bool isSignaled() const { return flag.load(); }
-				void reset(Object * newObj) noexcept { obj = newObj; }
-				bool hasContent() const noexcept { return !!obj; }
+				void reset(Object * newObj) noexcept { obj.store(newObj); }
+				bool hasContent() const noexcept { return !!obj.load(); }
 
 				void clearAndDelete()
 				{
-					if (obj)
+					if (obj.load())
+					{
 						Delete()(obj);
+					}
+					else if (flag.load())
+					{
+						// no object stored, but flag is set /signaled?
+						BreakIfDebugged();
+					}
 					obj = nullptr;
 					flag.store(false);
 				}
@@ -113,10 +181,12 @@
 			/// <returns></returns>
 			bool tryReplace(Object * newObject)
 			{
+				// TODO: move a tryRemoveOld in here?
 				if (!old->hasContent())
 				{
 					old->reset(newObject);
 					old = current.exchange(old);
+					// TODO: insert release memory fence?
 					return true;
 				}
 
@@ -127,17 +197,41 @@
 			/// Otherwise, returns a pointer to the newest stored object through
 			/// tryReplace.
 			/// NOTICE: any objects returned previously through this call may be asynchronously
-			/// invalidated.
+			/// invalidated, therefore you should only store the reference for this object in the current
+			/// stack frame.
 			/// 'Consumer' thread only.
 			/// </summary>
 			/// <returns></returns>
 			Object * getObject()
 			{
+				// TODO: insert acquire fence?
 				auto ce = current.load();
 				Object * retptr = nullptr;
 				if (ce->hasContent())
 				{
+					// implicit barriers on both operations, add fennce inbetween if ordering is weakened
 					ce->signalInUse();
+					retptr = ce->obj.load();
+				}
+				return retptr;
+			}
+
+			/// <summary>
+			/// Returns a null pointer if no objects have been stored yet.
+			/// Otherwise, returns a pointer to the newest stored object through tryReplace.
+			/// Contrary to getObject, this function does not signal usage of the new object 
+			/// - this HAS to be done through the consumer thread. As of such, this function
+			/// can be called through both threads, however if getObject is never called,
+			/// newer objects may never propagate as this class was never told it was safe to delete
+			/// the older object.
+			/// </summary>
+			Object * getObjectWithoutSignaling()
+			{
+				// TODO: insert acquire fence?
+				auto ce = current.load();
+				Object * retptr = nullptr;
+				if (ce->hasContent())
+				{
 					retptr = ce->obj;
 				}
 				return retptr;
