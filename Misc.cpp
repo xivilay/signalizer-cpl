@@ -77,6 +77,7 @@ namespace cpl
 			
 		#endif
 		
+
 		/*********************************************************************************************
 
 			This function allows the user/programmer to attach a debugger on fatal errors.

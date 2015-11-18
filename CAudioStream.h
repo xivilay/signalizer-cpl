@@ -39,6 +39,7 @@
 	#include <mutex>
 	#include "ConcurrentServices.h"
 	#include "lib/BlockingLockFreeQueue.h"
+	#include "lib/CDataBuffer.h"
 	#include <deque>
 	#define CPL_DEBUG_CAUDIOSTREAM
 
@@ -170,7 +171,7 @@
 			typedef AudioPacket<T, PacketSize> AudioFrame;
 			// atomic vector of pointers, atomic because we have unsynchronized read-access between threads (UB without atomic access)
 			typedef std::vector<std::atomic<AudioStreamListener *>> ListenerQueue;
-
+			
 			/// <summary>
 			/// A class that enables listening callbacks on both real-time and async audio
 			/// channels from a CAudioStream

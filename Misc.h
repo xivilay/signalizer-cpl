@@ -84,7 +84,14 @@
 			Types::tstring GetLastOSErrorMessage();
 			Types::tstring GetLastOSErrorMessage(Types::OSError errorToPrint);
 			
-
+			/// <summary>
+			/// Consumes any key from the console, without requiring enter to be hit.
+			/// </summary>
+			bool ConsumeAnyKey();
+			/// <summary>
+			/// Promts the user to press any key in the console to continue
+			/// </summary>
+			bool PromptAnyKey();
 
 			template<class Type, size_t alignment = 32>
 				Type * alignedMalloc(std::size_t numObjects)
@@ -108,6 +115,18 @@
 					
 					return reinterpret_cast<Type * >(ptr);
 				}
+
+			template<class Type, size_t alignment = 32>
+				inline Type * alignedRealloc(Type * ptr, std::size_t numObjects)
+				{
+					static_assert(std::is_trivially_copyable<Type>::value, "Reallocations may need to trivially copy buffer");
+					#ifdef __WINDOWS__
+						return reinterpret_cast<Type *>(_aligned_realloc(ptr, numObjects * sizeof(Type), alignment));
+					#else
+						#error "Implement aligned realloc for your platform"
+					#endif
+				}
+
 			inline void * alignedBytesMalloc(std::size_t size, std::size_t alignment)
 			{
 				void * ptr = nullptr;

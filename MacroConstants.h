@@ -116,6 +116,12 @@
 		#define BreakIfDebugged() (void *)0
 	#endif
 
+	#ifdef _DEBUG
+		#define CPL_NOEXCEPT_IF_RELEASE
+	#else
+		#define CPL_NOEXCEPT_IF_RELEASE noexcept
+	#endif
+
 	/*
 		On x64 windows, tcc emits wrong calling convention for floating point functions.
 		We circumvent this using a hack.
