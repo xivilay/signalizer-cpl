@@ -142,7 +142,7 @@
 				independently change this (even inbetween paints).
 				A return value of false will cause the next handler in the chain to handle the event.
 				Otherwise, the event is considered handled, and no other handlers will be called.
-				Add a valueformatter to this class to handle mapping of values to strings.
+				Add a valueformatter to this class (CBaseControl) to handle mapping of values to strings.
 
 				There will be a default handler. The handlers are called from newest added to the first.
 
@@ -552,7 +552,7 @@
 			*********************************************************************************************/
 			void bAddChangeListener(Listener * listener)
 			{
-				if (listener && !std::contains(listeners, listener))
+				if (listener && !contains(listeners, listener))
 				{
 					listeners.push_back(listener);
 					addClientDestructor(listener);
@@ -579,7 +579,7 @@
 			*********************************************************************************************/
 			void bAddPassiveChangeListener(PassiveListener * listener)
 			{
-				if (listener && !std::contains(passiveListeners, listener))
+				if (listener && !contains(passiveListeners, listener))
 				{
 					passiveListeners.push_back(listener);
 					addClientDestructor(listener);
@@ -606,7 +606,7 @@
 			*********************************************************************************************/
 			void bAddFormatter(ValueFormatter * formatter)
 			{
-				if (!std::contains(formatters, formatter))
+				if (!contains(formatters, formatter))
 				{
 					formatters.push_back(formatter);
 					addClientDestructor(formatter);

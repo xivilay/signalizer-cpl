@@ -299,7 +299,13 @@ namespace cpl
 	{
 		setValue(newValue * (getMaximum() - getMinimum()) + getMinimum(), 
 			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
-	}	
+	}
+	void CKnobSlider::bRedraw()
+	{
+		bFormatValue(text, bGetValue());
+		bSetText(text);
+		repaint();
+	}
 	void CKnobSlider::setCtrlType(ControlType newType)
 	{
 		if(newType > 0 && newType <= ControlType::ms)

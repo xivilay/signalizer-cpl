@@ -34,12 +34,77 @@
 	#include <cmath>
 	#include <functional>
 	#include <algorithm>
+	#include <type_traits>
+
+	namespace cpl
+	{
+		const char newl = '\n';
+		const char tab = '\t';
+
+		typedef std::make_signed<std::size_t>::type ssize_t;
+
+		template<class C, typename T>
+			std::pair<std::size_t, bool> index_of(const C & c, const T & t)
+			{
+				auto it = begin(c);
+				std::size_t count = 0;
+				for (; it != end(c); it++)
+				{
+					count++;
+				}
+				return it == end(c) ? std::make_pair(0ul, false) : std::make_pair(count, true);
+			}
+
+		template<class C, class T>
+			inline auto _contains_impl(const C& c, const T& x, int)
+				-> decltype(c.find(x), true)
+			{
+				return end(c) != c.find(x);
+			}
+
+		template<class C, class T>
+			inline bool _contains_impl(const C& v, const T& x, long)
+			{
+				return end(v) != std::find(begin(v), end(v), x);
+			}
+
+		template<class C, class T>
+			inline auto contains(const C& c, const T& x)
+				-> decltype(end(c), true)
+			{
+				return _contains_impl(c, x, 0);
+			}
+
+			template <class C>
+				constexpr auto data(C& c) -> decltype(c.data())
+				{
+					return c.data();
+				}
+			template <class C>
+				constexpr auto data(const C& c) -> decltype(c.data())
+				{
+					return c.data();
+				}
+
+			template <class T, std::size_t N>
+				constexpr T* data(T(&arr)[N]) noexcept
+				{
+					return arr;
+				}
+
+			template <class T>
+				constexpr T * data(T * arr) noexcept
+				{
+					return arr;
+				}
+	};
+
+
 
 	namespace std
 	{
 
-		const char newl = '\n';
-		const char tab = '\t';
+
 
 		template <> 
 			struct modulus < float >
@@ -67,25 +132,7 @@
 				http://codereview.stackexchange.com/a/59999/37465
 		*/
 
-		template<class C, class T>
-			inline auto _contains_impl(const C& c, const T& x, int)
-				-> decltype(c.find(x), true)
-			{
-				return end(c) != c.find(x);
-			}
 
-		template<class C, class T>
-			inline bool _contains_impl(const C& v, const T& x, long)
-			{
-				return end(v) != std::find(begin(v), end(v), x);
-			}
-
-		template<class C, class T>
-			inline auto contains(const C& c, const T& x)
-				-> decltype(end(c), true)
-			{
-				return _contains_impl(c, x, 0);
-			}
 
 		#if defined(__LLVM__) && !defined(__CPP14__)
 			// http://isocpp.org/files/papers/N3656.txt
@@ -128,17 +175,7 @@
 				return buf;
 			}
 		
-		template<class C, typename T>
-			std::pair<std::size_t, bool> index_of(const C & c, const T & t)
-			{
-				auto it = begin(c);
-				std::size_t count = 0;
-				for (; it != end(c); it++)
-				{
-					count++;
-				}
-				return it == end(c) ? std::make_pair(0ul, false) : std::make_pair(count, true);
-			}
+
 
 	}; // std
 #endif

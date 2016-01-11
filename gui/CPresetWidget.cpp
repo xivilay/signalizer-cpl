@@ -192,7 +192,6 @@ namespace cpl
 
 		kpresetList.setValues(shortList);
 
-
 	}
 
 	void CPresetWidget::initControls()

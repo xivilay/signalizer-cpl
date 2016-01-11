@@ -32,6 +32,8 @@
 
 #ifndef _CONCURRENTSERVICES_H
 	#define _CONCURRENTSERVICES_H
+	#include "common.h"
+
 	#include <thread>
 	#include "Utility.h"
 	#include <vector>
@@ -62,7 +64,7 @@
 				{
 					CPL_RUNTIME_EXCEPTION("Atomic bool flag reset through operator = .");
 				}
-				flag.store(val);
+				flag.store(!!val);
 				return *this;
 			}
 

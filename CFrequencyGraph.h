@@ -485,6 +485,7 @@
 			*/
 			bool compileLogSubDecade(double offset, double step)
 			{
+				// TODO: still hangs sometimes
 				// the amount of space it would take to draw numDivision subdivions.
 				auto const nextHigherFreq = offset + step * numDivisions;
 

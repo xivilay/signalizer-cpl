@@ -90,5 +90,44 @@
 			}
 			return false;
 		}
+
+		/// <summary>
+		/// Optimized for std::strings
+		/// </summary>
+		/// <param name="from"></param>
+		/// <param name="to"></param>
+		/// <returns></returns>
+		inline bool lexicalConversion(const std::string & from, std::int64_t & to)
+		{
+			double output;
+			char * endPtr = nullptr;
+			output = strtoll(from.c_str(), &endPtr, 0);
+			if (endPtr > from.c_str())
+			{
+				to = output;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Optimized for numbers to strings
+		/// </summary>
+		/// <param name="from"></param>
+		/// <param name="to"></param>
+		/// <returns></returns>
+		/*inline bool lexicalConversion(const std::int64_t & from, std::string & to)
+		{
+			to.reserve(std::numeric_limits<std::int64_t>::max_digits10());
+			double output;
+			char * endPtr = nullptr;
+			output = strtoll(from.c_str(), &endPtr, 0);
+			if (endPtr > from.c_str())
+			{
+				to = output;
+				return true;
+			}
+			return false;
+		}*/
 	}; // cpl
 #endif

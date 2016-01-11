@@ -36,6 +36,7 @@
 	#include "CSerializer.h"
 	#include "CToolTip.h"
 	#include "GraphicComponents.h"
+	#include "rendering\OpenGLEngine.h"
 
 	namespace cpl
 	{
@@ -237,11 +238,18 @@
 			void renderOpenGL() override final
 			{
 				/// <summary>
-				///  if the stack gets corrupted, the next variable should not have been overwritten.
+				///  if the stack gets corrupted, the next variable should not have been overwritten, and can be used
+				/// for debugging
 				/// </summary>
 				volatile thread_local COpenGLView * _stackSafeThis = this;
 				openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);
+
+				CPL_DEBUGCHECKGL();
+
 				onOpenGLRendering();
+
+				CPL_DEBUGCHECKGL();
+
 				openGLStamp = juce::Time::getHighResolutionTicks();
 			}
 
@@ -250,6 +258,29 @@
 				graphicsDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - graphicsStamp);
 				onGraphicsRendering(g);
 				graphicsStamp = juce::Time::getHighResolutionTicks();
+			}
+
+			/// <summary>
+			/// This can be called during openGL rendering to compose juce graphics
+			/// directly to the openGL surface, at a specific point in time. Notice the call doesn't happen 
+			/// on the main thread.
+			/// </summary>
+			template<typename ThreadedGraphicsFunction>
+			void renderGraphics(ThreadedGraphicsFunction func)
+			{
+				if (!oglc)
+					CPL_RUNTIME_EXCEPTION("OpenGL graphics composition called without having a target context.");
+
+				CPL_DEBUGCHECKGL();
+
+				std::unique_ptr<juce::LowLevelGraphicsContext> context(juce::createOpenGLGraphicsContext(*oglc, getWidth(), getHeight()));
+				juce::Graphics g(*context);
+
+				CPL_DEBUGCHECKGL();
+
+				func(g);
+
+				CPL_DEBUGCHECKGL();
 			}
 
 			void newOpenGLContextCreated() override

@@ -115,7 +115,8 @@
 	#include <memory>
 	#include <exception>
 	#include <stdexcept>
-	#include <cpl/stdext.h>
+	#include "stdext.h"
+	#include "PlatformSpecific.h"
 
 	namespace cpl
 	{
@@ -314,7 +315,7 @@
 
 		private:
 			const BinaryBuilder::byte * contents;
-			std::size_t contentSize;
+			std::int64_t contentSize;
 		};
 
 		class ISerializerSystem

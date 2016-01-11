@@ -55,6 +55,7 @@
 					OpenGLImageDrawer(COpenGLImage & img, COpenGLStack & s)
 						: Rasterizer(s), image(img)
 					{
+						s.enable(GL_TEXTURE_2D);
 						img.bind();
 						glBegin(GL_QUADS);
 						glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

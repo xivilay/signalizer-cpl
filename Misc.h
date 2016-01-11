@@ -73,7 +73,7 @@
 			int GetSizeRequiredFormat(const char * fmt, va_list pargs);
 
 			std::string StringFromVersion(unsigned int version);
-			long long ClockCounter();
+			std::uint64_t ClockCounter();
 			long long TimeCounter();
 			double TimeDifference(long long);
 			double TimeToMilisecs(long long);
@@ -350,7 +350,7 @@
 						BreakIfDebugged();
 						goto loop;
 					case MsgButton::bCancel:
-	#pragma message cwarn("Find a more gentle way to exit...")
+						// TODO: exit another way?
 						exit(-1);
 					}
 					// not needed (except for warns)

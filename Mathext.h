@@ -42,6 +42,7 @@
 	#include <functional>
 	#include "stdext.h"
 
+	// do we have enough digits?
 	#ifndef M_PI
 		#define M_PI 3.1415926535897932384626433832795028841971693993751058209
 	#endif
@@ -57,6 +58,12 @@
 	#ifndef HALFPI
 		#define HALFPI (M_PI / 2)
 	#endif
+
+	namespace std
+	{
+		template<typename T>
+			class complex;
+	};
 
 	namespace cpl
 	{
@@ -98,9 +105,158 @@
 		{
 			using namespace std;
 
+			/*
+			* Evaluate Chebyshev series
+			*
+			* int N;
+			* double x, y, coef[N], chebevl();
+			*
+			* y = chbevl( x, coef, N );
+			*
+			* DESCRIPTION:
+			*
+			* Evaluates the series
+			*
+			*        N-1
+			*         - '
+			*  y  =   >   coef[i] T (x/2)
+			*         -            i
+			*        i=0
+			*
+			* of Chebyshev polynomials Ti at argument x/2.
+			*
+			* Coefficients are stored in reverse order, i.e. the zero
+			* order term is last in the array.  Note N is the number of
+			* coefficients, not the order.
+			*
+			* If coefficients are for the interval a to b, x must
+			* have been transformed to x -> 2(2x - b - a)/(b-a) before
+			* entering the routine.  This maps x from (a, b) to (-1, 1),
+			* over which the Chebyshev polynomials are defined.
+			*
+			* If the coefficients are for the inverted interval, in
+			* which (a, b) is mapped to (1/b, 1/a), the transformation
+			* required is x -> 2(2ab/x - b - a)/(b-a).  If b is infinity,
+			* this becomes x -> 4a/x - 1.
+			*
+			* SPEED:
+			*
+			* Taking advantage of the recurrence properties of the
+			* Chebyshev polynomials, the routine requires one more
+			* addition per loop than evaluating a nested polynomial of
+			* the same degree.
+			
+				Cephes Math Library Release 2.0:  April, 1987
+				Copyright 1985, 1987 by Stephen L. Moshier
+			*/
+			double chbevl(double x, double array[], int n);
+
+			///<summary>
+			/// Chebyshev coefficients for exp(-x) I0(x)
+			/// in the interval [0,8].
+			/// lim(x->0){ exp(-x) I0(x) } = 1.
+			/// </summary>
+			extern double Chebyshev_A_Coeffs[];
+
+			///<summary>
+			/// Chebyshev coefficients for exp(-x) sqrt(x) I0(x)
+			/// in the inverted interval [8,infinity].
+			/// 
+			/// lim(x->inf){ exp(-x) sqrt(x) I0(x) } = 1/sqrt(2pi).
+			/// </summary>
+			extern double Chebyshev_B_Coeffs[];
+
+			///<summary>
+			/// This function computes the chebyshev polyomial T_n(x)
+			/// </summary>
+			template<typename T, typename SizeType>
+			T cheby_poly(SizeType n, T x)
+			{
+				if (std::abs(x) <= 1)
+					return std::cos(n * std::acos(x));
+				else
+					return std::cosh(n * std::acosh(x));
+			}
+
+
+			/*
+			*
+			* Modified Bessel function of order zero
+			*
+			* double x, y, i0();
+			*
+			* y = i0( x );
+			*
+			*
+			* DESCRIPTION:
+			*
+			* Returns modified Bessel function of order zero of the
+			* argument.
+			*
+			* The function is defined as i0(x) = j0( ix ).
+			*
+			* The range is partitioned into the two intervals [0,8] and
+			* (8, infinity).  Chebyshev polynomial expansions are employed
+			* in each interval.
+
+			Cephes Math Library Release 2.8:  June, 2000
+			Copyright 1984, 1987, 2000 by Stephen L. Moshier
+
+			*/
+			template<typename T>
+			T i0(T x)
+			{
+				T y;
+
+				if (x < (T)0)
+					x = -x;
+				if (x <= (T)8.0) {
+					y = (x / (T)2.0) - (T)2.0;
+					return(std::exp(x) * (T)chbevl(y, Chebyshev_A_Coeffs, 30));
+				}
+
+				return(std::exp(x) * (T)chbevl((T)32.0 / x - (T)2.0, Chebyshev_B_Coeffs, 25) / std::sqrt(x));
+			}
+
+			template<typename Scalar>
+				inline Scalar square(const std::complex<Scalar> & z)
+				{
+					return z.real() * z.real() + z.imag() * z.imag();
+				}
+
+			template<typename Scalar>
+				inline typename std::enable_if<std::is_arithmetic<Scalar>::value, Scalar>::type
+					square(Scalar z)
+					{
+						return z * z;
+					}
+
+			template<typename Scalar>
+				inline Scalar cube(const std::complex<Scalar> & z)
+				{
+					return z.real() * z.real() * z.real() + z.imag() + z.imag() * z.imag();
+				}
+
+			template<typename Scalar>
+				inline typename std::enable_if<std::is_arithmetic<Scalar>::value, Scalar>::type
+					cube(Scalar z)
+				{
+					return z * z * z;
+				}
 			namespace Complex
 			{
-			
+				/*template<typename T>
+					constexpr std::complex<T> operator"" i(T d)
+					{
+						return std::complex<T>{0.0L, d};
+					}
+
+				template<typename T>
+				constexpr std::complex<T> imaginary()
+				{
+					return{ 0, 1 };
+				}
+				*/
 			};
 
 			/*
@@ -332,7 +488,7 @@
 				}
 			template<typename Scalar>
 				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
-				lastPow2(Scalar x)
+					lastPow2(Scalar x)
 				{
 					Scalar power = 1;
 					while (x >>= 1) 
@@ -342,12 +498,27 @@
 			
 			template<typename Scalar>
 				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
-				nextPow2Inc(Scalar x)
+					nextPow2Inc(Scalar x)
 				{
 					if ((x & (x - 1)) == 0)
 						return x;
 					else
 						return nextPow2(x);
+				}
+
+
+			template<typename Scalar>
+				typename std::enable_if<std::is_integral<Scalar>::value && std::is_unsigned<Scalar>::value, bool>::type 
+					isPow2(Scalar x)
+				{
+					return (x & (x - 1)) == 0;
+				}
+
+			template<typename Scalar>
+				typename std::enable_if<std::is_integral<Scalar>::value && !std::is_unsigned<Scalar>::value, bool>::type
+					isPow2(Scalar x)
+				{
+					return x > 0 && !(x & (x ? 1));
 				}
 
 			template<typename Scalar = double>
@@ -400,7 +571,7 @@
 				inline typename std::enable_if<!std::is_floating_point<T2>::value, T2>::type
 					floorToNInf(T input)
 				{
-					return input;
+					return static_cast<T2>(input);
 				}
 
 

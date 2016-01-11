@@ -104,7 +104,7 @@
 							spaceAfterLargest ? std::max<int>(maxHeightInPrevRow, bounds.getHeight()) : bounds.getHeight();
 						// if we don't space vertically after the highest control in the last row,
 						// we position ourselves after the bottom of the control above us (if there is one).
-						auto const ypos = (spaceAfterLargest || y == 0) ? offY : controls[y - 1][x].first->bGetView()->getBottom() + sepY;
+						auto const ypos = (spaceAfterLargest || y == 0) ? offY : (controls[y - 1][x].first->bGetView()->getBottom() + sepY);
 						controls[y][x].first->bGetView()->setTopLeftPosition(offX, ypos);
 						offX += sepX;
 						offX += bounds.getWidth();

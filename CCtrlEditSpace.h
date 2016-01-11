@@ -37,6 +37,7 @@
 #ifndef _CCTRLEDITSPACE_H
 	#define _CCTRLEDITSPACE_H
 	#include "CBaseControl.h"
+	#include "gui/BuildingBlocks.h"
 
 	namespace cpl
 	{
@@ -112,27 +113,6 @@
 			virtual void onObjectDestruction(const CBaseControl::ObjectProxy & object) override;
 			juce::ComponentAnimator & getAnimator() { return juce::Desktop::getInstance().getAnimator(); }
 
-			struct SemanticBorder : public juce::Component
-			{
-				SemanticBorder() 
-					: borderColour(juce::Colours::black), isActive(false), borderSize(1.f) 
-				{ 
-					setOpaque(false); 
-					setWantsKeyboardFocus(false); 
-					setInterceptsMouseClicks(false, false); 
-				}
-
-				void paint(juce::Graphics & g)
-				{
-					if (!isActive)
-						return;
-					g.setColour(borderColour);
-					g.drawRect(getBounds().toFloat(), borderSize);
-				}
-				juce::Colour borderColour;
-				float borderSize;
-				volatile bool isActive;
-			};
 
 			SemanticBorder errorVisualizer;
 			// only to avoid cyclic dependency

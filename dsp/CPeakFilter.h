@@ -68,7 +68,7 @@
 
 				void calculatePole()
 				{
-					pole = static_cast<ScalarTy>(std::pow(decay, (Scalar)(1.0) / (sampleRate * fractionateMul)));
+					pole = static_cast<ScalarTy>(std::pow(decay, (ScalarTy) (1.0) / (sampleRate * fractionateMul)));
 
 				}
 

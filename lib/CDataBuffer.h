@@ -84,16 +84,16 @@
 					std::copy(first, last, begin());
 				}
 
-				CDataBuffer(const T * first, const T * last)
-					: buffer(nullptr), bufSize(0)
-				{
-					#ifdef _DEBUG
-						if (first > last || !first || !last)
-							CPL_RUNTIME_EXCEPTION("Corrupt range arguments");
-					#endif
-					resize(last - first);
-					std::memcpy(buffer, first, (last - first) * sizeof(T));
-				}
+			CDataBuffer(const T * first, const T * last)
+				: buffer(nullptr), bufSize(0)
+			{
+				#ifdef _DEBUG
+					if (first > last || !first || !last)
+						CPL_RUNTIME_EXCEPTION("Corrupt range arguments");
+				#endif
+				resize(last - first);
+				std::memcpy(buffer, first, (last - first) * sizeof(T));
+			}
 
 			CDataBuffer(const CDataBuffer<T> & other)
 				: buffer(nullptr), bufSize(0)
@@ -160,7 +160,10 @@
 					}
 				}
 			}
-
+			/// <summary>
+			/// Notice that 0 is a valid argument, in which the value of
+			/// begin()/data() is implementation defined
+			/// </summary>
 			void resize(std::size_t newSize, const T & initializer)
 			{
 				std::size_t oldSize = bufSize;
@@ -173,92 +176,74 @@
 				}
 			}
 
-			T * begin() CPL_NOEXCEPT_IF_RELEASE
+			inline T * begin() CPL_NOEXCEPT_IF_RELEASE
 			{
-				#ifdef _DEBUG
-					if (!buffer)
-						CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
-				#endif
 				return buffer;
 			}
 
-			T * end() CPL_NOEXCEPT_IF_RELEASE
+			inline T * end() CPL_NOEXCEPT_IF_RELEASE
 			{
-				#ifdef _DEBUG
-					if (!buffer)
-						CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
-				#endif
 				return buffer + bufSize;
 			}
 
-			const T * begin() const CPL_NOEXCEPT_IF_RELEASE
+			inline const T * begin() const CPL_NOEXCEPT_IF_RELEASE
 			{
-				#ifdef _DEBUG
-					if (!buffer)
-						CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
-				#endif
 				return buffer;
 			}
 
-			const T * end() const CPL_NOEXCEPT_IF_RELEASE
+			inline const T * end() const CPL_NOEXCEPT_IF_RELEASE
 			{
-				#ifdef _DEBUG
-					if (!buffer)
-						CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
-				#endif
+
 				return buffer + bufSize;
 			}
 
-			const T & operator [] (std::size_t index) const CPL_NOEXCEPT_IF_RELEASE
+			inline const T & operator [] (std::size_t index) const CPL_NOEXCEPT_IF_RELEASE
 			{
 				#ifdef _DEBUG
-					if (!buffer)
-						CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
 					if (index >= bufSize)
 						CPL_RUNTIME_EXCEPTION("Index out of bounds");
 				#endif
 				return buffer[index];
 			}
 
-			T & operator [] (std::size_t index) CPL_NOEXCEPT_IF_RELEASE
+			inline T & operator [] (std::size_t index) CPL_NOEXCEPT_IF_RELEASE
 			{
 				#ifdef _DEBUG
-					if (!buffer)
-						CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
 					if (index >= bufSize)
 						CPL_RUNTIME_EXCEPTION("Index out of bounds");
 				#endif
 				return buffer[index];
 			}
 
-			T & at(std::size_t index)
+			inline T & at(std::size_t index)
 			{
 				if (!buffer)
-					CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
+					CPL_RUNTIME_EXCEPTION("No valid elements to return!");
 				if (index >= bufSize)
 					CPL_RUNTIME_EXCEPTION("Index out of bounds");
 				return buffer[index];
 			}
 
-			const T & at(std::size_t index) const
+			inline const T & at(std::size_t index) const
 			{
 				if (!buffer)
-					CPL_RUNTIME_EXCEPTION("Unitialized buffer access");
+					CPL_RUNTIME_EXCEPTION("No valid elements to return!");
 				if (index >= bufSize)
 					CPL_RUNTIME_EXCEPTION("Index out of bounds");
 				return buffer[index];
 			}
 
-			T * data() CPL_NOEXCEPT_IF_RELEASE
+			inline T * data() CPL_NOEXCEPT_IF_RELEASE
 			{
 				return begin();
 			}
 
-			const T * data() const CPL_NOEXCEPT_IF_RELEASE
+			inline const T * data() const CPL_NOEXCEPT_IF_RELEASE
 			{
 				return begin();
 			}
-			private:
+
+		private:
 				T * buffer;
 				std::size_t bufSize;
 			};

@@ -37,6 +37,8 @@
 #include <cstdarg>
 #include "Types.h"
 #include "stdext.h"
+#include <atomic>
+
 #ifdef __GNUG__
 	#include <cstdlib>
 	#include <memory>
@@ -47,13 +49,13 @@ namespace cpl
 {
 	namespace Misc {
 
-		int addHandler();
+		int addHandlers();
 
 		static int instanceCount = 0;
 		static std::string GetDirectoryPath();
 		static int GetInstanceCounter();
-		static int __unusedInitialization = addHandler();
-
+		static int __unusedInitialization = addHandlers();
+		static std::atomic<std::terminate_handler> oldTerminate;
 		
 		#ifdef __GNUG__
 
@@ -86,7 +88,7 @@ namespace cpl
 		*********************************************************************************************/
 		void CrashIfUserDoesntDebug(const std::string & errorMessage)
 		{
-			auto ret = MsgBox(errorMessage + std::newl + std::newl + "Press yes to break after attaching a debugger. Press no to crash.", "cpl: Fatal error", 
+			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", "cpl: Fatal error", 
 				MsgStyle::sYesNoCancel | MsgIcon::iStop);
 			if (ret == MsgButton::bYes)
 			{
@@ -100,16 +102,43 @@ namespace cpl
 			cpl::Misc::CrashIfUserDoesntDebug("Pure virtual function called. This is a programming error, usually happening if a freed object is used again, "
 				"or calling virtual functions inside destructors/constructors.");
 		}
-		int addHandler()
+
+		void terminateHook()
+		{
+			// see if we terminated because of an exception
+			if (std::current_exception())
+			{
+				try
+				{
+					// as there is an exception, retrow it
+					throw;
+				}
+				catch (const std::exception & e)
+				{
+					MsgBox(e.what(), cpl::programInfo.name + ": Software exception", MsgStyle::sOk | MsgIcon::iStop);
+				}
+			}
+			auto oldHandler = oldTerminate.load();
+			if (oldHandler)
+				oldHandler();
+			else
+				std::abort();
+		}
+
+		int addHandlers()
 		{
 			static bool hasBeenAdded = false;
 			if (!hasBeenAdded)
 			{
+				oldTerminate.store(std::set_terminate(terminateHook));
 				#ifdef __MSVC__
 					hasBeenAdded = true;
 					_set_purecall_handler(_purescall);
-					_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+					#ifdef _DEBUG
+						_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+					#endif
 				#endif
+
 			}
 			return 0;
 		}
@@ -128,7 +157,16 @@ namespace cpl
 				while ((juce::Time::getHighResolutionTicks() - start) * factor < msecs)
 					;
 			#else
-				#error Needs implementation
+				auto start = std::chrono::high_resolution_clock::now();
+				while (true)
+				{
+					auto now = std::chrono::high_resolution_clock::now();
+					auto elapsed = now - start;
+					if (elapsed.count() / 1.0e8 > msecs)
+					{
+						break;
+					}
+				}
 			#endif
 		}
 
@@ -351,9 +389,9 @@ namespace cpl
 			Returns the CPU clock counter
 		 
 		 *********************************************************************************************/
-		long long ClockCounter()
+		std::uint64_t ClockCounter()
 		{
-			return (long long)__rdtsc();
+			return __rdtsc();
 		}
 		/*********************************************************************************************
 
@@ -639,7 +677,7 @@ namespace cpl
 
 			nOpenMsgBoxes--;
 
-			return reinterpret_cast<void*>(ret);
+			return reinterpret_cast<void*>(static_cast<std::intptr_t>(ret));
 		}
 
 		/*********************************************************************************************

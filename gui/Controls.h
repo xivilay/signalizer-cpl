@@ -35,4 +35,7 @@
 	#include "CComboBox.h"
 	#include "CButton.h"
 	#include "CTransformWidget.h"
+	#include "CInputControl.h"
+	#include "CPresetWidget.h"
+
 #endif

@@ -279,7 +279,7 @@ namespace cpl
 				image.setPath(path);
 				if (!image.load())
 				{
-					Misc::MsgBox("Error loading resource " + path + ":" + std::newl + Misc::GetLastOSErrorMessage(), _PROGRAM_NAME_ABRV " error!", Misc::MsgIcon::iStop);
+					Misc::MsgBox("Error loading resource " + path + ":" + newl + Misc::GetLastOSErrorMessage(), _PROGRAM_NAME_ABRV " error!", Misc::MsgIcon::iStop);
 					return false;
 				}
 			}

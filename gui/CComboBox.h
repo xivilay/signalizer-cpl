@@ -85,8 +85,13 @@
 				{
 					box.setSelectedId(((int)input) - 1);
 				}
+
+			bool setEnabledStateFor(const std::string & idx, bool toggle);
+			bool setEnabledStateFor(std::size_t idx, bool toggle);
 		protected:
 			
+			std::size_t indexOfValue(const std::string & idx) const noexcept;
+
 			void setZeroBasedSelIndex(int index);
 			// overrides
 			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;

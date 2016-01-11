@@ -96,7 +96,7 @@
 
 	#if defined(_WIN32) || defined (_WIN64)
 		#define isDebugged() !!IsDebuggerPresent()
-		#define debug_out(x) OutputDebugString(x)
+		#define CPL_DEBUGOUT(x) OutputDebugStringA(x)
 	#else
         // forward declare it
 		namespace Misc
@@ -312,7 +312,7 @@
 		do \
 		{ \
 			std::string message = std::string("Runtime exception in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
-			DBG(message); \
+			CPL_DEBUGOUT(message.c_str()); \
 			if(isDebugged()) DBG_BREAK(); \
 			throw std::runtime_error(message); \
 		} while(0) 

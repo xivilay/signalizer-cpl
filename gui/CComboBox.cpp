@@ -221,15 +221,46 @@ namespace cpl
 	/*********************************************************************************************/
 	bool CComboBox::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
 	{
+		auto idx = indexOfValue(valueString);
+		if (idx != -1)
+		{
+			// can never divide by zero here, since the for loop won't enter in that case
+			//val = iCtrlPrec_t(i) / (values.size() > 1 ? values.size() - 1 : 1);
+			val = intToFloat((int)idx + 1, (int)values.size());
+			return true;
+		}
+
+		return false;
+	}
+
+	std::size_t CComboBox::indexOfValue(const std::string & idx) const noexcept
+	{
 		for (std::size_t i = 0; i < values.size(); ++i)
 		{
-			if (values[i] == valueString)
+			if (values[i] == idx)
 			{
-				// can never divide by zero here, since the for loop won't enter in that case
-				//val = iCtrlPrec_t(i) / (values.size() > 1 ? values.size() - 1 : 1);
-				val = intToFloat((int)i + 1, (int)values.size());
-				return true;
+				return i;
 			}
+		}
+		return -1;
+	}
+
+	bool CComboBox::setEnabledStateFor(const std::string & idx, bool toggle)
+	{
+		return setEnabledStateFor(indexOfValue(idx), toggle);
+	}
+
+	bool CComboBox::setEnabledStateFor(std::size_t entry, bool toggle)
+	{
+		if (entry < values.size() && entry != -1)
+		{
+			bool selectNew = box.getSelectedId() == (entry + 1) && !toggle;
+			box.setItemEnabled((int)entry + 1, !!toggle);
+
+			// TODO: maybe make a more educated guess at some point.
+			if (selectNew)
+				bSetValue(0);
+			return true;
 		}
 		return false;
 	}

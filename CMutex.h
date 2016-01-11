@@ -222,11 +222,44 @@
 			}
 			static bool spinLock(Lockable *  bVal)
 			{
+				using namespace Misc;
+				unsigned int start;
+				int ret;
+				unsigned int ms = 2000;
+			loop:
 
-				while (bVal->flag.test_and_set())
-				{
+				start = QuickTime();
+				while (bVal->flag.test_and_set(std::memory_order_relaxed)) {
+					if ((QuickTime() - start) > ms)
+						goto time_out;
+
 				}
+				// normal exitpoint
 				return true;
+				// deadlock occurs
+
+			time_out:
+				// hello - you have reached this point if mutex was frozen.
+				BreakIfDebugged();
+				ret = Misc::MsgBox("Deadlock detected in spinlock: Protected resource is not released after max interval. "
+					"Wait again (try again), release resource (continue) - can create async issues - or exit (cancel)?",
+					_PROGRAM_NAME_ABRV " Error!",
+					sConTryCancel | iStop,
+					NULL,
+					true);
+				switch (ret)
+				{
+				case MsgButton::bTryAgain:
+					goto loop;
+				case MsgButton::bContinue:
+					bVal->flag.clear(); // flip val
+										// try again 
+					goto loop;
+				case MsgButton::bCancel:
+					exit(-1);
+				}
+				// not needed (except for warns)
+				return false;
 			}
 		};
 	};

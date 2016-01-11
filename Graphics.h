@@ -356,7 +356,7 @@
 					pixel.g = g;
 					pixel.b = b;
 				}
-
+#ifdef CPL_JUCE
 				UPixel(juce::PixelARGB pa)
 				{
 					pa.unpremultiply();
@@ -371,7 +371,7 @@
 				{
 
 				}
-
+#endif
 				/// <summary>
 				/// Saturated addition
 				/// </summary>

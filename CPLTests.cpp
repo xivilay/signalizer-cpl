@@ -35,6 +35,8 @@
 #include <cstdarg>
 #include <vector>
 #include <numeric>
+#include <iostream>
+#include <map>
 namespace cpl
 {
 	const auto warn = DiagnosticLevel::Warnings;
@@ -57,9 +59,9 @@ namespace cpl
 					
 					if (lock.owns_lock())
 					{
-						for (int i = 0; i < data.size(); ++i)
+						for (std::size_t i = 0; i < data.size(); ++i)
 						{
-							data[i] = std::rand();
+							data[i] = (float)std::rand();
 						}
 
 						std::atomic_thread_fence(std::memory_order::memory_order_release);
@@ -79,7 +81,7 @@ namespace cpl
 						// guaranteed that any changes from thread one to 'data' is seen after this fence?
 						std::atomic_thread_fence(std::memory_order::memory_order_acquire);
 
-						auto res = std::accumulate(data.begin(), data.end(), 0);
+						auto res = std::accumulate(data.begin(), data.end(), 0.0f);
 						std::cout << "Accumulated result is: " << res << std::endl;
 					}
 				}
@@ -108,7 +110,7 @@ namespace cpl
 
 
 
-		class LList : public cpl::CAudioStream<ftype, 128>::AudioStreamListener
+		class LList : public cpl::CAudioStream<ftype, 128>::Listener
 		{
 		public:
 			virtual bool onRTAudio(const Stream & source, ftype ** buffer, std::size_t numChannels, std::size_t numSamples)  override
@@ -140,7 +142,7 @@ namespace cpl
 			DiagnosticLevel lvl = DiagnosticLevel::None;
 		};
 
-		std::map<int, std::pair<LList, bool>> listeners;
+		std::map<std::size_t, std::pair<LList, bool>> listeners;
 		LList permListener;
 		std::size_t count = 0;
 		std::size_t drops = 0;
@@ -168,7 +170,7 @@ namespace cpl
 					sinfo.callAsyncListeners = true;
 					sinfo.callRTListeners = true;
 					sinfo.sampleRate = sampleRate;
-
+					sinfo.storeAudioHistory = true;
 					stream.initializeInfo(sinfo);
 
 					cpl::aligned_vector<ftype, 16> audioData[2];
@@ -180,14 +182,14 @@ namespace cpl
 						for (auto & ch : audioData)
 						{
 							ch.resize(size);
-							cpl::fillWithRand(ch, ch.size());
+							cpl::dsp::fillWithRand(ch, ch.size());
 						}
 
 						buffers[0] = audioData[0].data();
 						buffers[1] = audioData[1].data();
 
 						stream.processIncomingRTAudio(buffers, 2, size);
-						auto newDrops = stream.getDroppedFrames() - prevDroppedFrames;
+						auto newDrops = stream.getPerfMeasures().droppedAudioFrames - prevDroppedFrames;
 						const auto fsizef = stream.getASyncBufferSize();
 						dout(newDrops > 0 ? warn : verb, lvl,
 							"AT: Sent " CPL_FMT_SZT " realtime samples - dropped %llu frames." 
@@ -200,7 +202,7 @@ namespace cpl
 
 						Misc::PreciseDelay(msPerRender);
 					}
-					drops = stream.getDroppedFrames();
+					drops = stream.getPerfMeasures().droppedAudioFrames;
 				}
 			);
 
@@ -229,6 +231,8 @@ namespace cpl
 							else
 								listener.second = true;
 						}
+
+						stream.setAudioHistorySizeAndCapacity(std::rand() % 1000 + 100, std::rand() % 1000 + 1200);
 					}
 
 				}

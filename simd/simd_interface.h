@@ -412,7 +412,7 @@
 			// ps
 			inline void storeu(float * in, const v8sf ymm)
 			{
-				_mm256_store_ps(in, ymm);
+				_mm256_storeu_ps(in, ymm);
 			}
 
 			inline void store(float * in, const v8sf ymm)

@@ -34,7 +34,7 @@
 	#include "Mathext.h"
 	#include <functional>
 	#include <set>
-	#include <cpl/stdext.h>
+	#include "stdext.h"
 
 	namespace cpl
 	{
@@ -279,7 +279,7 @@
 					private:
 						void onDestruction(Derived * derivedServer)
 						{
-							if (!std::contains(servers, derivedServer))
+							if (!contains(servers, derivedServer))
 								throw std::runtime_error("Fatal error: DestructionServer::Client is not connected to server!");
 							// forget reference to server
 							servers.erase(derivedServer);

@@ -39,8 +39,11 @@
 	#include <mutex>
 	#include "ConcurrentServices.h"
 	#include "lib/BlockingLockFreeQueue.h"
-	#include "lib/CDataBuffer.h"
+	#include "lib/CLIFOStream.h"
+	#include "CProcessorTimer.h"
 	#include <deque>
+	#include <algorithm>
+	#include <numeric>
 	#define CPL_DEBUG_CAUDIOSTREAM
 
 	namespace cpl
@@ -73,13 +76,13 @@
 				AudioPacket(std::uint16_t elementsUsed)
 					: size(elementsUsed)
 				{
-					static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong alignment");
+					static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong packing");
 				}
 
 				AudioPacket(std::uint16_t elementsUsed, std::uint16_t channelConfiguration)
 					: size(elementsUsed), utility((util_t)channelConfiguration)
 				{
-					static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong alignment");
+					static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong packing");
 				}
 
 				AudioPacket() : size() {}
@@ -137,65 +140,308 @@
 		{
 		public:
 
+			struct PerformanceMeasurements
+			{
+				PerformanceMeasurements()
+				:
+					asyncOverhead(0), rtOverhead(0), asyncUsage(0), rtUsage(0), droppedAudioFrames(0)
+				{
+					
+				}
+				std::atomic<double> asyncOverhead;
+				std::atomic<double> rtOverhead;
+				std::atomic<double> asyncUsage;
+				std::atomic<double> rtUsage;
+				/// <summary>
+				/// Returns the number of dropped frames from the audio thread,
+				/// due to the FIFO being filled up as the async thread hasn't
+				/// catched up (due to being blocked or simply have too much work).
+				/// </summary>
+				std::atomic<std::uint64_t> droppedAudioFrames;
+			};
+
 			/// <summary>
 			/// Holds info about the audio stream. Wow.
 			/// </summary>
 			struct AudioStreamInfo
 			{
-				double sampleRate;
+				// yayyy no copy constructor for atomics. 
+				// remember to update this function!
+				AudioStreamInfo(const AudioStreamInfo & other)
+				{
+					*this = other;
+				}
 
-				std::size_t 
+				AudioStreamInfo & operator = (const AudioStreamInfo & other) noexcept
+				{
+					std::atomic_thread_fence(std::memory_order_acquire);
+
+					copyA(sampleRate, other.sampleRate);
+					copyA(anticipatedSize, other.anticipatedSize);
+					copyA(anticipatedChannels, other.anticipatedChannels);
+					copyA(audioHistorySize, other.audioHistorySize);
+					copyA(audioHistoryCapacity, other.audioHistoryCapacity);
+					copyA(isFrozen, other.isFrozen);
+					copyA(isSuspended, other.isSuspended);
+					copyA(callAsyncListeners, other.callAsyncListeners);
+					copyA(callRTListeners, other.callRTListeners);
+					copyA(storeAudioHistory, other.storeAudioHistory);
+					copyA(blockOnHistoryBuffer, other.blockOnHistoryBuffer);
+
+					std::atomic_thread_fence(std::memory_order_release);
+
+					return *this;
+				}
+
+				AudioStreamInfo()
+				{
+					std::atomic_thread_fence(std::memory_order_acquire);
+
+					sampleRate.store(0, std::memory_order_relaxed);
+					anticipatedSize.store(0, std::memory_order_relaxed);
+					anticipatedChannels.store(0, std::memory_order_relaxed);
+					audioHistorySize.store(0, std::memory_order_relaxed);
+					audioHistoryCapacity.store(0, std::memory_order_relaxed);
+					isFrozen.store(0, std::memory_order_relaxed);
+					isSuspended.store(0, std::memory_order_relaxed);
+					callAsyncListeners.store(0, std::memory_order_relaxed);
+					callRTListeners.store(0, std::memory_order_relaxed);
+					storeAudioHistory.store(0, std::memory_order_relaxed);
+					blockOnHistoryBuffer.store(0, std::memory_order_relaxed);
+
+					std::atomic_thread_fence(std::memory_order_release);
+
+				}
+
+				std::atomic<double> sampleRate;
+				
+				std::atomic<std::size_t> 
 					anticipatedSize,
-					anticipatedChannels,
-					circularBufferSize;
+					anticipatedChannels;
 
-				bool
+				std::atomic<std::size_t>
+					
+					audioHistorySize,
+					audioHistoryCapacity;
+
+				std::atomic<bool>
 					isFrozen,
 					isSuspended,
 					/// <summary>
 					/// if false, removes one mutex from the async subsystem and 
 					/// improves performance
-					/// See AudioStreamListener::onAsyncAudio
+					/// See Listener::onAsyncAudio
 					/// </summary>
 					callAsyncListeners,
 					/// <summary>
 					/// If false, removes a lot of locking complexity and improves performance.
-					/// See AudioStreamListener::onRTAudio
+					/// See Listener::onRTAudio
 					/// </summary>
-					callRTListeners;
+					callRTListeners,
+					/// <summary>
+					/// If true, stores the last audioHistorySize samples in a circular buffer.
+					/// </summary>
+					storeAudioHistory,
+					/// <summary>
+					/// If set, the async subsystem will block on the audio history buffers until
+					/// they are released back into the stream - this blocks async audio updates,
+					/// listener updates etc. as well
+					/// </summary>
+					blockOnHistoryBuffer;
+			private:
+				template<typename X, typename Y>
+				void copyA(X & dest, const Y & source)
+				{
+					dest.store(source.load(std::memory_order_relaxed), std::memory_order_relaxed);
+				}
 			};
 
-			class AudioStreamListener;
+			class Listener;
+
 			static const std::size_t packetSize = PacketSize;
+			static const std::size_t storageAlignment = 32;
 
 			typedef AudioPacket<T, PacketSize> AudioFrame;
 			// atomic vector of pointers, atomic because we have unsynchronized read-access between threads (UB without atomic access)
-			typedef std::vector<std::atomic<AudioStreamListener *>> ListenerQueue;
-			
+			typedef std::vector<std::atomic<Listener *>> ListenerQueue;
+			typedef typename cpl::CLIFOStream<T, storageAlignment> AudioBuffer;
+			typedef typename cpl::CLIFOStream<T, storageAlignment>::ProxyView AudioBufferView;
+			typedef T DataType;
+			typedef typename AudioBuffer::IteratorBase::iterator BufferIterator;
+			typedef typename AudioBuffer::IteratorBase::const_iterator CBufferIterator;
+			typedef CAudioStream<T, PacketSize> StreamType;
+			/// <summary>
+			/// When you iterate over a audio buffer using ended iterators,
+			/// there will be this number of iterator iterations.
+			/// </summary>
+			static const std::size_t bufferIndices = AudioBuffer::IteratorBase::iterator_indices;
+
+
+			/// <summary>
+			/// Provides a constant view of the internal audio buffers, synchronized.
+			/// The interface is built on RAII, the data is valid as long as this struct is in scope.
+			/// Same principle for AudioBufferViews.
+			/// </summary>
+			struct AudioBufferAccess
+			{
+			public:
+
+				typedef typename AudioBuffer::IteratorBase::iterator iterator;
+				typedef typename AudioBuffer::IteratorBase::const_iterator const_iterator;
+
+				AudioBufferAccess(std::mutex & m, const std::vector<AudioBuffer> & audioChannels)
+					: lock(m), audioChannels(audioChannels)
+				{
+
+				}
+
+				AudioBufferAccess(const AudioBufferAccess &) = delete;
+				AudioBufferAccess & operator = (const AudioBufferAccess &) = delete;
+				AudioBufferAccess & operator = (AudioBufferAccess &&) = delete;
+				AudioBufferAccess(AudioBufferAccess &&) = default;
+
+				AudioBufferView getView(std::size_t channel) const
+				{
+					return audioChannels.at(channel).createProxyView();
+				}
+
+				std::size_t getNumChannels() const noexcept
+				{
+					return audioChannels.size();
+				}
+
+				std::size_t getNumSamples() const noexcept
+				{
+					return getNumChannels() ? audioChannels[0].getSize() : 0;
+				}
+
+				/// <summary>
+				/// Iterate over the samples in the buffers. If biased is set, the samples arrive in chronological order.
+				/// The functor shall accept the following parameters:
+				///		(std::size_t sampleFrame, AudioStream::Data channel0, AudioStream::Data channelN ...)
+				/// </summary>
+				template<std::size_t Channels, bool biased, typename Functor>
+				inline void iterate(const Functor & f)
+				{
+					ChannelIterator<Channels, biased>::run(*this, f);
+				}
+
+				template<std::size_t Channels, bool biased, typename Functor>
+				inline void iterate(const Functor & f) const
+				{
+					ChannelIterator<Channels, biased>::run(*this, f);
+				}
+
+			private:
+
+				template<std::size_t channels, bool biased>
+					struct ChannelIterator;
+
+				template<>
+				struct ChannelIterator<2, true>
+				{
+					template<typename Functor>
+					static void run(AudioBufferAccess & access, const Functor & f)
+					{
+						StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
+
+						for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
+						{
+							BufferIterator
+								left = views[0].getItIndex(indice),
+								right = views[1].getItIndex(indice);
+
+							std::size_t range = views[0].getItRange(indice);
+
+							while (range--)
+							{
+								f(n++, *left++, *right++);
+							}
+						}
+					}
+
+					template<typename Functor>
+					static void run(const AudioBufferAccess & access, const Functor & f)
+					{
+						StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
+
+						for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
+						{
+							BufferIterator
+								left = views[0].getItIndex(indice),
+								right = views[1].getItIndex(indice);
+
+							std::size_t range = views[0].getItRange(indice);
+
+							while (range--)
+							{
+								f(n++, *left++, *right++);
+							}
+						}
+					}
+				};
+
+				template<>
+				struct ChannelIterator<1, true>
+				{
+					template<typename Functor>
+					static void run(const AudioBufferAccess & access, const Functor & f)
+					{
+						StreamType::AudioBufferView view = access.getView(0);
+
+						for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
+						{
+							BufferIterator left = views[0].getItIndex(indice);
+
+							std::size_t range = views[0].getItRange(indice);
+
+							while (range--)
+							{
+								f(n++, *left++, *right++);
+							}
+						}
+					}
+				};
+
+				const std::vector<AudioBuffer> & audioChannels;
+				std::unique_lock<std::mutex> lock;
+			};
+
 			/// <summary>
 			/// A class that enables listening callbacks on both real-time and async audio
 			/// channels from a CAudioStream
 			/// </summary>
-			class AudioStreamListener : Utility::CNoncopyable
+			class Listener : Utility::CNoncopyable
 			{
 			public:
 
 				typedef CAudioStream<T, PacketSize> Stream;
 
-				AudioStreamListener()
+				Listener()
 					: internalSource(nullptr)
 				{
 
 				}
-
+				/// <summary>
+				/// Called when certain properties are changed in the stream. 
+				/// Called from a real-time thread!
+				/// </summary>
+				virtual void onRTChangedProperties(const Stream & changedSource, const typename Stream::AudioStreamInfo & before) {}
+				/// <summary>
+				/// Called when certain properties are changed in the stream. 
+				/// Called from a non-real time thread!
+				/// Be very careful with whatever locks you obtain here, as you can easily deadlock something.
+				/// </summary>
+				virtual void onAsyncChangedProperties(const Stream & changedSource, const typename Stream::AudioStreamInfo & before) {}
 				/// <summary>
 				/// Called from a real-time thread.
 				/// </summary>
-				virtual bool onRTAudio(const Stream & source, T ** buffer, std::size_t numChannels, std::size_t numSamples) { return false; };
+				virtual bool onRTAudio(const Stream & source, T ** buffer, std::size_t numChannels, std::size_t numSamples) { return false; }
 				/// <summary>
 				/// Called from a non real-time thread.
+				/// Be very careful with whatever locks you obtain here, as you can easily deadlock something.
 				/// </summary>
-				virtual bool onAsyncAudio(const Stream & source, T ** buffer, std::size_t numChannels, std::size_t numSamples) { return false; };
+				virtual bool onAsyncAudio(const Stream & source, T ** buffer, std::size_t numChannels, std::size_t numSamples) { return false; }
 				
 				/// <summary>
 				/// May fail if the streams listener buffer is temporarily filled.
@@ -314,16 +560,27 @@
 				/// <summary>
 				/// Tries to remove the listener for 10 seconds. 
 				/// </summary>
-				virtual ~AudioStreamListener()
+				virtual ~Listener()
 				{
 					detachFromSource();
 				}
 
-				void sourcePropertiesChanged(const Stream & changedSource, const typename Stream::AudioStreamInfo & before)
+				void sourcePropertiesChangedRT(const Stream & changedSource, const typename Stream::AudioStreamInfo & before)
 				{
 					auto s1 = internalSource.load(std::memory_order_acquire);
 					if (&changedSource != s1)
-						crash("Inconsistency between argument CAudioStream and internal source; corrupt listener chain.");
+						return crash("Inconsistency between argument CAudioStream and internal source; corrupt listener chain.");
+
+					onRTChangedProperties(changedSource, before);
+				}
+
+				void sourcePropertiesChangedAsync(const Stream & changedSource, const typename Stream::AudioStreamInfo & before)
+				{
+					auto s1 = internalSource.load(std::memory_order_acquire);
+					if (&changedSource != s1)
+						return crash("Inconsistency between argument CAudioStream and internal source; corrupt listener chain.");
+
+					onAsyncChangedProperties(changedSource, before);
 				}
 
 				/// <summary>
@@ -349,14 +606,17 @@
 			/// <summary>
 			/// The async subsystem enables access to a callback on a background thread, similar
 			/// to audio callbacks, however, it is not real-time and can be blocked.
-			/// Integrity of audio stream is not guaranteed, especially if you block it for longer times.
+			/// Integrity of audio stream is not guaranteed, especially if you block it for longer times,
+			/// however it should run almost as fast and synced as the audio thread, with a minimal overhead.
 			/// It subsystem also continuously updates a circular buffer which you can lock.
 			/// 
 			/// Fifo sizes refer to the buffer size of the lock free fifo. The fifo stores AudioFrames.
 			/// </summary>
 			/// <param name="enableAsyncSubsystem"></param>
-			CAudioStream(std::size_t defaultListenerBankSize = 16, bool enableAsyncSubsystem = false, std::size_t initialFifoSize = 20, std::size_t maxFifoSize = 1000)
-				: droppedAudioFrames(), internalInfo(), audioFifo(initialFifoSize, maxFifoSize), objectIsDead(false)
+			CAudioStream(std::size_t defaultListenerBankSize = 16, bool enableAsyncSubsystem = false, size_t initialFifoSize = 20, std::size_t maxFifoSize = 1000)
+			: 
+				audioFifo(initialFifoSize, maxFifoSize), 
+				objectIsDead(false)
 			{
 				auto newListeners = std::make_unique<ListenerQueue>(defaultListenerBankSize);
 				if (!audioListeners.tryReplace(newListeners.get()))
@@ -372,38 +632,49 @@
 				{
 					asyncAudioThread = std::thread(&CAudioStream::asyncAudioSystem, this);
 					asyncAudioThreadCreated.store(true);
+					
 				}
+
 			}
 
 			/// <summary>
-			/// This must be called at least once, from the audio thread.
-			/// TODO: refactor, specify and consider what thread this makes sense to be initialized on
+			/// This must be called at least once, before streaming starts.
+			/// It is not safe to call this function concurrently
+			/// - decide on one thread, controlling it.
 			/// </summary>
 			void initializeInfo(const AudioStreamInfo & info)
 			{
-				audioRTThreadID = std::this_thread::get_id();
-				AudioStreamInfo before = internalInfo;
+				AudioStreamInfo oldInfo = internalInfo;
 				internalInfo = info;
-				auto & listeners = *audioListeners.getObject();
-
-				for (auto & listener : listeners)
-				{
-					auto rawListener = listener.load(std::memory_order_acquire);
-					if (rawListener)
-					{
-						rawListener->sourcePropertiesChanged(*this, before);
-					}
-
-				}
+				
+				audioSignalChange = true;
+				asyncSignalChange = true;
 			}
 
 			/// <summary>
 			/// Should only be called from the audio thread.
-			/// Deterministic, wait free and lock free, so long as listeners are as well.
+			/// Deterministic ( O(N) ), wait free and lock free, so long as listeners are as well.
 			/// </summary>
 			/// <returns>True if incoming audio was changed</returns>
 			bool processIncomingRTAudio(T ** buffer, std::size_t numChannels, std::size_t numSamples)
 			{
+				cpl::CProcessorTimer overhead, all;
+				overhead.start(); all.start();
+
+				auto const timeFraction = double(numSamples) / internalInfo.sampleRate.load(std::memory_order_relaxed);
+
+				auto id = std::this_thread::get_id();
+				if (audioRTThreadID != std::thread::id() && id != audioRTThreadID)
+				{
+					// so, another realtime thread is calling this.
+					// this should be interesting to debug.
+					BreakIfDebugged();
+					audioRTThreadID = id;
+				}
+				else
+				{
+					audioRTThreadID = id;
+				}
 				// may catch dangling pointers.
 				if (objectIsDead)
 					CPL_RUNTIME_EXCEPTION("This object was deleted somewhere!!");
@@ -428,18 +699,25 @@
 				// publish all data to listeners
 				unsigned mask(0);
 
+				bool signalChange = audioSignalChange.cas();
+
 				auto & listeners = *audioListeners.getObject();
 				if (internalInfo.callRTListeners)
 				{
+					overhead.pause();
 					for (auto & listener : listeners)
 					{
 						auto rawListener = listener.load(std::memory_order_acquire);
 						if (rawListener)
 						{
-							// TODO: figure out if it is UB to read the listener values without synchronization
+							if(signalChange)
+								rawListener->sourcePropertiesChangedRT(*this, oldInfo);
+
+							// TODO: exception handling?
 							mask |= (unsigned)rawListener->onIncomingRTAudio(*this, buffer, numChannels, numSamples);
 						}
 					}
+					overhead.resume();
 				}
 
 
@@ -462,7 +740,7 @@
 							std::memcpy(af.buffer, (buffer[0] + numSamples - n), aSamples * AudioFrame::element_size);
 
 							if (!audioFifo.pushElement(af))
-								droppedAudioFrames++;
+								measures.droppedAudioFrames++;
 						}
 
 						n -= aSamples;
@@ -480,7 +758,7 @@
 							std::memcpy(af.buffer, (buffer[0] + numSamples - n), aSamples * AudioFrame::element_size);
 							std::memcpy(af.buffer + aSamples, (buffer[1] + numSamples - n), aSamples * AudioFrame::element_size);
 							if (!audioFifo.pushElement(af))
-								droppedAudioFrames++;
+								measures.droppedAudioFrames++;
 						}
 
 						n -= aSamples;
@@ -493,12 +771,36 @@
 					break;
 				}
 
+				// post new measures
+
+				lpFilterTimeToMeasurement(measures.rtOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
+				lpFilterTimeToMeasurement(measures.rtUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
+
 				// return whether any data was changed.
 				return mask ? true : false;
 			}
 
+			/// <summary>
+			/// Returns a view of the audio history for all channels the last N samples (see setAudioHistorySize)
+			/// References are only guaranteed to be valid while AudioBufferAccess is in scope.
+			/// May acquire a lock in the returned class, so don't call it from real-time threads.
+			/// 
+			/// Ensures exclusive access while it is hold.
+			/// </summary>
+			AudioBufferAccess getAudioBufferViews()
+			{
+				return{ aBufferMutex, audioHistoryBuffers };
+			}
 
-			~CAudioStream()
+			/// <summary>
+			/// Safe to call from any thread (wait free).
+			/// </summary>
+			const AudioStreamInfo & getInfo() const noexcept
+			{
+				return internalInfo;
+			}
+
+			~CAudioStream() throw(...)
 			{
 				// the audio thread is created inside this flag.
 				// and that flag is set by this thread. 
@@ -547,35 +849,116 @@
 				}
 			}
 
+			/// <summary>
+			/// Safe to call from any thread (wait free).
+			/// Only valid if initialize() has been called previously.
+			/// </summary>
 			bool isAudioThread() noexcept
 			{
 				return std::this_thread::get_id() == audioRTThreadID;
 			}
 
+			/// <summary>
+			/// Safe to call from any thread (wait free).
+			/// </summary>
 			bool isAsyncThread() noexcept
 			{
 				return std::this_thread::get_id() == asyncAudioThread.get_id();
 			}
 
 			/// <summary>
-			/// Returns the number of dropped frames from the audio thread,
-			/// due to the FIFO being filled up as the async thread hasn't
-			/// catched up (due to being blocked or simple have too much work).
-			/// </summary>
-			std::uint64_t getDroppedFrames() const noexcept
-			{
-				return droppedAudioFrames;
-			}
-
-			/// <summary>
-			/// The number of AudioFrames in the async FIFO
+			/// Safe to call from any thread (wait free).
+			/// Returns the number of AudioFrames in the async FIFO
 			/// </summary>
 			std::size_t getASyncBufferSize() const noexcept
 			{
 				return audioFifo.size();
 			}
 
+			/// <summary>
+			/// Safe to call from any thread (wait free).
+			/// The actual current value, may not equal whatever set through setAudioHistorySize()
+			/// </summary>
+			std::size_t getAudioHistorySize() const noexcept
+			{
+				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getSize() : 0;
+			}
+
+			/// <summary>
+			/// Safe to call from any thread (wait free).
+			/// The actual current value, may not equal whatever set through setAudioHistoryCapacity()
+			/// </summary>
+			std::size_t getAudioHistoryCapacity() const noexcept
+			{
+				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getCapacity() : 0;
+			}
+
+			/// <summary>
+			/// Safe to call from any thread (wait free), however it may not take effect immediately
+			/// </summary>
+			void setAudioHistorySize(std::size_t newSize) noexcept
+			{
+				//OutputDebugString("1. Sat audio history size\n");
+				internalInfo.audioHistorySize.store(newSize);
+				audioSignalChange = true;
+				asyncSignalChange = true;
+			}
+
+			/// <summary>
+			/// Safe to call from any thread (wait free), however it may not take effect immediately
+			/// </summary>
+			void setAudioHistoryCapacity(std::size_t newCapacity) noexcept
+			{
+				internalInfo.audioHistorySize.store(std::min(internalInfo.audioHistorySize.load(), newCapacity));
+				internalInfo.audioHistoryCapacity.store(newCapacity);
+				audioSignalChange = true;
+				asyncSignalChange = true;
+			}
+
+			/// <summary>
+			/// May block. Ensure both fields are update before submitting.
+			/// May still not take effect immediately.
+			/// </summary>
+			void setAudioHistorySizeAndCapacity(std::size_t newSize, std::size_t newCapacity) noexcept
+			{
+				std::lock_guard<std::mutex> lk(aBufferMutex);
+				internalInfo.audioHistorySize.store(newSize, std::memory_order_relaxed);
+				internalInfo.audioHistoryCapacity.store(newCapacity, std::memory_order_relaxed);
+				audioSignalChange = true;
+				asyncSignalChange = true;
+			}
+
+			void setSuspendedState(bool newValue)
+			{
+				internalInfo.isSuspended.store(!!newValue, std::memory_order_release);
+				audioSignalChange = true;
+				asyncSignalChange = true;
+			}
+
+			const PerformanceMeasurements & getPerfMeasures() const noexcept
+			{
+				return measures;
+			}
+
+			/// <summary>
+			/// Returns the current number of async samples that 'has' happened asynchronously, but still haven't been posted
+			/// into the audio buffers, since the current AUdioStreamInfo::blockOnHistoryBuffers is set to false and something has blocked the audio buffers meanwhile. 
+			/// Safe and wait-free to call from any thread, guaranteed not to change in asynchronous callbacks.
+			/// </summary>
+			/// <returns></returns>
+			std::size_t getNumDeferredSamples() const noexcept
+			{
+				return numDeferredAsyncSamples.load(std::memory_order_acquire);
+			}
+
 		protected:
+			template<std::memory_order order = std::memory_order_relaxed>
+				inline void lpFilterTimeToMeasurement(std::atomic<double> & old, double newTime, double timeFraction)
+				{
+					const double coeff = std::pow(0.3, timeFraction);
+					newTime /= timeFraction;
+					old.store(newTime + coeff * (old.load(order) - newTime), order);
+				}
 
 			/// <summary>
 			/// Tries to add an audio listener into the stream.
@@ -590,7 +973,7 @@
 			/// </summary>
 			/// <param name="newListener"></param>
 			/// <returns></returns>
-			std::pair<bool, bool> addListener(AudioStreamListener * newListener, bool tryForceSuccess = false)
+			std::pair<bool, bool> addListener(Listener * newListener, bool tryForceSuccess = false)
 			{
 				std::unique_lock<std::mutex> lock(aListenerMutex, std::defer_lock);
 
@@ -625,7 +1008,7 @@
 			/// </summary>
 			/// <param name=""></param>
 			/// <returns></returns>
-			std::pair<bool, bool> removeListener(AudioStreamListener * listenerToBeRemoved, bool forceSuccess = false)
+			std::pair<bool, bool> removeListener(Listener * listenerToBeRemoved, bool forceSuccess = false)
 			{
 
 				std::unique_lock<std::mutex> lock(aListenerMutex, std::defer_lock);
@@ -642,7 +1025,7 @@
 			/// <summary>
 			/// Assumes you have appropriate locks!!
 			/// </summary>
-			bool insertIntoListenerQueue(AudioStreamListener * newListener)
+			bool insertIntoListenerQueue(Listener * newListener)
 			{
 				auto & listeners = getListeners();
 
@@ -662,7 +1045,7 @@
 			/// <summary>
 			/// Assumes you have appropriate locks!!
 			/// </summary>
-			bool removeFromListenerQueue(AudioStreamListener * listenerToBeRemoved)
+			bool removeFromListenerQueue(Listener * listenerToBeRemoved)
 			{
 				auto & listeners = getListeners();
 
@@ -759,21 +1142,23 @@
 			/// </summary>
 			void asyncAudioSystem()
 			{
-				
+				_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
 				asyncAudioThreadInitiated.store(true);
 
 				AudioFrame recv;
 				int pops(20);
 				// TODO: support more channels
 				std::vector<T> audioInput[2];
+				std::vector<T> deferredAudioInput[2];
 
 				typedef decltype(cpl::Misc::ClockCounter()) ctime_t;
 
 				// when it returns false, its time to quit this thread.
 				while (audioFifo.popElementBlocking(recv))
 				{
-					ctime_t then = cpl::Misc::ClockCounter();
+					CProcessorTimer overhead, all;
 
+					overhead.start(); all.start();
 					// each time we get into here, it's very likely there's a bunch of messages waiting.
 					auto numExtraEntries = audioFifo.enqueuededElements();
 
@@ -808,7 +1193,9 @@
 						
 					}
 
-					// Locking scope of listener queue
+					auto channels = AudioFrame::getChannelCount(recv.utility);
+
+					bool signalChange = false;
 					{
 
 						// dont lock unless it's necessary
@@ -835,6 +1222,29 @@
 
 						}
 
+						signalChange = asyncSignalChange.cas();
+						auto localAudioHistorySize = internalInfo.audioHistorySize.load(std::memory_order_acquire);
+						auto localAudioHistoryCapacity = internalInfo.audioHistoryCapacity.load(std::memory_order_acquire);
+						bool somethingWasDone = false;
+
+
+						// resize audio history buffer here, so it takes effect, 
+						// before any async callers are notified.
+						if (signalChange && (internalInfo.storeAudioHistory &&
+							localAudioHistorySize != getAudioHistorySize() ||
+							localAudioHistoryCapacity != getAudioHistoryCapacity()))
+						{
+							std::lock_guard<std::mutex> bufferLock(aBufferMutex);
+							//OutputDebugString(("1. Changed size to: " + std::to_string(localAudioHistorySize)).c_str());
+							ensureAudioHistoryStorage
+							(
+								channels,
+								localAudioHistorySize,
+								localAudioHistoryCapacity
+							);
+							somethingWasDone = true;
+						}
+
 						if (internalInfo.callAsyncListeners)
 						{
 
@@ -846,32 +1256,117 @@
 							T * audioBuffers[2] = { audioInput[0].data(), audioInput[1].data() };
 
 							auto & listeners = *audioListeners.getObjectWithoutSignaling();
+
+
+							if (signalChange && !somethingWasDone)
+							{
+								// 
+								//BreakIfDebugged();
+								//OutputDebugString("3. Signaled change, while still holding async buffer lock.\n");
+							}
+							overhead.pause();
+
 							for (auto & listener : listeners)
 							{
 								auto rawListener = listener.load(std::memory_order_relaxed);
 								if (rawListener)
 								{
+									if (signalChange)
+										rawListener->sourcePropertiesChangedAsync(*this, oldInfo);
+									// TODO: exception handling?
 									mask |= (unsigned) rawListener->onAsyncAudio
 									(
 										*this,
 										audioBuffers,
-										AudioFrame::getChannelCount(recv.utility),
+										channels,
 										numSamples[0]
 									);
 								}
 							}
+
+							overhead.resume();
+						}
+
+
+					}
+
+					// Publish into circular buffer here.
+					if(internalInfo.storeAudioHistory && internalInfo.audioHistorySize.load(std::memory_order_relaxed) && channels)
+					{
+						// TODO: figure out if we can conditionally acquire this mutex
+						// in the same scope as the previous, without keeping a hold
+						// on the listener mutex.
+						std::unique_lock<std::mutex> bufferLock(aBufferMutex, std::defer_lock);
+						// decide whether to wait on the buffers
+						if(!bufferLock.owns_lock())
+							internalInfo.blockOnHistoryBuffer ? bufferLock.lock() : bufferLock.try_lock();
+
+						if (bufferLock.owns_lock())
+						{
+
+							for (std::size_t i = 0; i < channels; ++i)
+							{
+								{
+									auto && w = audioHistoryBuffers[i].createWriter();
+									// first, insert all the old stuff that happened while this buffer was blocked
+									w.copyIntoHead(deferredAudioInput[i].data(), deferredAudioInput[i].size());
+									// next, insert current samples.
+									w.copyIntoHead(audioInput[i].data(), numSamples[i]);
+								}
+								// clear up temporary deferred stuff
+								deferredAudioInput[i].clear();
+								// bit redundant, but ensures it will be called.
+								numDeferredAsyncSamples.store(0, std::memory_order_release);
+							}
+						}
+						else
+						{
+							// defer current samples to a later point in time.
+							for (std::size_t i = 0; i < channels; ++i)
+							{
+								deferredAudioInput[i].insert
+								(
+									deferredAudioInput[i].end(), 
+									audioInput[i].begin(), 
+									audioInput[i].begin() + numSamples[i]
+								);
+							}
+
+							numDeferredAsyncSamples.store(deferredAudioInput[0].size(), std::memory_order::memory_order_release);
 						}
 					}
 
-
-
-					// Publish into circular buffer here.
-
-
+					// post measurements.
+					double timeFraction = (double)std::accumulate(std::begin(numSamples), std::end(numSamples), 0.0) / (std::end(numSamples) - std::begin(numSamples));
+					timeFraction /= internalInfo.sampleRate.load(std::memory_order::memory_order_relaxed);
+					lpFilterTimeToMeasurement(measures.asyncOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
+					lpFilterTimeToMeasurement(measures.asyncUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
 				}
 
 			}
 			
+			/// <summary>
+			/// Only call this if you own aBufferMutex.
+			/// May trash all current storage.
+			/// </summary>
+			/// <param name="audioHistorySize">The size of the circular buffer for the channel, in samples.</param>
+			void ensureAudioHistoryStorage(std::size_t channels, std::size_t pSize, std::size_t pCapacity)
+			{
+
+				// only add channels...
+				const auto nc = std::max(audioHistoryBuffers.size(), channels);
+
+				if (audioHistoryBuffers.size() != nc)
+				{
+					audioHistoryBuffers.resize(nc);
+				}
+				for (int i = 0; i < channels; ++i)
+				{
+					audioHistoryBuffers[i].setStorageRequirements(pSize, pCapacity, true, T());
+				}
+
+			}
+
 
 			template<typename Vector>
 			static inline void ensureVSize(Vector & v, std::size_t size, float factor = 1.5f)
@@ -922,15 +1417,21 @@
 				asyncAudioThreadInitiated,
 				objectIsDead;
 
-			ABoolFlag resizeListeners;
-			ABoolFlag tidyListeners;
+			ABoolFlag 
+				resizeListeners,
+				tidyListeners,
+				audioSignalChange,
+				asyncSignalChange;
 
+			//std::atomic<std::size_t> audioHistorySize, audioHistoryCapacity;
+			std::atomic<std::size_t> numDeferredAsyncSamples;
+			std::vector<AudioBuffer> audioHistoryBuffers;
 			std::thread::id audioRTThreadID;
 			std::thread asyncAudioThread;
 			CBlockingLockFreeQueue<AudioFrame> audioFifo;
-			std::uint64_t droppedAudioFrames;
 			ConcurrentObjectSwapper<ListenerQueue> audioListeners;
-			AudioStreamInfo internalInfo;
+			AudioStreamInfo internalInfo, oldInfo;
+			PerformanceMeasurements measures;
 			std::mutex aListenerMutex, aBufferMutex;
 		};
 

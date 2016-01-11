@@ -56,16 +56,19 @@
 	#include "gui/CButton.cpp"
 	#include "gui/CTransformWidget.cpp"
 	#include "gui/CPresetWidget.cpp"
+	#include "gui/CInputControl.cpp"
+	#include "gui/CDSPWindowWidget.cpp"
 	// rendering
 	#include "rendering/CSubpixelSoftwareGraphics.cpp"
 	#include "rendering/CDisplaySetup.cpp"
 	
 	// io and stuff
-	#include "CExclusiveFile.cpp"
+
 	#include "CPresetManager.cpp"
 
 
-#endif
+#endif	
+#include "CExclusiveFile.cpp"
 #include "ffts/dustfft.cpp"
 
 #ifdef CPL_INC_KISS
@@ -76,11 +79,13 @@
 #include "InstructionSet.cpp"
 #include "CTimer.cpp"
 #include "simd/simd_consts.cpp"
+#include "SigMathImp.cpp"
+#include "octave/octave_all.cpp"
 
 #if defined(CPL_HINT_FONT)
 	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
-	#include "FreeType\FreeTypeAmalgam.h"
-	#include "FreeType\FreeTypeAmalgam.cpp"
+	#include "FreeType/FreeTypeAmalgam.h"
+	#include "FreeType/FreeTypeAmalgam.cpp"
 #endif
 
 #if !defined(CPL_LEAN)
