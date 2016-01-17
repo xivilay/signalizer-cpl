@@ -44,7 +44,7 @@
 	{
 		namespace dsp
 		{
-			template<typename T, std::size_t Channels = 1, std::size_t Vectors = 3>
+			template<typename T, std::size_t Channels = 1>
 			class CComplexResonator : public cpl::CMutex::Lockable
 			{
 			public:
@@ -102,9 +102,10 @@
 
 				/// <summary>
 				/// Resonates the system (processing the data). Safe and wait-free from any thread.
+				/// Treats input data is real.
 				/// </summary>
 				template<typename V, class MultiVector>
-				inline void resonate(const MultiVector & data, std::size_t numDataChannels, std::size_t numSamples)
+				inline void resonateReal(const MultiVector & data, std::size_t numDataChannels, std::size_t numSamples)
 				{
 					CFastMutex lock(this);
 
@@ -147,6 +148,33 @@
 					}
 				}
 
+
+				/// <summary>
+				/// Resonates the system (processing the data). Safe and wait-free from any thread.
+				/// </summary>
+				/// <param name="data">
+				/// A multidimensioal array of following (supported) dimensions: [2][numSamples]
+				/// </param>
+				template<typename V, class MultiVector>
+				inline void resonateComplex(const MultiVector & data, std::size_t numSamples)
+				{
+					CFastMutex lock(this);
+
+					switch (numVectors)
+					{
+					case 1:
+						internalWindowComplexResonate<V, MultiVector, 1>(data, numSamples); break;
+					case 3:
+						internalWindowComplexResonate<V, MultiVector, 3>(data, numSamples); break;
+					case 5:
+						internalWindowComplexResonate<V, MultiVector, 5>(data, numSamples); break;
+					case 7:
+						internalWindowComplexResonate<V, MultiVector, 7>(data, numSamples); break;
+					case 9:
+						internalWindowComplexResonate<V, MultiVector, 9>(data, numSamples); break;
+					}
+
+				}
 				/// <summary>
 				/// Locks. O(n)
 				/// </summary>
@@ -338,6 +366,7 @@
 				/// <summary>
 				/// Maps the internal resonators (and their vectors) to resonate at the frequencies specified in mappedHz.
 				/// This call is SAFE, on any thread. However, it may acquire a mutex and reallocate memory.
+				/// Values for mappedHz[n] > sampleRate/2 infers complex results
 				/// </summary>
 				/// <param name="mappedHz">
 				/// A vector of size vSize of T. It is expected to be sorted.
@@ -574,6 +603,73 @@
 					}
 				}
 
+				template<typename V, class MultiVector, std::size_t staticVectors>
+				void internalWindowComplexResonate(const MultiVector & data, std::size_t numSamples)
+				{
+
+					using namespace cpl;
+					using namespace cpl::simd;
+
+					auto const vfactor = suitable_container<V>::size;
+					V t0;
+
+					std::size_t nR = numResonators;
+					std::size_t vC = nR * 2; // space filled by a vector buf
+					std::size_t sC = vC * numVectors; // space filled by all vector bufs
+
+
+					 //  iterate over each filter for each sample for each channel for each vector.
+					for (Types::fint_t k = 0; k < numFilters; k += vfactor)
+					{
+
+						// pointer to current sample
+						typename scalar_of<V>::type * audioInputs[numChannels];
+
+						V p_r[staticVectors], p_i[staticVectors];
+						V s_r[staticVectors], s_i[staticVectors];
+
+						// and load them
+						for (Types::fint_t v = 0; v < staticVectors; ++v)
+						{
+							p_r[v] = load<V>(coeff + v * vC + k + nR * real); // cos: e^i*omega (real)
+							p_i[v] = load<V>(coeff + v * vC + k + nR * imag); // sin: e^i*omega (imag)
+
+
+							s_r[v] = load<V>(state + v * vC + k + nR * real);
+							s_i[v] = load<V>(state + v * vC + k + nR * imag);
+
+							for (Types::fint_t c = 0; c < 2; ++c)
+							{
+								audioInputs[c] = &data[c][0];
+							}
+						}
+						for (Types::fint_t sample = 0; sample < numSamples; ++sample)
+						{
+
+							// combing stage
+							V
+								real = broadcast<V>(audioInputs[0]++),
+								imag = broadcast<V>(audioInputs[1]++);
+
+							for (Types::fint_t v = 0; v < staticVectors; ++v)
+							{
+								t0 = s_r[v] * p_r[v] - s_i[v] * p_i[v];
+								s_i[v] = s_r[v] * p_i[v] + s_i[v] * p_r[v];
+								s_r[v] = t0 + real;
+								s_i[v] += imag;
+							}
+
+
+						}
+
+						for (Types::fint_t v = 0; v < staticVectors; ++v)
+						{
+							store(state + v * vC + k + nR * real, s_r[v]); // state: e^i*omega (real)
+							store(state + v * vC + k + nR * imag, s_i[v]); // state: e^i*omega (imag)
+						}
+					}
+				}
+
 				template<typename V, class MultiVector, std::size_t inputDataChannels>
 				void internalWindowResonate3(const MultiVector & data, std::size_t numSamples)
 				{
@@ -711,8 +807,8 @@
 				std::vector<Scalar> N;
 
 			};
-			template<typename T, std::size_t Channels = 1, std::size_t Vectors = 3>
-				T CComplexResonator<T, Channels, Vectors>::resonatorScales[WindowTypes::End];
+			template<typename T, std::size_t Channels = 1>
+				T CComplexResonator<T, Channels>::resonatorScales[WindowTypes::End];
 		};
 	};
 #endif
