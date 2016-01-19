@@ -440,7 +440,7 @@
 
 							N[k] = 1.0/(1 - r);
 
-							for (int v = 0; v < numVectors; ++v)
+							for (std::size_t v = 0; v < numVectors; ++v)
 							{
 								// so basically, for doing frequency-domain windowing using DFT-coefficients of the windows, we need filters that are linearly 
 								// spaced around the frequency like the FFT. DFT bins are spaced linearly like 0.5 / N.
@@ -453,7 +453,7 @@
 								coeff[v * vC + k + nR * imag] = imagPart; // coeffs.c[0].imag()
 								if (newData)
 								{
-									for (int c = 0; c < numChannels; ++c)
+									for (std::size_t c = 0; c < numChannels; ++c)
 									{
 										state[sC * c + v * vC + nR * real] = 0;
 										state[sC * c + v * vC + nR * imag] = 0;
@@ -615,8 +615,6 @@
 
 					std::size_t nR = numResonators;
 					std::size_t vC = nR * 2; // space filled by a vector buf
-					std::size_t sC = vC * numVectors; // space filled by all vector bufs
-
 
 					 //  iterate over each filter for each sample for each channel for each vector.
 					for (Types::fint_t k = 0; k < numFilters; k += vfactor)

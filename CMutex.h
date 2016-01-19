@@ -63,44 +63,102 @@
 		private:
 			Lockable * resource;
 		public:
+
+			/// <summary>
+			/// Acquires the resource, with the default timeout
+			/// </summary>
 			CMutex(Lockable * l)
+				: resource(nullptr)
 			{
-				resource = l;
 				acquire(l);
 
 			}
+
+			/// <summary>
+			/// Acquires the resource, with the default timeout
+			/// </summary>
 			CMutex(Lockable & l)
+				: resource(nullptr)
 			{
-				resource = &l;
 				acquire(l);
 			}
-			CMutex()
+			/// <summary>
+			/// Does nothing, until something is acquired
+			/// </summary>
+			CMutex() noexcept
 				: resource(nullptr)
 			{
 
 			}
+
+			CMutex(const CMutex &) = delete;
+			CMutex(CMutex && other) noexcept
+			{
+				resource = other.resource;
+				other.resource = nullptr;
+			}
+
+			CMutex & operator = (CMutex && other) noexcept
+			{
+				resource = other.resource;
+				other.resource = nullptr;
+			}
+
+			/// <summary>
+			/// Releases any acquired resources
+			/// </summary>
 			~CMutex()
 			{
 				if (resource)
 					release(resource);
 
 			}
+
+			/// <summary>
+			/// Attemps to acquire the resource.
+			/// If it is already hold by this lock, nothing is done (recursive guarantee).
+			/// If another resource is locked by this lock, the previous lock is released, and then
+			/// attempts to acquire the other resource.
+			/// </summary>
+			/// <param name="l"></param>
 			void acquire(Lockable * l)
 			{
 				auto this_id = std::this_thread::get_id();
-				if (l->ownerThread == this_id)
-					return;
-				if (!resource)
-					resource = l;
-				if (!spinLock(2000, resource))
+				if (resource)
+				{
+					if (l->ownerThread == this_id && l == resource)
+						return;
+					else
+						release(resource);
+				}
+
+
+				if (!spinLock(2000, l))
 					//explode here
 					return;
-				l->ownerThread = std::this_thread::get_id();
+				else
+				{
+					resource = l;
+					l->ownerThread = std::this_thread::get_id();
+				}
+
 			}
+
+			/// <summary>
+			/// Attemps to acquire the resource.
+			/// If it is already hold by this lock, nothing is done (recursive guarantee).
+			/// If another resource is locked by this lock, the previous lock is released, and then
+			/// attempts to acquire the other resource.
+			/// </summary>
+			/// <param name="l"></param>
 			void acquire(Lockable & l)
 			{
 				acquire(&l);
 			}
+
+		/// <summary>
+		/// Releases the resource. Called automatically on destruction.
+		/// </summary>
 			void release()
 			{
 				
@@ -166,40 +224,75 @@
 			typedef CMutex::Lockable Lockable;
 			Lockable * resource;
 		public:
+			/// <summary>
+			/// Acquires the resource, with the default timeout
+			/// </summary>
 			CFastMutex(Lockable * l)
+				: resource(nullptr)
 			{
-				resource = l;
 				acquire(l);
-				
+
 			}
+
+			/// <summary>
+			/// Acquires the resource, with the default timeout
+			/// </summary>
 			CFastMutex(Lockable & l)
+				: resource(nullptr)
 			{
-				resource = &l;
 				acquire(l);
 			}
-			CFastMutex()
-			: resource(nullptr)
+			/// <summary>
+			/// Does nothing, until something is acquired
+			/// </summary>
+			CFastMutex() noexcept
+				: resource(nullptr)
 			{
-				
+
 			}
+
+			CFastMutex(const CFastMutex &) = delete;
+			CFastMutex(CFastMutex && other) noexcept
+			{
+				resource = other.resource;
+				other.resource = nullptr;
+			}
+
+			CFastMutex & operator = (CFastMutex && other) noexcept
+			{
+				resource = other.resource;
+				other.resource = nullptr;
+			}
+
+			/// <summary>
+			/// Releases any acquired resources
+			/// </summary>
 			~CFastMutex()
 			{
 				if (resource)
 					release(resource);
-				
+
 			}
 			void acquire(Lockable * l)
 			{
 				auto this_id = std::this_thread::get_id();
-				if(l->ownerThread == this_id)
-					return;
-				
-				if (!resource)
-					resource = l;
-				if (!spinLock(resource))
+				if (resource)
+				{
+					if (l->ownerThread == this_id && l == resource)
+						return;
+					else
+						release(resource);
+				}
+
+
+				if (!spinLock(l))
 					//explode here
 					return;
-				l->ownerThread = this_id;
+				else
+				{
+					resource = l;
+					l->ownerThread = std::this_thread::get_id();
+				}
 			}
 			void acquire(Lockable & l)
 			{

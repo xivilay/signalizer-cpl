@@ -46,6 +46,26 @@
 		namespace dsp
 		{
 
+			template<typename T, class alloc>
+			std::vector<T, alloc> real(const std::vector<std::complex<T>, alloc> & cmplx)
+			{
+				std::vector<T, alloc> ret(cmplx.size());
+				for (std::size_t i = 0; i < cmplx.size(); ++i)
+					ret[i] = cmplx[i].real();
+
+				return ret;
+			}
+
+			template<typename T, class alloc>
+			std::vector<T, alloc> imag(const std::vector<std::complex<T>, alloc> & cmplx)
+			{
+				std::vector<T, alloc> ret(cmplx.size());
+				for (std::size_t i = 0; i < cmplx.size(); ++i)
+					ret[i] = cmplx[i].imag();
+
+				return ret;
+			}
+
 			template<typename T>
 			void fftshift(std::complex<T> * fft, std::size_t N)
 			{
@@ -264,7 +284,7 @@
 			}
 
 			template<typename R, bool precise = true, typename T>
-			inline auto lanczosFilter(T * vec, std::size_t asize, double x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
+			inline auto lanczosFilter(T * vec, Types::fsint_t asize, double x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
 			{
 				R resonance = 0;
 				Types::fsint_t start = cpl::Math::floorToNInf<Types::fsint_t>(x);
@@ -346,7 +366,7 @@
 				void fillWithRand(T & vec, size_t size)
 				{
 					typedef unq_typeof(vec[0]) T2;
-					for (int i = 0; i < size; ++i)
+					for (std::size_t i = 0; i < size; ++i)
 					{
 						vec[i] = ((T2(RAND_MAX) / (T2)2) - (T2)rand()) / (T2(RAND_MAX) / (T2)2);
 					}
@@ -359,7 +379,7 @@
 					if (size == 1)
 						vec[0] = min;
 					else
-						for (int i = 0; i < size; ++i)
+						for (std::size_t i = 0; i < size; ++i)
 						{
 							vec[i] = min + (max - min) * i / (size - 1);
 						}
@@ -371,7 +391,7 @@
 			{
 				N <<= 1;
 				double x1, x2, y1, y2;
-				for (auto k = 2u; k < N; k += 2)
+				for (std::size_t k = 2u; k < N; k += 2)
 				{
 					x1 = tsf[k];
 					x2 = tsf[N - k];

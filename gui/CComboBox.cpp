@@ -242,7 +242,7 @@ namespace cpl
 				return i;
 			}
 		}
-		return -1;
+		return (std::size_t)-1;
 	}
 
 	bool CComboBox::setEnabledStateFor(const std::string & idx, bool toggle)
@@ -254,7 +254,7 @@ namespace cpl
 	{
 		if (entry < values.size() && entry != -1)
 		{
-			bool selectNew = box.getSelectedId() == (entry + 1) && !toggle;
+			bool selectNew = box.getSelectedId() == int(entry + 1) && !toggle;
 			box.setItemEnabled((int)entry + 1, !!toggle);
 
 			// TODO: maybe make a more educated guess at some point.

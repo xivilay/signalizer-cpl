@@ -119,7 +119,7 @@
 					separate
 				} utility;
 
-				static int getChannelCount(util_t channelType) noexcept
+				static std::size_t getChannelCount(util_t channelType) noexcept
 				{
 					return channelType > right ? 2 : 1;
 				}
@@ -807,7 +807,7 @@
 				if (asyncAudioThreadCreated.load())
 				{
 					// so the thread has been created; wait for it to enter function space.
-					bool success = cpl::Misc::WaitOnCondition(10000,
+					cpl::Misc::WaitOnCondition(10000,
 						[&]()
 						{
 							return asyncAudioThreadInitiated.load(std::memory_order_relaxed);
@@ -1360,7 +1360,7 @@
 				{
 					audioHistoryBuffers.resize(nc);
 				}
-				for (int i = 0; i < channels; ++i)
+				for (std::size_t i = 0; i < channels; ++i)
 				{
 					audioHistoryBuffers[i].setStorageRequirements(pSize, pCapacity, true, T());
 				}

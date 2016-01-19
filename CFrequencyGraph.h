@@ -259,17 +259,39 @@
 				// reset raw data buffer
 				untrans.clear();
 				titles.clear();
-				lowerFreq = frequencyForCoord(bounds.left);
-				higherFreq = frequencyForCoord(bounds.right);
 
 				if (scaling == Scaling::Logarithmic)
+				{
+					lowerFreq = std::max(frequencyForCoord(bounds.left), startDecade);
+					higherFreq = std::min(frequencyForCoord(bounds.right), stopFreq);
 					compileLogGraph();
+				}
 				else
+				{
+					lowerFreq = std::max(frequencyForCoord(bounds.left), 0.0);
+					higherFreq = std::min(frequencyForCoord(bounds.right), stopFreq);
 					compileLinearGraph();
+				}
+
 
 				transformLines();
 			}
 
+			void clear()
+			{
+				untrans.clear(); trans.clear(); titles.clear(); transTitles.clear();
+			}
+
+			const Utility::Bounds<double> & getBounds() const noexcept
+			{
+				return bounds;
+			}
+
+			const Utility::Bounds<double> & getView() const noexcept
+			{
+				return view;
+			}
+		
 		protected:
 
 			/*
@@ -336,6 +358,8 @@
 			{
 
 				// loop each decade
+				if (viewWidth < 0.0)
+					return;
 
 				double curDecade = lastDecade;
 				double minSpace = scale(minSpaceForDivision);
@@ -430,6 +454,8 @@
 							// since it is included.
 							if (!compileLogSubDecade(curDecade * div, curDecade / 10.0))
 							{
+								if (curDecade * (div) > higherFreq)
+									break;
 								// if curDecade is 10, and subDiv is 5, then the frequency of the current lines
 								// is curDecade * subDiv = 50Hz
 								double fracOffForDiv = (std::log10(div * curDecade) - 1.0) * spaceForDecade;
@@ -489,23 +515,31 @@
 				// the amount of space it would take to draw numDivision subdivions.
 				auto const nextHigherFreq = offset + step * numDivisions;
 
+				if (nextHigherFreq == lowerFreq || step == 0.0 || !std::isnormal(step))
+				{
+					BreakIfDebugged();
+				}
+
 				if (nextHigherFreq < lowerFreq)
 					return true;
 				
 				double spaceForSub = (std::log10(nextHigherFreq) - std::log10(offset)) * spaceForDecade;
 				spaceForSub *= boundsWidth;
+
 				// due to the logarithmic nature of spacing, if the recursing fails once, everything forward will fail.
 				// this is a small optimization.
 				bool dontRecurse = false;
 				bool printNextLine = true;
 
-				if (spaceForSub > scale(minSpaceForDivision))
+				auto minScaledSpace = scale(minSpaceForDivision);
+
+				if (minScaledSpace > 0.0 && spaceForSub > minScaledSpace)
 				{
 
 					for (int i = 0; i < numDivisions; ++i)
 					{
 						double localOffset = i * step;
-						if (offset + localOffset > nextHigherFreq)
+						if (offset + localOffset > nextHigherFreq || offset + localOffset > higherFreq)
 							return false;
 						if (dontRecurse || !compileLogSubDecade(offset + localOffset, step / 10.0))
 						{
