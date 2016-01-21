@@ -67,15 +67,19 @@
 			public Utility::CNoncopyable
 		{
 		public:
-			enum mode
+			enum mode : std::uint32_t
 			{
 				#ifdef __WINDOWS__
 					readMode = GENERIC_READ,
 					writeMode = GENERIC_WRITE,
-					readWriteMode = readMode | writeMode
+					readWriteMode = readMode | writeMode,
+					append = FILE_APPEND_DATA,
+					clear = 0
 				#elif defined(__MAC__)
+					clear = 0,
 					readMode = 2,
-					writeMode = 4
+					writeMode = 4,
+					append = 8
 				#endif
 			};
 			
@@ -91,9 +95,10 @@
 			CExclusiveFile();
 			~CExclusiveFile();
 
-			bool open(const std::string & path, mode m = writeMode, bool waitForLock = false);
+			bool open(const std::string & path, std::uint32_t m = writeMode, bool waitForLock = false);
 			bool read(void * src, std::int64_t bufsiz);
 			std::int64_t getFileSize();
+			bool newline();
 			bool write(const void * src, std::int64_t bufsiz);
 			static bool isFileExclusive(const std::string & path);
 			bool reset();

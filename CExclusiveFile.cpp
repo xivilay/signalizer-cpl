@@ -47,12 +47,12 @@ namespace cpl
 			close();
 	}
 
-	bool CExclusiveFile::open(const std::string & path, mode m, bool waitForLock)
+	bool CExclusiveFile::open(const std::string & path, std::uint32_t m, bool waitForLock)
 	{
 		if (isOpened())
 			close();
 		fileName = path;
-		fileMode = m;
+		fileMode = (mode)m;
 		#if defined(__CEF_USE_CSTDLIB)
 
 			handle = ::fopen(fileName.c_str(), "w");
@@ -66,17 +66,21 @@ namespace cpl
 		#elif defined(__WINDOWS__)
 			// if we're opening in writemode, we always create a new, empty file
 			// if it's reading mode, we only open existing files.
-			auto openMode = fileMode & writeMode ? CREATE_ALWAYS : OPEN_EXISTING;
+			auto openMode = OPEN_ALWAYS;
+			auto fileMask = fileMode & append ? FILE_APPEND_DATA : fileMode;
+
 			auto start = Misc::QuickTime();
 			do
 			{
 				handle = ::CreateFile(path.c_str(),
-					fileMode,
+					fileMask,
 					0x0, // this is the important part - 0 as dwShareMode will open the file exclusively (default)
 					nullptr,
 					openMode,
 					FILE_ATTRIBUTE_NORMAL,
-					nullptr);
+					nullptr
+				);
+
 				if (handle != INVALID_HANDLE_VALUE)
 					break;
 
@@ -98,7 +102,8 @@ namespace cpl
 
 		#elif defined(__UNIXC__)
 
-			int openMask = m == mode::writeMode ? O_WRONLY | O_CREAT : O_RDONLY ;
+			int openMask = m & mode::writeMode ? O_WRONLY | O_CREAT : O_RDONLY;
+			openMask |= m & mode::append ? O_APPEND : 0;
 			if(m == mode::writeMode)
 			{
 
@@ -131,6 +136,11 @@ namespace cpl
 		#endif
 
 		return isOpened();
+	}
+
+	bool CExclusiveFile::newline()
+	{
+		return write("\r\n");
 	}
 
 	std::int64_t CExclusiveFile::getFileSize()

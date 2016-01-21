@@ -202,7 +202,7 @@ namespace cpl
 
 						Misc::PreciseDelay(msPerRender);
 					}
-					drops = stream.getPerfMeasures().droppedAudioFrames;
+					drops = static_cast<std::size_t>(stream.getPerfMeasures().droppedAudioFrames);
 				}
 			);
 

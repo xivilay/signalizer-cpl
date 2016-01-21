@@ -81,6 +81,8 @@
 #include "simd/simd_consts.cpp"
 #include "SigMathImp.cpp"
 #include "octave/octave_all.cpp"
+#include "Protected.cpp"
+
 
 #if defined(CPL_HINT_FONT)
 	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"

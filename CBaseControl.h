@@ -358,7 +358,7 @@
 				Returns true if the value was succesfully interpreted and set.
 
 			*********************************************************************************************/
-			virtual bool bInterpretAndSet(const std::string & valueString, bool setInternal = false)
+			virtual bool bInterpretAndSet(const std::string & valueString, bool setInternal = false, bool synchronizedEvent = false)
 			{
 				iCtrlPrec_t val(0);
 				if (bInterpret(valueString, val))
@@ -366,7 +366,7 @@
 					if (setInternal)
 						bSetInternal(val);
 					else
-						bSetValue(val);
+						bSetValue(val, synchronizedEvent);
 					return true;
 				}
 				return false;

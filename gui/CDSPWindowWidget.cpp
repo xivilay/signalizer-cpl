@@ -95,7 +95,7 @@ namespace cpl
 		// scale to graphics size
 		y1 = Math::UnityScale::linear(y1, bot, top);
 
-		if (!std::isnormal(y1))
+		if (!std::isnormal(y1) && y1 != 0.0)
 		{
 			y1 =bot;
 		}
@@ -113,7 +113,9 @@ namespace cpl
 			if (!std::isnormal(y2))
 			{
 				auto s = std::copysign(1.0, y2);
-				if (s > 0 && n != ON / 2)
+				if (fftBuf[n] == 0.0)
+					y2 = bot;
+				else if (s > 0 && n != ON / 2)
 					y2 = bot;
 				else
 					y2 = top;
@@ -131,7 +133,7 @@ namespace cpl
 		y1 = Math::UnityScale::Inv::linear(y1, minW, maxW);
 		y1 = Math::UnityScale::linear(y1, bot, top);
 
-		if (!std::isnormal(y1))
+		if (!std::isnormal(y1) && y1 != 0.0)
 		{
 			y1 = bot;
 		}

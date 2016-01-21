@@ -38,6 +38,7 @@
 #include "Types.h"
 #include "stdext.h"
 #include <atomic>
+#include "CExclusiveFile.h"
 
 #ifdef __GNUG__
 	#include <cstdlib>
@@ -79,6 +80,15 @@ namespace cpl
 			
 		#endif
 		
+		void LogException(const std::string & errorMessage)
+		{
+			CExclusiveFile exceptionLog;
+
+			exceptionLog.open(GetDirectoryPath() + "/" + programInfo.name + " exceptions.log", exceptionLog.writeMode | exceptionLog.append, true);
+			exceptionLog.write(("Exception in " + programInfo.name + " v." + programInfo.version + ": " + GetDate() + ", " + GetTime() +  + " -> " + errorMessage).c_str());
+			exceptionLog.newline();
+		}
+
 
 		/*********************************************************************************************
 
@@ -88,7 +98,7 @@ namespace cpl
 		*********************************************************************************************/
 		void CrashIfUserDoesntDebug(const std::string & errorMessage)
 		{
-			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", "cpl: Fatal error", 
+			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", programInfo.name + ": Fatal error", 
 				MsgStyle::sYesNoCancel | MsgIcon::iStop);
 			if (ret == MsgButton::bYes)
 			{
@@ -480,6 +490,29 @@ namespace cpl
 				sprintf_s(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 			#else
 				sprintf(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
+			#endif
+			return buffer;
+		}
+
+		std::string GetDate()
+		{
+			time_t timeObj;
+			tm * ctime;
+			time(&timeObj);
+			#ifdef __MSVC__
+				tm pTime;
+				gmtime_s(&pTime, &timeObj);
+				ctime = &pTime;
+			#else
+				// consider using a safer alternative here.
+				ctime = gmtime(&timeObj);			
+			#endif
+			char buffer[100];
+			// not cross platform.
+			#ifdef __MSVC__
+				sprintf_s(buffer, "%d/%d/%d", ctime->tm_mday, ctime->tm_mon + 1, ctime->tm_year + 1900);
+			#else
+				sprintf(buffer, "%d/%d/%d", ctime->tm_mday, ctime->tm_mon + 1, ctime->tm_year + 1900);
 			#endif
 			return buffer;
 		}

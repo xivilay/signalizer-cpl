@@ -99,7 +99,7 @@
 		/// <returns></returns>
 		inline bool lexicalConversion(const std::string & from, std::int64_t & to)
 		{
-			double output;
+			std::int64_t output;
 			char * endPtr = nullptr;
 			output = strtoll(from.c_str(), &endPtr, 0);
 			if (endPtr > from.c_str())

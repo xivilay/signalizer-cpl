@@ -44,6 +44,7 @@
 	#include <deque>
 	#include <algorithm>
 	#include <numeric>
+	#include "Protected.h"
 	#define CPL_DEBUG_CAUDIOSTREAM
 
 	namespace cpl
@@ -737,7 +738,7 @@
 						{
 							// TODO: ensure aSamples < std::uint16_T::max()
 							AudioFrame af(static_cast<std::uint16_t>(aSamples), AudioFrame::mono);
-							std::memcpy(af.buffer, (buffer[0] + numSamples - n), aSamples * AudioFrame::element_size);
+							std::memcpy(af.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 
 							if (!audioFifo.pushElement(af))
 								measures.droppedAudioFrames++;
@@ -755,8 +756,8 @@
 						{
 							// TODO: ensure aSamples < std::uint16_T::max()
 							AudioFrame af(static_cast<std::uint16_t>(aSamples * 2), AudioFrame::separate);
-							std::memcpy(af.buffer, (buffer[0] + numSamples - n), aSamples * AudioFrame::element_size);
-							std::memcpy(af.buffer + aSamples, (buffer[1] + numSamples - n), aSamples * AudioFrame::element_size);
+							std::memcpy(af.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
+							std::memcpy(af.buffer + aSamples, (buffer[1] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 							if (!audioFifo.pushElement(af))
 								measures.droppedAudioFrames++;
 						}
@@ -1136,6 +1137,17 @@
 			}
 
 		private:
+
+			void protectedAsyncSystemEntry()
+			{
+				CProtected::runProtectedCodeErrorHandling
+				(
+					[this]()
+					{
+						asyncAudioSystem();
+					}
+				);
+			}
 
 			/// <summary>
 			/// Asynchronous subsystem.

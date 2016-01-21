@@ -45,6 +45,7 @@
 		{
 
 			std::string GetTime ();
+			std::string GetDate();
 			std::string DemangleRawName(const std::string & name);
 			
 			
@@ -77,6 +78,8 @@
 			long long TimeCounter();
 			double TimeDifference(long long);
 			double TimeToMilisecs(long long);
+
+			void LogException(const std::string & errorMessage);
 
 			void CrashIfUserDoesntDebug(const std::string & errorMessage);
 

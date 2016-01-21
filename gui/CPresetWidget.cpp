@@ -69,7 +69,7 @@ namespace cpl
 	{
 		if (c == &ksavePreset)
 		{
-			CCheckedSerializer serializer(name);
+			SerializerType serializer(name);
 			parent->save(serializer.getArchiver(), programInfo.versionInteger);
 			juce::File location;
 			bool result = CPresetManager::instance().savePresetAs(serializer, location, name);
@@ -83,7 +83,7 @@ namespace cpl
 		}
 		else if (c == &kloadPreset)
 		{
-			CCheckedSerializer serializer(name);
+			SerializerType serializer(name);
 			juce::File location;
 			bool result = CPresetManager::instance().loadPresetAs(serializer, location, name);
 			updatePresetList();
@@ -95,7 +95,7 @@ namespace cpl
 		}
 		else if (c == &ksaveDefault)
 		{
-			CCheckedSerializer serializer(name);
+			SerializerType serializer(name);
 			parent->save(serializer.getArchiver(), programInfo.versionInteger);
 			juce::File location;
 			bool result = CPresetManager::instance().savePreset(fullPathToPreset("default"), serializer, location);
@@ -109,7 +109,7 @@ namespace cpl
 		}
 		else if (c == &kloadDefault)
 		{
-			CCheckedSerializer serializer(name);
+			SerializerType serializer(name);
 			juce::File location;
 			bool result = CPresetManager::instance().loadPreset(fullPathToPreset("default"), serializer, location);
 			updatePresetList();
@@ -126,7 +126,7 @@ namespace cpl
 			if (presetName.size())
 			{
 				juce::File location;
-				CCheckedSerializer serializer(name);
+				SerializerType serializer(name);
 				if (CPresetManager::instance().loadPreset(fullPathToPreset(presetName), serializer, location))
 				{
 					parent->load(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
@@ -164,13 +164,13 @@ namespace cpl
 	void CPresetWidget::setDisplayedPreset(juce::File location)
 	{
 		std::string newValue = presetWithoutExtension(location);
-		kpresetList.bInterpretAndSet(newValue, false);
+		kpresetList.bInterpretAndSet(newValue, true, true);
 	}
 
 	bool CPresetWidget::setSelectedPreset(juce::File location)
 	{
 		std::string newValue = presetWithoutExtension(location);
-		return kpresetList.bInterpretAndSet(newValue, true);
+		return kpresetList.bInterpretAndSet(newValue, false, true);
 	}
 
 	const std::vector<std::string>& CPresetWidget::getPresets()

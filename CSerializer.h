@@ -183,10 +183,12 @@
 				return *this;
 			}
 
-			void appendBytes(const void * content, std::size_t bytes)
+			void appendBytes(const void * content, std::uint64_t bytesl)
 			{
-				if (!bytes)
+				if (!bytesl)
 					return;
+
+				std::size_t bytes = static_cast<std::size_t>(bytesl);
 				ensureExtraBytes(bytes);
 				std::memcpy(getCurrentPointer(), content, bytes);
 				bytesUsed += bytes;
@@ -305,17 +307,17 @@
 		class WeakContentWrapper
 		{
 		public:
-			WeakContentWrapper(const BinaryBuilder::byte * c, std::size_t size) : contents(c), contentSize(size) {}
-			WeakContentWrapper(const void * c, std::size_t size)
+			WeakContentWrapper(const BinaryBuilder::byte * c, std::uint64_t size) : contents(c), contentSize(size) {}
+			WeakContentWrapper(const void * c, std::uint64_t size)
 				: contents(static_cast<const BinaryBuilder::byte *>(c)), contentSize(size) {}
 			WeakContentWrapper(const ContentWrapper & cw) : contents(cw.getBlock()), contentSize(cw.getSize()) {}
 
 			const char * getBlock() const { return contents; }
-			std::size_t getSize() const { return contentSize; }
+			std::uint64_t getSize() const { return contentSize; }
 
 		private:
 			const BinaryBuilder::byte * contents;
-			std::int64_t contentSize;
+			std::uint64_t contentSize;
 		};
 
 		class ISerializerSystem
@@ -539,6 +541,8 @@
 			long long int getMasterVersion() const noexcept { return version; }
 			virtual bool build(const WeakContentWrapper & cr) override
 			{
+				if (!cr.getBlock() || !cr.getSize())
+					return false;
 				const StdHeader * start = (const StdHeader *) cr.getBlock();
 
 				// a child system is a key that identifies the child followed by 
@@ -1027,13 +1031,13 @@
 				if(startHeader->headerSize != CSerializer::MD5CheckedHeader().headerSize)
 					CPL_RUNTIME_EXCEPTION("Checked header has invalid size.");
 
-				if(std::memcmp(startHeader->getData<char>(), nameReference.c_str(), nameSize) != 0)
+				if(std::memcmp(startHeader->getData<char>(), nameReference.c_str(), static_cast<std::size_t>(nameSize)) != 0)
 					CPL_RUNTIME_EXCEPTION(
 						std::string("Checked header's name \'") + startHeader->getData<char>() + "\' is different from expected \'" + nameReference + "\'."
 				);
 
 				const void * dataBlock = startHeader->next();
-				std::size_t dataSize = cr.getSize() - ((const char *)startHeader->next() - (const char *)startHeader);
+				std::size_t dataSize = static_cast<std::size_t>(cr.getSize() - ((const char *)startHeader->next() - (const char *)startHeader));
 
 				auto md5 = juce::MD5(dataBlock, dataSize);
 

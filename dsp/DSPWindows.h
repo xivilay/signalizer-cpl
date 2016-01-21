@@ -657,7 +657,14 @@
 								T malpha = T(M_PI * alpha);
 								T denom = Math::i0(malpha);
 								for (std::size_t n = 0; n < N; ++n)
-									w[n] = Math::i0(malpha * std::sqrt(1 - cpl::Math::square(((T)(2 * n + offset)) / K - 1))) / denom;
+								{
+									auto phase = cpl::Math::square(((T)(2 * n + offset)) / K - 1);
+									if (phase > (T)1) // handles negative input for sqrt(), avoiding nan values.
+										phase -= (phase - 1) * 2;
+
+									w[n] = Math::i0(malpha * std::sqrt(1 - phase)) / denom;
+								}
+
 							}
 
 						template<typename T, class InOutVector>

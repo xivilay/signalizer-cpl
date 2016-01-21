@@ -37,6 +37,7 @@
 	#include "CToolTip.h"
 	#include "GraphicComponents.h"
 	#include "rendering\OpenGLEngine.h"
+	#include "Protected.h"
 
 	namespace cpl
 	{
@@ -246,7 +247,14 @@
 
 				CPL_DEBUGCHECKGL();
 
-				onOpenGLRendering();
+				CProtected::runProtectedCodeErrorHandling
+				(
+					[&]()
+					{
+						onOpenGLRendering();
+					}
+				);
+
 
 				CPL_DEBUGCHECKGL();
 

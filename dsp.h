@@ -46,6 +46,32 @@
 		namespace dsp
 		{
 
+			template<typename Ty>
+				struct DualComplex
+				{
+					typedef Ty type;
+
+					std::complex<type> val[2];
+
+				};
+			template<typename Ty>
+				inline DualComplex<Ty> getZFromNFFT(Ty * tsf, std::size_t idx, std::size_t N)
+				{
+					idx <<= 1;
+					N <<= 1;
+					Ty x1 = tsf[idx];
+					Ty x2 = tsf[N - idx];
+					Ty y1 = tsf[idx + 1];
+					Ty y2 = tsf[N - idx + 1];
+
+					DualComplex<Ty> ret;
+
+					ret.val[0] = std::complex<Ty>((x1 + x2) * 0.5, (y1 - y2) * 0.5);
+					ret.val[1] = std::complex<Ty>((y1 + y2) * 0.5, -(x1 - x2) * 0.5);
+
+					return ret;
+				}
+
 			template<typename T, class alloc>
 			std::vector<T, alloc> real(const std::vector<std::complex<T>, alloc> & cmplx)
 			{
@@ -320,7 +346,7 @@
 			template<typename R, typename T>
 			inline auto linearFilter(T * vec, Types::fsint_t asize, double x) -> typename std::remove_reference<decltype(vec[0])>::type
 			{
-				Types::fsint_t x1 = cpl::Math::floorToNInf<Types::fsint_t>(x);
+				Types::fsint_t x1 = cpl::Math::floorToNInf<Types::fsint_t>(static_cast<Types::fsint_t>(x));
 				Types::fsint_t x2 = std::min(asize - 1, x1 + 1);
 
 				//if (x2 == asize - 1)

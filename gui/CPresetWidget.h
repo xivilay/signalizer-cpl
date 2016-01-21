@@ -48,6 +48,8 @@
 		{
 		public:
 
+			typedef CCheckedSerializer SerializerType;
+
 			enum Setup
 			{
 				/// <summary>
