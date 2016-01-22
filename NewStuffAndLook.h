@@ -369,7 +369,7 @@
 			}
 			CTextTabBar()
 				: selectedIndex(0), maxTabHeight(25), CBaseControl(this), isMouseInside(false),
-				orientation(Vertical), triangleSize(5), isTriangleHovered(false), isIndeterminateState(true)
+				orientation(Vertical), triangleSize(5), isTriangleHovered(false), isIndeterminateState(true), panelIsClosed(true)
 			{
 				setRepaintsOnMouseActivity(true);
 				mouseCoords[0] = mouseCoords[1] = 0;
