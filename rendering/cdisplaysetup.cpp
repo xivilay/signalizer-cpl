@@ -115,11 +115,12 @@ namespace cpl
 		{
 			update();
 			// set the hooking to happen in the main thread when its ready and set
-			GUIUtils::FutureMainEvent(100, [&]() { installMessageHook(); });
+			GUIUtils::FutureMainEvent(100, [&]() { installMessageHook(); }, this);
 		}
 
 		CDisplaySetup::~CDisplaySetup()
 		{
+			notifyDestruction();
 			if (systemHook.hook)
 			{
 				removeMessageHook();
@@ -143,20 +144,20 @@ namespace cpl
 				{
 					case WM_SETTINGCHANGE:
 					case WM_DISPLAYCHANGE:
-						if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
+						if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.load(std::memory_order_acquire))
 						{
 							// avoid posting it multiple times:
-							CDisplaySetup::instance().getSystemHook().eventHasBeenPosted = true;
+							CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
 							
 							// spawn the event
-							GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); });
+							GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
 						}
 					default:
 						break;
 						
 				}
 				
-				return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook, code, wParam, lParam);
+				return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook.load(std::memory_order_acquire), code, wParam, lParam);
 			}
 		#elif defined(__MAC__)
 		
@@ -169,10 +170,10 @@ namespace cpl
 				else if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
 				{
 					// avoid posting it multiple times:
-					CDisplaySetup::instance().getSystemHook().eventHasBeenPosted = true;
+					CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
 					
 					// spawn the event
-					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); });
+					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, this);
 				}
 			}
 		
@@ -196,7 +197,7 @@ namespace cpl
 		void CDisplaySetup::removeMessageHook()
 		{
 			#ifdef __WINDOWS__
-				UnhookWindowsHookEx((HHOOK)systemHook.hook);
+				UnhookWindowsHookEx((HHOOK)systemHook.hook.load(std::memory_order_acquire));
 			#elif defined(__MAC__)
 				CGDisplayRemoveReconfigurationCallback(&MessageHook, nullptr);
 			#endif

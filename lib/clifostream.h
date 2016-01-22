@@ -617,6 +617,11 @@
 					else
 						cursor %= newSize;
 
+					if (size == 0 && newSize != 0)
+					{
+						std::fill(internalBuffer.begin(), internalBuffer.end(), filler);
+					}
+
 					setSizeInternal(newSize);
 				}
 

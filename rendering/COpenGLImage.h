@@ -73,23 +73,26 @@
 					{
 						//float width = 1;
 						//float height = 1;
-						float width = float(image.width) / image.textureWidth;
-						float height = float(image.height) / image.textureHeight;
+						float width = float(image.width - 1) / (image.textureWidth);
+						float height = float(image.height - 1) / (image.textureHeight );
 
 						float onePixel = 1.0f / image.width;
 
-						glTexCoord2f(0, 0.0f);					glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, -1.0f);
-						glTexCoord2f(0, height);				glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, 1.0f);
+						glTexCoord2f(0, 0.0f);					glVertex2f(1.0f - xoffset * 2, -1.0f);
+						glTexCoord2f(0, height);				glVertex2f(1.0f - xoffset * 2, 1.0f);
 						glTexCoord2f(xoffset * width - onePixel, height);	glVertex2f(1.0f, 1.0f);
-						glTexCoord2f(xoffset * width - onePixel, 0.0f);	glVertex2f(1.0f, -1.0f);
-
-						xoffset -= onePixel *0.5f;
-
-						glTexCoord2f(xoffset * width, 0.0f);	glVertex2f(-1.0f, -1.0f);
-						glTexCoord2f(xoffset * width, height);	glVertex2f(-1.0f, 1.0f);
+						glTexCoord2f(xoffset * width - onePixel, 0.0f);	glVertex2f(1.0f, -1.0f); 
+						
+						glTexCoord2f(xoffset * width + onePixel, 0.0f);	glVertex2f(-1.0f, -1.0f);
+						glTexCoord2f(xoffset * width + onePixel, height);	glVertex2f(-1.0f, 1.0f);
 						glTexCoord2f(width, height);			glVertex2f(1.0f - xoffset * 2, 1.0f);
 						glTexCoord2f(width, 0.0f);				glVertex2f(1.0f - xoffset * 2, -1.0f);
 
+
+						/*glTexCoord2f(0, 0.0f);					glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, -1.0f);
+						glTexCoord2f(0, height);				glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, 1.0f);
+						glTexCoord2f(xoffset * width - onePixel, height);	glVertex2f(1.0f, 1.0f);
+						glTexCoord2f(xoffset * width - onePixel, 0.0f);	glVertex2f(1.0f, -1.0f); */
 					}
 
 					/*
@@ -140,6 +143,8 @@
 					resize(w, h, false);
 				}
 
+				std::size_t getWidth() const noexcept { return width; }
+				std::size_t getHeight() const noexcept { return height; }
 
 				bool loadImage(const juce::Image & oldContents)
 				{
@@ -457,7 +462,7 @@
 							g.setImageResamplingQuality(juce::Graphics::mediumResamplingQuality);
 							g.drawImage(oldContents,
 								0, 0, width, height,
-								0, 0, imgHeight, imgWidth,
+								0, 0, imgWidth, imgHeight,
 								false);
 						}
 						juce::Image::BitmapData bmp(rescaled, juce::Image::BitmapData::readOnly);

@@ -89,13 +89,18 @@ namespace cpl
 		g.fillRect(box.getBounds());
 
 	}
+	CInputControl::~CInputControl()
+	{
+		notifyDestruction();
+	}
+
 	void CInputControl::indicateSuccess()
 	{
 		if (getAnimator().isAnimating(&errorVisualizer))
 		{
 			// already animating this
 			// TODO: ensure reference doesn't die.
-			GUIUtils::FutureMainEvent(500, [&]() { indicateSuccess(); });
+			GUIUtils::FutureMainEvent(500, [&]() { indicateSuccess(); }, this);
 		}
 
 		errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::success);
@@ -113,7 +118,7 @@ namespace cpl
 		{
 			// already animating this
 			// TODO: ensure reference doesn't die.
-			GUIUtils::FutureMainEvent(500, [&]() { indicateError(); });
+			GUIUtils::FutureMainEvent(500, [&]() { indicateError(); }, this);
 		}
 
 		errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::error);

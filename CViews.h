@@ -36,29 +36,24 @@
 	#include "CSerializer.h"
 	#include "CToolTip.h"
 	#include "GraphicComponents.h"
-	#include "rendering\OpenGLEngine.h"
+	#include "rendering/OpenGLEngine.h"
 	#include "Protected.h"
+	#include "GUIUtils.h"
 
 	namespace cpl
 	{
-		/*
-			A CView is the base class of all views.
-		*/
+
+		/// <summary>
+		/// A CView is the base class of all views.
+		/// </summary>
 		class CView
 		:
-			public CSerializer::Serializable
+			public CSerializer::Serializable,
+			public DestructionNotifier
 		{
 			
 		public:
-			class EventListener
-			{
-			public:
-				virtual void onViewConstruction(CView * view) = 0;
-				virtual void onViewDestruction(CView * view) = 0;
-				
-				virtual ~EventListener() {};
-				
-			};
+
 			
 			CView()
 				: isFullScreen(false), isSynced(false), oglc(nullptr), bufferSwapInterval(0)
@@ -68,18 +63,12 @@
 
 			virtual ~CView()
 			{
-				if (eventListeners.size())
-				{
-					// you must call notifyListeners() in your destructor!
-					jassertfalse;
-				}
+
 			}
 
 			virtual juce::Component * getWindow() = 0;
 			virtual bool setFullScreenMode(bool toggle) { isFullScreen = toggle; return false; }
 			bool getIsFullScreen() const { return isFullScreen; }
-			virtual void addEventListener(EventListener * el) { eventListeners.insert(el); }
-			virtual void removeEventListenerr(EventListener * el) { eventListeners.erase(el); }
 			virtual void repaintMainContent() {};
 			virtual void visualize() {};
 			/// <summary>
@@ -124,12 +113,7 @@
 			
 		protected:
 
-			void notifyDestruction()
-			{
-				for (auto listener : eventListeners)
-					listener->onViewDestruction(this);
-				eventListeners.clear();
-			}
+
 
 			bool isFullScreen;
 			bool isSynced;
@@ -140,7 +124,7 @@
 			// 0 == no cap on framerate, 1 = vsync, 2 and over are reciprocals of
 			// current monitor refresh rate.
 			int bufferSwapInterval;
-			std::set<EventListener *> eventListeners;
+
 			juce::OpenGLContext * oglc;
 			
 		};

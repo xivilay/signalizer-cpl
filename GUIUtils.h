@@ -39,6 +39,46 @@
 
 	namespace cpl
 	{
+		/// <summary>
+		/// Very similar to Utility::DestructionServer, this is however one-way and more lightweight, AND
+		/// - Requires the child class to call notifyListeners() in its destructor, such that
+		/// (child*)this is a valid object on callback.
+		/// </summary>
+		class DestructionNotifier
+		{
+		public:
+			class EventListener
+			{
+			public:
+				virtual void onServerDestruction(DestructionNotifier * v) = 0;
+
+				virtual ~EventListener() {};
+			};
+
+			virtual void addEventListener(EventListener * el) { eventListeners.insert(el); }
+			virtual void removeEventListenerr(EventListener * el) { eventListeners.erase(el); }
+
+			void notifyDestruction()
+			{
+				for (auto listener : eventListeners)
+					listener->onServerDestruction(this);
+				eventListeners.clear();
+			}
+
+			virtual ~DestructionNotifier()
+			{
+				if (eventListeners.size())
+				{
+					// you must call notifyListeners() in your destructor!
+					BreakIfDebugged();
+					Misc::LogException("A view didn't notify it's listeners upon destruction!");
+				}
+			}
+
+
+		private:
+			std::set<EventListener *> eventListeners;
+		};
 
 		template<typename T>
 		juce::Rectangle<int> centerRectInsideRegion(const juce::Rectangle<T> boundingRect, double length, double border)
@@ -91,25 +131,44 @@
 				});
 			}
 			template<typename Functor>
-				class DelayedCall : public juce::Timer
+				class DelayedCall : public juce::Timer, public DestructionNotifier::EventListener
 				{
 				public:
 					DelayedCall(long numMs, Functor functionToRun)
-						: func(functionToRun)
+						: func(functionToRun), contextWasDeleted(false), notifServer(nullptr)
 					{
+						startTimer((int)numMs);
+					}
+
+					DelayedCall(long numMs, Functor functionToRun, DestructionNotifier * server)
+						: func(functionToRun), contextWasDeleted(false), notifServer(server)
+					{
+						notifServer->addEventListener(this);
 						startTimer((int)numMs);
 					}
 					void timerCallback() override
 					{
 						stopTimer();
-						func();
+						if(!contextWasDeleted)
+							func();
 						delete this;
 					}
+
+					void onServerDestruction(DestructionNotifier * e)
+					{
+						contextWasDeleted = true;
+					}
+
 					virtual ~DelayedCall()
 					{
-
+						if (!contextWasDeleted && notifServer)
+						{
+							notifServer->removeEventListenerr(this);
+						}
 					};
 					Functor func;
+					bool contextWasDeleted;
+					DestructionNotifier * notifServer;
 				};
 
 				template<typename Functor>
@@ -181,10 +240,16 @@
 			template<typename Functor>
 				void FutureMainEvent(long numMsToDelay, Functor functionToRun)
 				{
-
-
 					new DelayedCall<Functor>(numMsToDelay, functionToRun);
+				}
 
+			template<typename Functor>
+				void FutureMainEvent(long numMsToDelay, Functor functionToRun, DestructionNotifier * notifServer)
+				{
+					if (notifServer)
+					{
+						new DelayedCall<Functor>(numMsToDelay, functionToRun, notifServer);
+					}
 				}
 
 			inline bool ForceFocusTo(const juce::Component & window)

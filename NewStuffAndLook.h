@@ -202,6 +202,7 @@
 				virtual void panelClosed(BaseBarType * object) {};
 
 				virtual void tabSelected(BaseBarType * object, int index) {};
+				virtual void activeTabClicked(BaseBarType * object, int index) {};
 				virtual ~CTabBarListener() {};
 			};
 
@@ -319,7 +320,7 @@
 							textColour = cpl::GetColour(cpl::ColourEntry::auxfont);
 						}
 						// enhance brightness
-						if (!isIndeterminateState && index == hoverButton)
+						if (index == hoverButton)
 						{
 							textColour = textColour.brighter(0.2f);
 						}
@@ -384,14 +385,22 @@
 			void setSelectedTab(int index)
 			{
 				int size = (int)buttons.size();
-				if (isIndeterminateState || (size > 1 && index >= 0 && index < size && index != selectedIndex))
+				if (isIndeterminateState || (size > 1 && index >= 0 && index < size))
 				{
-					isIndeterminateState = false;
-					selectedIndex = index;
-					bSetValue(double(index) / (buttons.size() - 1));
-					renderTriangle();
-					for (auto & listener : listeners)
-						listener->tabSelected(this, index);
+					if (isIndeterminateState || index != selectedIndex)
+					{
+						isIndeterminateState = false;
+						selectedIndex = index;
+						bSetValue(double(index) / (buttons.size() - 1));
+						renderTriangle();
+						for (auto & listener : listeners)
+							listener->tabSelected(this, index);
+					}
+					else
+					{
+						for (auto & listener : listeners)
+							listener->activeTabClicked(this, index);
+					}
 				}
 			}
 
@@ -456,13 +465,11 @@
 				mouseCoords[0] = e.x;
 				mouseCoords[1] = e.y;
 				auto currentHover = getMouseHoverButton();
+				auto const offset = cornerOffset * 1.5f;
+
 				if (currentHover == selectedIndex)
 				{
-					auto tabSize = double(getWidth()) / buttons.size();
-					if (e.x > (tabSize * currentHover + tabSize * 0.83))
-						isTriangleHovered = true;
-					else
-						isTriangleHovered = false;
+					isTriangleHovered = triangleVertices.contains(e.position);
 				}
 				else
 					isTriangleHovered = false;

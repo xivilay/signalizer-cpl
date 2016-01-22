@@ -59,7 +59,8 @@
 			public Utility::DestructionServer<CCtrlEditSpace>,
 			public juce::ChangeListener,
 			public juce::ButtonListener,
-			public CToolTipClient
+			public CToolTipClient,
+			public DestructionNotifier
 		{
 
 		public:

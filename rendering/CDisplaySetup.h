@@ -40,14 +40,14 @@
 	{
 		namespace rendering
 		{
-			class CDisplaySetup
+			class CDisplaySetup : public DestructionNotifier
 			{
 			public:
 				
 				struct DisplayEvent
 				{
-					void * hook;
-					bool eventHasBeenPosted;
+					std::atomic<void *> hook;
+					std::atomic<bool> eventHasBeenPosted;
 				} systemHook;
 				
 				struct DisplayData

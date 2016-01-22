@@ -227,7 +227,7 @@ namespace cpl
 		if (getAnimator().isAnimating(&errorVisualizer))
 		{
 			// already animating this, try again in some time
-			GUIUtils::FutureMainEvent(500, [&]() { animateSucces(objectThatWasModified); });
+			GUIUtils::FutureMainEvent(500, [&]() { animateSucces(objectThatWasModified); }, this);
 		}
 		if (compactMode)
 		{
@@ -267,7 +267,7 @@ namespace cpl
 		if (getAnimator().isAnimating(&errorVisualizer))
 		{
 			// already animating this, try again in some time
-			GUIUtils::FutureMainEvent(500, [&]() { animateError(objectThatWasModified); });
+			GUIUtils::FutureMainEvent(500, [&]() { animateError(objectThatWasModified); }, this);
 		}
 		if (compactMode)
 		{
@@ -444,6 +444,7 @@ namespace cpl
 
 	CCtrlEditSpace::~CCtrlEditSpace() 
 	{
+		notifyDestruction();
 		// warning - the control may have been deleted at this point
 		// if so, the callback on onDeathDestruction sets the parentControl pointer to zero.
 		if(parentControl)

@@ -48,13 +48,14 @@
 			public juce::Component,
 			protected juce::Label::Listener,
 			protected juce::ChangeListener,
-			public cpl::CBaseControl
+			public cpl::CBaseControl,
+			public DestructionNotifier
 		{
 
 		public:
 
 			CInputControl(const std::string & name);
-
+			~CInputControl();
 			// list of |-seperated values
 			virtual void setInputValue(const std::string & value, bool sync = true);
 			virtual void setInputValueInternal(const std::string & value);
