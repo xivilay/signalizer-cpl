@@ -290,6 +290,20 @@
 				return view;
 			}
 		
+
+			/*
+			Maps transformed fraction to a frequency
+			*/
+			inline double scaleFractionToFrequency(double fraction)
+			{
+				if (scaling == Scaling::Logarithmic)
+					return Math::UnityScale::exp(fraction, startDecade, stopFreq);
+				else if (scaling == Scaling::Linear)
+					return fraction * stopFreq;
+
+				return 0.0;
+			}
+
 		protected:
 
 			/*
@@ -472,18 +486,6 @@
 				}
 			}
 
-			/*
-				Maps transformed fraction to a frequency
-			*/
-			inline double scaleFractionToFrequency(double fraction)
-			{
-				if (scaling == Scaling::Logarithmic)
-					return Math::UnityScale::exp(fraction, startDecade, stopFreq);
-				else if (scaling == Scaling::Linear)
-					return fraction * stopFreq;
-
-				return 0.0;
-			}
 			void saveLine(double coord) { untrans.push_back(coord); }
 			void saveDivision(double coord, double text) { titles.push_back({ coord, text }); };
 			/*

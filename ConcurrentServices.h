@@ -64,14 +64,13 @@
 				{
 					CPL_RUNTIME_EXCEPTION("Atomic bool flag reset through operator = .");
 				}
-				flag.store(!!val);
+				flag.store(!!val, std::memory_order_release);
 				return *this;
 			}
 
 			operator bool() const noexcept
 			{
-				// TODO: figure out less strict ordering possible.
-				return flag.load();
+				return flag.load(std::memory_order_acquire);
 			}
 
 			/// <summary>
@@ -84,7 +83,7 @@
 			{
 				bool expected = true;
 				// TODO: figure out less strict ordering possible.
-				return flag.compare_exchange_strong(expected, newVal);
+				return flag.compare_exchange_strong(expected, newVal, std::memory_order_acquire);
 			}
 
 		private:

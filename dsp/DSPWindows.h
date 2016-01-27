@@ -39,6 +39,7 @@
 	#include "../dsp.h"
 	#include "../octave/signal/octave_signal.h"
 	#include <array>
+	#include "../ffts.h"
 
 	namespace cpl
 	{
@@ -452,9 +453,9 @@
 							{
 								switch (symmetry)
 								{
-								case Shape::Symmetric: return (T)4.7095873015873009;
+								//case Shape::Symmetric: return (T)4.7095873015873009;
 								case Shape::Periodic: return (T)4.6360000000000001;
-								case Shape::DFTEven: return (T)4.7094943766265196;
+								//case Shape::DFTEven: return (T)4.7094943766265196;
 								default:
 									return 0;
 								}
@@ -913,8 +914,153 @@
 					};
 			};
 
+
+			/// <summary>
+			/// Calculates the scalloping loss for the specified window, where the worst case loss for fourier transforms is at binOffset = 0.5.
+			/// Higher values emulate non-evenly spaced filter banks.
+			/// Non-deterministic in runtime (decimalDigitsPrecision scales runtime by O(n)).
+			/// </summary>
+			template<typename T>
+				T windowScallopLoss(dsp::WindowTypes winType, int decimalDigitsPrecision, T binOffset = T(0.5), dsp::Windows::Shape shape = dsp::Windows::Shape::Symmetric, T alpha = T(), T beta = T())
+				{
+					switch (winType)
+					{
+					case WindowTypes::Rectangular:
+						return scresponse<true>(binOffset);
+						break;
+					case WindowTypes::Hann:
+						break;
+					case WindowTypes::Hamming:
+						break;
+					case WindowTypes::FlatTop:
+						break;
+					case WindowTypes::Blackman:
+						break;
+					case WindowTypes::ExactBlackman:
+						break;
+					case WindowTypes::Triangular:
+						break;
+					case WindowTypes::Parzen:
+						break;
+					case WindowTypes::Nuttall:
+						break;
+					case WindowTypes::BlackmanNuttall:
+						break;
+					case WindowTypes::BlackmanHarris:
+						break;
+					case WindowTypes::Gaussian:
+						break;
+					case WindowTypes::DolphChebyshev:
+						break;
+					case WindowTypes::Kaiser:
+						break;
+					case WindowTypes::Ultraspherical:
+						break;
+					case WindowTypes::Welch:
+						break;
+					case WindowTypes::Poisson:
+						break;
+					case WindowTypes::HannPoisson:
+						break;
+					case WindowTypes::Lanczos:
+						break;
+					case WindowTypes::End:
+					default:
+						return 0.5;
+					}
+
+					auto N = 2 << (5 + decimalDigitsPrecision);
+
+					aligned_vector<T, 32> win(N);
+
+					T sum = 0;
+					std::complex<T> csum;
+
+					windowFunction<T>(winType, win, N, shape, alpha, beta);
+
+					// compute SL sums:
+					// https://www.utdallas.edu/~cpb021000/EE%204361/Great%20DSP%20Papers/Harris%20on%20Windows.pdf
+					for (int i = 0; i < N; ++i)
+					{
+						csum += win[i] * std::polar(1.0, 2 * M_PI * binOffset / N * i);
+						sum += win[i];
+					}
+
+					return std::abs(csum) / sum;
+				}
+
+			/// <summary>
+			/// Calculates the scalloping loss for the specified window, where the worst case loss for fourier transforms is at binOffset = 0.5.
+			/// Higher values emulate non-evenly spaced filter banks.
+			/// Deterministic and wait-free in runtime, O(N)
+			/// </summary>
+			template<class InVector, typename T>
+				T windowScallopLoss(const InVector & w, std::size_t N, T binOffset = T(0.5))
+				{
+					switch (winType)
+					{
+					case WindowTypes::Rectangular:
+						return scresponse<true>(binOffset);
+						break;
+						// TODO: fill in closed-form of the rest of the windows
+					case WindowTypes::Hann:
+						break;
+					case WindowTypes::Hamming:
+						break;
+					case WindowTypes::FlatTop:
+						break;
+					case WindowTypes::Blackman:
+						break;
+					case WindowTypes::ExactBlackman:
+						break;
+					case WindowTypes::Triangular:
+						break;
+					case WindowTypes::Parzen:
+						break;
+					case WindowTypes::Nuttall:
+						break;
+					case WindowTypes::BlackmanNuttall:
+						break;
+					case WindowTypes::BlackmanHarris:
+						break;
+					case WindowTypes::Gaussian:
+						break;
+					case WindowTypes::DolphChebyshev:
+						break;
+					case WindowTypes::Kaiser:
+						break;
+					case WindowTypes::Ultraspherical:
+						break;
+					case WindowTypes::Welch:
+						break;
+					case WindowTypes::Poisson:
+						break;
+					case WindowTypes::HannPoisson:
+						break;
+					case WindowTypes::Lanczos:
+						break;
+					case WindowTypes::End:
+					default:
+						return 0.5;
+					}
+
+					T sum = 0;
+					std::complex<T> csum;
+
+					// compute SL sums:
+					// https://www.utdallas.edu/~cpb021000/EE%204361/Great%20DSP%20Papers/Harris%20on%20Windows.pdf
+					for (int i = 0; i < N; ++i)
+					{
+						csum += win[i] * std::polar(1.0, 2 * M_PI * binOffset / N * i);
+						sum += win[i];
+					}
+
+					return std::abs(csum) / sum;
+				}
+
 			/// <summary>
 			/// Calculates the specified window coefficients, and stores them in the InOutVector, that is assumed to be a random access indexable buffer containing N elements of T.
+			/// Deterministic and wait-free in runtime
 			///	</summary>
 			/// <param name="alpha">
 			/// The alpha parameter generally specifies the attenuation of the sidelobes for windows that support it: 100 will set sidelobes to -100dB.
@@ -1004,7 +1150,8 @@
 			/// <summary>
 			/// Returns the scaling coefficient the specified window will produce.
 			/// Scale a transform by this amount to preserve the original peak power in a transformed spectrum.
-			/// For parameters, see windowFunction
+			/// For parameters, see windowFunction.
+			/// Deterministic and wait-free in runtime
 			/// </summary>
 			template<WindowTypes wclass, typename T, class InOutVector>
 				T windowScale(InOutVector & w, std::size_t N, Windows::Shape symmetry = Windows::Shape::Symmetric, T alpha = T(), T beta = T())
@@ -1015,7 +1162,8 @@
 			/// <summary>
 			/// Returns the scaling coefficient the specified window will produce.
 			/// Scale a transform by this amount to preserve the original peak power in a transformed spectrum.
-			/// For parameters, see windowFunction
+			/// For parameters, see windowFunction.
+			/// Deterministic and wait-free in runtime.
 			/// </summary>
 			template<typename T, class InOutVector>
 				typename std::enable_if<!std::is_integral<T>::value, T>::type 
@@ -1073,6 +1221,7 @@
 
 			/// <summary>
 			/// Returns whether the specified window has a finite amount of non-zero fourier series.
+			/// Deterministic and wait-free in runtime.
 			/// </summary>
 			template<WindowTypes wclass>
 				inline constexpr bool windowHasFiniteDFT()
@@ -1082,6 +1231,7 @@
 
 			/// <summary>
 			/// Returns whether the specified window has a finite amount of non-zero fourier series.
+			/// Deterministic and wait-free in runtime
 			/// </summary>
 			inline bool windowHasFiniteDFT(WindowTypes wclass)
 			{
@@ -1106,6 +1256,7 @@
 
 			/// <summary>
 			/// Returns a pair with a pointer+size to a finite fourier series of the transformed window.
+			/// Deterministic and wait-free in runtime.
 			/// </summary>
 			template<typename T, WindowTypes wclass>
 				std::pair<const T *, std::size_t> windowCoefficients()
@@ -1117,6 +1268,7 @@
 			/// <summary>
 			/// Returns a pair with a pointer+size to a finite fourier series of the transformed window.
 			/// A rectangular window is returned, if none exists.
+			/// Deterministic and wait-free in runtime.
 			/// </summary>
 			template<typename T>
 				std::pair<const T *, std::size_t> windowCoefficients(WindowTypes wclass)
