@@ -106,7 +106,7 @@
 
 		public:
 
-			template<class Object>
+			template<class Obj>
 			struct ConcurrentEntry
 			{
 				ConcurrentEntry()
@@ -115,7 +115,7 @@
 
 				}
 
-				std::atomic<Object *> obj;
+				std::atomic<Obj *> obj;
 				std::atomic_bool flag;
 
 				static_assert(ATOMIC_BOOL_LOCK_FREE, "Atomic bools need to be lock free.");

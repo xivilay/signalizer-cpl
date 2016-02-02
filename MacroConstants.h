@@ -98,6 +98,7 @@
 		#define isDebugged() !!IsDebuggerPresent()
 		#define CPL_DEBUGOUT(x) OutputDebugStringA(x)
 	#else
+		#define CPL_DEBUGOUT(x) fputs(x, stderr)
         // forward declare it
 		namespace Misc
 		{
@@ -226,7 +227,7 @@
 		#define cwarn(exp) (FILE_LINE_LINK  " -> " __FUNCTION__ ": warning: " exp)
 
 
-	#elif defined(__llvm__)
+	#elif defined(__llvm__) && defined(__clang__)
 
 		// cross-platform size_t specifier for printf-families
 		#define CPL_FMT_SZT "%zu"
@@ -248,7 +249,7 @@
 		// a bug in current apple llvm emits an error message on derived
 		// classes constructors/destructors if they don't have this specifier
 		#define __llvm_DummyNoExcept noexcept
-		#define __thread_local __thread
+
 		#define __alignas(x) alignas(x)
 		#define __alignof(x) alignof(x)
 
@@ -282,13 +283,16 @@
 		
 		#define cwarn(exp) ("warning: " exp)
 
-#pragma message cwarn("Update this to actually check llvm version")
-
-	#if 0
-		#define CPL_LLVM_SUPPORTS_AVX
-	#else
-		#pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")
-	#endif
+        #if __clang_major__ > 7
+            #define CPL_LLVM_SUPPORTS_AVX
+            #define __thread_local thread_local
+        #elif __clang_major__ >= 7
+            #define CPL_LLVM_SUPPORTS_AVX
+    		#define __thread_local __thread
+        #else
+    		#define __thread_local __thread
+            #pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")
+        #endif
 
 	#elif defined(__GNUG__)
 		#if __GNUG__ >= 4

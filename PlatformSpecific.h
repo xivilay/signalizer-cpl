@@ -58,6 +58,9 @@
 			#include <OpenGL/glext.h>
 
 		#endif
+
+        #include <setjmp.h>
+
 	#endif
 
 	#ifndef __MSVC__

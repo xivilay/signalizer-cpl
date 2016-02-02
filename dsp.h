@@ -35,6 +35,7 @@
 	#include <complex>
 	#include <cstdint>
 	#include "Utility.h"
+    #include <complex>
 	//#include <amp.h>
 	//#include <amp_math.h>
 	//#include <amp_graphics.h>
@@ -261,7 +262,7 @@
 					if (i >= 0 && i < asize)
 					{
 						auto impulse = vec[i];
-						auto response = fresponse<precise>(x - i, wsize);
+						auto response = lzresponse<precise>(x - i, wsize);
 						resonance += impulse * response;
 					}
 				}
@@ -547,7 +548,7 @@
 			void AccFourierTransform(const Vector & data, InOutVector & inout, Scalar sampleRate, size_t siz, size_t len)
 			{
 				Scalar pimega = Scalar(PI) / sampleRate;
-				/*for (int f = 0; f < siz; ++f)
+				for (int f = 0; f < siz; ++f)
 				{
 					inout[f] = inout[f] * pimega;
 
@@ -851,7 +852,7 @@
 			template<typename Scalar, class Vector>
 			void haarDWT(Vector & input, Vector & output, std::size_t size)
 			{
-				for (Types::fint_t length = size >> 1;; length >>= 1)
+                for (auto length = size >> 1;; length >>= 1)
 				{
 					for (int i = 0; i < length; ++i) {
 						Scalar sum = input[i * 2] + input[i * 2 + 1];

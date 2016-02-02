@@ -38,7 +38,7 @@
 	#include <vector>
 	#include "Types.h"
 	#include "ssemath.h"
-
+    #include <complex>
 	#include <functional>
 	#include "stdext.h"
 
@@ -58,12 +58,6 @@
 	#ifndef HALFPI
 		#define HALFPI (M_PI / 2)
 	#endif
-
-	namespace std
-	{
-		template<typename T>
-			class complex;
-	};
 
 	namespace cpl
 	{
@@ -518,7 +512,7 @@
 				typename std::enable_if<std::is_integral<Scalar>::value && !std::is_unsigned<Scalar>::value, bool>::type
 					isPow2(Scalar x)
 				{
-					return x > 0 && !(x & (x ? 1));
+					return x > 0 && !(x & (x - 1));
 				}
 
 			template<typename Scalar = double>

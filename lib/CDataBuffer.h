@@ -104,9 +104,9 @@
 
 			CDataBuffer(CDataBuffer<T> && other)
 			{
-				size = other.size;
+				bufSize = other.bufSize;
 				buffer = other.buffer;
-				other.size = 0;
+				other.bufSize = 0;
 				other.buffer = nullptr;
 			}
 
@@ -119,9 +119,9 @@
 
 			CDataBuffer & operator = (CDataBuffer<T> && other)
 			{
-				size = other.size;
+				bufSize = other.bufSize;
 				buffer = other.buffer;
-				other.size = 0;
+				other.bufSize = 0;
 				other.buffer = nullptr;
 			}
 

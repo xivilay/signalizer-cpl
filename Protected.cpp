@@ -34,7 +34,7 @@ namespace cpl
 	
 	CProtected::StaticData CProtected::staticData;
 	__thread_local CProtected::ThreadData CProtected::threadData;
-	std::atomic<int> checkCounter = 0;
+    std::atomic<int> checkCounter {0};
 	// TODO: make atomic. It is safe on all x86 systems, though.
 	std::unique_ptr<CProtected> internalInstance;
 	CMutex::Lockable creationLock;
@@ -293,7 +293,7 @@ namespace cpl
 					
 						threadData.currentException = CSystemException(CSystemException::access_violation,
 												 safeToContinue,
-												 in_address,
+												 nullptr,
 												 fault_address,
 												 ecode,
 												 sig);
@@ -399,7 +399,7 @@ namespace cpl
 					signal(SIGFPE, &CState::signalHandler);
 					signal(SIGSEGV, &CState::signalHandler);
 				#elif defined (__CSTATE_USE_SIGACTION)
-					staticData.newHandler.sa_sigaction = &CState::signalActionHandler;
+					staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
 					staticData.newHandler.sa_flags = SA_SIGINFO;
 					staticData.newHandler.sa_mask = 0;
 					sigemptyset(&staticData.newHandler.sa_mask);

@@ -44,6 +44,8 @@
 	#include <signal.h>
 	#include <thread>
 	#include "CMutex.h"
+    #include <map>
+
 
 	namespace cpl
 	{
@@ -103,7 +105,7 @@
 								return from exception handler.
 								current exception is in CState::currentException
 							*/
-							threadData.activeStateObject = nullptr;
+							threadData.isInStack = false;
 							throw threadData.currentException;
 						}
 						// run the potentially bad code
