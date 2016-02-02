@@ -71,7 +71,7 @@
 		/// to worker threads.
 		/// </summary>
 		template<typename T, std::size_t bufsize>
-			PACKED struct AudioPacket
+			struct PACKED AudioPacket
 			{
 			public:
 				AudioPacket(std::uint16_t elementsUsed)
@@ -285,6 +285,10 @@
 			/// </summary>
 			struct AudioBufferAccess
 			{
+			private:
+				template<std::size_t channels, bool biased>
+					struct ChannelIterator;
+				
 			public:
 
 				typedef typename AudioBuffer::IteratorBase::iterator iterator;
@@ -335,8 +339,7 @@
 
 			private:
 
-				template<std::size_t channels, bool biased>
-					struct ChannelIterator;
+
 
 				template<>
 				struct ChannelIterator<2, true>
@@ -978,7 +981,7 @@
 			{
 				std::unique_lock<std::mutex> lock(aListenerMutex, std::defer_lock);
 
-				tryForceSuccess ? lock.lock() : lock.try_lock();
+				tryForceSuccess ? lock.lock() : (void)lock.try_lock();
 
 				if (!lock.owns_lock())
 					return{ false, false };
@@ -1014,7 +1017,7 @@
 
 				std::unique_lock<std::mutex> lock(aListenerMutex, std::defer_lock);
 
-				forceSuccess ? lock.lock() : lock.try_lock();
+				forceSuccess ? lock.lock() : (void)lock.try_lock();
 
 				if (!lock.owns_lock())
 					return { false, false };
@@ -1311,7 +1314,7 @@
 						std::unique_lock<std::mutex> bufferLock(aBufferMutex, std::defer_lock);
 						// decide whether to wait on the buffers
 						if(!bufferLock.owns_lock())
-							internalInfo.blockOnHistoryBuffer ? bufferLock.lock() : bufferLock.try_lock();
+							internalInfo.blockOnHistoryBuffer ? bufferLock.lock() : (void)bufferLock.try_lock();
 
 						if (bufferLock.owns_lock())
 						{

@@ -27,8 +27,8 @@
 
 *************************************************************************************/
 
-#ifndef _SBLOCKFREE_DATAQUEUE_H
-	#define _SBLOCKFREE_DATAQUEUE_H
+#ifndef SBLOCKFREE_DATAQUEUE_H
+	#define SBLOCKFREE_DATAQUEUE_H
 	
 	#include "readerwriterqueue/readerwriterqueue.h"
 	#include <vector>
@@ -36,7 +36,7 @@
 	#include "../Utility.h"
 	#include <atomic>
 
-	#ifdef __C11__
+	#if defined(__C11__) && defined(__MSVC__)
 		#include <stdatomic.h>
 	 #endif
 

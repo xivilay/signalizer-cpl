@@ -100,9 +100,12 @@
 	#else
 		#define CPL_DEBUGOUT(x) fputs(x, stderr)
         // forward declare it
-		namespace Misc
+		namespace cpl
 		{
-			bool IsBeingDebugged();
+			namespace Misc
+			{
+				bool IsBeingDebugged();
+			};
 		};
 		#define isDebugged() cpl::Misc::IsBeingDebugged()
 		#define debug_out(x) (void*) 0
@@ -233,7 +236,7 @@
 		#define CPL_FMT_SZT "%zu"
 
 		#define __C99__
-		#define __C11__
+
 		#define APE_API __cdecl
 		#define APE_STD_API __cdecl
 		#define APE_API_VARI __cdecl
@@ -286,9 +289,11 @@
         #if __clang_major__ > 7
             #define CPL_LLVM_SUPPORTS_AVX
             #define __thread_local thread_local
+			#define __C11__
         #elif __clang_major__ >= 7
             #define CPL_LLVM_SUPPORTS_AVX
     		#define __thread_local __thread
+			#define __C11__
         #else
     		#define __thread_local __thread
             #pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")

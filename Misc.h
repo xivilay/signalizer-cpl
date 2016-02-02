@@ -96,6 +96,10 @@
 			/// </summary>
 			bool PromptAnyKey();
 
+			/// <summary>
+			/// Returns uninitialized memory aligned to alignment boundary.
+			/// Has same behaviour as std::malloc
+			/// </summary>
 			template<class Type, size_t alignment = 32>
 				Type * alignedMalloc(std::size_t numObjects)
 				{
@@ -106,6 +110,11 @@
 					#else
 						// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
 
+						#ifdef CPL_MAC
+							// all allocations on OS X are aligned to 16-byte boundaries
+							if(aligment <= 16)
+								return reinterpret_cast<Type *>(std::malloc(numObjects * sizeof(Type)));
+						#endif
 					
 						void *mem = malloc( size + (alignment-1) + sizeof(void*) );
 						
@@ -113,12 +122,17 @@
 						amem += (alignment - ((uintptr_t)amem & (alignment - 1)) & (alignment - 1));
 						
 						((void**)amem)[-1] = mem;
-						ptr = amem;;
+						ptr = amem;
 					#endif
 					
 					return reinterpret_cast<Type * >(ptr);
 				}
-
+			
+			/// <summary>
+			/// Returns uninitialized memory aligned to alignment boundary.
+			/// Has same behaviour as std::realloc. Alignment between calls
+			/// has to be consistent.
+			/// </summary>
 			template<class Type, size_t alignment = 32>
 				inline Type * alignedRealloc(Type * ptr, std::size_t numObjects)
 				{
@@ -126,10 +140,45 @@
 					#ifdef __WINDOWS__
 						return reinterpret_cast<Type *>(_aligned_realloc(ptr, numObjects * sizeof(Type), alignment));
 					#else
-						#error "Implement aligned realloc for your platform"
+						#ifdef CPL_MAC
+							// all allocations on OS X are aligned to 16-byte boundaries
+							if(aligment <= 16)
+								return reinterpret_cast<Type *>(std::realloc(ptr, numObjects * sizeof(Type)));
+						#endif
+						// https://github.com/numpy/numpy/issues/5312
+						void *p1, **p2, *base;
+						std::size_t
+							old_offs,
+							offs = alignment - 1 + sizeof(void*),
+							n = sizeof(Type) * numObjects;
+					
+						if (ptr != nullptr)
+						{
+							base = *(((void**)ptr)-1);
+							if ((p1 = std::realloc(base, n + offs)) == nullptr)
+								return nullptr;
+							if (p1 == base)
+								return ptr;
+							p2 = (void**)(((std::uintptr_t)(p1)+offs) & ~(alignment-1));
+							old_offs = (size_t)((std::uintptr_t)ptr - (std::uintptr_t)base);
+							std::memmove(p2, (char*)p1 + old_offs, n);
+						}
+						else
+						{
+							if ((p1 = std::malloc(n + offs)) == nullptr)
+								return nullptr;
+							p2 = (void**)(((std::uintptr_t)(p1)+offs) & ~(alignment-1));
+						}
+						*(p2-1) = p1;
+						return reinterpret_cast<Type *>(p2);
+					
 					#endif
 				}
-
+			
+			/// <summary>
+			/// Returns uninitialized memory aligned to alignment boundary.
+			/// Has same behaviour as std::malloc
+			/// </summary>
 			inline void * alignedBytesMalloc(std::size_t size, std::size_t alignment)
 			{
 				void * ptr = nullptr;
@@ -150,6 +199,7 @@
 				
 				return reinterpret_cast<void *>(ptr);
 			}
+			
 			template<class Type>
 				void alignedFree(Type & obj)
 				{

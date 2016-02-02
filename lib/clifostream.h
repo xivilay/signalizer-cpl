@@ -65,7 +65,7 @@
 					}
 				public:
 
-					friend class CBuf;
+					friend CBuf;
 
 					typedef T * iterator;
 					typedef const T * const_iterator;
@@ -86,7 +86,6 @@
 					/// <summary>
 					/// Indicates to the processor to bring the second part into the cache as well
 					/// </summary>
-					/// <returns></returns>
 					inline void prefetchSecondPart() const noexcept { _mm_prefetch(second(), _MM_HINT_T1); }
 
 					inline const T * first() const noexcept { return buffer + cursor; }
@@ -143,7 +142,7 @@
 						cursor = other.cursor;
 						bsize = other.bsize;
 						buffer = other.buffer;
-						other.buffer = other.ncParent = nullptr;
+						other.buffer = nullptr; other.ncParent = nullptr;
 					}
 
 					std::size_t
@@ -167,7 +166,7 @@
 				///			for(auto it = proxy.second(); it != proxy.secondEnd(); ++it)
 				///				*it;
 				///		3. 
-				///			for(int idx = 0; idx < 2; ++idx)
+				///			for(int idx = 0; idx < proxy.iterator_indices; ++idx)
 				///			{
 				///				auto start = proxy.getItIndex(idx)
 				///				auto end = start + proxy.getItRange(idx);
@@ -189,25 +188,23 @@
 					ProxyView(const CBuf & buf)
 						: IteratorBase(buf)
 					{
-
 					}
 
 					ProxyView(ProxyView && other)
 					{
-						absorb(other);
+						this->absorb(other);
+						other.ncParent = nullptr;
 					}
 
 					ProxyView & operator = (ProxyView && other) noexcept
 					{
 						absorb(other);
-						other.parent = nullptr;
+						other.ncParent = nullptr;
 					}
 
 					/// <summary>
 					/// Wraps around size. Biased: index 0 = current head of buffer (not the cursor of it)
 					/// </summary>
-					/// <param name="index"></param>
-					/// <returns></returns>
 					inline const T & operator [] (std::size_t index) const noexcept
 					{
 						// TODO: overflow checks.
@@ -215,44 +212,40 @@
 							if (cursor + index > cursor)
 								CPL_RUNTIME_EXCEPTION("Overflow error");
 						#endif
-						return buffer[(cursor + index) % bsize];
+						return this->buffer[(cursor + index) % this->bsize];
 					}
 
 					inline T & nonconst(std::size_t index)
 					{
 						#ifdef _DEBUG
-							if (index >= bsize)
+							if (index >= this->bsize)
 								CPL_RUNTIME_EXCEPTION("Index out of bounds");
 						#endif
 						#ifdef _DEBUG
 							if (cursor + index > cursor)
 								CPL_RUNTIME_EXCEPTION("Overflow error");
 						#endif
-						return buffer[(cursor + index) % bsize];
+						return this->buffer[(cursor + index) % this->bsize];
 					}
 					/// <summary>
 					/// Wraps around size, unbiased: index 0 = buffer cursor.
 					/// Does NOT wrap around size.
 					/// </summary>
-					/// <param name="index"></param>
-					/// <returns></returns>
 					inline const T & unbiasedAccess(std::size_t index) const noexcept
 					{
-						return buffer[index % bsize];
+						return this->buffer[index % this->bsize];
 					}
 
 					/// <summary>
 					/// Does NOT wrap around size, unbiased: index 0 = buffer cursor
 					/// </summary>
-					/// <param name="index"></param>
-					/// <returns></returns>
 					inline const T & unbiasedDirectAccess(std::size_t index) const noexcept
 					{
 						#ifdef _DEBUG
-							if (index >= bsize)
+							if (index >= this->bsize)
 								CPL_RUNTIME_EXCEPTION("Index out of bounds");
 						#endif
-						return buffer[index];
+						return this->buffer[index];
 					}
 
 					/// <summary>
@@ -270,11 +263,11 @@
 
 						while (n > 0)
 						{
-							auto const space = getItRange(it);
+							auto const space = this->getItRange(it);
 							auto const part = std::min(ssize_t(space), n - std::max(ssize_t(0), n - ssize_t(space)));
 
 
-							auto head = getItIndex(it);
+							auto head = this->getItIndex(it);
 
 							if (part > 0)
 							{
@@ -290,9 +283,9 @@
 
 					~ProxyView()
 					{
-						if (ncParent)
+						if (this->ncParent)
 						{
-							ncParent->releaseReader(*this);
+							this->ncParent->releaseReader(*this);
 						}
 					}
 				};
@@ -307,7 +300,7 @@
 					}
 
 					Writer(Writer && other)
-						: IteratorBase(other), parent(other.parent)
+						: IteratorBase((IteratorBase &&)other), parent(other.parent)
 					{
 						other.parent = other.ncParent = nullptr;
 					}
@@ -326,15 +319,15 @@
 					{
 						// TODO: handle mem + bufsize > ptrsize()
 						// TODO: handle space > ssize_t::max()
-						ssize_t n = (ssize_t)bufSize + std::min((ssize_t)size() - (ssize_t)bufSize, (ssize_t)0);
+						ssize_t n = (ssize_t)bufSize + std::min((ssize_t)this->size() - (ssize_t)bufSize, (ssize_t)0);
 						while (n > 0)
 						{
-							auto const space = getItRange(0);
+							auto const space = this->getItRange(0);
 							auto const part = std::min(ssize_t(space), n - std::max(ssize_t(0), n - ssize_t(space)));
 
 							if (part > 0)
 							{
-								std::memcpy(first(), mem + bufSize - n, part * sizeof(T));
+								std::memcpy(this->first(), mem + bufSize - n, part * sizeof(T));
 								advance(part);
 							}
 
@@ -347,7 +340,7 @@
 					/// </summary>
 					void setHeadAndAdvance(const T & newElement) noexcept
 					{
-						buffer[cursor] = newElement;
+						this->buffer[cursor] = newElement;
 						advance(1);
 					}
 
@@ -356,7 +349,7 @@
 					/// </summary>
 					void seek(std::size_t newCursor) noexcept
 					{
-						cursor = std::min(bsize, newCursor);
+						cursor = std::min(this->bsize, newCursor);
 					}
 
 					/// <summary>
@@ -365,7 +358,7 @@
 					inline void advance(std::size_t bufSize) noexcept
 					{
 						cursor += bufSize;
-						cursor %= bsize;
+						cursor %= this->bsize;
 					}
 
 					~Writer()
@@ -436,7 +429,7 @@
 					return *this;
 				}
 				/// <summary>
-				/// Sets the maximunm size of the container, possibly reallocating (but preserving)
+				/// Sets the maximum size of the container, possibly reallocating (but preserving)
 				/// the memory. size() may be reduced to newCapacity.
 				/// </summary>
 				void setCapacity(std::size_t newCapacity)
@@ -452,7 +445,7 @@
 						{
 							setSize(newCapacity);
 						}
-						resize(numElements);
+						resize(newCapacity);
 					}
 
 				}
@@ -478,7 +471,7 @@
 					if (newSize > capacity)
 						CPL_RUNTIME_EXCEPTION("Index out of bounds");
 
-					configureNewSize(newSize, dataFill, shuffleDataToFit);
+					configureNewSize(newSize, dataFill, modifyDataToFit);
 				}
 
 				/// <summary>
@@ -562,7 +555,7 @@
 				{
 					if (!isUsingOwnBuffer)
 						CPL_RUNTIME_EXCEPTION("No previous buffer was provided to be used.");
-					if (memory != memoryToUse)
+					if (memory != memoryToUnuse)
 						CPL_RUNTIME_EXCEPTION("Mismatch between memory buffers.");
 
 					// TODO: copy memory?

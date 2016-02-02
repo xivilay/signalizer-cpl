@@ -223,10 +223,13 @@
 			void renderOpenGL() override final
 			{
 				/// <summary>
-				///  if the stack gets corrupted, the next variable should not have been overwritten, and can be used
+				/// If the stack gets corrupted, the next variable should not have been overwritten, and can be used
 				/// for debugging
 				/// </summary>
-				volatile thread_local COpenGLView * _stackSafeThis = this;
+				#ifdef DEBUG
+					volatile thread_local COpenGLView * _stackSafeThis = this;
+					(void)_stackSafeThis;
+				#endif
 				openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);
 
 				CPL_DEBUGCHECKGL();

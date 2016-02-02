@@ -261,6 +261,16 @@
 			{
 				return _mm256_and_pd(val, consts<v4sd>::sign_bit);
 			}
+			
+			inline float sign(float val)
+			{
+				return (float)std::copysign(1.0, val);
+			}
+			
+			inline double sign(double val)
+			{
+				return (double)std::copysign(1.0, val);
+			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
