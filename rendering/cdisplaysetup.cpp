@@ -173,7 +173,7 @@ namespace cpl
 					CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
 					
 					// spawn the event
-					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, this);
+					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
 				}
 			}
 		

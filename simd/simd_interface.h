@@ -512,7 +512,7 @@
 					#ifndef __MSVC__
 						Ty & operator [] (unsigned idx) { return c[idx]; }
 					#endif
-					operator Ty* () { return c; }
+					//operator Ty* () { return c; }
 					Ty * data() { return c; }
 
 					Ty * begin() { return c; }

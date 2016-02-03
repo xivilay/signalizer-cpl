@@ -106,7 +106,7 @@
 								current exception is in CState::currentException
 							*/
 							threadData.isInStack = false;
-							throw threadData.currentException;
+							throw CSystemException(threadData.currentExceptionData);
 						}
 						// run the potentially bad code
 						function();
@@ -181,6 +181,10 @@
 			{
 			public:
 				// this is kinda ugly, but needed to create a simple interface, abstract to seh and signals
+				
+				// the retarted create() pattern is used because clang STILL doesn't support thread_local,
+				// thus we must use __thread, which DOESN'T support non-trivial destruction (implied by use of constructors).
+				// TODO: fix the upper messages.
 				struct eStorage
 				{
 					const void * faultAddr; // the address the exception occured
@@ -195,19 +199,15 @@
 						bool aVInProtectedMemory; // whether an access violation happened in our protected memory
 					};
 
-					eStorage(XWORD exp, bool resolved = true, const void * faultAddress = nullptr, 
+					static eStorage create(XWORD exp, bool resolved = true, const void * faultAddress = nullptr,
 								const void * attemptedAddress = nullptr, int extraCode = 0, int actualCode = 0)
-						:	exceptCode(exp), safeToContinue(resolved), faultAddr(faultAddress),
-							attemptedAddr(attemptedAddress), extraInfoCode(extraCode), actualCode(actualCode)
 					{
-
+						return {faultAddress, attemptedAddress, exp, extraCode, actualCode, resolved};
 					}
 
-					eStorage()
-						: exceptCode(0), safeToContinue(false), faultAddr(nullptr),
-						attemptedAddr(nullptr), extraInfoCode(0), actualCode(0)
+					static eStorage create()
 					{
-
+						return {};
 					}
 				} data;
 
@@ -242,15 +242,13 @@
 				}
 
 				CSystemException(const eStorage & eData)
-					: data(eData)
 				{
-
+					data = eData;
 				}
 
 				CSystemException(XWORD exp, bool resolved = true, const void * faultAddress = nullptr, const void * attemptedAddress = nullptr, int extraCode = 0, int actualCode = 0)
-					: data(exp, resolved, faultAddress, attemptedAddress, extraCode, actualCode)
 				{
-				
+					data = eStorage::create(exp, resolved, faultAddress, attemptedAddress, extraCode, actualCode);
 				}
 				const char * what() const noexcept override
 				{
@@ -285,7 +283,7 @@
 				bool isInStack;
 				#ifndef __MSVC__
 					sigjmp_buf threadJumpBuffer;
-					CSystemException currentException;
+				CSystemException::eStorage currentExceptionData;
 				#endif
 				unsigned fpuMask;
 			} threadData;

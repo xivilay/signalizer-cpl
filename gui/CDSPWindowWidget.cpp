@@ -159,9 +159,12 @@ namespace cpl
 	CDSPWindowWidget::CDSPWindowWidget()
 	: 
 		CBaseControl(this),
-		analyzer(*this),
-		p { dsp::WindowTypes::Rectangular, dsp::Windows::Shape::Symmetric, 0.0, 0.0 }
+		analyzer(*this)
 	{
+		p.wType.store(dsp::WindowTypes::Rectangular, std::memory_order_relaxed);
+		p.wSymmetry.store(dsp::Windows::Shape::Symmetric, std::memory_order_relaxed);
+		p.wAlpha.store(0.0, std::memory_order_relaxed);
+		p.wBeta.store(0.0, std::memory_order_relaxed);
 		initControls();
 		enableTooltip();
 	}

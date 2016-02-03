@@ -220,7 +220,7 @@ namespace cpl
 						additionalCode = static_cast<int>(exp->ExceptionRecord->ExceptionInformation[0]);
 					}
 
-					e = CSystemException::eStorage(exceptCode, safeToContinue, exceptionAddress, (const void *) addr, additionalCode);
+					e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress, (const void *) addr, additionalCode);
 
 					return EXCEPTION_EXECUTE_HANDLER;
 				}
@@ -237,7 +237,7 @@ namespace cpl
 				_clearfp();
 				safeToContinue = true;
 
-				e = CSystemException::eStorage(exceptCode, safeToContinue, exceptionAddress);
+					e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress);
 
 				return EXCEPTION_EXECUTE_HANDLER;
 
@@ -291,7 +291,7 @@ namespace cpl
 					{
 
 					
-						threadData.currentException = CSystemException(CSystemException::access_violation,
+						threadData.currentExceptionData = CSystemException::eStorage::create(CSystemException::access_violation,
 												 safeToContinue,
 												 nullptr,
 												 fault_address,
@@ -338,7 +338,7 @@ namespace cpl
 								break;
 						}
 						safeToContinue = true;
-						threadData.currentException = CSystemException(code_status, safeToContinue, fault_address);
+						threadData.currentExceptionData = CSystemException::eStorage::create(code_status, safeToContinue, fault_address);
 					
 						// jump back to CState::runProtectedCode. Note, we know that function was called
 						// earlier in the stackframe, because threadData.activeStateObject is non-null

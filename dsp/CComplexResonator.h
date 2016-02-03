@@ -758,7 +758,7 @@
 					}
 				}
 
-				static T resonatorScales[WindowTypes::End];
+				static T resonatorScales[(std::size_t)WindowTypes::End];
 
 				static int initiateResonatorScale()
 				{
@@ -805,8 +805,11 @@
 				std::vector<Scalar> N;
 
 			};
-			template<typename T, std::size_t Channels = 1>
-				T CComplexResonator<T, Channels>::resonatorScales[WindowTypes::End];
+			template<typename T, std::size_t Channels>
+				T CComplexResonator<T, Channels>::resonatorScales[(std::size_t)WindowTypes::End];
+			
+			template<typename T, std::size_t Channels>
+				const std::size_t CComplexResonator<T, Channels>::numChannels;
 		};
 	};
 #endif

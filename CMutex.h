@@ -102,6 +102,7 @@
 			{
 				resource = other.resource;
 				other.resource = nullptr;
+				return *this;
 			}
 
 			/// <summary>
@@ -262,6 +263,7 @@
 			{
 				resource = other.resource;
 				other.resource = nullptr;
+				return *this;
 			}
 
 			/// <summary>

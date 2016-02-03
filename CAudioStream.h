@@ -59,6 +59,10 @@
 				va_end(args);
 			}
 		};
+		
+		template<std::size_t channels, bool biased>
+			struct ChannelIterator;
+		
 		template<typename T, std::size_t>
 			class CAudioStream;
 
@@ -286,11 +290,10 @@
 			struct AudioBufferAccess
 			{
 			private:
-				template<std::size_t channels, bool biased>
-					struct ChannelIterator;
+
 				
 			public:
-
+				typedef StreamType InheritStreamType;
 				typedef typename AudioBuffer::IteratorBase::iterator iterator;
 				typedef typename AudioBuffer::IteratorBase::const_iterator const_iterator;
 
@@ -330,7 +333,12 @@
 				{
 					ChannelIterator<Channels, biased>::run(*this, f);
 				}
-
+				
+				/// <summary>
+				/// Iterate over the samples in the buffers. If biased is set, the samples arrive in chronological order.
+				/// The functor shall accept the following parameters:
+				///		(std::size_t sampleFrame, AudioStream::Data channel0, AudioStream::Data channelN ...)
+				/// </summary>
 				template<std::size_t Channels, bool biased, typename Functor>
 				inline void iterate(const Functor & f) const
 				{
@@ -340,8 +348,7 @@
 			private:
 
 
-
-				template<>
+				/*template<>
 				struct ChannelIterator<2, true>
 				{
 					template<typename Functor>
@@ -405,7 +412,7 @@
 							}
 						}
 					}
-				};
+				};*/
 
 				const std::vector<AudioBuffer> & audioChannels;
 				std::unique_lock<std::mutex> lock;
@@ -672,7 +679,8 @@
 				{
 					// so, another realtime thread is calling this.
 					// this should be interesting to debug.
-					BreakIfDebugged();
+					// TODO: this is an actual problem. Store all audio thread ids in a set, and compare instead.
+					//BreakIfDebugged();
 					audioRTThreadID = id;
 				}
 				else
@@ -1246,8 +1254,8 @@
 						// resize audio history buffer here, so it takes effect, 
 						// before any async callers are notified.
 						if (signalChange && (internalInfo.storeAudioHistory &&
-							localAudioHistorySize != getAudioHistorySize() ||
-							localAudioHistoryCapacity != getAudioHistoryCapacity()))
+							(localAudioHistorySize != getAudioHistorySize()) ||
+							(localAudioHistoryCapacity != getAudioHistoryCapacity())))
 						{
 							std::lock_guard<std::mutex> bufferLock(aBufferMutex);
 							//OutputDebugString(("1. Changed size to: " + std::to_string(localAudioHistorySize)).c_str());
@@ -1450,5 +1458,81 @@
 			std::mutex aListenerMutex, aBufferMutex;
 		};
 
+		
+		template<>
+		struct ChannelIterator<2, true>
+		{
+			template<typename Functor, class StreamBufferAccess>
+			static void run(StreamBufferAccess & access, const Functor & f)
+			{
+				typedef typename StreamBufferAccess::InheritStreamType StreamType;
+				typedef typename StreamType::BufferIterator BufferIterator;
+				
+				typename StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
+
+				for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
+				{
+					BufferIterator
+						left = views[0].getItIndex(indice),
+						right = views[1].getItIndex(indice);
+
+					std::size_t range = views[0].getItRange(indice);
+
+					while (range--)
+					{
+						f(n++, *left++, *right++);
+					}
+				}
+			}
+
+			template<typename Functor, class StreamBufferAccess>
+			static void run(const StreamBufferAccess & access, const Functor & f)
+			{
+				typedef typename StreamBufferAccess::InheritStreamType StreamType;
+				typedef typename StreamType::BufferIterator BufferIterator;
+				
+				typename StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
+
+				for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
+				{
+					BufferIterator
+						left = views[0].getItIndex(indice),
+						right = views[1].getItIndex(indice);
+
+					std::size_t range = views[0].getItRange(indice);
+
+					while (range--)
+					{
+						f(n++, *left++, *right++);
+					}
+				}
+			}
+		};
+
+		template<>
+		struct ChannelIterator<1, true>
+		{
+			template<typename Functor, class StreamBufferAccess>
+			static void run(const StreamBufferAccess & access, const Functor & f)
+			{
+				typedef typename StreamBufferAccess::InheritStreamType StreamType;
+				typedef typename StreamType::BufferIterator BufferIterator;
+				
+				typename StreamType::AudioBufferView view = access.getView(0);
+
+				for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
+				{
+					BufferIterator left = view.getItIndex(indice);
+
+					std::size_t range = view.getItRange(indice);
+
+					while (range--)
+					{
+						f(n++, *left++);
+					}
+				}
+			}
+		};
+		
 	};
 #endif

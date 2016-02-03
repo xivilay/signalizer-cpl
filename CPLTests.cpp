@@ -46,7 +46,7 @@ namespace cpl
 
 	void func()
 	{
-		std::atomic_bool quit = false;
+		std::atomic_bool quit {false};
 
 		std::vector<float> data(100);
 		std::mutex m;
@@ -154,7 +154,7 @@ namespace cpl
 			cpl::CAudioStream<ftype, 128> stream(16, true, 10, 10000);
 			std::atomic_bool quit(false);
 			dout(info, lvl, "Press any key to quit - starting in 1000ms\n");
-			Sleep(1000);
+			cpl::Misc::Delay(1000);
 
 			permListener.listenToSource(stream);
 			//permListener.lvl = warn;

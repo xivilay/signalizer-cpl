@@ -76,7 +76,12 @@
 					IteratorBase & operator = (const IteratorBase &) = delete;
 					IteratorBase(IteratorBase && other)
 					{
-						absorb(other);
+						// TODO: refactor into absorb(), when clang starts not being weird
+						// (it wants to bind other to a l-value?)
+						cursor = other.cursor;
+						bsize = other.bsize;
+						buffer = other.buffer;
+						other.buffer = nullptr; other.ncParent = nullptr;
 					}
 					IteratorBase & operator = (IteratorBase && other) noexcept
 					{
@@ -191,15 +196,13 @@
 					}
 
 					ProxyView(ProxyView && other)
+						: IteratorBase(static_cast<IteratorBase &&>(other))
 					{
-						this->absorb(other);
-						other.ncParent = nullptr;
 					}
 
 					ProxyView & operator = (ProxyView && other) noexcept
 					{
 						absorb(other);
-						other.ncParent = nullptr;
 					}
 
 					/// <summary>
@@ -302,7 +305,7 @@
 					Writer(Writer && other)
 						: IteratorBase((IteratorBase &&)other), parent(other.parent)
 					{
-						other.parent = other.ncParent = nullptr;
+						other.parent = nullptr; other.ncParent = nullptr;
 					}
 
 					Writer & operator = (Writer && other) noexcept
@@ -357,8 +360,8 @@
 					/// </summary>
 					inline void advance(std::size_t bufSize) noexcept
 					{
-						cursor += bufSize;
-						cursor %= this->bsize;
+						this->cursor += bufSize;
+						this->cursor %= this->bsize;
 					}
 
 					~Writer()
