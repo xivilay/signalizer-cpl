@@ -1077,18 +1077,20 @@
 			/// <summary>
 			/// Gets the current listener list with appropriate signaling mechanisms
 			/// based on what thread is calling.
+			/// Note: You should never need to call this from an audio thread (stop doing it).
 			/// </summary>
-			/// <returns></returns>
 			ListenerQueue & getListeners()
 			{
-				if (isAudioThread())
+				// TODO: reimplement
+				/*if (isAudioThread())
 				{
 					return *audioListeners.getObject();
 				}
 				else
 				{
 					return *audioListeners.getObjectWithoutSignaling();
-				}
+				}*/
+				return *audioListeners.getObjectWithoutSignaling();
 			}
 			/// <summary>
 			/// Assumes you have appropriate locks!!
@@ -1097,7 +1099,7 @@
 			/// </summary>
 			bool tidyListenerQueue()
 			{
-				auto & listeners = getListeners();
+				auto & listeners = *audioListeners.getObject();
 				for (std::size_t i = 0, lastSlot = 0; i < listeners.size(); ++i)
 				{
 					if (listeners[i].load(std::memory_order_relaxed)) // again, we have exclusive access
