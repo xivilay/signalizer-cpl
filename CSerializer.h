@@ -839,6 +839,11 @@
 				data.appendBytes(object, size);
 			}
 
+			/// <summary>
+			/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
+			/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
+			/// stay architechture-independant!
+			/// </summary>
 			template<typename T>
 				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
 					operator << (const T & object)
@@ -857,9 +862,12 @@
 			{
 				data.rewindWrite();
 			}
-			//template<typename T>
-			//	CSerializer & operator << (const T * object);
-
+			
+			/// <summary>
+			/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
+			/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
+			/// stay architechture-independant!
+			/// </summary>
 			template<typename T>
 				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
 					operator >> ( T & object)

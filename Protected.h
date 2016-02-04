@@ -97,7 +97,7 @@
 							throw CSystemException(exceptionData);
 					#else
 						// trigger int 3
-						BreakIfDebugged();
+						//BreakIfDebugged();
 						// set the jump in case a signal gets raised
 						if(sigsetjmp(threadData.threadJumpBuffer, 1))
 						{
