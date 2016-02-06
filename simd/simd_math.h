@@ -862,7 +862,8 @@
 			}
 
 		template<typename V>
-			inline V cos(V x)
+			inline typename std::enable_if<simd::is_simd<V>::value, V>::type
+				cos(V x)
 			{
 				/*V s, c;
 				sincos(x, &s, &c);
@@ -870,27 +871,6 @@
 
 				return sin(x + consts<V>::pi_half);
 			}
-
-
-		inline float cos(float x)
-		{
-			return ::std::cosf(x);
-		}
-		
-		inline float sin(float x)
-		{
-			return ::std::sinf(x);
-		}
-		
-		inline double cos(double x)
-		{
-			return ::std::cos(x);
-		}
-		
-		inline double sin(double x)
-		{
-			return ::std::sin(x);
-		}
 			
 		template<typename V>
 			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value>::type

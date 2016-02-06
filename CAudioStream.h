@@ -680,6 +680,7 @@
 					// so, another realtime thread is calling this.
 					// this should be interesting to debug.
 					// TODO: this is an actual problem. Store all audio thread ids in a set, and compare instead.
+					// NOTE: resolved for now (very temporary), all audio threads shouldn't call getListeners()
 					//BreakIfDebugged();
 					audioRTThreadID = id;
 				}
