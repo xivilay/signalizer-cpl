@@ -268,9 +268,16 @@
 
 				CPL_DEBUGCHECKGL();
 
-				std::unique_ptr<juce::LowLevelGraphicsContext> context(juce::createOpenGLGraphicsContext(*oglc, getWidth(), getHeight()));
+				
+				// TODO: consider if the graphics context can be created/acquired somehow else, so we don't have to consider screen size.. etc.
+				auto scale = oglc->getRenderingScale();
+				std::unique_ptr<juce::LowLevelGraphicsContext> context(juce::createOpenGLGraphicsContext(*oglc, static_cast<int>(scale * getWidth()), static_cast<int>(scale * getHeight())));
+				
 				juce::Graphics g(*context);
-
+				if(scale != 1.0)
+					g.addTransform (AffineTransform::scale ((float) scale));
+				
+				
 				CPL_DEBUGCHECKGL();
 
 				func(g);
