@@ -229,6 +229,8 @@
 		#define FILE_LINE_LINK __FILE__ "(" __tostring(__LINE__) ") : "
 		#define cwarn(exp) (FILE_LINE_LINK  " -> " __FUNCTION__ ": warning: " exp)
 
+		#define CPL_COMPILER_SUPPORTS_AVX
+
 
 	#elif defined(__llvm__) && defined(__clang__)
 
@@ -287,11 +289,11 @@
 		#define cwarn(exp) ("warning: " exp)
 
         #if __clang_major__ > 7
-            #define CPL_LLVM_SUPPORTS_AVX
+            #define CPL_COMPILER_SUPPORTS_AVX
             #define __thread_local thread_local
 			#define __C11__
         #elif __clang_major__ >= 7
-            #define CPL_LLVM_SUPPORTS_AVX
+            #define CPL_COMPILER_SUPPORTS_AVX
     		#define __thread_local __thread
 			#define __C11__
         #else

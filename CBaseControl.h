@@ -610,6 +610,7 @@
 				{
 					formatters.push_back(formatter);
 					addClientDestructor(formatter);
+					bRedraw();
 				}
 			}
 			/*********************************************************************************************
