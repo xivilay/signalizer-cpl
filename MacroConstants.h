@@ -297,6 +297,7 @@
     		#define __thread_local __thread
 			#define __C11__
         #else
+			#define CPL_CLANG_BUGGY_RECURSIVE_LAMBDAS
     		#define __thread_local __thread
             #pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")
         #endif

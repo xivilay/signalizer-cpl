@@ -366,20 +366,70 @@ namespace cpl
 		
 			if(staticData.oldHandlers[sig].sa_flags & SA_SIGINFO)
 			{
-				if(staticData.oldHandlers[sig].sa_sigaction)
+				auto addr = staticData.oldHandlers[sig].sa_sigaction;
+				
+				// why is this system so ugly
+				if((void*)addr == SIG_DFL)
+				{
+					struct sigaction current;
+					if(sigaction(sig, &staticData.oldHandlers[sig], &current))
+					{
+						goto die_brutally;
+					}
+					else
+					{
+						if(raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
+							goto die_brutally;
+						else
+							return;
+					}
+				}
+				else if((void*)addr == SIG_IGN)
+				{
+					return;
+				}
+				else
+				{
 					return staticData.oldHandlers[sig].sa_sigaction(sig, siginfo, extra);
+				}
+
+
 			}
 			else
 			{
-				if(staticData.oldHandlers[sig].sa_handler)
+				auto addr = staticData.oldHandlers[sig].sa_handler;
+				
+				if(addr == SIG_DFL)
+				{
+					struct sigaction current;
+					if(sigaction(sig, &staticData.oldHandlers[sig], &current))
+					{
+						goto die_brutally;
+					}
+					else
+					{
+						if(raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
+							goto die_brutally;
+						else
+							return;
+					}
+				}
+				else if(addr == SIG_IGN)
+				{
+					return;
+				}
+				else
+				{
 					return staticData.oldHandlers[sig].sa_handler(sig);
+				}
+				
 			}
 			/*
 				WE SHOULD NEVER REACH THIS POINT. NEVER. Except for nuclear war and/or nearby black hole
 			*/
 		
 			// no handler found, throw exception (that will call terminate)
-		
+		die_brutally:
 			throw std::runtime_error(_PROGRAM_NAME " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
 		#endif
 	}
