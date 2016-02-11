@@ -55,11 +55,12 @@
 				virtual ~EventListener() {};
 			};
 
-			virtual void addEventListener(EventListener * el) { eventListeners.insert(el); }
-			virtual void removeEventListenerr(EventListener * el) { eventListeners.erase(el); }
+			virtual void addEventListener(EventListener * el) { cpl::CMutex lock(mutex); eventListeners.insert(el); }
+			virtual void removeEventListener(EventListener * el) { cpl::CMutex lock(mutex); eventListeners.erase(el); }
 
 			void notifyDestruction()
 			{
+				cpl::CMutex lock(mutex);
 				for (auto listener : eventListeners)
 					listener->onServerDestruction(this);
 				eventListeners.clear();
@@ -77,6 +78,7 @@
 
 
 		private:
+			cpl::CMutex::Lockable mutex;
 			std::set<EventListener *> eventListeners;
 		};
 
@@ -163,7 +165,7 @@
 					{
 						if (!contextWasDeleted && notifServer)
 						{
-							notifServer->removeEventListenerr(this);
+							notifServer->removeEventListener(this);
 						}
 					};
 					Functor func;
@@ -250,6 +252,33 @@
 					{
 						new DelayedCall<Functor>(numMsToDelay, functionToRun, notifServer);
 					}
+				}
+
+			template<typename Functor>
+				void MainEvent(DestructionNotifier & notifServer, Functor functionToRun)
+				{
+					struct CustomMessage : public juce::MessageManager::MessageBase, public DestructionNotifier::EventListener
+					{
+						CustomMessage(Functor func, DestructionNotifier & server) : f(func), notif(&server) { post(); }
+
+						virtual void messageCallback() override { if (!contextWasDeleted) f(); }
+
+						void onServerDestruction(DestructionNotifier * e) override { contextWasDeleted = true; }
+
+						virtual ~CustomMessage()
+						{
+							if (!contextWasDeleted && notif)
+							{
+								notif->removeEventListener(this);
+							}
+						};
+
+						Functor f;
+						DestructionNotifier * notif;
+						bool contextWasDeleted = false;
+					};
+
+					new CustomMessage(functionToRun, notifServer);
 				}
 
 			inline bool ForceFocusTo(const juce::Component & window)
