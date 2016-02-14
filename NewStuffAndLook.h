@@ -326,32 +326,35 @@
 						}
 
 						g.setColour(color);
-						g.fillRect(size * index, 0.f, (float)size, (float)getHeight());
+						// -1 size so it will be filled by separator
+						g.fillRect(size * index, 0.f, (float)size - (index == buttons.size() - 1 ? 0 : 1), (float)getHeight());
 						g.setColour(textColour);
 						g.drawFittedText(buttons[index].c_str(), textRectangle, juce::Justification::centredLeft, 1);
-
-
-					}
-
-					g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
-					// draw horizontal lines.
-					for (unsigned line = 0; line < (buttons.size()); ++line)
-					{
-						//if (line == selectedIndex)
-						//g.setColour(Colours::red);
-						double pos = double(line) / (buttons.size());
-						g.drawLine((float)ceil(pos * getWidth()), 0.f, (float)ceil(pos * getWidth()), (float)getHeight(), 0.5f);
-
+						
+						g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+						// vertical borders
+						g.drawVerticalLine(size * index + size, 0.0f, (float)getHeight());
 					}
 					g.setColour(cpl::GetColour(cpl::ColourEntry::aux));
 					// draw triangle
 					if (isTriangleHovered)
 						g.setOpacity(0.8f);
-					else
-						g.setOpacity(0.6f);
-
+						else
+					g.setOpacity(0.6f);
+							
 					if (!isIndeterminateState)
 						g.fillPath(triangleVertices);
+					
+					return;
+
+					// draw horizontal lines.
+					for (auto index = 0; index < (int)buttons.size() - 1; ++index)
+					{
+						// vertical borders
+						g.drawVerticalLine(size * index + size, 0.0f, (float)getHeight());
+					}
+
+
 
 					//p.addTriangle()
 
@@ -658,11 +661,11 @@
 			virtual void paint(juce::Graphics & g) override
 			{
 
-				//g.setColour(Colours::black);
-				// fill rects
+				g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+				g.fillAll();
 
 				auto cornerOffset = 5;
-
+				auto elementBorder = 1;
 				auto hoverButton = getMouseHoverButton();
 				auto height = (getHeight()) / (int)buttons.size();
 				auto iconHeight = height - cornerOffset * 2;
@@ -683,8 +686,17 @@
 					}
 
 					double pos = double(index) / (buttons.size());
+					double nextPos = double(index + 1) / (buttons.size());
+					auto heightThisEntry = int(getHeight() * nextPos) - int(getHeight() * pos);
+					
 					g.setColour(color);
-					g.fillRect(0, cpl::Math::round<int>(pos * getHeight()), getWidth(), height);
+					g.fillRect
+					(
+						0,
+						(int)(pos * getHeight()) + (index == 0 ? 1 : 0), // creates a border at the top of the first element
+						getWidth() - (isSelectedIndex ? 0 : elementBorder),
+						heightThisEntry - elementBorder - (index == 0 ? 1 : 0)
+					 );
 
 					//auto const & image = vectors[index].getImage();
 					g.setOpacity(isSelectedIndex ? 1 : 0.5f);
@@ -701,7 +713,7 @@
 					// 5, g.getCurrentFont().getHeight() / 2 + height/2 + height * index
 					//g.drawSingleLineText(buttons[index].c_str(),);
 				}
-				//return; // comment if you want black bars around
+				return; // comment if you want black bars around
 				g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
 				// draw horizontal lines.
 				//return;
@@ -711,9 +723,9 @@
 					g.drawLine(0.f, float(pos * getHeight()), (float)getWidth(), float(pos * getHeight()), 0.5f);
 				}
 				if (selectedIndex != 0)
-					g.drawLine((float)getWidth() - 1, (float)0, (float)getWidth() - 1, (float)selectedIndex * height, 0.5f);
+					g.drawLine((float)getWidth() - 0.5f, (float)0, (float)getWidth() - 0.5f, (float)selectedIndex * height, 0.5f);
 				if (buttons.size() > 1)
-					g.drawLine((float)getWidth() - 1, (float)(selectedIndex + 1) * height, (float)getWidth() - 1, (float)getHeight(), 0.5f);
+					g.drawLine((float)getWidth() - 0.5f, (float)(selectedIndex + 1) * height, (float)getWidth() - 0.5f, (float)getHeight(), 0.5f);
 			}
 
 			void resized() override

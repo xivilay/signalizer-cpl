@@ -232,8 +232,8 @@ namespace cpl
 	 *********************************************************************************************/
 	
 	static const char * resourceNames[] = {
-		"knob.png", 
-		"checkbox.png",
+		"bmps/knob.png",
+		"bmps/checkbox.png",
 		"icons/desktop.png",
 		"icons/formulae.png",
 		"icons/gear.png",
@@ -280,6 +280,7 @@ namespace cpl
 				if (!image.load())
 				{
 					Misc::MsgBox("Error loading resource " + path + ":" + newl + Misc::GetLastOSErrorMessage(), _PROGRAM_NAME_ABRV " error!", Misc::MsgIcon::iStop);
+					BreakIfDebugged();
 					return false;
 				}
 			}
@@ -320,7 +321,7 @@ namespace cpl
 		auto const & img = resources[name].getImage();
 		#ifdef CPL_THROW_ON_NO_RESOURCE
 			if(img.isNull() || !img.isValid())
-				throw new std::runtime_error("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
+				CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
 		#endif
 		return img;
 		
@@ -342,12 +343,12 @@ namespace cpl
 	CButton2::CButton2()
 	: DrawableButton("Button", ButtonStyle::ImageRaw), CBaseControl(this), multiToggle(false)
 	{
-		auto resource = CResourceManager::instance().getResource("button_up.png");
+		auto resource = CResourceManager::instance().getResource("bmps/button_up.png");
 		if (resource.valid())
 		{
 			setSize(resource.content->getWidth(),
 				resource.content->getHeight());
-			setImages(CResourceManager::instance().getResource("button_up.png").content, nullptr, resource.content, nullptr, nullptr, nullptr, resource.content);
+			setImages(CResourceManager::instance().getResource("bmps/button_up.png").content, nullptr, resource.content, nullptr, nullptr, nullptr, resource.content);
 			setVisible(true);
 			addListener(this);
 		}
@@ -356,12 +357,12 @@ namespace cpl
 	CButton2::CButton2(const std::string & text, const std::string & textToggled, CCtrlListener * list)
 		: DrawableButton("Button", ButtonStyle::ImageRaw), CBaseControl(this), multiToggle(false)
 	{
-		auto resource = CResourceManager::instance().getResource("button_up.png");
+		auto resource = CResourceManager::instance().getResource("bmps/button_up.png");
 		if (resource.valid())
 		{
 			setSize(resource.content->getWidth(),
 				resource.content->getHeight());
-			setImages(CResourceManager::instance().getResource("button_up.png").content, nullptr, resource.content, nullptr, nullptr, nullptr, resource.content);
+			setImages(CResourceManager::instance().getResource("bmps/button_up.png").content, nullptr, resource.content, nullptr, nullptr, nullptr, resource.content);
 			setVisible(true);
 		}
 		texts[0] = text;
@@ -565,7 +566,7 @@ namespace cpl
 	 
 	 *********************************************************************************************/
 	CToggle::CToggle()
-		: CBaseControl(this), cbox(CResourceManager::instance().getImage("checkbox.png"))
+		: CBaseControl(this), cbox(CResourceManager::instance().getImage("bmps/checkbox.png"))
 	{
 		addListener(this);
 		setSize(ControlSize::Square.width, 20);

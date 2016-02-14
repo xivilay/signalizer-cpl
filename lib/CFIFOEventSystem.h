@@ -64,7 +64,7 @@
 					CPL_RUNTIME_EXCEPTION("Null-pointer listener interface passed!");
 				}
 
-				asyncThread = std::thread(asyncSubSystem, this);
+				asyncThread = std::thread(asyncSubsystem, this);
 			}
 
 			bool postMessage(const Message & m)
