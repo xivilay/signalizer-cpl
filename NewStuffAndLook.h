@@ -304,7 +304,7 @@
 					//float fontSize = JUCE_LIVE_CONSTANT(11.1);
 					g.setFont(TextSize::normalText);
 					auto size = (float)ceil(double(getWidth()) / buttons.size());
-					juce::Rectangle<int> textRectangle(cornerOffset, 0, cpl::Math::round<int>(size - triangleSize * 2.5), getHeight());
+					juce::Rectangle<int> textRectangle(cornerOffset, 0, size - cornerOffset * 2, getHeight());
 					for (auto index = 0; index < (int)buttons.size(); ++index)
 					{
 						textRectangle.setX(cpl::Math::round<int>(cornerOffset + size * index));
@@ -313,9 +313,11 @@
 						{
 							color = cpl::GetColour(cpl::ColourEntry::activated);
 							textColour = cpl::GetColour(cpl::ColourEntry::selfont);
+							textRectangle.setRight(triangleVertices.getBounds().getX() - cornerOffset);
 						}
 						else
 						{
+							textRectangle.setWidth(size - cornerOffset * 2);
 							color = cpl::GetColour(cpl::ColourEntry::deactivated);
 							textColour = cpl::GetColour(cpl::ColourEntry::auxfont);
 						}
@@ -327,7 +329,7 @@
 
 						g.setColour(color);
 						// -1 size so it will be filled by separator
-						g.fillRect(size * index, 0.f, (float)size - (index == buttons.size() - 1 ? 0 : 1), (float)getHeight());
+						g.fillRect(size * index, 0.f, (float)size - ((std::size_t)index == buttons.size() - 1 ? 0 : 1), (float)getHeight());
 						g.setColour(textColour);
 						g.drawFittedText(buttons[index].c_str(), textRectangle, juce::Justification::centredLeft, 1);
 						
@@ -472,7 +474,7 @@
 
 				if (currentHover == selectedIndex)
 				{
-					isTriangleHovered = triangleVertices.contains(e.position);
+					isTriangleHovered = triangleVertices.getBounds().expanded(2.f).contains(e.position);
 				}
 				else
 					isTriangleHovered = false;
@@ -499,9 +501,9 @@
 				if (!buttons.size())
 					return;
 
-				auto const offset = cornerOffset * 1.5f;
+				auto const offset = cornerOffset * 1.5;
 
-				triangleSize = float(orientation == Vertical ? getWidth() : getHeight()) - offset * 2;
+				triangleSize =  float(orientation == Vertical ? getWidth() : getHeight()) - offset * 2;
 
 				juce::Point<float> pos;
 				juce::Point<float> originCenter;
@@ -517,6 +519,9 @@
 				}
 
 				triangleVertices.clear();
+
+				if ((getHeight() & 1) != 0)
+					pos.y += 1;
 
 				triangleVertices.addTriangle
 				(

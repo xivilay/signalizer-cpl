@@ -67,7 +67,9 @@
 			/// calls lambda inside 'safe wrappers', catches OS errors and filters them.
 			/// Throws CSystemException on errors, crashes on unrecoverable errors.
 			/// 
-			/// Note that the stack will NOT be unwound (it wouldn't be anyway if we caught any exception),
+			/// Does NOT catch software exceptions.
+			/// 
+			/// Note that the stack may NOT be unwound (it wouldn't be anyway if we caught any exception),
 			/// so consider your program to be in an UNDEFINED state; write some info to a file and crash gracefully
 			/// afterwards!
 			/// </summary>
