@@ -56,7 +56,7 @@
 
 			
 			CView()
-				: isFullScreen(false), isSynced(false), oglc(nullptr), bufferSwapInterval(0)
+				: isFullScreen(false), isSynced(false), oglc(nullptr), bufferSwapInterval(0), refreshRate(0)
 			{
 			}
 			

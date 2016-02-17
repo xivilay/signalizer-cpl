@@ -40,8 +40,11 @@
 	/// <summary>
 	/// returns true if any errors were caught. 
 	/// </summary>
-	#define CPL_DEBUGCHECKGL() cpl::OpenGLEngine::DebugCheckGLErrors(__FILE__, __LINE__, __FUNCTION__)
-
+	#ifdef _DEBUG
+		#define CPL_DEBUGCHECKGL() cpl::OpenGLEngine::DebugCheckGLErrors(__FILE__, __LINE__, __FUNCTION__)
+	#else
+		#define CPL_DEBUGCHECKGL() (false)
+	#endif
 
 	namespace cpl
 	{
@@ -242,15 +245,10 @@
 				friend class Rasterizer;
 
 				COpenGLStack()
-					: ras(nullptr)
+					: ras(nullptr), blenderWasAltered(false)
 				{
 					CPL_DEBUGCHECKGL();
-					// store the old blending functions.
-					if (glIsEnabled(GL_BLEND))
-					{
-						glGetIntegerv(GL_BLEND_DST, &oldDestinationBlend);
-						glGetIntegerv(GL_BLEND_SRC, &oldSourceBlend);
-					}
+
 					glGetFloatv(GL_POINT_SIZE, &oldPointSize);
 					glGetFloatv(GL_LINE_WIDTH, &oldLineSize);
 				}
@@ -272,20 +270,24 @@
 						// Your openGL stack got destroyed before attached rasterizers!!
 						jassertfalse;
 					}
-
+					CPL_DEBUGCHECKGL();
 
 					// revert blending function
-					if (glIsEnabled(GL_BLEND))
+					if (blenderWasAltered)
 					{
 						glBlendFunc(oldDestinationBlend, oldSourceBlend);
 					}
-
+					CPL_DEBUGCHECKGL();
 					// revert features
 					for (auto it = features.rbegin(); it != features.rend(); ++it)
 					{
 						glDisable(*it);
+						CPL_DEBUGCHECKGL();
 					}
+					CPL_DEBUGCHECKGL();
 					glPointSize(oldPointSize);
+
+					CPL_DEBUGCHECKGL();
 					glLineWidth(oldLineSize);
 
 				}
@@ -314,9 +316,13 @@
 
 				void setBlender(GLFeatureType source, GLFeatureType destination)
 				{
+					blenderWasAltered = true;
+					glGetIntegerv(GL_BLEND_DST, &oldDestinationBlend);
+					glGetIntegerv(GL_BLEND_SRC, &oldSourceBlend);
 					enable(GL_BLEND);
 					glBlendFunc(source, destination);
 					
+
 					auto error = glGetError();
 					if (error != GL_NO_ERROR)
 					{
@@ -367,6 +373,7 @@
 				std::vector<GLFeatureType> features;
 				Rasterizer * ras;
 				GLSetting oldDestinationBlend, oldSourceBlend;
+				bool blenderWasAltered;
 				GLfloat oldPointSize, oldLineSize;
 			};
 
