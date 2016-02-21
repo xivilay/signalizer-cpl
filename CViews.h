@@ -222,6 +222,7 @@
 			
 			void renderOpenGL() override final
 			{
+				juce::OpenGLHelpers::resetErrorState();
 				/// <summary>
 				/// If the stack gets corrupted, the next variable should not have been overwritten, and can be used
 				/// for debugging

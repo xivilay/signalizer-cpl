@@ -316,9 +316,13 @@
 
 				void setBlender(GLFeatureType source, GLFeatureType destination)
 				{
+					if (!blenderWasAltered)
+					{
+						glGetIntegerv(GL_BLEND_DST, &oldDestinationBlend);
+						glGetIntegerv(GL_BLEND_SRC, &oldSourceBlend);
+					}
 					blenderWasAltered = true;
-					glGetIntegerv(GL_BLEND_DST, &oldDestinationBlend);
-					glGetIntegerv(GL_BLEND_SRC, &oldSourceBlend);
+
 					enable(GL_BLEND);
 					glBlendFunc(source, destination);
 					
