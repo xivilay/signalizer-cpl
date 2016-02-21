@@ -259,7 +259,7 @@
 				{
 					struct CustomMessage : public juce::MessageManager::MessageBase, public DestructionNotifier::EventListener
 					{
-						CustomMessage(Functor func, DestructionNotifier & server) : f(func), notif(&server) { post(); }
+						CustomMessage(Functor func, DestructionNotifier & server) : f(func), notif(&server) { notif->addEventListener(this); post(); }
 
 						virtual void messageCallback() override { if (!contextWasDeleted) f(); }
 
