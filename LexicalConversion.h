@@ -43,7 +43,7 @@
 		/// <param name="f"></param>
 		/// <param name="t"></param>
 		/// <returns></returns>
-		template<typename From, typename To> 
+		template<typename From, typename To>
 			inline bool lexicalConversion(const From & f, To & t)
 			{
 				std::stringstream ss;

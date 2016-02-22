@@ -36,3 +36,78 @@ void Desktop::setKioskComponent(Component* kioskModeComponent, bool enableOrDisa
 
 	}
 }
+
+juce_mac_NSViewComponentPeer.mm:
+
+//==============================================================================
+void Desktop::setKioskComponent (Component* kioskComp, bool shouldBeEnabled, bool allowMenusAndBars)
+{
+   #if defined (MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_6
+
+    NSViewComponentPeer* const peer = dynamic_cast<NSViewComponentPeer*> (kioskComp->getPeer());
+    jassert (peer != nullptr); // (this should have been checked by the caller)
+
+   #if defined (MAC_OS_X_VERSION_10_7) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+    if (peer->hasNativeTitleBar()
+          && [peer->window respondsToSelector: @selector (toggleFullScreen:)])
+    {
+        if (shouldBeEnabled && ! allowMenusAndBars)
+            [NSApp setPresentationOptions: NSApplicationPresentationHideDock | NSApplicationPresentationHideMenuBar];
+
+        [peer->window performSelector: @selector (toggleFullScreen:) withObject: nil];
+    }
+    else
+   #endif
+    {
+        if (shouldBeEnabled)
+        {
+            if (peer->hasNativeTitleBar())
+                [peer->window setStyleMask: NSBorderlessWindowMask];
+
+          
+			NSView * handle = (NSView*)kioskComp->getWindowHandle();
+			//NSRect frame = [handle convertRect: [handle bounds] toView: nil];
+			
+			//kioskComp->setBounds (Desktop::getInstance().getDisplays().getMainDisplay().totalArea);
+			NSRect frame = [handle.window convertRectToScreen:handle.frame];
+			
+			auto && currentDisplay = getDisplays().getDisplayContaining(juce::Point<int>(frame.origin.x, frame.origin.y));
+			if(&currentDisplay == &getDisplays().getMainDisplay())
+			{
+				[NSApp setPresentationOptions: (allowMenusAndBars ? (NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar)
+												: (NSApplicationPresentationHideDock | NSApplicationPresentationHideMenuBar))];
+			}
+			
+			kioskModeComponent->setBounds(currentDisplay.totalArea);
+			
+            peer->becomeKeyWindow();
+        }
+        else
+        {
+            if (peer->hasNativeTitleBar())
+            {
+                [peer->window setStyleMask: (NSViewComponentPeer::getNSWindowStyleMask (peer->getStyleFlags()))];
+                peer->setTitle (peer->getComponent().getName()); // required to force the OS to update the title
+            }
+
+            [NSApp setPresentationOptions: NSApplicationPresentationDefault];
+        }
+    }
+   #elif JUCE_SUPPORT_CARBON
+    if (shouldBeEnabled)
+    {
+        SetSystemUIMode (kUIModeAllSuppressed, allowMenusAndBars ? kUIOptionAutoShowMenuBar : 0);
+        kioskComp->setBounds (Desktop::getInstance().getDisplays().getMainDisplay().totalArea);
+    }
+    else
+    {
+        SetSystemUIMode (kUIModeNormal, 0);
+    }
+   #else
+    (void) kioskComp; (void) shouldBeEnabled; (void) allowMenusAndBars;
+
+    // If you're targeting OSes earlier than 10.6 and want to use this feature,
+    // you'll need to enable JUCE_SUPPORT_CARBON.
+    jassertfalse;
+   #endif
+}
