@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@
 
 	#ifndef _CPL_NO_ACCELERATION /* define this if you dont want accelerated code */
 
-		#ifdef __MSVC__ /* C++ AMP currently only supported on visual c++ targets */
+		#ifdef CPL_MSVC /* C++ AMP currently only supported on visual c++ targets */
 
 			#include <amp.h>
 			#include <amp_math.h>
@@ -229,8 +229,8 @@
 					struct CDFTData
 					{
 						float wc1, wc2;
-						__alignas(32) float sinPhases[8]; // starting sine phases
-						__alignas(32) float cosPhases[8]; // starting cosine phases
+						CPL_ALIGNAS(32) float sinPhases[8]; // starting sine phases
+						CPL_ALIGNAS(32) float cosPhases[8]; // starting cosine phases
 						float c1, c2; // coefficients for oscillators
 						Types::fint_t qSamplesNeeded; // amount of samples needed to satisfy correct resolution
 						Types::fint_t decimationFactor; // amount of decimation that can be done, while still satisfying the nyquist theorem

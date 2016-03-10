@@ -2,7 +2,7 @@
 
 namespace cpl
 {
-	#ifndef __WINDOWS__
+	#ifndef CPL_WINDOWS
 		//  GCC Inline Assembly
 		// creds: http://stackoverflow.com/questions/6121792/how-to-check-if-a-cpu-supports-the-sse3-instruction-set
 		void cpuid(int CPUInfo[4],int InfoType)

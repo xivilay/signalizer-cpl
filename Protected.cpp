@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ namespace cpl
 {
 	
 	CProtected::StaticData CProtected::staticData;
-	__thread_local CProtected::ThreadData CProtected::threadData;
+	CPL_THREAD_LOCAL CProtected::ThreadData CProtected::threadData;
     std::atomic<int> checkCounter {0};
 	// TODO: make atomic. It is safe on all x86 systems, though.
 	std::unique_ptr<CProtected> internalInstance;
@@ -75,7 +75,7 @@ namespace cpl
 		checkCounter.fetch_add(1);
 		if (checkCounter.load() > 1)
 			CPL_RUNTIME_EXCEPTION("More than one Protected instance created at a time.");
-		#ifndef __WINDOWS__
+		#ifndef CPL_WINDOWS
 			registerHandlers();
 		#endif
 	}
@@ -121,7 +121,7 @@ namespace cpl
 		case CSystemException::status::access_violation:
 			{
 				Misc::CStringFormatter fmt;
-				#ifndef __MSVC__
+				#ifndef CPL_MSVC
 					switch(e.data.actualCode)
 					{
 						case SIGSEGV:
@@ -195,9 +195,9 @@ namespace cpl
 	 *********************************************************************************************/
 	XWORD CProtected::structuredExceptionHandler(XWORD _code, CSystemException::eStorage & e, void * systemInformation)
 	{
-		BreakIfDebugged();
+		CPL_BREAKIFDEBUGGED();
 
-		#ifdef __WINDOWS__
+		#ifdef CPL_WINDOWS
 			auto exceptCode = _code;
 			bool safeToContinue(false);
 			void * exceptionAddress = nullptr;
@@ -262,7 +262,7 @@ namespace cpl
 
 	void CProtected::signalActionHandler(int sig, siginfo_t * siginfo, void * extra)
 	{
-		#ifndef __WINDOWS__
+		#ifndef CPL_WINDOWS
 			// consider locking signalLock here -- not sure if its well-defined, though
 		
 			/*
@@ -430,7 +430,7 @@ namespace cpl
 		
 			// no handler found, throw exception (that will call terminate)
 		die_brutally:
-			throw std::runtime_error(_PROGRAM_NAME " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
+			throw std::runtime_error(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
 		#endif
 	}
 
@@ -441,22 +441,17 @@ namespace cpl
 	 *********************************************************************************************/
 	bool CProtected::registerHandlers()
 	{
-		#ifndef __MSVC__
+		#ifndef CPL_MSVC
 			CMutex lock(staticData.signalLock);
 			if(!staticData.signalReferenceCount)
 			{
-				#ifdef __CSTATE_USE_SIGNALS
-					signal(SIGFPE, &CState::signalHandler);
-					signal(SIGSEGV, &CState::signalHandler);
-				#elif defined (__CSTATE_USE_SIGACTION)
-					staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
-					staticData.newHandler.sa_flags = SA_SIGINFO;
-					staticData.newHandler.sa_mask = 0;
-					sigemptyset(&staticData.newHandler.sa_mask);
-					sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
-					sigaction(SIGFPE, &staticData.newHandler, &staticData.oldHandlers[SIGFPE]);
-					sigaction(SIGBUS, &staticData.newHandler, &staticData.oldHandlers[SIGBUS]);
-				#endif
+				staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
+				staticData.newHandler.sa_flags = SA_SIGINFO;
+				staticData.newHandler.sa_mask = 0;
+				sigemptyset(&staticData.newHandler.sa_mask);
+				sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
+				sigaction(SIGFPE, &staticData.newHandler, &staticData.oldHandlers[SIGFPE]);
+				sigaction(SIGBUS, &staticData.newHandler, &staticData.oldHandlers[SIGBUS]);
 			}
 			staticData.signalReferenceCount++;
 			return true;
@@ -466,7 +461,7 @@ namespace cpl
 	
 	bool CProtected::unregisterHandlers()
 	{
-		#ifndef __MSVC__
+		#ifndef CPL_MSVC
 			CMutex lock(staticData.signalLock);
 			staticData.signalReferenceCount--;
 			if(staticData.signalReferenceCount == 0)

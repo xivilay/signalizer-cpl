@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -29,10 +29,8 @@
 
 *************************************************************************************/
 
-#ifndef _CFREQUENCYGRAPH_H
-	#define _CFREQUENCYGRAPH_H
-
-	//#define _CFREQUENCYGRAPH_DO_CHECKS
+#ifndef CPL_CFREQUENCYGRAPH_H
+	#define CPL_CFREQUENCYGRAPH_H
 
 	#include <cmath>
 	#include <vector>
@@ -40,11 +38,10 @@
 	#include "mathext.h"
 	#include "Utility.h"
 
+	#define CPL_CFREQUENCYGRAPH_DO_CHECKS
+
 	namespace cpl
 	{
-
-
-
 		class CFrequencyGraph
 		{
 		public:
@@ -67,11 +64,19 @@
 
 			};
 
-			CFrequencyGraph(const Utility::Bounds<double> bounds, // bounds are the actual coordinates the graph spans ('world')
+			CFrequencyGraph
+			(
+				const Utility::Bounds<double> bounds, // bounds are the actual coordinates the graph spans ('world')
 				const Utility::Bounds<double> view, // view are the zoomed coords the graph should span, ie. a subset 
 				double maxFrequency, // the maximum frequency of the graph to show. typically sampleRate / 2
-				double startDecade = 10.0) // starting decade of the graph. for logarithmic graphs, it cannot be zero.
-				: bounds(bounds), view(view), startDecade(startDecade), stopFreq(maxFrequency), scaling(Linear), minSpaceForDivision(1000000000000)
+				double startDecade = 10.0 // starting decade of the graph. for logarithmic graphs, it cannot be zero.
+			) 
+				: bounds(bounds)
+				, view(view)
+				, startDecade(startDecade)
+				, stopFreq(maxFrequency)
+				, scaling(Linear)
+				, minSpaceForDivision(1000000000000)
 			{
 				setup();
 			}
@@ -163,7 +168,7 @@
 			*/
 			double fractionToCoordTransformed(double fraction)
 			{
-				#ifdef _CFREQUENCYGRAPH_DO_CHECKS
+				#ifdef CPL_CFREQUENCYGRAPH_DO_CHECKS
 					fraction = cpl::Math::confineTo(fraction, 0.0, 1.0);
 				#endif
 				return transform(transformFraction(fraction));
@@ -177,7 +182,7 @@
 			double transformFraction(double fraction)
 			{
 
-				#ifdef _CFREQUENCYGRAPH_DO_CHECKS
+				#ifdef CPL_CFREQUENCYGRAPH_DO_CHECKS
 					fraction = cpl::Math::confineTo(fraction, 0.0, 1.0);
 				#endif
 				
@@ -195,7 +200,7 @@
 			double frequencyForCoord(double coord)
 			{
 				auto fraction = invTransform(coord);
-				#ifdef _CFREQUENCYGRAPH_DO_CHECKS
+				#ifdef CPL_CFREQUENCYGRAPH_DO_CHECKS
 					fraction = cpl::Math::confineTo(fraction, 0.0, 1.0);
 				#endif
 				return scaleFractionToFrequency(fraction);
@@ -227,7 +232,7 @@
 				//return  view.left + ((fraction * boundsWidth) / viewWidth) * boundsWidth;
 
 				double temp = (fraction * boundsWidth - view.left + bounds.left) / viewWidth;
-				#ifdef _CFREQUENCYGRAPH_DO_CHECKS
+				#ifdef CPL_CFREQUENCYGRAPH_DO_CHECKS
 					temp = cpl::Math::confineTo(temp, 0.0, 1.0);
 				#endif
 				return  bounds.left + temp * boundsWidth;
@@ -517,7 +522,7 @@
 
 				if (nextHigherFreq == lowerFreq || step == 0.0 || !std::isnormal(step))
 				{
-					BreakIfDebugged();
+					CPL_BREAKIFDEBUGGED();
 				}
 
 				if (nextHigherFreq < lowerFreq)
@@ -609,18 +614,21 @@
 				}
 			}
 
-
 		private:
+
 			// containers for results
 			std::vector<double> untrans;
 			std::vector<double> trans;
 			std::vector<MajorDivision> titles;
 			std::vector<MajorDivision> transTitles;
+
 			// the bounds of the window
 			Utility::Bounds<double> bounds;
 			Utility::Bounds<double> view;
+
 			// vars
-			double viewWidth,
+			double 
+				viewWidth,
 				boundsWidth,
 				minSpaceForDivision,
 				spaceForDecade,

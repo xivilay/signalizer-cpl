@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 
 *************************************************************************************/
 
-#ifndef _GUIUTILS_H
-	#define _GUIUTILS_H
+#ifndef CPL_GUIUTILS_H
+	#define CPL_GUIUTILS_H
 
 	#include "Common.h"
 	#include "PlatformSpecific.h"
@@ -71,7 +71,7 @@
 				if (eventListeners.size())
 				{
 					// you must call notifyListeners() in your destructor!
-					BreakIfDebugged();
+					CPL_BREAKIFDEBUGGED();
 					Misc::LogException("A view didn't notify it's listeners upon destruction!");
 				}
 			}
@@ -283,7 +283,7 @@
 
 			inline bool ForceFocusTo(const juce::Component & window)
 			{
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					if (SetFocus((HWND)window.getWindowHandle()))
 						return true;
 				#else
@@ -295,7 +295,7 @@
 			template<typename WindowPtrType>
 				bool SynthesizeMouseClick(WindowPtrType windowHandle, int x, int y)
 				{
-					#ifdef __WINDOWS__
+					#ifdef CPL_WINDOWS
 						#ifndef __SYNTHESISE_MOUSE
 							INPUT input = {};
 							input.type = INPUT_MOUSE;

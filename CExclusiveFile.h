@@ -1,25 +1,25 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
+	cpl - cross-platform library - v. 0.1.0.
 	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 	 
-	 This program is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 3 of the License, or
-	 (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 	 
-	 This program is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 	 
-	 You should have received a copy of the GNU General Public License
-	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	 
-	 See \licenses\ for additional details on licenses associated with this program.
+	See \licenses\ for additional details on licenses associated with this program.
  
- **************************************************************************************
+**************************************************************************************
 
 	file:CExclusiveFile.h
 	
@@ -31,14 +31,14 @@
 		Class is RAII safe (file is closed on destruction).
  
 	options:
-		#define __CEF_USE_CSTDLIB
+		#define CPL_CEF_USE_CSTDLIB
 			causes the header to use the cstdlib, losing all previous properties but provided
 			for compability
 
 *************************************************************************************/
 
-#ifndef _CEXCLUSIVEFILE_H
-	#define _CEXCLUSIVEFILE_H
+#ifndef CPL_CEXCLUSIVEFILE_H
+	#define CPL_CEXCLUSIVEFILE_H
 
 	#include "MacroConstants.h"
 	#include "Utility.h"
@@ -46,13 +46,13 @@
 	#include <string>
 	#include <cstdint>
 
-	#if defined(__CEF_USE_CSTDLIB)
+	#if defined(CPL_CEF_USE_CSTDLIB)
 		#include <cstdio>
 		typedef FILE * FileHandle;
-	#elif defined(__WINDOWS__)
+	#elif defined(CPL_WINDOWS)
 		#include <Windows.h>
 		typedef HANDLE FileHandle;
-	#elif defined(__MAC__)
+	#elif defined(CPL_MAC)
 		#include <unistd.h>
 		#include <fcntl.h>
 		typedef int FileHandle;
@@ -61,7 +61,6 @@
 
 	namespace cpl
 	{
-		
 		class CExclusiveFile
 		: 
 			public Utility::CNoncopyable
@@ -69,13 +68,13 @@
 		public:
 			enum mode : std::uint32_t
 			{
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					readMode = GENERIC_READ,
 					writeMode = GENERIC_WRITE,
 					readWriteMode = readMode | writeMode,
 					append = FILE_APPEND_DATA,
 					clear = 0
-				#elif defined(__MAC__)
+				#elif defined(CPL_MAC)
 					clear = 0,
 					readMode = 2,
 					writeMode = 4,
@@ -109,5 +108,5 @@
 			bool flush();
 			bool close();
 		};
-	} //namespace APE'
+	} 
 #endif

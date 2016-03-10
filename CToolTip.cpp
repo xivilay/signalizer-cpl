@@ -33,15 +33,16 @@
 
 #include "GraphicComponents.h"
 #include "CViews.h"
+
 namespace cpl
 {
 	CToolTipWindow::CToolTipWindow (Component* const parentComp, const int delayMs)
-	: Component ("tooltip"),
-	millisecondsBeforeTipAppears (delayMs),
-	mouseClicks (0),
-	mouseWheelMoves (0),
-	lastHideTime (0),
-	lastComponentUnderMouse (nullptr)
+		: Component ("tooltip")
+		, millisecondsBeforeTipAppears (delayMs)
+		, mouseClicks (0)
+		, mouseWheelMoves (0)
+		, lastHideTime (0)
+		, lastComponentUnderMouse (nullptr)
 	{
 		if (Desktop::getInstance().getMainMouseSource().canHover())
 			startTimer (123);

@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 
 	file:simd.h
 
-		Math and operations on vector types, as well as types encapsulating
-		raw sse types.
+		Math and operations on a unified interface for scalar and vector types, 
+		as well as types encapsulating raw sse types.
 
 *************************************************************************************/
 
@@ -433,7 +433,7 @@
 			// pd
 			inline void storeu(double * in, const v4sd ymm)
 			{
-				_mm256_store_pd(in, ymm);
+				_mm256_storeu_pd(in, ymm);
 			}
 
 			inline void store(double * in, const v4sd ymm)
@@ -470,7 +470,7 @@
 			{
 				*in = out;
 			}
-#ifndef __MSVC__
+#ifndef CPL_MSVC
 			#define _mm256_set_m128i(hi, lo) (_mm256_inserti128_si256(_mm256_castsi128_si256(hi), lo, 1))
 			#define _mm256_set_m128(hi, lo) (_mm256_insertf128_ps(_mm256_castps128_ps256(hi), lo, 1))
 #endif
@@ -491,11 +491,11 @@
 			
 			
 			// alignment-properties must be number-literals STILL in msvc. Grrr
-			#if defined(__MSVC__) && _MSC_VER < 1900
+			#if defined(CPL_MSVC) && _MSC_VER < 1900
 				#pragma message cwarn( "fix alignment of this type.")
 				#define simd_alignment_of(V) __declspec(align(32))
 			#else
-				#define simd_alignment_of(V) __alignas(sizeof(V)) /* hack */
+				#define simd_alignment_of(V) CPL_ALIGNAS(sizeof(V)) /* hack */
 			#endif
 
 			template<typename V>
@@ -509,7 +509,7 @@
 					typedef V emulated_ty;
 				public:
 					
-					#ifndef __MSVC__
+					#ifndef CPL_MSVC
 						Ty & operator [] (unsigned idx) { return c[idx]; }
 					#else
 						operator Ty* () { return c; }

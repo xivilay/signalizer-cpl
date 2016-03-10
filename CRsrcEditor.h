@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,16 +26,17 @@
 
 *************************************************************************************/
 
-#ifndef CRSRCEDITOR_H
-	#define CRSRCEDITOR_H
+#ifndef CPL_CRSRCEDITOR_H
+	#define CPL_CRSRCEDITOR_H
 
 	#include "Common.h"
 	#include <cstdint>
 	#include <sstream>
 
-	#ifndef __MAC__
+	#ifndef CPL_MAC
 		#warning "cpl: osx .rsrc resource editor included for non-mac targets"
 	#endif
+
 	#ifndef __LITTLE_ENDIAN
 	#define __LITTLE_ENDIAN 1
 	#endif

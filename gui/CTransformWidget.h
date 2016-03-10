@@ -2,7 +2,7 @@
  
 	cpl - cross-platform library - v. 0.1.0.
  
-	Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@
  
 *************************************************************************************/
 
-#ifndef _CTRANSFORMWIDGET_H
-	#define _CTRANSFORMWIDGET_H
+#ifndef CPL_CTRANSFORMWIDGET_H
+	#define CPL_CTRANSFORMWIDGET_H
 	#include "ControlBase.h"
 	#include "../Graphics.h"
 

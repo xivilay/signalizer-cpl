@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -381,7 +381,7 @@
 				{
 
 					auto newp = _mm_adds_epu8(_mm_set1_epi32(pixel.p), _mm_set1_epi32(other.pixel.p));
-#ifdef __MSVC__
+#ifdef CPL_MSVC
 					return newp.m128i_u32[0];
 #else
 					return newp[0];
@@ -398,7 +398,7 @@
 
 					auto newp = _mm_adds_epu8(_mm_set1_epi32(pixel.p), _mm_set1_epi32(other.pixel.p));
 
-#ifdef __MSVC__
+#ifdef CPL_MSVC
 					pixel.p = newp.m128i_u32[0];
 #else
 					pixel.p = newp[0];

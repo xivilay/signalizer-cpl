@@ -1,29 +1,29 @@
 /*************************************************************************************
  
- cpl - cross-platform library - v. 0.1.0.
+	cpl - cross-platform library - v. 0.1.0.
  
- Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
  
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
  
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
- See \licenses\ for additional details on licenses associated with this program.
+	See \licenses\ for additional details on licenses associated with this program.
  
  **************************************************************************************
  
- file:ComponentContainers.cpp
+	file:CColourControl.cpp
  
-	Source code for componentcontainers.h
+		Source code for CColourControl.h
  
  *************************************************************************************/
 
@@ -238,7 +238,7 @@ namespace cpl
 		juce::PixelARGB toPixelARGB() { return juce::PixelARGB(c.a, c.r, c.g, c.b); }
 		void fromPixelARGB(juce::PixelARGB p) { c.b = p.getBlue(); c.g = p.getGreen(); c. r = p.getRed(); c.a = p.getAlpha(); }
 		ARGBPixel() : c() {}
-		#ifdef __MSVC__
+		#ifdef CPL_MSVC
 			ARGBPixel(std::uint8_t red, std::uint8_t green, std::uint8_t blue) 
 			{
 				c.a = 0;

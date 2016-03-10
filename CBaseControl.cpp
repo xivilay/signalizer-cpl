@@ -1,10 +1,8 @@
 /*************************************************************************************
 
-	Audio Programming Environment VST. 
-		
-		VST is a trademark of Steinberg Media Technologies GmbH.
+	cpl - cross-platform library - v. 0.1.0.
 
-    Copyright (C) 2013 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,9 +21,9 @@
 
 **************************************************************************************
 
-	file:Misc.cpp
-		
-		Implementation of Misc.h
+	file:CBaseControl.cpp
+
+		Implementation of some stuff, avoiding cyclic dependencies
 
 *************************************************************************************/
 #include "CBaseControl.h"
@@ -33,7 +31,6 @@
 
 namespace cpl
 {
-
 	std::unique_ptr<CCtrlEditSpace> CBaseControl::bCreateEditSpace()
 	{
 		if (isEditSpacesAllowed)
@@ -41,14 +38,4 @@ namespace cpl
 		else
 			return nullptr;
 	}
-	/*CSerializer::Archiver & operator << (CSerializer::Archiver & left, CBaseControl * right)
-	{
-		right->save(left, left.getMasterVersion());
-		return left;
-	}
-	CSerializer::Builder & operator >> (CSerializer::Builder & left, CBaseControl * right)
-	{
-		right->load(left, left.getMasterVersion());
-		return left;
-	}*/
 };

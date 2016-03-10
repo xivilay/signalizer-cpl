@@ -2,7 +2,7 @@
  
 	cpl - cross-platform library - v. 0.1.0.
  
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -30,12 +30,12 @@
 #ifndef _COPENGLIMAGE_H
 	#define _COPENGLIMAGE_H
 	#include "../common.h"
-	#include "OpenGLEngine.h"
+	#include "OpenGLRendering.h"
 	#include "../Mathext.h"
 
 	namespace cpl
 	{
-		namespace OpenGLEngine
+		namespace OpenGLRendering
 		{
 			class COpenGLImage
 			{
@@ -177,12 +177,12 @@
 				{
 					if (fillColour.getPixelARGB().getInRGBAMemoryOrder() == 0) // background colour is black.
 					{
-						juce::Image newContents(juceFormat, textureWidth, textureHeight, true);
+						juce::Image newContents(juceFormat, static_cast<int>(textureWidth), static_cast<int>(textureHeight), true);
 						loadImageInternal(newContents);
 					}
 					else
 					{
-						juce::Image newContents(juceFormat, textureWidth, textureHeight, false);
+						juce::Image newContents(juceFormat, static_cast<int>(textureWidth), static_cast<int>(textureHeight), false);
 						{
 							juce::Graphics g(newContents);
 							g.fillAll(fillColour);
@@ -262,13 +262,13 @@
 					float sourceY = (height - sourceHeight) * 0.5f;
 					float destY = (height - destHeight) * 0.5f;
 
-					juce::Image upload(juceFormat, width, height, false);
+					juce::Image upload(juceFormat, static_cast<int>(width), static_cast<int>(height), false);
 					{
 						juce::Graphics g(upload);
 						g.fillAll(fillColour);
 						g.drawImage(currentContents, 
-							0, destY, width, destHeight,
-							0, sourceY, width, sourceHeight,
+							0, static_cast<int>(destY), static_cast<int>(width), static_cast<int>(destHeight),
+							0, static_cast<int>(sourceY), static_cast<int>(width), static_cast<int>(sourceHeight),
 							false);
 					}
 
@@ -300,7 +300,7 @@
 
 
 					auto r = [](double in) { return cpl::Math::round<int, double>(in); };
-					juce::Image upload(juceFormat, width, height, false);
+					juce::Image upload(juceFormat, static_cast<int>(width), static_cast<int>(height), false);
 					{
 						juce::Graphics g(upload);
 						g.setImageResamplingQuality(juce::Graphics::ResamplingQuality::mediumResamplingQuality);
@@ -374,7 +374,7 @@
 						CPL_DEBUGCHECKGL();
 
 						glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0,
-							1, height, format, GL_UNSIGNED_BYTE, &pixels[0]);
+							1, static_cast<int>(height), format, GL_UNSIGNED_BYTE, &pixels[0]);
 
 						CPL_DEBUGCHECKGL();
 
@@ -449,24 +449,24 @@
 					if (imgWidth == width && imgHeight == height)
 					{
 						juce::Image::BitmapData bmp(oldContents, juce::Image::BitmapData::readOnly);
-						transferToOpenGL(width, height, bmp.data, oglFormat);
+						transferToOpenGL(static_cast<int>(width), static_cast<int>(height), bmp.data, oglFormat);
 					}
 					else
 					{
 						// needs to be rescaled.
-						juce::Image rescaled(juceFormat, width, height, false);
+						juce::Image rescaled(juceFormat, static_cast<int>(width), static_cast<int>(height), false);
 						{
 							juce::Graphics g(rescaled);
 							g.setOpacity(1.0f);
 							g.fillAll(fillColour);
 							g.setImageResamplingQuality(juce::Graphics::mediumResamplingQuality);
 							g.drawImage(oldContents,
-								0, 0, width, height,
-								0, 0, imgWidth, imgHeight,
+								0, 0, static_cast<int>(width), static_cast<int>(height),
+								0, 0, static_cast<int>(imgWidth), static_cast<int>(imgHeight),
 								false);
 						}
 						juce::Image::BitmapData bmp(rescaled, juce::Image::BitmapData::readOnly);
-						transferToOpenGL(width, height, bmp.data, oglFormat);
+						transferToOpenGL(static_cast<int>(width), static_cast<int>(height), bmp.data, oglFormat);
 					}
 				}
 
@@ -478,7 +478,7 @@
 
 					bind();
 
-					juce::Image offloaded(juceFormat, textureWidth, textureHeight, false);
+					juce::Image offloaded(juceFormat, static_cast<int>(textureWidth), static_cast<int>(textureHeight), false);
 					{
 						juce::Image::BitmapData data(offloaded, juce::Image::BitmapData::readWrite);
 
@@ -495,15 +495,15 @@
 					// chop off irrelvant sections.
 					// can use a memory copy operation here instead, but this is fail safe.
 					// can also directly assign if width == actualWidth and height == actualHeight
-					currentContents = juce::Image(juceFormat, width, height, false);
+					currentContents = juce::Image(juceFormat, static_cast<int>(width), static_cast<int>(height), false);
 					{
 #pragma message cwarn("Needs to take the circular position into account, such that images doesn't wrap around. This requires this class to know about the circular position, though.")
 						juce::Graphics g(currentContents);
 						g.setOpacity(1.0f);
 						g.fillAll(fillColour);
 						g.drawImage(offloaded,
-							0, 0, width, height,
-							0, 0, width, height,
+							0, 0, static_cast<int>(width), static_cast<int>(height),
+							0, 0, static_cast<int>(width), static_cast<int>(height),
 							false);
 					}
 					return true;
@@ -549,7 +549,7 @@
 						}
 
 
-						glTexSubImage2D(GL_TEXTURE_2D, 0, 0, topLeft ? (height - h) : 0, w, h,
+						glTexSubImage2D(GL_TEXTURE_2D, 0, 0, topLeft ? static_cast<int>(height - h) : 0, w, h,
 							type, GL_UNSIGNED_BYTE, pixels);
 						CPL_DEBUGCHECKGL();
 					}

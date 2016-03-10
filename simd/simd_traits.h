@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,10 +21,9 @@
 
 **************************************************************************************
 
-	file:simd.h
+	file:simd_traits.h
 
-		Math and operations on vector types, as well as types encapsulating
-		raw sse types.
+		Traits of simd types
 
 *************************************************************************************/
 
@@ -221,7 +220,7 @@
 				non-member overloads of the operators.
 			*/
 			
-			#ifdef __MSVC__
+			#ifdef CPL_MSVC
 				#define AddSimdOperatorps(name, op, type, prefix) \
 					inline type operator op (const type left, const type right) { return prefix ## _ ## name ## _ps(left, right); }
 

@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -80,14 +80,14 @@
 					/*
 						This is not really crossplatform, but I'm working on it!
 					*/
-					#ifdef __MSVC__
+					#ifdef CPL_MSVC
 						bool exception_caught = false;
 
 						CSystemException::eStorage exceptionData;
 
 						__try {
 							
-						//	BreakIfDebugged();
+						//	CPL_BREAKIFDEBUGGED();
 							function();
 						}
 						__except (CProtected::structuredExceptionHandler(GetExceptionCode(), exceptionData, GetExceptionInformation()))
@@ -99,7 +99,7 @@
 							throw CSystemException(exceptionData);
 					#else
 						// trigger int 3
-						//BreakIfDebugged();
+						//CPL_BREAKIFDEBUGGED();
 						// set the jump in case a signal gets raised
 						if(sigsetjmp(threadData.threadJumpBuffer, 1))
 						{
@@ -126,7 +126,7 @@
 					 
 						try {
 							// <-- breakpoint disables SIGBUS
-							BreakIfDebugged();
+							CPL_BREAKIFDEBUGGED();
 							function();
 						}
 						catch(const CSystemException & e) {
@@ -137,7 +137,7 @@
 						catch(...)
 						{
 							Misc::MsgBox("Unknown exception thrown, breakpoint is triggered afterwards");
-							BreakIfDebugged();
+							CPL_BREAKIFDEBUGGED();
 						
 						}
 					 */
@@ -215,7 +215,7 @@
 
 				enum status : XWORD {
 					nullptr_from_plugin = 1,
-					#ifdef __WINDOWS__
+					#ifdef CPL_WINDOWS
 						// this is not good: these are not crossplatform constants.
 						access_violation = EXCEPTION_ACCESS_VIOLATION,
 						intdiv_zero = EXCEPTION_INT_DIVIDE_BY_ZERO,
@@ -225,7 +225,7 @@
 						finexact = EXCEPTION_FLT_INEXACT_RESULT,
 						foverflow = EXCEPTION_FLT_OVERFLOW,
 						funderflow = EXCEPTION_FLT_UNDERFLOW
-					#elif defined(__MAC__)
+					#elif defined(CPL_MAC)
 						access_violation = SIGSEGV,
 						intdiv_zero,
 						fdiv_zero,
@@ -267,7 +267,7 @@
 			
 			 static struct StaticData
 			 {
-				#ifndef __WINDOWS__
+				#ifndef CPL_WINDOWS
 					std::map<int, struct sigaction> oldHandlers;
 					struct sigaction newHandler;
 					volatile int signalReferenceCount;
@@ -277,13 +277,13 @@
 			 } staticData;
 			 
 			 
-			static __thread_local struct ThreadData
+			static CPL_THREAD_LOCAL struct ThreadData
 			{
 				/// <summary>
 				/// Thread local set on entry and exit of protected code stack frames.
 				/// </summary>
 				bool isInStack;
-				#ifndef __MSVC__
+				#ifndef CPL_MSVC
 					sigjmp_buf threadJumpBuffer;
 				CSystemException::eStorage currentExceptionData;
 				#endif

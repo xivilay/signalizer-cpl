@@ -2,7 +2,7 @@
  
 	 cpl - cross-platform library - v. 0.3.0.
 	 
-	 Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	 Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 	 
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@
 
 *************************************************************************************/
 
-#ifndef _TYPES_H
-	#define _TYPES_H
+#ifndef CPL_TYPES_H
+	#define CPL_TYPES_H
 
 	#include <type_traits>
 	#include <cstdint>
@@ -67,7 +67,7 @@
 			// sse-vector of 32/16/8/4 ints
 			typedef __m256i v256si;
 
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				typedef DWORD OSError;
 			#else
 				typedef decltype(errno) OSError;

@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -167,13 +167,14 @@
 
 			// does a integer and using floating point lines; usable for non-avx512 modes
 			template<typename V>
-			inline typename cpl::simd::to_integer<V>::type
-			vfloat_and(typename cpl::simd::to_integer<V>::type a, typename cpl::simd::to_integer<V>::type b)
-			{
-				return reinterpret_vector_cast<typename cpl::simd::to_integer<V>::type>(
-																						vand(reinterpret_vector_cast<V>(a), reinterpret_vector_cast<V>(b))
-																						);
-			}
+				inline typename cpl::simd::to_integer<V>::type
+					vfloat_and(typename cpl::simd::to_integer<V>::type a, typename cpl::simd::to_integer<V>::type b)
+					{
+						return reinterpret_vector_cast<typename cpl::simd::to_integer<V>::type>
+						(
+							vand(reinterpret_vector_cast<V>(a), reinterpret_vector_cast<V>(b))
+						);
+					}
 			
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 

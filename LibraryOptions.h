@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -35,10 +35,10 @@
  
 *************************************************************************************/
 
-#ifndef _LIBRARYOPTIONS_H
-	#define _LIBRARYOPTIONS_H
+#ifndef CPL_LIBRARYOPTIONS_H
+	#define CPL_LIBRARYOPTIONS_H
 	#include "MacroConstants.h"
-	#ifdef CPL_JUCE
+	#if defined(CPL_JUCE) && defined(_DEBUG)
 		//#define DONT_SET_USING_JUCE_NAMESPACE 1
 		//#define TYPEFACE_BITMAP_RENDERING
 		//#define CPL_HINT_FONT

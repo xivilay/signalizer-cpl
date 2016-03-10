@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -29,16 +29,17 @@
 
 *************************************************************************************/
 
-#ifndef _COMMON_H
-	#define _COMMON_H
+#ifndef CPL_COMMON_H
+	#define CPL_COMMON_H
 
 	#include <string>
+	#include <cstdint>
 
 	struct ProgramInfo
 	{
 		std::string name; // the name of the program
 		std::string version; // a version string of the program
-		long long int versionInteger; // an integer version literal, that follows compare semantics
+		std::int64_t versionInteger; // an integer version literal, that follows compare semantics
 		std::string author; // your (company's) name
 		std::string programAbbr; // abbreviation of the program's name for small spaces (and file extensions)
 		// cpl has a generic tree structure, it looks for in the current working directory.
@@ -56,6 +57,7 @@
 	}
 
 	#include "LibraryOptions.h"
+
 	#ifdef CPL_JUCE
 		#include "../JuceLibraryCode/JuceHeader.h"
 	#endif

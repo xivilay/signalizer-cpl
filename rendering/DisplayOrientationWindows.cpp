@@ -8,7 +8,7 @@
 //
 #include "../MacroConstants.h"
 
-#ifdef __WINDOWS__ 
+#ifdef CPL_WINDOWS 
 	#include <windows.h>
 
 	enum ORIENTATION

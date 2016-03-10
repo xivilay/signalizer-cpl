@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -29,8 +29,9 @@
 *************************************************************************************/
 
 
-#ifndef _SYSSTATS_H
-	#define _SYSSTATS_H
+#ifndef CPL_SYSSTATS_H
+	#define CPL_SYSSTATS_H
+
 	#include "MacroConstants.h"
 	#include "InstructionSet.h"
 
@@ -86,7 +87,7 @@
 					#ifdef __CPP11__
 						return std::thread::hardware_concurrency();
 					#else
-						#ifdef __WINDOWS__
+						#ifdef CPL_WINDOWS
 							SYSTEM_INFO sysinfo;
 							GetSystemInfo( &sysinfo );
 							return sysinfo.dwNumberOfProcessors;
@@ -147,7 +148,7 @@
 						narchs |= Archs::MMX;
 
 
-					#ifdef __WINDOWS__
+					#ifdef CPL_WINDOWS
 						HKEY hKey;
 						DWORD dwMHz;
 						DWORD dwSize = sizeof(DWORD);
@@ -170,8 +171,6 @@
 				double frequency;
 
 			};
-
-
 
 		};
 	};

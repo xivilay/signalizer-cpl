@@ -2,7 +2,7 @@
  
 	cpl - cross-platform library - v. 0.1.0.
  
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,20 +21,20 @@
  
  **************************************************************************************
  
-	file:SubpixelRendering.h
+	file:OpenGLRasterizers.h
  
-		Utilities and types needed for rendering subpixel graphics.
+		Some rasterizer primitives
 
  *************************************************************************************/
 
-#ifndef _OPENGLRASTERIZERS_H
-	#define _OPENGLRASTERIZERS_H
+#ifndef CPL_OPENGLRASTERIZERS_H
+	#define CPL_OPENGLRASTERIZERS_H
 	#include "../common.h"
-	#include "OpenGLEngine.h"
+	#include "OpenGLRendering.h"
 
 	namespace cpl
 	{
-		namespace OpenGLEngine
+		namespace OpenGLRendering
 		{
 
 			class ImageDrawer
@@ -50,7 +50,7 @@
 					setColour(juce::Colours::white);
 				}
 
-				inline void drawAt(OpenGLEngine::Vertex x1, OpenGLEngine::Vertex y1, OpenGLEngine::Vertex x2, OpenGLEngine::Vertex y2)
+				inline void drawAt(OpenGLRendering::Vertex x1, OpenGLRendering::Vertex y1, OpenGLRendering::Vertex x2, OpenGLRendering::Vertex y2)
 				{
 					glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
 					glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 1.0f, 0.0f);
@@ -63,7 +63,7 @@
 					glColor4f(colour.getFloatRed(), colour.getFloatGreen(), colour.getFloatBlue(), colour.getFloatAlpha());
 				}
 
-				inline void drawAt(juce::Rectangle<OpenGLEngine::Vertex> area)
+				inline void drawAt(juce::Rectangle<OpenGLRendering::Vertex> area)
 				{
 					glTexCoord2f(0, 0); glVertex3f(area.getX(), area.getY(), 0);
 					glTexCoord2f(0, 1); glVertex3f(area.getX(), area.getY() + area.getHeight(), 0);
@@ -94,7 +94,7 @@
 						glBegin(primitive);
 					}
 
-					inline void addVertex(OpenGLEngine::Vertex x, OpenGLEngine::Vertex y, OpenGLEngine::Vertex z)
+					inline void addVertex(OpenGLRendering::Vertex x, OpenGLRendering::Vertex y, OpenGLRendering::Vertex z)
 					{
 						glVertex3f(x, y, z);
 					}
@@ -123,7 +123,7 @@
 
 				protected:
 					std::size_t vertexPointer;
-					//__alignas(32) Vertex vertices[vertexBufferSize * dimensions];
+					//CPL_ALIGNAS(32) Vertex vertices[vertexBufferSize * dimensions];
 				};
 
 
@@ -201,7 +201,7 @@
 						glBegin(GL_LINE_STRIP);
 					}
 
-					inline void addVertex(OpenGLEngine::Vertex x, OpenGLEngine::Vertex y, OpenGLEngine::Vertex z)
+					inline void addVertex(OpenGLRendering::Vertex x, OpenGLRendering::Vertex y, OpenGLRendering::Vertex z)
 					{
 						glVertex3f(x, y, z);
 					}
@@ -220,7 +220,7 @@
 
 				protected:
 					std::size_t vertexPointer;
-					//__alignas(32) Vertex vertices[vertexBufferSize * dimensions];
+					//CPL_ALIGNAS(32) Vertex vertices[vertexBufferSize * dimensions];
 				};
 
 

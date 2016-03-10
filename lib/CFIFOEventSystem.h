@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,15 +21,9 @@
 
 **************************************************************************************
 
-	file:CLIFOStream.h
+	file:CFIFOEventSystem.h
 		
-		A class buffer that supports efficient wrap-around and iterators, acting like a closed
-		ring.
-		This class is NOT thread-safe, it is your job to protect it.
-		It is not a FIFO queue, although it supports reading the buffer FIFO-style.
-		However, per default, it acts like a LIFO - the produer advances the ring, while the consumer doesn't.
-		TODO: refactor dual memory system into a templated parameter allocator class,
-		and refactor proxyview and writer into a single class controlled by const overloads.
+			A wait free SPSC message system, delivering messages asynchronously
 
 *************************************************************************************/
 
@@ -56,8 +50,8 @@
 				virtual ~AsyncEventListener() {};
 			};
 
-			CFIFOEventSystem(AsyncEventListener l, std::size_t queueSize = 1)
-				: queue(queueSize), listener(l)
+			CFIFOEventSystem(AsyncEventListener & l, std::size_t queueSize = 1)
+				: queue(queueSize), listener(&l)
 			{
 				if (!l)
 				{
@@ -87,7 +81,7 @@
 				else
 				{
 					// this probably requires attention: The async thread either wasn't created or it has crashed
-					BreakIfDebugged();
+					CPL_BREAKIFDEBUGGED();
 				}
 			}
 

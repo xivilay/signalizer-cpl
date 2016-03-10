@@ -15,22 +15,19 @@
 #ifndef DUSTFFT_H
 #define DUSTFFT_H
 
-namespace cpl
+namespace signaldust
 {
-	namespace signaldust
-	{
-		/* Main interface:
-		Use SSE2 packed processing for 16-byte aligned buffers (faster).
-		For unaligned buffers, falls back to slower scalar code.
-		*/
-		void DustFFT_fwdD(double * buf, unsigned n);
-		void DustFFT_revD(double * buf, unsigned n);
+	/* Main interface:
+	Use SSE2 packed processing for 16-byte aligned buffers (faster).
+	For unaligned buffers, falls back to slower scalar code.
+	*/
+	void DustFFT_fwdD(double * buf, unsigned n);
+	void DustFFT_revD(double * buf, unsigned n);
 
-		/* These assume 16 bytes alignment without checking anything.
-		Use these if you want to crash (for debug/testing) on unaligned buffers.
-		*/
-		void DustFFT_fwdDa(double * buf, unsigned n);
-		void DustFFT_revDa(double * buf, unsigned n);
-	};
+	/* These assume 16 bytes alignment without checking anything.
+	Use these if you want to crash (for debug/testing) on unaligned buffers.
+	*/
+	void DustFFT_fwdDa(double * buf, unsigned n);
+	void DustFFT_revDa(double * buf, unsigned n);
 };
 #endif /* DUSTFFT_H */

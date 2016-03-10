@@ -2,7 +2,7 @@
  
 	 cpl - cross-platform library - v. 0.1.0.
  
-	 Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	 Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by
@@ -32,12 +32,13 @@
 #include "../GUIUtils.h"
 
 
-#ifdef __WINDOWS__
+#ifdef CPL_WINDOWS
 	#include "DisplayOrientationWindows.cpp"
-#elif defined(__MAC__)
+#elif defined(CPL_MAC)
 	#include <CoreGraphics/CGDisplayConfiguration.h>
+#else
 	// add linux, osx, android, ios here.
-	//#error "Update displayorientations to your current platform!"
+	#error "Update displayorientations to your current platform!"
 #endif
 #include "../PlatformSpecific.h"
 #include "../MacSupport.h"
@@ -102,6 +103,7 @@ namespace cpl
 
 		CDisplaySetup & CDisplaySetup::instance()
 		{
+			// TODO: threadsafe?
 			if (internalInstance == nullptr)
 			{
 				internalInstance = new CDisplaySetup();
@@ -127,7 +129,7 @@ namespace cpl
 			}
 		}
 
-		#ifdef __WINDOWS__
+		#ifdef CPL_WINDOWS
 
 			LRESULT CALLBACK MessageHook(int code, WPARAM wParam, LPARAM lParam)
 			{
@@ -159,7 +161,7 @@ namespace cpl
 				
 				return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook.load(std::memory_order_acquire), code, wParam, lParam);
 			}
-		#elif defined(__MAC__)
+		#elif defined(CPL_MAC)
 		
 			void MessageHook( CGDirectDisplayID display, CGDisplayChangeSummaryFlags flags, void *userInfo )
 			{
@@ -182,23 +184,23 @@ namespace cpl
 
 		void CDisplaySetup::installMessageHook()
 		{
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				systemHook.hook = SetWindowsHookEx(
 					WH_CALLWNDPROCRET,
 					MessageHook,
 					GetModuleHandle(0),
 					GetCurrentThreadId()
 				);
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				CGDisplayRegisterReconfigurationCallback(&MessageHook, nullptr);
 			#endif
 		}
 
 		void CDisplaySetup::removeMessageHook()
 		{
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				UnhookWindowsHookEx((HHOOK)systemHook.hook.load(std::memory_order_acquire));
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				CGDisplayRemoveReconfigurationCallback(&MessageHook, nullptr);
 			#endif
 		}
@@ -210,7 +212,7 @@ namespace cpl
 			bool systemUsesSubpixelSmoothing = false;
 			double finalGamma = defaultFontGamma;
 			double rotation;
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				BOOL systemSmoothing = FALSE;
 				// antialiased text set?
 				if (SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &systemSmoothing, 0)
@@ -243,7 +245,7 @@ namespace cpl
 				auto displayOrigin = display.userArea.getPosition();
 				// default to RGB...
 				LCDMatrixOrientation displayOrientation = LCDMatrixOrientation::RGB;
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					UINT systemMatrixOrder = 0;
 					if (SystemParametersInfo(SPI_GETFONTSMOOTHINGORIENTATION, 0, &systemMatrixOrder, 0))
 					{
@@ -262,7 +264,7 @@ namespace cpl
 						};
 					}
 				#endif
-				#ifndef __MAC__
+				#ifndef CPL_MAC
 					if (GetScreenOrientation({ displayOrigin.getX(), displayOrigin.getY() }, rotation))
 					{
 						currentMonitorInfo.screenOrientation = RadsToOrientation(rotation);

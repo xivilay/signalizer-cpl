@@ -1,31 +1,31 @@
 /*************************************************************************************
  
- cpl - cross-platform library - v. 0.1.0.
+	cpl - cross-platform library - v. 0.1.0.
  
- Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
  
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
  
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
- See \licenses\ for additional details on licenses associated with this program.
+	See \licenses\ for additional details on licenses associated with this program.
  
- **************************************************************************************
+**************************************************************************************
  
- file:ComponentContainers.cpp
+	file:CDSPWindowWidget.cpp
  
-	Source code for componentcontainers.h
+		Source code for CDSPWindowWidget.h
  
- *************************************************************************************/
+*************************************************************************************/
 
 #include "CDSPWindowWidget.h"
 #include "../dsp/DSPWindows.h"
@@ -141,7 +141,7 @@ namespace cpl
 		for (std::size_t n = 1; n < ON; ++n)
 		{
 			// interpolate window value
-			double y2 = dsp::linearFilter<double>(window.data(), window.size(), (double)n / oversamplingFactor);
+			double y2 = dsp::linearFilter<double>(window.data(), static_cast<Types::fsint_t>(window.size()), (double)n / oversamplingFactor);
 			// normalize to [-1, 1]
 			y2 = Math::UnityScale::Inv::linear(y2, minW, maxW);
 			// scale to graphics size

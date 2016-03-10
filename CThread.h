@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -32,9 +32,9 @@
 *************************************************************************************/
 
 
-#ifndef _CTHREAD_H
+#ifndef CPL_CTHREAD_H
 
-	#define _CTHREAD_H
+	#define CPL_CTHREAD_H
 
 	#include "PlatformSpecific.h"
 	#define __threadh_win_call
@@ -42,7 +42,7 @@
 		#include <thread>
 		typedef std::thread * Thread_t;
 		typedef std::thread::native_handle_type ThreadHandle;
-	#elif defined(__WINDOWS__)
+	#elif defined(CPL_WINDOWS)
 		typedef HANDLE ThreadHandle;
 		typedef ThreadHandle Thread_t;
 		#undef __threadh_win_call
@@ -105,7 +105,7 @@
 					else
 						result = -2;
 					retval = nullptr;
-				#elif defined(__WINDOWS__)
+				#elif defined(CPL_WINDOWS)
 					auto fret = WaitForSingleObject(thread, INFINITE);
 					if (!fret) {
 						result = GetLastError();
@@ -130,7 +130,7 @@
 					if (thread->joinable())
 						thread->detach();
 						delete thread;
-					#elif defined(__WINDOWS__)
+					#elif defined(CPL_WINDOWS)
 						CloseHandle(thread);
 					#else
 						pthread_detach(thread);
@@ -147,7 +147,7 @@
 				int result = 0;
 				#ifdef __CPP11__
 					thread = new std::thread(cpp11_target, func_args);
-				#elif defined(__WINDOWS__)
+				#elif defined(CPL_WINDOWS)
 					thread = CreateThread(NULL, NULL, NULL,
 										win_target,
 										reinterpret_cast<void*>(func_args),
@@ -176,7 +176,7 @@
 			}
 			static void * posix_target(void * imp)
 			{
-				#ifndef __WINDOWS__
+				#ifndef CPL_WINDOWS
 					args * func = reinterpret_cast<args *>(imp);
 					auto ret = func->addr(func->arg);
 					delete func;

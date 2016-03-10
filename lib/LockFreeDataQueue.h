@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,9 +21,11 @@
 
 **************************************************************************************
 
-	file:AlignedAllocator.h
-	
-		An allocator for stl containers, that allocates N-aligned memory.
+	file:LockFreeDataQueue.h
+
+		A lock free data queue (SPSC), meaning it stores complete T's (not pointers).
+		The queue has ownership of the elements, so it's good for objects that are complex
+		to copy.
 
 *************************************************************************************/
 

@@ -1,38 +1,36 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
-	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
-	 
-	 This program is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 3 of the License, or
-	 (at your option) any later version.
-	 
-	 This program is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
-	 
-	 You should have received a copy of the GNU General Public License
-	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	 
-	 See \licenses\ for additional details on licenses associated with this program.
- 
- **************************************************************************************
+	cpl - cross-platform library - v. 0.1.0.
 
-	file:CMutex.h
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
+	 
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	 
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	 
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	 
+	See \licenses\ for additional details on licenses associated with this program.
+ 
+**************************************************************************************
+
+	file:CDBMeterGraph.h
 		
-		Provides an interface for easily locking objects through RAII so long as
-		they publically derive from CMutex::Lockable.
-		Uses an special spinlock that yields the thread instead of busy-waiting.
-		time-outs after a specified interval, and asks the user what to do, as well
-		as providing debugger breakpoints in case of locks.
+		Provides functionality for automatically computing decibel divisions in a view,
+		with granularity based upon pixel length.
 
 *************************************************************************************/
 
-#ifndef _CDBMETER_H
-	#define _CDBMETER_H
+#ifndef CPL_CDBMETERGRAPH_H
+	#define CPL_CDBMETERGRAPH_H
+
 	#include <vector>
 	#include "mathext.h"
 	#include "Utility.h"

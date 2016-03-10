@@ -34,8 +34,8 @@
 
 *************************************************************************************/
 
-#ifndef CTOOLTIP_H
-	#define CTOOLTIP_H
+#ifndef CPL_CTOOLTIP_H
+	#define CPL_CTOOLTIP_H
 	namespace cpl
 	{
 		using namespace juce;

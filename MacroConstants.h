@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -29,14 +29,13 @@
 
 *************************************************************************************/
 
-#ifndef _MACROCONSTANTS_H
-	#define _MACROCONSTANTS_H
+#ifndef CPL_MACROCONSTANTS_H
+	#define CPL_MACROCONSTANTS_H
 
 	#include <cstdint>
 
-	#define _CONSOLE_CLEAR_HISTORY
-	#define __xstring(x) #x
-	#define __tostring(x) __xstring(x)
+	#define CPL__xstring(x) #x
+	#define CPL__tostring(x) CPL__xstring(x)
 
 	#ifdef JUCE_APP_VERSION
 		#define CPL_JUCE
@@ -44,44 +43,44 @@
 
 	#if defined(_WIN64) || defined(__x86_64__)
 		typedef std::uint64_t XWORD;
-		#define __M_64BIT_ 1
-		#define _ARCH_STRING "64-bit"
+		#define CPL_M_64BIT_ 1
+		#define CPL_ARCH_STRING "64-bit"
 	#else
 		#define __M_32BIT_
 		typedef std::uint32_t XWORD;
-		#define _ARCH_STRING "32-bit"
+		#define CPL_ARCH_STRING "32-bit"
 	#endif
 
 	#if defined(_WIN32) || defined (_WIN64)
 
-		#define __WINDOWS__
-		#define _PROG_EXTENSION ".dll"
-		#define DIR_SEP '\\'
+		#define CPL_WINDOWS
+		#define CPL_PROG_EXTENSION ".dll"
+		#define CPL_DIR_SEP '\\'
 	#elif defined (__MACH__) && (__APPLE__)
-		#define DIR_SEP '/'
-		#define __MAC__
-		#define __UNIXC__
+		#define CPL_DIR_SEP '/'
+		#define CPL_MAC
+		#define CPL_UNIXC
 		#ifdef APE_JUCE
-			#define _PROG_EXTENSION ".component"
+			#define CPL_PROG_EXTENSION ".component"
 		#else
-			#define _PROG_EXTENSION ".vst"
+			#define CPL_PROG_EXTENSION ".vst"
 		#endif
 	#else
-		#define __UNIXC__
+		#define CPL_UNIXC
 	#endif
 	#ifdef _MSC_VER
 
 	#else
 
     #endif
-    //#define cwarn(text) message("[" __FILE__ "] (" __tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
+    //#define cwarn(text) message("[" __FILE__ "] (" CPL__tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
 
 	// an 'operator' that retrieves the unqualified type of the expression x
 	// useful when you want to create a lvalue-type from any expression 
 	#define unq_typeof(x) typename std::remove_cv<typename std::remove_reference<decltype(x)>::type>::type
 	#define val_typeof(x) std::remove_cv<typename std::remove_reference<decltype(x)>::type>::type
-	#if defined(__WINDOWS__) || defined(__MAC__)
-		#define __INTEL_ASSEMBLY_
+	#if defined(CPL_WINDOWS) || defined(CPL_MAC)
+		#define CPL_INTEL_ASSEMBLY
 		// gcc or msvc assembly syntax?
 		#ifdef _MSC_VER
 			#define DBG_BREAK() DebugBreak();
@@ -95,7 +94,7 @@
 	#define CPL_NOOP while(false){}
 
 	#if defined(_WIN32) || defined (_WIN64)
-		#define isDebugged() !!IsDebuggerPresent()
+		#define CPL_ISDEBUGGED() !!IsDebuggerPresent()
 		#define CPL_DEBUGOUT(x) OutputDebugStringA(x)
 	#else
 		#define CPL_DEBUGOUT(x) fputs(x, stderr)
@@ -107,17 +106,14 @@
 				bool IsBeingDebugged();
 			};
 		};
-		#define isDebugged() cpl::Misc::IsBeingDebugged()
+		#define CPL_ISDEBUGGED() cpl::Misc::IsBeingDebugged()
 		#define debug_out(x) (void*) 0
 	#endif
-	// intrinsic only to capi.cpp
-	#define CAPI_SANITY_CHECK() \
-		if(!iface || !iface->engine) \
-			throw CState::CSystemException(CState::CSystemException::status::nullptr_from_plugin, true);
-	#ifndef _DEBUG0
-		#define BreakIfDebugged() if(isDebugged()) DBG_BREAK()
+
+	#ifndef _DEBUG
+		#define CPL_BREAKIFDEBUGGED() if(CPL_ISDEBUGGED()) DBG_BREAK()
 	#else
-		#define BreakIfDebugged() (void *)0
+		#define CPL_BREAKIFDEBUGGED() (void *)0
 	#endif
 
 	#ifdef _DEBUG
@@ -130,43 +126,15 @@
 		On x64 windows, tcc emits wrong calling convention for floating point functions.
 		We circumvent this using a hack.
 	*/
-	#if defined(__WINDOWS__) && defined(__M_64BIT_)
+	#if defined(CPL_WINDOWS) && defined(CPL_M_64BIT_)
 		#define APE_CHECK_FOR_TCC_HACK
 	#endif
 
-	#ifndef ArraySize
-		#define ArraySize(x) (sizeof(x) / sizeof(x[0]))
+	#ifndef CPL_ARRAYSIZE
+		#define CPL_ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
 	#endif
 
-	#define DIRC_COMP(x) ((x) == '\\' || (x) == '/')
-
-	#define _PROGRAM_NAME "Cross Platform Library"
-	#define _PROGRAM_NAME_ABRV "cpl"
-
-	#define _VERSION_SPECIFIC "alpha"
-
-
-	#ifdef APE_JUCE
-		#define _HOST_TARGET_TECH "JUCE"
-		#define _VERSION_INT JucePlugin_VersionCode
-		#define _VERSION_INT_STRING JucePlugin_VersionString
-	#elif defined(APE_IPLUG)
-		#define _HOST_TARGET_TECH "IPlug"
-	#elif defined(APE_VST)
-		#define _HOST_TARGET_TECH "VST"
-	#endif
-	#define _VERSION_STRING	_VERSION_SPECIFIC " " _VERSION_INT_STRING
-	#define _PROGRAM_AUTHOR "Janus Thorborg"
-	#define _TIME_OF_WRITING "2015"
-	#define _HOMEPAGE_SENTENCE
-	#define _ADDITIONAL_NOTES
-
-	#define RADTOHZ(rads) (rads / PI * 2)
-
-	#define lower_byte(w)		((unsigned char)(((unsigned long)(w)) & 0xff))
-	#define _rgb_get_red(rgb)	(lower_byte(rgb))
-	#define _rgb_get_green(rgb)	(lower_byte(((unsigned short)(rgb)) >> 8))
-	#define _rgb_get_blue(rgb)	(lower_byte((rgb)>>16))
+	#define CPL_DIRC_COMP(x) ((x) == '\\' || (x) == '/')
 
 	#if defined(_MSC_VER) 
 
@@ -175,16 +143,16 @@
 
 		// oh god
 		#define NOMINMAX
+
 		#if _MSC_VER >= 1700
 			#define __CPP11__
 		#endif
 		#if _MSC_VER >= 2100
 			#define CPL_HAS_CONSTEXPR
 		#endif
-		#define __MSVC__
-		#define APE_API _cdecl
-		#define APE_STD_API _cdecl
-		#define APE_API_VARI _cdecl
+
+		#define CPL_MSVC
+
 		#ifndef CPL_ALL_WARNINGS
 			#pragma warning(disable:4482) // qualified names
 			#pragma warning(disable:4005) // redefinition of macros
@@ -210,23 +178,25 @@
 				#pragma warning(disable:4127) // conditional expression is constant
 			#endif
 		#endif
-		#define __llvm_DummyNoExcept
+		#define CPL_llvm_DummyNoExcept
+
 		#if _MSC_VER >= 1900
-			#define __alignas(x) alignas(x)
+			#define CPL_ALIGNAS(x) alignas(x)
 		#else
-			#define __alignas(x) __declspec(align(x))
+			#define CPL_ALIGNAS(x) __declspec(align(x))
 		#endif
-		#define __thread_local __declspec(thread)
+
+		#define CPL_THREAD_LOCAL __declspec(thread)
 		#define siginfo_t void
-		#define __noexcept
+		#define CPL_NOEXCEPT
 
 		#ifndef __func__
 			#define __func__ __FUNCTION__
 		#endif
 
-		#define __RESTRICT__ __restrict
+		#define CPL_RESTRICT __restrict
 
-		#define FILE_LINE_LINK __FILE__ "(" __tostring(__LINE__) ") : "
+		#define FILE_LINE_LINK __FILE__ "(" CPL__tostring(__LINE__) ") : "
 		#define cwarn(exp) (FILE_LINE_LINK  " -> " __FUNCTION__ ": warning: " exp)
 
 		#define CPL_COMPILER_SUPPORTS_AVX
@@ -239,9 +209,6 @@
 
 		#define __C99__
 
-		#define APE_API __cdecl
-		#define APE_STD_API __cdecl
-		#define APE_API_VARI __cdecl
 		// change this to check against _LIBCPP_VERSION to detect cpp11 support
 		#if 1
 			#define __CPP11__
@@ -253,12 +220,12 @@
 		#endif
 		// a bug in current apple llvm emits an error message on derived
 		// classes constructors/destructors if they don't have this specifier
-		#define __llvm_DummyNoExcept noexcept
+		#define CPL_llvm_DummyNoExcept noexcept
 
-		#define __alignas(x) alignas(x)
+		#define CPL_ALIGNAS(x) alignas(x)
 		#define __alignof(x) alignof(x)
 
-		#define __RESTRICT__ __restrict
+		#define CPL_RESTRICT __restrict
 
 		// Enable inclusion of all simd headers.
 		#ifndef __SSE__
@@ -290,15 +257,15 @@
 
         #if __clang_major__ > 7
             #define CPL_COMPILER_SUPPORTS_AVX
-            #define __thread_local thread_local
+            #define CPL_THREAD_LOCAL thread_local
 			#define __C11__
         #elif __clang_major__ >= 7
             #define CPL_COMPILER_SUPPORTS_AVX
-    		#define __thread_local __thread
+    		#define CPL_THREAD_LOCAL __thread
 			#define __C11__
         #else
 			#define CPL_CLANG_BUGGY_RECURSIVE_LAMBDAS
-    		#define __thread_local __thread
+    		#define CPL_THREAD_LOCAL __thread
             #pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")
         #endif
 
@@ -311,7 +278,7 @@
 		#define APE_STD_API __cdecl
 		#define APE_API_VARI __cdecl
 		#define __GCC__
-		#define __llvm_DummyNoExcept
+		#define CPL_llvm_DummyNoExcept
 
 		#define cwarn(exp) ("warning: " exp)
 
@@ -325,7 +292,7 @@
 		{ \
 			std::string message = std::string("Runtime exception in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
 			CPL_DEBUGOUT(message.c_str()); \
-			if(isDebugged()) DBG_BREAK(); \
+			if(CPL_ISDEBUGGED()) DBG_BREAK(); \
 			throw std::runtime_error(message); \
 		} while(0) 
 
@@ -344,46 +311,9 @@
 		#define PACKED
 	#endif
 
-	// program types
-	namespace APE
-	{
-		#ifdef _DOUBLE_PRECISION
-			typedef double Float;
-		#else
-			typedef float Float;
-		#endif
-		typedef int32_t Int;
-		typedef int64_t Long;
-	}
-
-	#define APE_DEF_ALIGN 4
-
 	#ifndef MAX_PATH
 		#define MAX_PATH 260
 	#endif
 	#define NI "Error: This feature is not implemented for target (" __FILE__ ", " __LINE__ " - " __FUNCTION__ ".)"
-
-	#ifndef PLUG_SC_CHANS
-		#define PLUG_SC_CHANS 0
-	#endif
-	#ifndef PUBLIC_NAME
-		#define PUBLIC_NAME PLUG_NAME
-	#endif
-	#ifndef IPLUG_CTOR
-		#define IPLUG_CTOR(nParams, nPresets, instanceInfo) \
-		IPlug(instanceInfo, nParams, PLUG_CHANNEL_IO, nPresets, \
-		PUBLIC_NAME, "", PLUG_MFR, PLUG_VER, PLUG_UNIQUE_ID, PLUG_MFR_ID, \
-		PLUG_LATENCY, PLUG_DOES_MIDI, PLUG_DOES_STATE_CHUNKS, PLUG_IS_INST, PLUG_SC_CHANS)
-	#endif
-
-	/*
-		Macro functions, extentions
-	*/
-	// beware: multiple evaluation of arguments + i must be a compile-time constant!
-	// -- returns a vector where all elements are set to element i of v
-	#define _mm256_broadcastidx_ps(v, i) _mm256_permute_ps(_mm256_permute2f128_ps(v, v, (i >> 2) | ((i >> 2) << 4)), _MM_SHUFFLE(i & 3, i & 3, i & 3, i & 3))
-	// beware: multiple evaluation of arguments + i must be a compile-time constant!
-	// -- returns a vector where all elements are set to element i of v
-	#define _mm_broadcastidx_ps(v, i) _mm_shuffle_ps(v, v, _MM_SHUFFLE(i, i, i, i))
 
 #endif

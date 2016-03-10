@@ -1,25 +1,25 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
+	cpl - cross-platform library - v. 0.1.0.
 	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 	 
-	 This program is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 3 of the License, or
-	 (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 	 
-	 This program is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 	 
-	 You should have received a copy of the GNU General Public License
-	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	 
-	 See \licenses\ for additional details on licenses associated with this program.
+	See \licenses\ for additional details on licenses associated with this program.
  
- **************************************************************************************
+**************************************************************************************
 
 	file:Misc.h
 	
@@ -29,8 +29,8 @@
 
 *************************************************************************************/
 
-#ifndef _MISC_H
-	#define _MISC_H
+#ifndef CPL_MISC_H
+	#define CPL_MISC_H
 
 	#include <string>
 	#include "MacroConstants.h"
@@ -105,7 +105,7 @@
 				{
 					void * ptr = nullptr;
 					std::size_t size = sizeof(Type) * numObjects;
-					#ifdef __WINDOWS__
+					#ifdef CPL_WINDOWS
 						ptr = _aligned_malloc(size, alignment);
 					#else
 						// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
@@ -137,7 +137,7 @@
 				inline Type * alignedRealloc(Type * ptr, std::size_t numObjects)
 				{
 					static_assert(std::is_trivially_copyable<Type>::value, "Reallocations may need to trivially copy buffer");
-					#ifdef __WINDOWS__
+					#ifdef CPL_WINDOWS
 						return reinterpret_cast<Type *>(_aligned_realloc(ptr, numObjects * sizeof(Type), alignment));
 					#else
 						#ifdef CPL_MAC
@@ -182,7 +182,7 @@
 			inline void * alignedBytesMalloc(std::size_t size, std::size_t alignment)
 			{
 				void * ptr = nullptr;
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					ptr = _aligned_malloc(size, alignment);
 				#else
 					// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
@@ -203,7 +203,7 @@
 			template<class Type>
 				void alignedFree(Type & obj)
 				{
-					#ifdef __WINDOWS__
+					#ifdef CPL_WINDOWS
 						_aligned_free(obj);
 					#else
 						if(obj)
@@ -253,7 +253,7 @@
 						
 			enum MsgButton : int
 			{
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					bYes = IDYES,
 					bNo = IDNO,
 					bRetry = IDRETRY,
@@ -268,7 +268,7 @@
 					bTryAgain = bRetry,
 					bContinue = bYes,
 					bCancel = IDCANCEL
-				#elif defined(__MAC__)
+				#elif defined(CPL_MAC)
 					bYes = 6,
 					bNo = 7,
 					bRetry = 4,
@@ -280,7 +280,7 @@
 			};
 			enum MsgStyle : int
 			{
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					sOk = MB_OK,
 					sYesNoCancel = MB_YESNOCANCEL,
 					sConTryCancel = MB_CANCELTRYCONTINUE
@@ -288,7 +288,7 @@
 					sOk = MB_OK,
 					sYesNoCancel = MB_YESNOCANCEL,
 					sConTryCancel = sYesNoCancel
-				#elif defined(__MAC__)
+				#elif defined(CPL_MAC)
 					sOk = 0,
 					sYesNoCancel = 3,
 					sConTryCancel = 6
@@ -296,7 +296,7 @@
 			};
 			enum MsgIcon : int
 			{
-				#ifdef __WINDOWS__
+				#ifdef CPL_WINDOWS
 					iStop = MB_ICONSTOP,
 					iQuestion = MB_ICONQUESTION,
 					iInfo = MB_ICONINFORMATION,
@@ -306,7 +306,7 @@
 					iQuestion = MB_ICONINFORMATION,
 					iInfo = MB_ICONINFORMATION,
 					iWarning = MB_ICONSTOP
-				#elif defined(__MAC__)
+				#elif defined(CPL_MAC)
 					iStop = 0x10,
 					iWarning = iStop,
 					iInfo = 0x40,
@@ -315,7 +315,7 @@
 			};
 
 			int MsgBox(	const std::string & text, 
-						const std::string & title = _PROGRAM_NAME_ABRV, 
+						const std::string & title = "", 
 						int nStyle = MsgStyle::sOk, 
 						void * parent = NULL, 
 						const bool bBlocking = true);
@@ -395,12 +395,12 @@
 					}
 					ret = MsgBox("Deadlock detected in conditional wait: Protected resource is not released after max interval. "
 							"Wait again (try again, breaks if debugged), continue anyway (continue) - can create async issues - or exit (cancel)?", 
-							_PROGRAM_NAME_ABRV " Error!", 
+							programInfo.name + " Error!", 
 							sConTryCancel | iStop);
 					switch(ret) 
 					{
 					case MsgButton::bTryAgain:
-						BreakIfDebugged();
+						CPL_BREAKIFDEBUGGED();
 						goto loop;
 					case MsgButton::bCancel:
 						// TODO: exit another way?

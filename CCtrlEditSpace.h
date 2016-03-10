@@ -1,41 +1,35 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
+	cpl - cross-platform library - v. 0.1.0.
 	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 	 
-	 This program is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 3 of the License, or
-	 (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 	 
-	 This program is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 	 
-	 You should have received a copy of the GNU General Public License
-	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	 
-	 See \licenses\ for additional details on licenses associated with this program.
+	See \licenses\ for additional details on licenses associated with this program.
  
- **************************************************************************************
+**************************************************************************************
 
-	file:CBaseControl.h
+	file:CCtrlEditSpace.h
 		
-		CBaseControl - base class for all implementable controls.
-		all methods prefixed with 'b' to avoid future nameclashing.
-		This class provides a common interface for all 'controls' to support
-		normalized value-, string and position get/set.
-		Also encapsulates listeners into a single one.
-		Provides a cheap RAII mutex lock as well, as well as optional reference counting.
-		Does not derive from the system's base class for graphics to avoid the diamond
-		problem (classes deriving from this should set the base class in their constructor)
+		An UI for CBaseControls that allows editing their internal and semantic values.
+		Can be subclassed to extend functionality.
 
 *************************************************************************************/
 
-#ifndef _CCTRLEDITSPACE_H
-	#define _CCTRLEDITSPACE_H
+#ifndef CPL_CCTRLEDITSPACE_H
+	#define CPL_CCTRLEDITSPACE_H
 	#include "CBaseControl.h"
 	#include "gui/BuildingBlocks.h"
 

@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 
 	#include "../Common.h"
 	#include "../Utility.h"
-	#include "../CAudioBuffer.h"
 	#include <vector>
 	#include <memory>
 	#include <map>

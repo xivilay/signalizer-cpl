@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,16 +21,15 @@
 
 **************************************************************************************
 
-	file:CColourControl.h
+	file:CPresetWidget.h
 
-		A widget that can display a colour and allow the user to choose a new.
-		Note the explicit use of juce::PixelARGB - avoid representing colours
-		through integers (platforms has binary inconsistensies).
+		A widget that can browse presets on disk, show a list of them, and serialize/
+		restore its parent view.
  
 *************************************************************************************/
 
-#ifndef _CPRESETWIDGET_H
-	#define _CPRESETWIDGET_H
+#ifndef CPL_CPRESETWIDGET_H
+	#define CPL_CPRESETWIDGET_H
 
 	#include "../common.h"
 	#include "ControlBase.h"

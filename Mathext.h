@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@
 
 *************************************************************************************/
 
-#ifndef _MATHEXT_H
-	#define _MATHEXT_H
+#ifndef CPL_MATHEXT_H
+	#define CPL_MATHEXT_H
 
 	// check this!
 	//http ://fastapprox.googlecode.com/svn/trunk/fastapprox/src/fastonebigheader.h
@@ -37,7 +37,6 @@
 	#include "MacroConstants.h"
 	#include <vector>
 	#include "Types.h"
-	#include "ssemath.h"
     #include <complex>
 	#include <functional>
 	#include "stdext.h"
@@ -314,7 +313,7 @@
 				}
 
 			// for situations where you calculate a signed fraction added to an offset
-				template<int divisor, typename T>
+			template<int divisor, typename T>
 				inline std::div_t indexDivision(T dividend)
 				{
 					static_assert(divisor != 0, "Zero-division protection");
@@ -363,29 +362,28 @@
 			inline float compileVector(Types::v4sf xmm)
 			{
 
-				__alignas(16) float vec[4];
+				CPL_ALIGNAS(16) float vec[4];
 				_mm_store_ps(vec, xmm);
 				return compileVector(vec);
 			}
 
 			inline double compileVector(Types::v4sd ymm)
 			{
-				__alignas(32) double vec[4];
+				CPL_ALIGNAS(32) double vec[4];
 				_mm256_store_pd(vec, ymm);
 				return compileVector(vec);
 			}
 
 			inline double compileVector(Types::v8sf ymm)
 			{
-				__alignas(32) float vec[8];
+				CPL_ALIGNAS(32) float vec[8];
 				_mm256_store_ps(vec, ymm);
 				return compileVector(vec);
 			}
 
 			inline double compileVector(Types::v2sd xmm)
 			{
-				
-				__alignas(16) double vec[2];
+				CPL_ALIGNAS(16) double vec[2];
 				_mm_store_pd(vec, xmm);
 				return compileVector(vec);
 			}
@@ -404,26 +402,6 @@
 					return sqrt(rms / (double)size);
 	
 				}
-
-			inline float fastabs(float x)
-			{
-				union __alignas(4) binary_float
-				{
-					float f;
-					struct
-					{
-						unsigned mantissa : 24;
-						unsigned exponent : 7;
-						unsigned sign : 1;
-					} binary;
-				};
-				((binary_float*)(&x))->binary.sign = 0;
-
-				return x;
-
-				//std::uint32_t ipart = std::uint32_t((*reinterpret_cast<std::uint32_t*>(&x)) & ~0x80000000);
-				//return *(float*)&ipart;
-			}
 
 			inline int fastabs(int x)
 			{

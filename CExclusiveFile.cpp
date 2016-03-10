@@ -1,31 +1,31 @@
 /*************************************************************************************
  
-	 Audio Programming Environment - Audio Plugin - v. 0.3.0.
+	cpl - cross-platform library - v. 0.1.0.
+
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 	 
-	 Copyright (C) 2014 Janus Lynggaard Thorborg [LightBridge Studios]
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 	 
-	 This program is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 3 of the License, or
-	 (at your option) any later version.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 	 
-	 This program is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	 
-	 You should have received a copy of the GNU General Public License
-	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	 
-	 See \licenses\ for additional details on licenses associated with this program.
+	See \licenses\ for additional details on licenses associated with this program.
  
- **************************************************************************************
+**************************************************************************************
  
-	 file:CExclusiveFile.cpp
+	file:CExclusiveFile.cpp
 	 
 		Implementation of CExclusiveFile class.
  
- *************************************************************************************/
+*************************************************************************************/
 
 #include "CExclusiveFile.h"
 #include "MacroConstants.h"
@@ -53,7 +53,7 @@ namespace cpl
 			close();
 		fileName = path;
 		fileMode = (mode)m;
-		#if defined(__CEF_USE_CSTDLIB)
+		#if defined(CPL_CEF_USE_CSTDLIB)
 
 			handle = ::fopen(fileName.c_str(), "w");
 			if(!handle) {
@@ -63,7 +63,7 @@ namespace cpl
 			isOpen = true;
 			return isOpened();
 
-		#elif defined(__WINDOWS__)
+		#elif defined(CPL_WINDOWS)
 			// if we're opening in writemode, we always create a new, empty file
 			// if it's reading mode, we only open existing files.
 			auto openMode = OPEN_ALWAYS;
@@ -100,7 +100,7 @@ namespace cpl
 				handle = 0;
 			}
 
-		#elif defined(__UNIXC__)
+		#elif defined(CPL_UNIXC)
 
 			int openMask = m & mode::writeMode ? O_WRONLY | O_CREAT : O_RDONLY;
 			openMask |= m & mode::append ? O_APPEND : 0;
@@ -140,12 +140,16 @@ namespace cpl
 
 	bool CExclusiveFile::newline()
 	{
-		return write("\r\n");
+		#if defined(CPL_WINDOWS)
+			return write("\r\n");
+		#else
+			return write("\n");
+		#endif
 	}
 
 	std::int64_t CExclusiveFile::getFileSize()
 	{
-		#if defined(__CEF_USE_CSTDLIB)
+		#if defined(CPL_CEF_USE_CSTDLIB)
 			if (isOpen)
 			{
 				auto oldPos = ftell(handle);
@@ -155,14 +159,14 @@ namespace cpl
 				return size;
 			}
 		
-		#elif defined(__WINDOWS__)
+		#elif defined(CPL_WINDOWS)
 			if (isOpen)
 			{
 				LARGE_INTEGER fileSize = { 0 };
 				if (::GetFileSizeEx(handle, &fileSize) != FALSE)
 					return static_cast<std::int64_t>(fileSize.QuadPart);
 			}
-		#elif defined(__UNIXC__)
+		#elif defined(CPL_UNIXC)
 			if (isOpen)
 			{
 				struct stat fileStats = {};
@@ -175,17 +179,17 @@ namespace cpl
 
 	bool CExclusiveFile::read(void * src, std::int64_t bufsiz)
 	{
-		#if defined(__CEF_USE_CSTDLIB)
+		#if defined(CPL_CEF_USE_CSTDLIB)
 			if (isOpen)
 				return std::fwrite(src, bufsiz, 1, handle) == bufsiz;
-		#elif defined(__WINDOWS__)
+		#elif defined(CPL_WINDOWS)
 			DWORD dwRead(0);
 			if (bufsiz > std::numeric_limits<DWORD>::max())
 				throw std::runtime_error("CExclusiveFile::read - buffer size too large");
 			DWORD dwSize = static_cast<DWORD>(bufsiz);
 			auto ret = ::ReadFile(handle, src, dwSize, &dwRead, nullptr);
 			return (ret != FALSE) && (dwRead == dwSize);
-		#elif defined(__UNIXC__)
+		#elif defined(CPL_UNIXC)
 			if (isOpen)
 				return ::read(handle, src, (std::size_t)bufsiz) == bufsiz;
 			#endif
@@ -194,17 +198,17 @@ namespace cpl
 
 	bool CExclusiveFile::write(const void * src, std::int64_t bufsiz)
 	{
-		#if defined(__CEF_USE_CSTDLIB)
+		#if defined(CPL_CEF_USE_CSTDLIB)
 			if (isOpen)
 				return std::fwrite(src, bufsiz, 1, handle) == bufsiz;
-		#elif defined(__WINDOWS__)
+		#elif defined(CPL_WINDOWS)
 			DWORD dwWritten(0);
 			DWORD dwSize = static_cast<DWORD>(bufsiz);
 			if (bufsiz > std::numeric_limits<DWORD>::max())
 				throw std::runtime_error("CExclusiveFile::read - buffer size too large");
 			auto ret = ::WriteFile(handle, src, dwSize, &dwWritten, nullptr);
 			return (ret != FALSE) && (dwWritten == dwSize);
-		#elif defined(__UNIXC__)
+		#elif defined(CPL_UNIXC)
 			if (isOpen)
 				return ::write(handle, src, (std::size_t)bufsiz) == bufsiz;
 		#endif
@@ -255,11 +259,11 @@ namespace cpl
 	{
 		if (!isOpen)
 			return false;
-		#if defined(__CEF_USE_CSTDLIB)
+		#if defined(CPL_CEF_USE_CSTDLIB)
 			return !std::fflush(handle);
-		#elif defined(__WINDOWS__)
+		#elif defined(CPL_WINDOWS)
 			return !!::FlushFileBuffers(handle);
-		#elif defined(__UNIXC__)
+		#elif defined(CPL_UNIXC)
 			return ::fsync(handle) < 0 ? false : true;
 		#endif
 		return false;
@@ -270,11 +274,11 @@ namespace cpl
 		if (!isOpen)
 			return false;
 		bool ret(false);
-		#if defined(__CEF_USE_CSTDLIB)
+		#if defined(CPL_CEF_USE_CSTDLIB)
 			ret = !std::fclose(handle);
-		#elif defined(__WINDOWS__)
+		#elif defined(CPL_WINDOWS)
 			ret = !!::CloseHandle(handle);
-		#elif defined(__UNIXC__)
+		#elif defined(CPL_UNIXC)
 			::flock(handle, LOCK_UN);
 			ret = ::close(handle) < 0 ? false : true;
 		#endif

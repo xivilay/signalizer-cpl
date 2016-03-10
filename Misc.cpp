@@ -1,10 +1,8 @@
 /*************************************************************************************
 
-	Audio Programming Environment VST. 
-		
-		VST is a trademark of Steinberg Media Technologies GmbH.
+	cpl - cross-platform library - v. 0.1.0.
 
-    Copyright (C) 2013 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -141,7 +139,7 @@ namespace cpl
 			if (!hasBeenAdded)
 			{
 				oldTerminate.store(std::set_terminate(terminateHook));
-				#ifdef __MSVC__
+				#ifdef CPL_MSVC
 					hasBeenAdded = true;
 					_set_purecall_handler(_purescall);
 					#ifdef _DEBUG
@@ -211,7 +209,7 @@ namespace cpl
 
 		Types::OSError GetLastOSErrorCode()
 		{
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				return GetLastError();
 			#else
 				return errno;
@@ -221,7 +219,7 @@ namespace cpl
 		Types::tstring GetLastOSErrorMessage()
 		{
 			auto lastError = GetLastOSErrorCode();
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				Types::char_t * apiPointer = nullptr;
 
 				Types::OSError numChars = FormatMessage
@@ -247,7 +245,7 @@ namespace cpl
 		Types::tstring GetLastOSErrorMessage(Types::OSError errorToUse)
 		{
 			auto lastError = errorToUse;
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				Types::char_t * apiPointer = nullptr;
 
 				Types::OSError numChars = FormatMessage
@@ -277,14 +275,13 @@ namespace cpl
 		int ObtainUniqueInstanceID()
 		{
 			int pID;
-			#if defined(__WINDOWS__)
+			#if defined(CPL_WINDOWS)
 				pID = GetProcessId(GetCurrentProcess());
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				pID = getpid();
 			#endif
 			if(instanceCount > std::numeric_limits<unsigned char>::max())
-				MsgBox("Warning: You currently have had more than 256 instances open, this may cause a wrap around in instance-id's",
-					   _PROGRAM_NAME, iInfo | sOk, nullptr, true);
+				MsgBox("Warning: You currently have had more than 256 instances open, this may cause a wrap around in instance-id's", programInfo.name, iInfo | sOk, nullptr, true);
 			int iD = (pID << 8) | GetInstanceCounter();
 			return iD;
 		}
@@ -315,9 +312,9 @@ namespace cpl
 		 *********************************************************************************************/
 		bool IsBeingDebugged()
 		{
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				return IsDebuggerPresent() ? true : false;
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				#ifdef _DEBUG
 					int                 junk;
 					int                 mib[4];
@@ -361,7 +358,7 @@ namespace cpl
 		 *********************************************************************************************/
 		int GetSizeRequiredFormat(const char * fmt, va_list pargs)
 		{
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				return _vscprintf(fmt, pargs);
 			#else
 				int retval;
@@ -378,8 +375,8 @@ namespace cpl
 			Define a symbol for __rdtsc if it doesn't exist
 		 
 		 *********************************************************************************************/
-		#ifndef __MSVC__
-			#ifdef __M_64BIT_
+		#ifndef CPL_MSVC
+			#ifdef CPL_M_64BIT_
 				__inline__ uint64_t __rdtsc() {
 					uint64_t a, d;
 					__asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
@@ -415,7 +412,7 @@ namespace cpl
 
 			#ifdef _WINDOWS_
 				::QueryPerformanceCounter((LARGE_INTEGER*)&t);
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				auto t1 = mach_absolute_time();
 				*(decltype(t1)*)&t = t1;
 			#elif defined(__CPP11__)
@@ -442,7 +439,7 @@ namespace cpl
 
 				//long long t = TimeCounter();
 				ret = (time) * (1000.0/f);
-			#elif defined(__MAC__)	
+			#elif defined(CPL_MAC)	
 				auto t1 = *(decltype(mach_absolute_time())*)&time;
 
 				struct mach_timebase_info tinfo;
@@ -475,7 +472,7 @@ namespace cpl
 			time_t timeObj;
 			tm * ctime;
 			time(&timeObj);
-			#ifdef __MSVC__
+			#ifdef CPL_MSVC
 				tm pTime;
 				gmtime_s(&pTime, &timeObj);
 				ctime = &pTime;
@@ -485,7 +482,7 @@ namespace cpl
 			#endif
 			char buffer[100];
 			// not cross platform.
-			#ifdef __MSVC__
+			#ifdef CPL_MSVC
 			
 				sprintf_s(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 			#else
@@ -499,7 +496,7 @@ namespace cpl
 			time_t timeObj;
 			tm * ctime;
 			time(&timeObj);
-			#ifdef __MSVC__
+			#ifdef CPL_MSVC
 				tm pTime;
 				gmtime_s(&pTime, &timeObj);
 				ctime = &pTime;
@@ -509,7 +506,7 @@ namespace cpl
 			#endif
 			char buffer[100];
 			// not cross platform.
-			#ifdef __MSVC__
+			#ifdef CPL_MSVC
 				sprintf_s(buffer, "%d/%d/%d", ctime->tm_mday, ctime->tm_mon + 1, ctime->tm_year + 1900);
 			#else
 				sprintf(buffer, "%d/%d/%d", ctime->tm_mday, ctime->tm_mon + 1, ctime->tm_year + 1900);
@@ -527,7 +524,7 @@ namespace cpl
 		{
 			if (programInfo.hasCustomDirectory)
 				return programInfo.customDirectory();
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
 				// change to MAX_PATH on all supported systems
 				char path[MAX_PATH + 2];
 				unsigned long nLen = 0;
@@ -545,14 +542,14 @@ namespace cpl
 				if (!nLen)
 					return "";
 				while (nLen--> 0) {
-					if (DIRC_COMP(path[nLen])) {
+					if (CPL_DIRC_COMP(path[nLen])) {
 						path[nLen] = '\0';
 						break;
 					}
 				};
 				path[MAX_PATH + 1] = NULL;
 				return path;
-			#elif defined(__MAC__) && defined(__APE_LOCATE_USING_COCOA)
+			#elif defined(CPL_MAC) && defined(__APE_LOCATE_USING_COCOA)
 				/*
 					GetBundlePath() returns the path to the bundle, inclusive of the bundle name.
 					Since everything we have is in the subdir /contents/ we append that.
@@ -569,7 +566,7 @@ namespace cpl
 				std::string ret = path;
 				ret += "/Contents";
 				return ret;
-			#elif defined(__MAC__) && defined(__APE_LOCATE_USING_CF)
+			#elif defined(CPL_MAC) && defined(__APE_LOCATE_USING_CF)
 				// change to MAX_PATH on all supported systems
 				char path[MAX_PATH + 2];
 				unsigned long nLen = 0;
@@ -585,14 +582,14 @@ namespace cpl
 						return path;
 					}
 				}
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				Dl_info exeInfo;
 				dladdr ((void*) GetDirectoryPath, &exeInfo);
 				// need to chop off 2 directories here
 				std::string fullPath(exeInfo.dli_fname);
 				for (int i = fullPath.length(), z = 0; i != 0; --i) {
 					// directory slash detected
-					if (DIRC_COMP(fullPath[i]))
+					if (CPL_DIRC_COMP(fullPath[i]))
 						z++;
 					// return minus 2 directories
 					if(z == 2)
@@ -624,9 +621,9 @@ namespace cpl
 					std::this_thread::yield();
 				else
 					std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-			#elif defined (__WINDOWS__)
+			#elif defined (CPL_WINDOWS)
 				::Sleep(ms);
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				usleep(ms * 1000);
 			#endif
 			return 0;
@@ -640,7 +637,8 @@ namespace cpl
 		*********************************************************************************************/
 		unsigned int QuickTime()
 		{
-			#ifdef __WINDOWS__
+			#ifdef CPL_WINDOWS
+				// TODO: GetTickCount64()
 				return GetTickCount();
 			#else
 				// from sweep/lice
@@ -661,11 +659,11 @@ namespace cpl
 		*********************************************************************************************/
 		inline static int _mbx(void * systemData, const char * text, const char * title, int nStyle = 0)
 		{
-			#ifdef __WINDOWS__ 
+			#ifdef CPL_WINDOWS 
 				if (!systemData)
 					nStyle |=  MB_DEFAULT_DESKTOP_ONLY;
 				return (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
-			#elif defined(__MAC__)
+			#elif defined(CPL_MAC)
 				return MacBox(systemData, text, title, nStyle);
 			#else
 				#error "Implement a similar messagebox for your target"

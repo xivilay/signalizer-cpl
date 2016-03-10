@@ -2,7 +2,7 @@
  
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 	 
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by
@@ -31,8 +31,9 @@
 
 *************************************************************************************/
 
-#ifndef _CAUDIOSTREAM_H
-	#define _CAUDIOSTREAM_H
+#ifndef CPL_CAUDIOSTREAM_H
+	#define CPL_CAUDIOSTREAM_H
+
 	#include <thread>
 	#include "Utility.h"
 	#include <vector>
@@ -45,7 +46,6 @@
 	#include <algorithm>
 	#include <numeric>
 	#include "Protected.h"
-	#define CPL_DEBUG_CAUDIOSTREAM
 
 	namespace cpl
 	{
@@ -66,7 +66,7 @@
 		template<typename T, std::size_t>
 			class CAudioStream;
 
-		#ifdef __MSVC__
+		#ifdef CPL_MSVC
 			#pragma pack(push, 1)
 		#endif
 		/// <summary>
@@ -136,7 +136,7 @@
 				T * end() noexcept { return buffer + size; }
 				T buffer[capacity];
 			};
-		#ifdef __MSVC__
+		#ifdef CPL_MSVC
 			#pragma pack(pop)
 		#endif
 
@@ -275,13 +275,12 @@
 			typedef typename AudioBuffer::IteratorBase::iterator BufferIterator;
 			typedef typename AudioBuffer::IteratorBase::const_iterator CBufferIterator;
 			typedef CAudioStream<T, PacketSize> StreamType;
+
 			/// <summary>
 			/// When you iterate over a audio buffer using ended iterators,
 			/// there will be this number of iterator iterations.
 			/// </summary>
 			static const std::size_t bufferIndices = AudioBuffer::IteratorBase::iterator_indices;
-
-
 			/// <summary>
 			/// Provides a constant view of the internal audio buffers, synchronized.
 			/// The interface is built on RAII, the data is valid as long as this struct is in scope.
@@ -289,9 +288,6 @@
 			/// </summary>
 			struct AudioBufferAccess
 			{
-			private:
-
-				
 			public:
 				typedef StreamType InheritStreamType;
 				typedef typename AudioBuffer::IteratorBase::iterator iterator;
@@ -346,73 +342,6 @@
 				}
 
 			private:
-
-
-				/*template<>
-				struct ChannelIterator<2, true>
-				{
-					template<typename Functor>
-					static void run(AudioBufferAccess & access, const Functor & f)
-					{
-						StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
-
-						for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
-						{
-							BufferIterator
-								left = views[0].getItIndex(indice),
-								right = views[1].getItIndex(indice);
-
-							std::size_t range = views[0].getItRange(indice);
-
-							while (range--)
-							{
-								f(n++, *left++, *right++);
-							}
-						}
-					}
-
-					template<typename Functor>
-					static void run(const AudioBufferAccess & access, const Functor & f)
-					{
-						StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
-
-						for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
-						{
-							BufferIterator
-								left = views[0].getItIndex(indice),
-								right = views[1].getItIndex(indice);
-
-							std::size_t range = views[0].getItRange(indice);
-
-							while (range--)
-							{
-								f(n++, *left++, *right++);
-							}
-						}
-					}
-				};
-
-				template<>
-				struct ChannelIterator<1, true>
-				{
-					template<typename Functor>
-					static void run(const AudioBufferAccess & access, const Functor & f)
-					{
-						StreamType::AudioBufferView view = access.getView(0);
-
-						for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
-						{
-							BufferIterator left = views[0].getItIndex(indice);
-
-							std::size_t range = views[0].getItRange(indice);
-
-							while (range--)
-							{
-								f(n++, *left++, *right++);
-							}
-						}
-					}
-				};*/
 
 				const std::vector<AudioBuffer> & audioChannels;
 				std::unique_lock<std::mutex> lock;
@@ -603,7 +532,7 @@
 				void crash(const char * why)
 				{
 					ASDbg(why);
-					BreakIfDebugged();
+					CPL_BREAKIFDEBUGGED();
 					auto s1 = internalSource.load(std::memory_order_acquire);
 					if (s1)
 						s1->removeListener(this, true);
@@ -681,7 +610,7 @@
 					// this should be interesting to debug.
 					// TODO: this is an actual problem. Store all audio thread ids in a set, and compare instead.
 					// NOTE: resolved for now (very temporary), all audio threads shouldn't call getListeners()
-					//BreakIfDebugged();
+					//CPL_BREAKIFDEBUGGED();
 					audioRTThreadID = id;
 				}
 				else
@@ -780,7 +709,7 @@
 					break;
 				default:
 					// TODO: what to do?
-					BreakIfDebugged();
+					CPL_BREAKIFDEBUGGED();
 					break;
 				}
 
@@ -1287,7 +1216,7 @@
 							if (signalChange && !somethingWasDone)
 							{
 								// 
-								//BreakIfDebugged();
+								//CPL_BREAKIFDEBUGGED();
 								//OutputDebugString("3. Signaled change, while still holding async buffer lock.\n");
 							}
 							overhead.pause();

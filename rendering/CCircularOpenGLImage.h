@@ -2,7 +2,7 @@
  
 	cpl - cross-platform library - v. 0.1.0.
  
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
  
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,9 +21,10 @@
  
  **************************************************************************************
  
-	file:SubpixelRendering.h
+	file:CCircularOpenGLImage.h
  
-		Utilities and types needed for rendering subpixel graphics.
+		An class that wraps an openGL texture, and supports drawing it pixel-perfectly.
+		What can this be used for? Spectrograms, pretty much.
 
  *************************************************************************************/
 

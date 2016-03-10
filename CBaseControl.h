@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2015 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@
 
 *************************************************************************************/
 
-#ifndef _CBASECONTROL_H
-	#define _CBASECONTROL_H
+#ifndef CPL_CBASECONTROL_H
+	#define CPL_CBASECONTROL_H
 
 	#include "CMutex.h"
 	#include "Common.h"
@@ -61,27 +61,6 @@
 		class CCtrlEditSpace;
 		class CBaseControl;
 
-		//-----------------------------------------------------------------------------
-		// CReferenceCounter Declaration (Reference Counting)
-		// This class is from VSTGUI 3.6 (removed in 4+)
-		//-----------------------------------------------------------------------------
-		class CReferenceCounter2
-		{
-		public:
-			CReferenceCounter2() : nbReference(1) {}
-			virtual ~CReferenceCounter2() {}
-
-			virtual void forget() { nbReference--; if (nbReference == 0) delete this; }
-			virtual void remember() { nbReference++; }
-			long getNbReference() const { return nbReference; }
-	
-		private:
-			long nbReference;
-		};
-
-		// reference counter used for all controls
-		typedef CReferenceCounter2 refCounter;
-
 		/*********************************************************************************************
 
 			The base class of all controls supported in this SDK that are represented through a 
@@ -90,7 +69,6 @@
 		*********************************************************************************************/
 		class CBaseControl 
 		: 
-			public refCounter,
 			public CMutex::Lockable,
 			public juce::Slider::Listener,
 			public juce::Button::Listener,
@@ -101,9 +79,6 @@
 			public CSerializer::Serializable
 		{
 		public:
-
-			//friend CSerializer::Archiver & operator << (CSerializer::Archiver & left, CBaseControl * right);
-			//friend CSerializer::Builder & operator >> (CSerializer::Builder & left, CBaseControl * right);
 
 			/*********************************************************************************************
 
@@ -679,7 +654,7 @@
 			static bool bMapIntValueToString(std::string & stringBuf, iCtrlPrec_t  val)
 			{
 				char buf[200];
-				#ifdef __MSVC__
+				#ifdef CPL_MSVC
 					sprintf_s(buf, "%.17g", cpl::Math::confineTo<iCtrlPrec_t>(val, 0.0, 1.0));
 				#else
 					snprintf(buf, sizeof(buf), "%.17g", cpl::Math::confineTo<iCtrlPrec_t>(val, 0.0, 1.0));
@@ -755,11 +730,5 @@
 
 		typedef CBaseControl::Listener CCtrlListener;
 
-		/*
-			Global operators
-		*/
-
-		//CSerializer::Archiver & operator << (CSerializer::Archiver & left, CBaseControl * right);
-		//CSerializer::Builder & operator >> (CSerializer::Builder & left, CBaseControl * right);
 	};
 #endif
