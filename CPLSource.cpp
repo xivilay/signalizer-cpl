@@ -36,6 +36,7 @@
 #ifdef CPL_JUCE
 
 	#include "GraphicComponents.cpp"
+	#include "Resources.cpp"
 	#include "CBaseControl.cpp"
 	#include "CToolTip.cpp"
 	#include "CCtrlEditSpace.cpp"

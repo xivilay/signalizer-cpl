@@ -280,7 +280,7 @@
 						void onDestruction(Derived * derivedServer)
 						{
 							if (!contains(servers, derivedServer))
-								throw std::runtime_error("Fatal error: DestructionServer::Client is not connected to server!");
+								CPL_RUNTIME_EXCEPTION("Fatal error: DestructionServer::Client is not connected to server!");
 							// forget reference to server
 							servers.erase(derivedServer);
 							// return an unmodifiable reference to the server

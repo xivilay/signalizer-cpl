@@ -70,9 +70,7 @@ namespace cpl
 	{
 		if (!parent)
 		{
-			throw std::runtime_error(
-				std::string(__func__) + std::string(": Null pointer passed to constructor - trying to control non-existant control")
-			);
+			CPL_RUNTIME_EXCEPTION("Null pointer passed to constructor - trying to control non-existant control");
 		}
 
 		// store old value of control:
@@ -83,7 +81,7 @@ namespace cpl
 		switchWithOld->enableTooltip(true);
 		switchWithOld->bAddPassiveChangeListener(this);
 
-		iconSucces.setImage(CVectorResource::renderSVGToImage("icons/svg/succestick.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::success)));
+		iconSucces.setImage(CVectorResource::renderSVGToImage("icons/svg/successtick.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::success)));
 		iconError.setImage(CVectorResource::renderSVGToImage("icons/svg/errorcross.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::error)));
 		iconSucces.setOpaque(false);
 		iconSucces.setAlpha(0);

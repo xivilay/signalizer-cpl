@@ -44,6 +44,6 @@
 		//#define CPL_HINT_FONT
 		#define JUCE_ENABLE_LIVE_CONSTANT_EDITOR 1
 	#endif
-	#define CPL_THROW_ON_NO_RESOURCE
+	//#define CPL_THROW_ON_NO_RESOURCE
 
 #endif

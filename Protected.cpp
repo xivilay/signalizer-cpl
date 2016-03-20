@@ -430,7 +430,7 @@ namespace cpl
 		
 			// no handler found, throw exception (that will call terminate)
 		die_brutally:
-			throw std::runtime_error(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
+			CPL_RUNTIME_EXCEPTION(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
 		#endif
 	}
 

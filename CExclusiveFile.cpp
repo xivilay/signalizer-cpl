@@ -185,7 +185,7 @@ namespace cpl
 		#elif defined(CPL_WINDOWS)
 			DWORD dwRead(0);
 			if (bufsiz > std::numeric_limits<DWORD>::max())
-				throw std::runtime_error("CExclusiveFile::read - buffer size too large");
+				CPL_RUNTIME_EXCEPTION("buffer size too large");
 			DWORD dwSize = static_cast<DWORD>(bufsiz);
 			auto ret = ::ReadFile(handle, src, dwSize, &dwRead, nullptr);
 			return (ret != FALSE) && (dwRead == dwSize);
@@ -205,7 +205,7 @@ namespace cpl
 			DWORD dwWritten(0);
 			DWORD dwSize = static_cast<DWORD>(bufsiz);
 			if (bufsiz > std::numeric_limits<DWORD>::max())
-				throw std::runtime_error("CExclusiveFile::read - buffer size too large");
+				CPL_RUNTIME_EXCEPTION("buffer size too large");
 			auto ret = ::WriteFile(handle, src, dwSize, &dwWritten, nullptr);
 			return (ret != FALSE) && (dwWritten == dwSize);
 		#elif defined(CPL_UNIXC)

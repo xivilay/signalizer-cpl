@@ -663,22 +663,24 @@
 		class CIconTabBar : public CTextTabBar<>
 		{
 		public:
+
+			static const size_t iconOffset = 3;
+
 			virtual void paint(juce::Graphics & g) override
 			{
 
 				g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
 				g.fillAll();
 
-				auto cornerOffset = 5;
 				auto elementBorder = 1;
 				auto hoverButton = getMouseHoverButton();
 				auto height = (getHeight()) / (int)buttons.size();
-				auto iconHeight = height - cornerOffset * 2;
+				auto iconHeight = height - iconOffset * 2;
 				//g.getCurrentFont().getHeight() / 2 + height / 2
-				juce::Rectangle<int> iconRectangle(cornerOffset, cornerOffset, getWidth() - cornerOffset * 2, iconHeight);
+				juce::Rectangle<int> iconRectangle(iconOffset, iconOffset, getWidth() - iconOffset * 2, iconHeight);
 				for (int index = 0; index < (int)buttons.size(); ++index)
 				{
-					iconRectangle.setY(height * index + cornerOffset);
+					iconRectangle.setY(height * index + iconOffset);
 					bool isSelectedIndex = selectedIndex == index;
 
 					auto color = isSelectedIndex ? 
@@ -702,21 +704,10 @@
 						getWidth() - (isSelectedIndex ? 0 : elementBorder),
 						heightThisEntry - elementBorder - (index == 0 ? 1 : 0)
 					 );
-
-					//auto const & image = vectors[index].getImage();
-					g.setOpacity(isSelectedIndex ? 1 : 0.5f);
-					g.drawImageAt(vectors[(unsigned)index].getImage(), cornerOffset, height * index + cornerOffset);
+					vectors[(unsigned)index].changeFillColour(cpl::GetColour(cpl::ColourEntry::selfont));
+					vectors[(unsigned)index].getDrawable()->drawWithin(g, iconRectangle.toFloat().withTrimmedRight(1), juce::RectanglePlacement::centred, isSelectedIndex ? 1 : 0.5f);
+					//g.drawImageAt(vectors[(unsigned)index].getImage(), iconOffset, height * index + iconOffset);
 					g.setOpacity(1.f);
-					/*g.drawImage
-					(
-					image,
-					iconRectangle.getX(), iconRectangle.getY(), iconRectangle.getWidth(), iconRectangle.getHeight(),
-					0, 0, image.getWidth(), image.getHeight()
-					);*/
-					//g.drawFittedText(buttons[index].c_str(), textRectangle, juce::Justification::centredLeft, 1);
-
-					// 5, g.getCurrentFont().getHeight() / 2 + height/2 + height * index
-					//g.drawSingleLineText(buttons[index].c_str(),);
 				}
 				return; // comment if you want black bars around
 				g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
@@ -742,12 +733,9 @@
 				//auto hoverButton = getMouseHoverButton();
 
 				auto height = (getHeight()) / (int)buttons.size();
-				auto iconHeight = height - cornerOffset * 2;
+				auto iconHeight = height - iconOffset * 2;
 				//g.getCurrentFont().getHeight() / 2 + height / 2
-				juce::Rectangle<float> iconRectangle((float)cornerOffset, (float)cornerOffset, (float)getWidth() - cornerOffset * 2.0f, (float)iconHeight);
-
-				for (auto & vec : vectors)
-					vec.renderImage(iconRectangle.withZeroOrigin(), cpl::GetColour(cpl::ColourEntry::selfont));
+				juce::Rectangle<float> iconRectangle((float)iconOffset, (float)iconOffset, (float)getWidth() - iconOffset * 2.0f, (float)iconHeight);
 
 			}
 
@@ -770,75 +758,6 @@
 
 		};
 
-		class NameComp : public juce::Component
-		{
-			cpl::CIconTabBar bar;
-			cpl::CComboBox box;
-		public:
-			NameComp(std::string name, bool hasIcons = true)
-				: content(name), sel(sel.showColourspace | sel.showColourAtTop, 2, 2), hasIcons(hasIcons),
-				knob("SomeValue", knob.hz), color("smukt")
-			{
-				knob.bToggleEditSpaces(true);
-				knob.bSetDescription("This is a general knob.");
-				knob.bSetPos(10, 10);
-				if (hasIcons)
-				{
-					bar.setOrientation(bar.Vertical);
-					bar.addTab("icons/svg/gear.svg");
-					bar.addTab("icons/svg/painting.svg");
-					bar.addTab("icons/svg/wrench.svg");
-					bar.addTab("icons/svg/formulae.svg");
-					addAndMakeVisible(bar);
-				}
-				else
-				{
-					addAndMakeVisible(knob);
-					addAndMakeVisible(box);
-				}
-				box.bSetTitle("Algorithm:");
-				box.bSetPos(150, 5);
-
-				box.setValues("Fast Fourier Transform|FFT|Minimum Q DFT|Resonators");
-
-
-				color.bSetPos(300, 20);
-				color.bToggleEditSpaces(true);
-				addAndMakeVisible(color);
-				//addAndMakeVisible(sel);
-			}
-
-			void paint(Graphics & g)
-			{
-				g.fillAll(cpl::GetColour(cpl::ColourEntry::activated));
-				g.setFont(TextSize::largeText);
-				g.setColour(cpl::GetColour(cpl::ColourEntry::selfont));
-				g.drawFittedText(content, getBounds(), Justification::centredRight, 1);
-				if (hasIcons)
-				{
-					g.setFont(cpl::TextSize::smallerText);
-					g.drawText("Lazy dog caught the quick fox.", juce::Rectangle<float>(35, 5, 300, 20), juce::Justification::topLeft, true);
-					g.setFont(cpl::TextSize::smallText);
-					g.drawText("Lazy dog caught the quick fox.", juce::Rectangle<float>(35, 20, 300, 20), juce::Justification::topLeft, true);
-					g.setFont(cpl::TextSize::normalText);
-					g.drawText("Lazy dog caught the quick fox.", juce::Rectangle<float>(35, 40, 300, 20), juce::Justification::topLeft, true);
-					g.setFont(cpl::TextSize::largeText);
-					g.drawText("Lazy dog caught the quick fox.", juce::Rectangle<float>(35, 70, 300, 20), juce::Justification::topLeft, true);
-				}
-			}
-
-			void resized()
-			{
-				bar.setBounds(0, 0, 25, getHeight());
-
-			}
-			std::string content;
-			juce::ColourSelector sel;
-			bool hasIcons;
-			CKnobSlider knob;
-			CColourControl color;
-		};
-
 		class CSVGButton : public juce::Button, public cpl::CBaseControl
 		{
 		public:
@@ -854,15 +773,6 @@
 			{
 				rsc.associate(imagePath);
 				resized();
-			}
-
-			void resized() override
-			{
-				auto size = juce::Rectangle<int>(0, 0, getBounds().getWidth() - 2 * cornerOffset, getBounds().getHeight() - 2 * cornerOffset);
-				rsc.renderImage<int>(size, cpl::GetColour(ColourEntry::selfont));
-
-				rect.clear();
-				rect.addRectangle(0.f, 0.f, (float)getWidth() - 1, (float)getHeight() - 1);
 			}
 
 			iCtrlPrec_t bGetValue() const override
@@ -901,27 +811,20 @@
 					g.fillAll(cpl::GetColour(ColourEntry::deactivated));
 				}
 
-				if (getToggleState())
-				{
-					g.setOpacity(1.f);
-				}
+				rsc.changeFillColour(cpl::GetColour(ColourEntry::selfont));
 
-				else
-				{
-					g.setOpacity(0.5f);
-				}
+				rsc.getDrawable()->drawWithin(
+					g, 
+					getBounds().withZeroOrigin().reduced(cornerOffset).toFloat(), 
+					juce::RectanglePlacement::centred,
+					getToggleState() ? 1.0f : 0.5f
+				);
 
-
-				g.drawImageAt(rsc.getImage(), cornerOffset, cornerOffset);
-
-				g.setColour(getToggleState() ? cpl::GetColour(ColourEntry::deactivated) : cpl::GetColour(ColourEntry::separator));
-				//g.strokePath(rect, pst);
 			}
 
 		private:
-			static const int cornerOffset = 4;
+			static const int cornerOffset = 2;
 			CVectorResource rsc;
-			juce::Path rect;
 			juce::PathStrokeType pst;
 		};
 	};
