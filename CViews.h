@@ -106,14 +106,11 @@
 			bool isOpenGL() const noexcept { return oglc != nullptr; }
 			juce::OpenGLContext * getAttachedContext() const noexcept { return oglc; }
 			bool shouldSynchronize() { return isSynced; }
-			void setSyncing(bool shouldSync) { isSynced = shouldSync; }
 			void setApproximateRefreshRate(int ms) { refreshRate = ms; }
 			void setSwapInterval(int interval) { bufferSwapInterval = interval; }
 			int getSwapInterval() const noexcept { return isOpenGL() ? oglc->getSwapInterval() : 1; }
 			
 		protected:
-
-
 
 			bool isFullScreen;
 			bool isSynced;
@@ -157,6 +154,15 @@
 
 		public:
 			
+			class OpenGLEventListener
+			{
+			public:
+				virtual void onOGLRendering(COpenGLView * view) {};
+				virtual void onOGLContextCreation(COpenGLView * view) { };
+				virtual void onOGLContextDestruction(COpenGLView * view) {};
+				virtual ~OpenGLEventListener() {}
+			};
+
 			COpenGLView()
 			{
 				graphicsStamp = juce::Time::getHighResolutionTicks();
@@ -208,7 +214,7 @@
 				return graphicsDelta;
 			}
 			/// <summary>
-			/// Returns the time it took from the last frame started rendering, till this frame started rendering
+			/// Returns the time it took from the last frame started rendering, till this frame started rendering.
 			/// This can be used as a fraction of how much time you should proceed in this frame.
 			/// Time is in seconds.
 			/// </summary>
@@ -218,10 +224,27 @@
 				return openGLDelta;
 			}
 
+			void addOpenGLEventListener(OpenGLEventListener * listener)
+			{
+				std::lock_guard<std::mutex> lock(hookMutex);
+				oglEventListeners.insert(listener);
+			}
+
+			void removeOpenGLEventListener(OpenGLEventListener * listener)
+			{
+				std::lock_guard<std::mutex> lock(hookMutex);
+				oglEventListeners.erase(listener);
+			}
+
 		protected:
 			
 			void renderOpenGL() override final
 			{
+				{
+					std::lock_guard<std::mutex> lock(hookMutex);
+					for (auto && l : oglEventListeners)
+						l->onOGLRendering(this);
+				}
 				juce::OpenGLHelpers::resetErrorState();
 				/// <summary>
 				/// If the stack gets corrupted, the next variable should not have been overwritten, and can be used
@@ -272,7 +295,13 @@
 				
 				// TODO: consider if the graphics context can be created/acquired somehow else, so we don't have to consider screen size.. etc.
 				auto scale = oglc->getRenderingScale();
-				std::unique_ptr<juce::LowLevelGraphicsContext> context(juce::createOpenGLGraphicsContext(*oglc, static_cast<int>(scale * getWidth()), static_cast<int>(scale * getHeight())));
+				std::unique_ptr<juce::LowLevelGraphicsContext> context(
+					juce::createOpenGLGraphicsContext(
+						*oglc, 
+						static_cast<int>(scale * getWidth()), 
+						static_cast<int>(scale * getHeight())
+					)
+				);
 				
 				juce::Graphics g(*context);
 				if(scale != 1.0)
@@ -288,13 +317,20 @@
 
 			void newOpenGLContextCreated() override
 			{
-				if (bufferSwapInterval >= 0)
-					oglc->setSwapInterval(bufferSwapInterval);
-
+				{
+					std::lock_guard<std::mutex> lock(hookMutex);
+					for (auto && l : oglEventListeners)
+						l->onOGLContextCreation(this);
+				}
 				initOpenGL();
 			}
 			void openGLContextClosing() override
 			{
+				{
+					std::lock_guard<std::mutex> lock(hookMutex);
+					for (auto && l : oglEventListeners)
+						l->onOGLContextDestruction(this);
+				}
 				closeOpenGL();
 			}
 
@@ -309,6 +345,10 @@
 
 			decltype(juce::Time::getHighResolutionTicks()) graphicsStamp;
 			decltype(juce::Time::getHighResolutionTicks()) openGLStamp;
+
+		private:
+			std::mutex hookMutex;
+			std::set<OpenGLEventListener *> oglEventListeners;
 		};
 
 		/*

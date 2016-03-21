@@ -187,16 +187,8 @@ namespace cpl
 		 *********************************************************************************************/
 		const std::string & DirectoryPath()
 		{
-			static std::string dirPath;
-			if(!dirPath.size())
-			{
-				dirPath = GetDirectoryPath();
-				return dirPath;
-			}
-			else
-			{
-				return dirPath;
-			}
+			static std::string dirPath = GetDirectoryPath();
+			return dirPath;
 		}
 
 		/*********************************************************************************************
@@ -350,6 +342,25 @@ namespace cpl
 			return false;
 		}
 		
+
+		const char * GetImageBase()
+		{
+			#ifdef CPL_WINDOWS
+				HMODULE hMod;
+				if (GetModuleHandleExA(
+					GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+					(char*)&GetDirectoryPath, &hMod))
+				{
+					return reinterpret_cast<char *>(hMod);
+				}
+			#elif CPL_MAC
+#error Implement GetImageBase for your platform
+			#elif CPL_UNIXC
+#error Implement GetImageBase for your platform
+			#endif
+			return nullptr;
+		}
+
 		/*********************************************************************************************
 		 
 			returns the amount of characters needed to print pargs to the format list,

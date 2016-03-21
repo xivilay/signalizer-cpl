@@ -99,7 +99,8 @@ namespace cpl
 	std::string CProtected::formatExceptionMessage(const CSystemException & e) 
 	{
 		Misc::CStringFormatter base;
-		base << "Exception at " << std::hex << e.data.faultAddr << ": ";
+		base << "Exception at " << std::hex << e.data.faultAddr 
+			 << "(base + 0x" << ((const char*)e.data.faultAddr - Misc::GetImageBase()) << "): ";
 		switch(e.data.exceptCode)
 		{
 		case CSystemException::status::intdiv_zero:

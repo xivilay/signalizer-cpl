@@ -38,7 +38,7 @@
 
 	namespace cpl
 	{
-		const char newl = '\n';
+		extern const char * newl;
 		const char tab = '\t';
 
 		typedef std::make_signed<std::size_t>::type ssize_t;

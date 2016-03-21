@@ -38,6 +38,8 @@
 	#include <vector>
 	#include <atomic>
 	#include <memory>
+	#include "Misc.h"
+
 
 	namespace cpl
 	{
@@ -59,10 +61,7 @@
 
 			ABoolFlag & operator = (bool val)
 			{
-				if (!val)
-				{
-					CPL_RUNTIME_EXCEPTION("Atomic bool flag reset through operator = .");
-				}
+				CPL_RUNTIME_ASSERTION(val && "Atomic bool flag reset through operator = .");
 				flag.store(!!val, std::memory_order_release);
 				return *this;
 			}

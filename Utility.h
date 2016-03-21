@@ -35,6 +35,7 @@
 	#include <functional>
 	#include <set>
 	#include "stdext.h"
+	#include "Misc.h"
 
 	namespace cpl
 	{

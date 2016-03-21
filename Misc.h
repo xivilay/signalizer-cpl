@@ -39,6 +39,7 @@
 	#include "PlatformSpecific.h"
 	#include "Types.h"
 	#include <typeinfo>
+
 	namespace cpl
 	{
 		namespace Misc 
@@ -58,6 +59,11 @@
 			int ObtainUniqueInstanceID();
 			void ReleaseUniqueInstanceID(int ID);
 			bool IsBeingDebugged();
+
+			/// <summary>
+			/// Returns a pointer to the base of the current image (DLL/DYLIB/SO)
+			/// </summary>
+			const char * GetImageBase();
 
 			const std::string & DirectoryPath();
 
@@ -409,6 +415,30 @@
 					// not needed (except for warns)
 					return false;
 				}
+
+
+			#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert) \
+				do \
+				{ \
+					std::string message = std::string("Runtime exception in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
+					CPL_DEBUGOUT(message.c_str()); \
+					cpl::Misc::LogException(message); \
+					if(CPL_ISDEBUGGED()) DBG_BREAK(); \
+					bool doAbort = isassert; \
+					if(doAbort) \
+						std::abort(); \
+					else \
+						throw std::runtime_error(message); \
+				} while(0) 
+
+
+			#define CPL_RUNTIME_EXCEPTION(msg) \
+				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false)
+
+			#define CPL_RUNTIME_ASSERTION(expression) \
+				if(!(expression)) \
+					CPL_INTERNAL_EXCEPTION("Runtime assertion failed: " #expression, __FILE__, __LINE__, __func__, true)
+
 		}; // Misc
 	}; // APE
 #endif

@@ -140,11 +140,7 @@ namespace cpl
 
 	bool CExclusiveFile::newline()
 	{
-		#if defined(CPL_WINDOWS)
-			return write("\r\n");
-		#else
-			return write("\n");
-		#endif
+		return write(newl);
 	}
 
 	std::int64_t CExclusiveFile::getFileSize()

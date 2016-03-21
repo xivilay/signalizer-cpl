@@ -99,13 +99,6 @@
 	#else
 		#define CPL_DEBUGOUT(x) fputs(x, stderr)
         // forward declare it
-		namespace cpl
-		{
-			namespace Misc
-			{
-				bool IsBeingDebugged();
-			};
-		};
 		#define CPL_ISDEBUGGED() cpl::Misc::IsBeingDebugged()
 		#define debug_out(x) (void*) 0
 	#endif
@@ -286,20 +279,7 @@
 	#else
 		#error "Compiler not supported."
 	#endif
-
-	#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname) \
-		do \
-		{ \
-			std::string message = std::string("Runtime exception in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
-			CPL_DEBUGOUT(message.c_str()); \
-			if(CPL_ISDEBUGGED()) DBG_BREAK(); \
-			throw std::runtime_error(message); \
-		} while(0) 
-
-
-	#define CPL_RUNTIME_EXCEPTION(msg) \
-		CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__)
-
+		
 	#if defined(__LLVM__) || defined(__GCC__)
 		// sets a standard for packing structs.
 		// this is enforced on msvc by using #pragma pack()

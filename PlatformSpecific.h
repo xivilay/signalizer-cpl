@@ -34,9 +34,11 @@
 	#include "MacroConstants.h"
 
 	#ifdef CPL_WINDOWS
+
 		#include <windows.h>
 		#include <tchar.h>
 		#include <intrin.h>
+
 	#elif defined(CPL_UNIXC)
 
 		#include <dlfcn.h>

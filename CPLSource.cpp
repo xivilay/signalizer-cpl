@@ -32,6 +32,7 @@
 
 #include "Common.h"
 #include "Misc.cpp"
+#include "stdext.cpp"
 
 #ifdef CPL_JUCE
 

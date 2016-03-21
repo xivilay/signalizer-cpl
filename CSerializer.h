@@ -117,6 +117,7 @@
 	#include <stdexcept>
 	#include "stdext.h"
 	#include "PlatformSpecific.h"
+	#include "Misc.h"
 
 	namespace cpl
 	{
