@@ -55,7 +55,7 @@ namespace cpl
 
 		double wscale = p.generateWindow<double>(window, window.size()) / N;
 
-		g.setColour(GetColour(ColourEntry::selfont).withMultipliedBrightness(0.8f));
+		g.setColour(GetColour(ColourEntry::SelectedText).withMultipliedBrightness(0.8f));
 
 		double top = 0;
 		double bot = getHeight();
@@ -126,7 +126,7 @@ namespace cpl
 			y1 = y2;
 		}
 
-		g.setColour(GetColour(ColourEntry::ctrltext));
+		g.setColour(GetColour(ColourEntry::ControlText));
 
 
 		y1 = window[0];

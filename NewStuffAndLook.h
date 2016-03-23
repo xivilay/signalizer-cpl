@@ -88,8 +88,8 @@
 				for (int index = 0; index < buttons.size(); ++index)
 				{
 					textRectangle.setY(height * index);
-					auto color = selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::activated) : cpl::GetColour(cpl::ColourEntry::deactivated);
-					Colour textColour = (selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::selfont) : cpl::GetColour(cpl::ColourEntry::auxfont));
+					auto color = selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::Activated) : cpl::GetColour(cpl::ColourEntry::Deactivated);
+					Colour textColour = (selectedIndex == index ? cpl::GetColour(cpl::ColourEntry::SelectedText) : cpl::GetColour(cpl::ColourEntry::AuxillaryText));
 					// enhance brightness
 					if (index == hoverButton)
 					{
@@ -262,13 +262,13 @@
 						juce::Colour textColour, color;
 						if (!isIndeterminateState && selectedIndex == index)
 						{
-							color = cpl::GetColour(cpl::ColourEntry::activated);
-							textColour = cpl::GetColour(cpl::ColourEntry::selfont);
+							color = cpl::GetColour(cpl::ColourEntry::Activated);
+							textColour = cpl::GetColour(cpl::ColourEntry::SelectedText);
 						}
 						else
 						{
-							color = cpl::GetColour(cpl::ColourEntry::deactivated);
-							textColour = cpl::GetColour(cpl::ColourEntry::auxfont);
+							color = cpl::GetColour(cpl::ColourEntry::Deactivated);
+							textColour = cpl::GetColour(cpl::ColourEntry::AuxillaryText);
 						}
 						// enhance brightness
 						if (!isIndeterminateState && index == hoverButton)
@@ -311,15 +311,15 @@
 						juce::Colour textColour, color;
 						if (!isIndeterminateState && selectedIndex == index)
 						{
-							color = cpl::GetColour(cpl::ColourEntry::activated);
-							textColour = cpl::GetColour(cpl::ColourEntry::selfont);
+							color = cpl::GetColour(cpl::ColourEntry::Activated);
+							textColour = cpl::GetColour(cpl::ColourEntry::SelectedText);
 							textRectangle.setRight(triangleVertices.getBounds().getX() - cornerOffset);
 						}
 						else
 						{
 							textRectangle.setWidth(size - cornerOffset * 2);
-							color = cpl::GetColour(cpl::ColourEntry::deactivated);
-							textColour = cpl::GetColour(cpl::ColourEntry::auxfont);
+							color = cpl::GetColour(cpl::ColourEntry::Deactivated);
+							textColour = cpl::GetColour(cpl::ColourEntry::AuxillaryText);
 						}
 						// enhance brightness
 						if (index == hoverButton)
@@ -333,11 +333,11 @@
 						g.setColour(textColour);
 						g.drawFittedText(buttons[index].c_str(), textRectangle, juce::Justification::centredLeft, 1);
 						
-						g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+						g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 						// vertical borders
 						g.drawVerticalLine(size * index + size, 0.0f, (float)getHeight());
 					}
-					g.setColour(cpl::GetColour(cpl::ColourEntry::aux));
+					g.setColour(cpl::GetColour(cpl::ColourEntry::Auxillary));
 					// draw triangle
 					if (isTriangleHovered)
 						g.setOpacity(0.8f);
@@ -604,7 +604,7 @@
 			{
 				dirs[0] = Direction::left;
 				dirs[1] = Direction::bottom;
-				colours[0] = colours[1] = cpl::GetColour(ColourEntry::aux);
+				colours[0] = colours[1] = cpl::GetColour(ColourEntry::Auxillary);
 				setClickingTogglesState(true);
 				setOpaque(false);
 			}
@@ -669,7 +669,7 @@
 			virtual void paint(juce::Graphics & g) override
 			{
 
-				g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+				g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 				g.fillAll();
 
 				auto elementBorder = 1;
@@ -684,8 +684,8 @@
 					bool isSelectedIndex = selectedIndex == index;
 
 					auto color = isSelectedIndex ? 
-						cpl::GetColour(cpl::ColourEntry::activated) : cpl::GetColour(cpl::ColourEntry::deactivated);
-					Colour textColour = (isSelectedIndex ? cpl::GetColour(cpl::ColourEntry::selfont) : cpl::GetColour(cpl::ColourEntry::auxfont));
+						cpl::GetColour(cpl::ColourEntry::Activated) : cpl::GetColour(cpl::ColourEntry::Deactivated);
+					Colour textColour = (isSelectedIndex ? cpl::GetColour(cpl::ColourEntry::SelectedText) : cpl::GetColour(cpl::ColourEntry::AuxillaryText));
 					// enhance brightness
 					if (index == hoverButton)
 					{
@@ -704,13 +704,13 @@
 						getWidth() - (isSelectedIndex ? 0 : elementBorder),
 						heightThisEntry - elementBorder - (index == 0 ? 1 : 0)
 					 );
-					vectors[(unsigned)index].changeFillColour(cpl::GetColour(cpl::ColourEntry::selfont));
+					vectors[(unsigned)index].changeFillColour(cpl::GetColour(cpl::ColourEntry::SelectedText));
 					vectors[(unsigned)index].getDrawable()->drawWithin(g, iconRectangle.toFloat().withTrimmedRight(1), juce::RectanglePlacement::centred, isSelectedIndex ? 1 : 0.5f);
 					//g.drawImageAt(vectors[(unsigned)index].getImage(), iconOffset, height * index + iconOffset);
 					g.setOpacity(1.f);
 				}
 				return; // comment if you want black bars around
-				g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+				g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 				// draw horizontal lines.
 				//return;
 				for (unsigned line = 0; line < buttons.size(); ++line)
@@ -796,22 +796,22 @@
 
 				if (getToggleState() && !isButtonDown)
 				{
-					g.fillAll(cpl::GetColour(ColourEntry::activated));
+					g.fillAll(cpl::GetColour(ColourEntry::Activated));
 				}
 				else if (isButtonDown)
 				{
-					g.fillAll(cpl::GetColour(ColourEntry::deactivated).brighter(0.3f));
+					g.fillAll(cpl::GetColour(ColourEntry::Deactivated).brighter(0.3f));
 				}
 				else if (isMouseOverButton)
 				{
-					g.fillAll(cpl::GetColour(ColourEntry::deactivated).brighter(0.1f));
+					g.fillAll(cpl::GetColour(ColourEntry::Deactivated).brighter(0.1f));
 				}
 				else
 				{
-					g.fillAll(cpl::GetColour(ColourEntry::deactivated));
+					g.fillAll(cpl::GetColour(ColourEntry::Deactivated));
 				}
 
-				rsc.changeFillColour(cpl::GetColour(ColourEntry::selfont));
+				rsc.changeFillColour(cpl::GetColour(ColourEntry::SelectedText));
 
 				rsc.getDrawable()->drawWithin(
 					g, 

@@ -81,7 +81,7 @@
 			{
 				void paint(juce::Graphics & g) override
 				{
-					g.fillAll(GetColour(ColourEntry::deactivated));
+					g.fillAll(GetColour(ColourEntry::Deactivated));
 					
 				}
 				

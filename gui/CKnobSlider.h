@@ -42,7 +42,7 @@
 		*********************************************************************************************/
 		class CKnobSlider 
 		: 
-			public juce::Slider, 
+			protected juce::Slider,
 			public CBaseControl
 		{
 
@@ -61,7 +61,6 @@
 			const int msLimit = 1000;
 
 			CKnobSlider(const std::string & name = "", ControlType typeToRepresent = ControlType::pct);
-			virtual ~CKnobSlider();
 
 			// overrides
 			virtual iCtrlPrec_t bGetValue() const override;
@@ -91,15 +90,20 @@
 
 			// true if this is displayed as a knob, otherwise it is a slider.
 			bool isKnob;
+			void computePaths();
+			juce::Slider & getSlider() { return *this; }
+			iCtrlPrec_t laggedValue;
 
 		private:
 
+			juce::Path pie, pointer;
+
+			juce::Slider::SliderStyle oldStyle;
 			ControlType type;
 			juce::Image knobGraphics;
 			int numFrames;
 			int sideLength;
 			std::string title, text;
-
 		};
 	};
 #endif

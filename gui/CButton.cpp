@@ -106,7 +106,7 @@ namespace cpl
 	{
 		const float cornerSize = 5.5f;
 		const int lengthToCorner = static_cast<int>(ceil(cornerSize / 2));
-		juce::Colour c = cpl::GetColour(ColourEntry::activated).brighter(0.1f);
+		juce::Colour c = cpl::GetColour(ColourEntry::Activated).brighter(0.1f);
 		auto bias = 0.0f;
 		const bool isPressed = isButtonDown || getToggleState();
 		// button becomes darker if pressed
@@ -171,7 +171,7 @@ namespace cpl
 
 		}
 		g.setFont(cpl::TextSize::smallText);
-		g.setColour(cpl::GetColour(ColourEntry::ctrltext));
+		g.setColour(cpl::GetColour(ColourEntry::ControlText));
 		//juce::Font lol("Consolas", cpl::TextSize::normalText, Font::plain);
 
 		//g.setFont(lol);

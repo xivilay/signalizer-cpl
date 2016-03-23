@@ -105,7 +105,14 @@ namespace cpl
 	}
 	void CEditSpaceSpawner::mouseDoubleClick(const juce::MouseEvent & e)
 	{
-		if (auto c = dynamic_cast<cpl::CBaseControl *>(e.eventComponent))
+		cpl::CBaseControl * control = dynamic_cast<cpl::CBaseControl *>(e.eventComponent);
+
+		if (!control)
+		{
+			control = dynamic_cast<cpl::CBaseControl *>(e.eventComponent->getParentComponent());
+		}
+
+		if (control)
 		{
 			// check if control is owned by a current edit space
 			// - in which case we dont want to destroy the current.
@@ -119,13 +126,13 @@ namespace cpl
 				}
 			}
 
-			currentEditSpace = c->bCreateEditSpace();
+			currentEditSpace = control->bCreateEditSpace();
 			if (currentEditSpace)
 			{
 				currentEditSpace->addClientDestructor(this);
 
-				auto bounds = c->bGetAbsSize();
-				auto topleft = c->bGetView()->getScreenPosition();
+				auto bounds = control->bGetAbsSize();
+				auto topleft = control->bGetView()->getScreenPosition();
 
 				currentEditSpace->addComponentListener(this);
 				dialog.setTopLeftPosition(topleft.getX(), topleft.getY() + bounds.getHeight());
@@ -160,7 +167,7 @@ namespace cpl
 	 
 	 *********************************************************************************************/
 	CRenderButton::CRenderButton(const std::string & text, const std::string & textToggled)
-		: juce::Button(text), CBaseControl(this), c(cpl::GetColour(ColourEntry::activated).brighter(0.6f)), toggle(false)
+		: juce::Button(text), CBaseControl(this), c(cpl::GetColour(ColourEntry::Activated).brighter(0.6f)), toggle(false)
 	{
 		
 		texts[0] = text;
@@ -286,7 +293,7 @@ namespace cpl
 
 		}
 		g.setFont(cpl::TextSize::smallText);
-		g.setColour(cpl::GetColour(ColourEntry::ctrltext));
+		g.setColour(cpl::GetColour(ColourEntry::ControlText));
 		//juce::Font lol("Consolas", cpl::TextSize::normalText, Font::plain);
 
 		//g.setFont(lol);

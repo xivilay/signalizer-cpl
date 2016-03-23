@@ -109,16 +109,16 @@
 
 			enum class ColourEntry
 			{
-				deactivated,
-				normal,
-				activated,
-				aux,
-				auxfont,
-				separator,
-				selfont,
-				success,
-				error,
-				ctrltext,
+				Deactivated,
+				Normal,
+				Activated,
+				Auxillary,
+				AuxillaryText,
+				Separator,
+				SelectedText,
+				Success,
+				Error,
+				ControlText,
 				End
 			};
 

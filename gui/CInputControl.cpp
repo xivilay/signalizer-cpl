@@ -83,9 +83,9 @@ namespace cpl
 	{
 		//g.setFont(systemFont.withHeight(TextSize::normalText)); EDIT_TYPE_NEWFONTS
 		g.setFont(TextSize::normalText);
-		g.setColour(cpl::GetColour(cpl::ColourEntry::ctrltext));
+		g.setColour(cpl::GetColour(cpl::ColourEntry::ControlText));
 		g.drawFittedText(title, stringBounds, juce::Justification::centredLeft, 1, 1);
-		g.setColour(cpl::GetColour(cpl::ColourEntry::deactivated));
+		g.setColour(cpl::GetColour(cpl::ColourEntry::Deactivated));
 		g.fillRect(box.getBounds());
 
 	}
@@ -103,7 +103,7 @@ namespace cpl
 			GUIUtils::FutureMainEvent(500, [&]() { indicateSuccess(); }, this);
 		}
 
-		errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::success);
+		errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::Success);
 		errorVisualizer.borderSize = 4.f;
 		errorVisualizer.setAlpha(1.f);
 		errorVisualizer.isActive = true;
@@ -121,7 +121,7 @@ namespace cpl
 			GUIUtils::FutureMainEvent(500, [&]() { indicateError(); }, this);
 		}
 
-		errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::error);
+		errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::Error);
 		errorVisualizer.borderSize = 4.f;
 		errorVisualizer.setAlpha(1.f);
 		errorVisualizer.isActive = true;

@@ -81,8 +81,8 @@ namespace cpl
 		switchWithOld->enableTooltip(true);
 		switchWithOld->bAddPassiveChangeListener(this);
 
-		iconSucces.setImage(CVectorResource::renderSVGToImage("icons/svg/successtick.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::success)));
-		iconError.setImage(CVectorResource::renderSVGToImage("icons/svg/errorcross.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::error)));
+		iconSucces.setImage(CVectorResource::renderSVGToImage("icons/svg/successtick.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::Success)));
+		iconError.setImage(CVectorResource::renderSVGToImage("icons/svg/errorcross.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::Error)));
 		iconSucces.setOpaque(false);
 		iconSucces.setAlpha(0);
 		iconError.setOpaque(false);
@@ -139,31 +139,31 @@ namespace cpl
 			createSimpleViewEditor();
 		}
 
-		g.fillAll(cpl::GetColour(cpl::ColourEntry::deactivated));
-		g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+		g.fillAll(cpl::GetColour(cpl::ColourEntry::Deactivated));
+		g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 		g.drawVerticalLine(getWidth() - (compactHeight - 1), 0.f, (float)getHeight() - 1);
 
 		if (!compactMode)
 		{
-			g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 			g.drawHorizontalLine(elementHeight, 0.f, getWidth() - 1.f);
 			// draw title of control
 			//g.setFont(cpl::systemFont); EDIT_TYPE_NEWFONTS
 			g.setFont(TextSize::normalText);
-			g.setColour(cpl::GetColour(cpl::ColourEntry::auxfont));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::AuxillaryText));
 			auto titleRect = getBounds().withPosition(5, 1).withHeight(elementHeight);
 			g.drawText("Editing ", titleRect.withRight(47), juce::Justification::centredLeft);
-			g.setColour(cpl::GetColour(cpl::ColourEntry::selfont));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::SelectedText));
 			g.drawText(Misc::DemangledTypeName(*parentControl), titleRect.withLeft(50), juce::Justification::centredLeft);
 
 			// draw insides, starting with internal value
 			auto elementPos = titleRect.withY(titleRect.getY() + elementHeight);
-			g.setColour(cpl::GetColour(cpl::ColourEntry::auxfont));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::AuxillaryText));
 			g.drawText("Semantic value:", elementPos, juce::Justification::centredLeft);
 
 			g.drawText("Internal value:", elementPos.withY(cpl::Math::round<int>(elementPos.getY() + elementHeight * 1.5)), juce::Justification::centredLeft);
 		}
-		g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+		g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 		g.drawRect(0, 0, getWidth(), getHeight());
 
 	}
@@ -231,7 +231,7 @@ namespace cpl
 		{
 			exitAfterAnimation = compactMode;
 			inputValueWasValid = true;
-			errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::success);
+			errorVisualizer.borderColour = cpl::GetColour(cpl::ColourEntry::Success);
 			errorVisualizer.borderSize = 4.f;
 			errorVisualizer.setAlpha(1.f);
 			errorVisualizer.isActive = true;
@@ -270,7 +270,7 @@ namespace cpl
 		if (compactMode)
 		{
 			exitAfterAnimation = inputValueWasValid = false;
-			errorVisualizer.borderColour = cpl::GetColour(ColourEntry::error);
+			errorVisualizer.borderColour = cpl::GetColour(ColourEntry::Error);
 			errorVisualizer.borderSize = 4.f;
 			errorVisualizer.setAlpha(1.f);
 			errorVisualizer.isActive = true;

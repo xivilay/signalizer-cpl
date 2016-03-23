@@ -278,9 +278,7 @@ namespace cpl
 	CColourControl::CColourControl(const std::string & name, ColourType typeToUse)
 		: CKnobSlider(name), colourType(typeToUse), colour(0xFF, 0, 0, 0), channel(Channels::Red)
 	{
-		//bForceEvent();
 		isEditSpacesAllowed = true;
-		setVisible(true);
 		onValueChange();
 	}
 	/*********************************************************************************************/
@@ -444,7 +442,9 @@ namespace cpl
 		colour = floatToInt(floatingRepresentation);
 		//std::cout << "Value " << std::hex << newColour.getARGB()  << "set to " <<  colour.getARGB() << std::endl;
 
-		setValue(floatingRepresentation * (getMaximum() - getMinimum()) + getMinimum(), juce::NotificationType::sendNotificationSync);
+		getSlider().setValue(
+			floatingRepresentation * (getSlider().getMaximum() - getSlider().getMinimum()) + getSlider().getMinimum(), 
+			juce::NotificationType::sendNotificationSync);
 	}
 	bool CColourControl::bStringToValue(const std::string & valueString, iCtrlPrec_t & value) const
 	{

@@ -56,9 +56,9 @@ namespace cpl
 				label.addListener(this);
 				label.setSelectAllWhenFocused(true);
 				label.setText("1", true);
-				label.setColour(TextEditor::backgroundColourId, GetColour(ColourEntry::deactivated));
-				label.setColour(TextEditor::outlineColourId, GetColour(ColourEntry::separator));
-				label.setColour(TextEditor::textColourId, GetColour(ColourEntry::auxfont));
+				label.setColour(TextEditor::backgroundColourId, GetColour(ColourEntry::Deactivated));
+				label.setColour(TextEditor::outlineColourId, GetColour(ColourEntry::Separator));
+				label.setColour(TextEditor::textColourId, GetColour(ColourEntry::AuxillaryText));
 				label.setScrollToShowCursor(false);
 				addAndMakeVisible(label);
 			}
@@ -242,12 +242,12 @@ namespace cpl
 		const char * titles[] = { " - Position - ", " - Rotation - ", " - Scale - " };
 
 		g.setFont(TextSize::normalText);
-		g.setColour(GetColour(ColourEntry::auxfont));
+		g.setColour(GetColour(ColourEntry::AuxillaryText));
 		for (unsigned y = 0; y < 3; ++y)
 		{
 			g.drawText(titles[y], 0, y * (elementHeight * 2), getWidth(), elementHeight - 1, juce::Justification::centred);
 		}
-		g.setColour(GetColour(ColourEntry::auxfont));
+		g.setColour(GetColour(ColourEntry::AuxillaryText));
 		g.setFont(TextSize::smallText);
 		for (unsigned y = 0; y < 3; ++y)
 		{

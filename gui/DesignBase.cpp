@@ -170,33 +170,33 @@ namespace cpl
 	ColourMapEntry ColourMap[] = 
 	{
 		// popup menus
-		{ PopupMenu::backgroundColourId, ColourEntry::deactivated },
-		{ PopupMenu::textColourId, ColourEntry::auxfont },
+		{ PopupMenu::backgroundColourId, ColourEntry::Deactivated },
+		{ PopupMenu::textColourId, ColourEntry::AuxillaryText },
 
 		// combo-boxes
-		{ ComboBox::backgroundColourId, ColourEntry::deactivated },
-		{ ComboBox::buttonColourId, ColourEntry::separator },
-		{ ComboBox::arrowColourId, ColourEntry::aux },
-		{ ComboBox::outlineColourId, ColourEntry::separator },
-		{ ComboBox::textColourId, ColourEntry::auxfont },
+		{ ComboBox::backgroundColourId, ColourEntry::Deactivated },
+		{ ComboBox::buttonColourId, ColourEntry::Separator },
+		{ ComboBox::arrowColourId, ColourEntry::Auxillary },
+		{ ComboBox::outlineColourId, ColourEntry::Separator },
+		{ ComboBox::textColourId, ColourEntry::AuxillaryText },
 
 		// text editors
-		{ juce::TextEditor::focusedOutlineColourId, ColourEntry::aux },
-		{ juce::TextEditor::outlineColourId, ColourEntry::activated },
-		{ juce::TextEditor::textColourId, ColourEntry::auxfont },
-		{ juce::TextEditor::highlightedTextColourId, ColourEntry::selfont },
+		{ juce::TextEditor::focusedOutlineColourId, ColourEntry::Auxillary },
+		{ juce::TextEditor::outlineColourId, ColourEntry::Activated },
+		{ juce::TextEditor::textColourId, ColourEntry::AuxillaryText },
+		{ juce::TextEditor::highlightedTextColourId, ColourEntry::SelectedText },
 
 		// colour selectors
-		{ ColourSelector::backgroundColourId, ColourEntry::deactivated },
-		{ ColourSelector::labelTextColourId, ColourEntry::auxfont },
+		{ ColourSelector::backgroundColourId, ColourEntry::Deactivated },
+		{ ColourSelector::labelTextColourId, ColourEntry::AuxillaryText },
 
 		// labels
-		{ juce::Label::textColourId, ColourEntry::auxfont },
-		{ juce::Label::textWhenEditingColourId, ColourEntry::auxfont },
+		{ juce::Label::textColourId, ColourEntry::AuxillaryText },
+		{ juce::Label::textWhenEditingColourId, ColourEntry::AuxillaryText },
 		// tool tips
-		{ CToolTipWindow::backgroundColourId, ColourEntry::deactivated },
-		{ CToolTipWindow::outlineColourId, ColourEntry::separator },
-		{ CToolTipWindow::textColourId, ColourEntry::selfont }
+		{ CToolTipWindow::backgroundColourId, ColourEntry::Deactivated },
+		{ CToolTipWindow::outlineColourId, ColourEntry::Separator },
+		{ CToolTipWindow::textColourId, ColourEntry::SelectedText }
 	};
 
 
@@ -288,7 +288,7 @@ namespace cpl
 	void CLookAndFeel_CPL::drawComboBox(Graphics & g, int width, int height, bool isButtonDown, int buttonX, int buttonY, int buttonW, int buttonH, ComboBox & c)
 	{
 		const int triangleSize = cpl::Math::round<int>(buttonH * 0.5);
-		g.fillAll(cpl::GetColour(cpl::ColourEntry::deactivated));
+		g.fillAll(cpl::GetColour(cpl::ColourEntry::Deactivated));
 
 		juce::Path triangleVertices;
 
@@ -306,7 +306,9 @@ namespace cpl
 		);
 		
 		triangleVertices.applyTransform(AffineTransform::identity.rotated(float(isPopped * -M_PI * 0.5), d1 + xO + triangleSize * 0.5f, d1 + yO + triangleSize * 0.5f));
-		g.setColour(cpl::GetColour(cpl::ColourEntry::activated).brighter(0.2f + 0.2f * isPopped));
+		g.setColour(cpl::GetColour(cpl::ColourEntry::Activated).brighter(
+			c.isMouseOverOrDragging() * 0.1f + 0.2f + 0.2f * isPopped)
+		);
 		g.fillPath(triangleVertices);
 		
 	};

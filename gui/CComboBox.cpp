@@ -95,7 +95,7 @@ namespace cpl
 	{
 		//g.setFont(systemFont.withHeight(TextSize::normalText)); EDIT_TYPE_NEWFONTS
 		g.setFont(TextSize::normalText);
-		g.setColour(cpl::GetColour(cpl::ColourEntry::ctrltext));
+		g.setColour(cpl::GetColour(cpl::ColourEntry::ControlText));
 		g.drawFittedText(title, stringBounds, juce::Justification::centredLeft, 1, 1);
 	}
 	/*********************************************************************************************/

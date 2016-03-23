@@ -29,6 +29,8 @@
 
 #include "CKnobSlider.h"
 #include "CKnobSliderEditor.h"
+#include "../simd/simd_consts.h"
+
 
 namespace cpl
 {
@@ -43,18 +45,19 @@ namespace cpl
 			return nullptr;
 	}
 
-
-	/*********************************************************************************************
-
-	CKnobSlider
-
-	*********************************************************************************************/
 	CKnobSlider::CKnobSlider(const std::string & name, ControlType typeToUse)
-		: Slider("CKnobSlider"), knobGraphics(CResourceManager::instance().getImage("bmps/knob.png")), CBaseControl(this), title(name), type(typeToUse)
+		: juce::Slider("CKnobSlider")
+		, knobGraphics(CResourceManager::instance().getImage("bmps/knob.png"))
+		, CBaseControl(this)
+		, title(name)
+		, type(typeToUse)
+		, oldStyle(Slider::SliderStyle::RotaryVerticalDrag)
+		, laggedValue(0)
 	{
-		Slider::setRange(0.0, 1.0);
+		// IF you change the range, please change the scaling back to what is found in the comments.
+		setRange(0.0, 1.0);
 		isEditSpacesAllowed = true;
-		this->addListener(this);
+		addListener(this);
 		numFrames = knobGraphics.getHeight() / knobGraphics.getWidth();
 		sideLength = knobGraphics.getWidth();
 		setTextBoxStyle(NoTextBox, 0, 0, 0);
@@ -62,13 +65,10 @@ namespace cpl
 		enableTooltip(true);
 		setVisible(true);
 		setPopupMenuEnabled(true);
-	}
-
-
-	CKnobSlider::~CKnobSlider()
-	{
 
 	}
+
+
 
 	bool CKnobSlider::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
 	{
@@ -192,52 +192,95 @@ namespace cpl
 		}
 	}
 
+	void CKnobSlider::computePaths()
+	{
+		const float radius = jmin(getWidth() / 2, getHeight() / 2) - 1.0f;
+		const float centreX = getHeight() * 0.5f;
+		const float centreY = centreX;
+		const float rx = centreX - radius;
+		const float ry = centreY - radius;
+		const float rw = radius * 2.0f;
+		const float rotaryStartAngle = 2 * simd::consts<float>::pi * -0.4f;
+		const float rotaryEndAngle = 2 * simd::consts<float>::pi * 0.4f;
+		const float angle = bGetValue() * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
+		const float thickness = 0.7f;
+
+		// pie fill
+		pie.clear();
+		pie.addPieSegment(rx, ry, rw, rw, rotaryStartAngle, angle, thickness * 0.9f);
+
+		// pointer
+		const float innerRadius = radius * 0.2f;
+		const float pointerHeight = innerRadius * thickness;
+		const float pointerLengthScale = 0.5f;
+
+		pointer.clear();
+
+		pointer.addRectangle(
+			-pointerHeight * 0.5f + 2.f + (1 - pointerLengthScale) * radius * thickness,
+			-pointerHeight * 0.5f,
+			pointerLengthScale * radius * thickness,
+			innerRadius * thickness);
+		auto trans = AffineTransform::rotation(angle - simd::consts<float>::pi * 0.5).translated(centreX, centreY);
+		pointer.applyTransform(trans);
+		
+	}
+
 	void CKnobSlider::paint(juce::Graphics& g)
 	{
+		auto newValue = bGetValue();
+
 		if (isKnob)
 		{
-			auto size = ControlSize::Square.height;
-			auto quarterSize = size / 4;
-			auto sideKnobLength = ControlSize::Square.height / 2;
-			// quantize
-			int value = Math::round<int>((getValue() - getMinimum()) / (getMaximum() - getMinimum()) * (numFrames - 1));
+			if (newValue != laggedValue)
+				computePaths();
+
+			// code based on the v2 juce knob
+
+			const bool isMouseOver = isMouseOverOrDragging() && isEnabled();
+			const float thickness = 0.7f;
+
+			// main fill
+			g.setColour(GetColour(ColourEntry::Deactivated));
+			g.fillEllipse(juce::Rectangle<float>(getHeight(), getHeight()));
+
+			// center fill
+			g.setColour(GetColour(ColourEntry::Separator));
+			g.fillEllipse(juce::Rectangle<float>(getHeight(), getHeight()).reduced(getHeight() * (1 - thickness * 1.1f)));
+
+			g.setColour(GetColour(ColourEntry::SelectedText)
+				.withMultipliedBrightness(isMouseOver ? 0.8f : 0.7f));
+
+			g.fillPath(pie);
+
+			g.setColour(GetColour(ColourEntry::ControlText)
+				.withMultipliedBrightness(isMouseOver ? 1.0f : 0.8f));
+
+			g.fillPath(pointer);
+
 			g.setFont(TextSize::smallerText);
-			//g.setFont(systemFont.withHeight()); EDIT_TYPE_NEWFONTS
-			g.setColour(cpl::GetColour(cpl::ColourEntry::ctrltext));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::ControlText));
 
-			// if the size is greater or equal to standard square height, we draw the knob in the middle, and the text above and bottom.
-			if (getHeight() >= ControlSize::Square.height)
-			{
-				g.drawImage(knobGraphics, quarterSize, quarterSize, sideKnobLength, sideKnobLength, 0, value * sideLength, sideLength, sideLength);
-				g.drawText(bGetTitle(), getTitleRect(), juce::Justification::horizontallyCentred, false);
-				g.drawText(bGetText(), getTextRect(), juce::Justification::centred, false);
-			}
-			else
-			{
-				g.drawImage(knobGraphics, 0, 0, sideKnobLength, sideKnobLength, 0, value * sideLength, sideLength, sideLength);
-				g.drawText(bGetTitle(), getTitleRect(), juce::Justification::centredLeft, false);
-				g.drawText(bGetText(), getTextRect(), juce::Justification::centredLeft, false);
-			}
-
-
-
+			// text
+			g.drawText(bGetTitle(), getTitleRect(), juce::Justification::centredLeft, false);
+			g.drawText(bGetText(), getTextRect(), juce::Justification::centredLeft, false);
 		}
 		else
 		{
 			
-			g.fillAll(cpl::GetColour(cpl::ColourEntry::activated).darker(0.6f));
+			g.fillAll(cpl::GetColour(cpl::ColourEntry::Activated).darker(0.6f));
 
 
 			auto bounds = getBounds();
 			auto rem = CRect(1, 1, bounds.getWidth() - 2, bounds.getHeight() - 2);
-			g.setColour(cpl::GetColour(cpl::ColourEntry::activated).darker(0.1f));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::Activated).darker(0.1f));
 			g.fillRect(rem.withLeft(cpl::Math::round<int>(rem.getX() + rem.getWidth() * bGetValue())));
 
-			g.setColour(cpl::GetColour(cpl::ColourEntry::separator));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
 			//g.drawRect(getBounds().toFloat());
 			g.setFont(TextSize::largeText);
 			//g.setFont(systemFont.withHeight(TextSize::largeText)); EDIT_TYPE_NEWFONTS
-			g.setColour(cpl::GetColour(cpl::ColourEntry::auxfont));
+			g.setColour(cpl::GetColour(cpl::ColourEntry::AuxillaryText));
 			if (isMouseOverOrDragging())
 			{
 				g.drawText(bGetText(), getBounds().withPosition(5, 0), juce::Justification::centredLeft);
@@ -248,11 +291,14 @@ namespace cpl
 			}
 
 		}
+
+		laggedValue = bGetValue();
 	}
 
 	iCtrlPrec_t CKnobSlider::bGetValue() const
 	{
-		return static_cast<iCtrlPrec_t>((getValue() - getMinimum()) / (getMaximum() - getMinimum()));
+		// (getValue() - getMinimum()) / (getMaximum() - getMinimum())
+		return static_cast<iCtrlPrec_t>(getValue());
 	}
 	void CKnobSlider::save(CSerializer::Archiver & ar, long long int version)
 	{
@@ -267,16 +313,16 @@ namespace cpl
 		iCtrlPrec_t value(0);
 		bool vel(false);
 		int sens(0);
-		SliderStyle style;
+		Slider::SliderStyle style;
 		ar >> value;
 		ar >> isKnob;
 		ar >> vel;
 		ar >> sens;
 		ar >> style;
 		setIsKnob(isKnob);
-		this->setVelocityBasedMode(vel);
-		this->setMouseDragSensitivity(sens);
-		this->setSliderStyle(style);
+		setVelocityBasedMode(vel);
+		setMouseDragSensitivity(sens);
+		setSliderStyle(style);
 		bSetValue(value, true);
 	}
 
@@ -286,7 +332,8 @@ namespace cpl
 	}
 	void CKnobSlider::bSetInternal(iCtrlPrec_t newValue)
 	{
-		setValue(newValue * (getMaximum() - getMinimum()) + getMinimum(), dontSendNotification);
+		// newValue * (getMaximum() - getMinimum()) + getMinimum()
+		setValue(newValue, dontSendNotification);
 	}
 	void CKnobSlider::bSetTitle(const std::string & in)
 	{
@@ -294,8 +341,8 @@ namespace cpl
 	}
 	void CKnobSlider::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		setValue(newValue * (getMaximum() - getMinimum()) + getMinimum(), 
-			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
+		// newValue * (getMaximum() - getMinimum()) + getMinimum()
+		setValue(newValue, sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
 	}
 	void CKnobSlider::bRedraw()
 	{
@@ -311,17 +358,19 @@ namespace cpl
 
 	void CKnobSlider::setIsKnob(bool shouldBeKnob)
 	{
-		isKnob = !!shouldBeKnob;
-		if (isKnob)
+		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);//setSize(ControlSize::Square.width, ControlSize::Square.height);
+
+		if (shouldBeKnob && !isKnob)
 		{
-			setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);//setSize(ControlSize::Square.width, ControlSize::Square.height);
-			this->setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+			setSliderStyle(oldStyle);
 		}
 		else
 		{
-			setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);
-			this->setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+			oldStyle = getSliderStyle();
+			setSliderStyle(Slider::SliderStyle::LinearHorizontal);
 		}
+
+		isKnob = !!shouldBeKnob;
 	}
 
 	bool CKnobSlider::getIsKnob() const
