@@ -33,6 +33,7 @@
 #include "Common.h"
 #include "Misc.cpp"
 #include "stdext.cpp"
+#include "CMutex.cpp"
 
 #ifdef CPL_JUCE
 

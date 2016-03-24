@@ -31,7 +31,11 @@
 		#define CPL_THROW_ON_NO_RESOURCE:
 			if set, will throw an exception if cpl cannot find
 			a needed resource.
- 
+		#define CPL_TRACEGUARD_ENTRYPOINTS
+			if set, a top-level handler will be installed at common entry points
+			(before user code in audio threads, async threads, opengl rendering etc.),
+			that will catch soft- and hardware exceptions, display messages and log
+			the exceptions with stacktraces etc.
  
 *************************************************************************************/
 
@@ -45,5 +49,5 @@
 		#define JUCE_ENABLE_LIVE_CONSTANT_EDITOR 1
 	#endif
 	//#define CPL_THROW_ON_NO_RESOURCE
-
+	#define CPL_TRACEGUARD_ENTRYPOINTS
 #endif

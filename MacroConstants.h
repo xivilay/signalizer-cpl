@@ -31,7 +31,6 @@
 
 #ifndef CPL_MACROCONSTANTS_H
 	#define CPL_MACROCONSTANTS_H
-
 	#include <cstdint>
 
 	#define CPL__xstring(x) #x
@@ -103,11 +102,11 @@
 		#define debug_out(x) (void*) 0
 	#endif
 
-	#ifndef _DEBUG
+	/* #ifdef _DEBUG */
 		#define CPL_BREAKIFDEBUGGED() if(CPL_ISDEBUGGED()) DBG_BREAK()
-	#else
+	/* #else
 		#define CPL_BREAKIFDEBUGGED() (void *)0
-	#endif
+	#endif */
 
 	#ifdef _DEBUG
 		#define CPL_NOEXCEPT_IF_RELEASE

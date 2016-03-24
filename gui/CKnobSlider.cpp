@@ -202,7 +202,9 @@ namespace cpl
 		const float rw = radius * 2.0f;
 		const float rotaryStartAngle = 2 * simd::consts<float>::pi * -0.4f;
 		const float rotaryEndAngle = 2 * simd::consts<float>::pi * 0.4f;
-		const float angle = bGetValue() * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
+		const float angle = static_cast<float>(
+			bGetValue() * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle
+		);
 		const float thickness = 0.7f;
 
 		// pie fill
@@ -221,7 +223,7 @@ namespace cpl
 			-pointerHeight * 0.5f,
 			pointerLengthScale * radius * thickness,
 			innerRadius * thickness);
-		auto trans = AffineTransform::rotation(angle - simd::consts<float>::pi * 0.5).translated(centreX, centreY);
+		auto trans = AffineTransform::rotation(angle - simd::consts<float>::pi * 0.5f).translated(centreX, centreY);
 		pointer.applyTransform(trans);
 		
 	}

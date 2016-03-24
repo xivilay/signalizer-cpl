@@ -55,7 +55,7 @@
 				{
 					return DemangleRawName(typeid(object).name());
 				}
-			
+
 			int ObtainUniqueInstanceID();
 			void ReleaseUniqueInstanceID(int ID);
 			bool IsBeingDebugged();

@@ -82,8 +82,14 @@ namespace cpl
 		{
 			CExclusiveFile exceptionLog;
 
-			exceptionLog.open(GetDirectoryPath() + "/" + programInfo.name + " exceptions.log", exceptionLog.writeMode | exceptionLog.append, true);
-			exceptionLog.write(("Exception in " + programInfo.name + " v." + programInfo.version + ": " + GetDate() + ", " + GetTime() +  + " -> " + errorMessage).c_str());
+			exceptionLog.open(GetDirectoryPath() + "/" + programInfo.name + " exceptions.log",
+				exceptionLog.writeMode | exceptionLog.append, true);
+			exceptionLog.newline();
+			exceptionLog.write(("----------------" + GetDate() + ", " + GetTime() + "----------------").c_str());
+			exceptionLog.newline();
+			exceptionLog.write(("- Exception in \"" + programInfo.name + "\" v.\"" + programInfo.version + "\"").c_str());
+			exceptionLog.newline();
+			exceptionLog.write(errorMessage.data(), errorMessage.size());
 			exceptionLog.newline();
 		}
 
@@ -91,7 +97,7 @@ namespace cpl
 		/*********************************************************************************************
 
 			This function allows the user/programmer to attach a debugger on fatal errors.
-			Otherwise, crash.
+			Otherwise, crash (assumingly).
 
 		*********************************************************************************************/
 		void CrashIfUserDoesntDebug(const std::string & errorMessage)
@@ -100,15 +106,16 @@ namespace cpl
 				MsgStyle::sYesNoCancel | MsgIcon::iStop);
 			if (ret == MsgButton::bYes)
 			{
-				DBG_BREAK();
-				cpl::Misc::Delay(1);
+				CPL_BREAKIFDEBUGGED();
 			}
 		}
 
 		void __cdecl _purescall(void)
 		{
-			cpl::Misc::CrashIfUserDoesntDebug("Pure virtual function called. This is a programming error, usually happening if a freed object is used again, "
-				"or calling virtual functions inside destructors/constructors.");
+			auto except = "Pure virtual function called. This is a programming error, usually happening if a freed object is used again, "
+				"or calling virtual functions inside destructors/constructors.";
+			LogException(except);
+			cpl::Misc::CrashIfUserDoesntDebug(except);
 		}
 
 		void terminateHook()
@@ -123,7 +130,10 @@ namespace cpl
 				}
 				catch (const std::exception & e)
 				{
-					MsgBox(e.what(), cpl::programInfo.name + ": Software exception", MsgStyle::sOk | MsgIcon::iStop);
+					using namespace std;
+					auto what = "Software exception at std::terminate_hook: "s + e.what();
+					LogException(what);
+					MsgBox(what, cpl::programInfo.name + ": Software exception", MsgStyle::sOk | MsgIcon::iStop);
 				}
 			}
 			auto oldHandler = oldTerminate.load();

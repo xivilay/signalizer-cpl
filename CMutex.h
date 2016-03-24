@@ -44,6 +44,7 @@
 	#endif
 	namespace cpl
 	{
+		int AlertUserAboutMutex();
 
 		class CMutex
 		{
@@ -196,12 +197,7 @@
 			time_out:
 				// hello - you have reached this point if mutex was frozen.
 				CPL_BREAKIFDEBUGGED();
-				ret = Misc::MsgBox("Deadlock detected in spinlock: Protected resource is not released after max interval. "
-					"Wait again (try again), release resource (continue) - can create async issues - or exit (cancel)?",
-					programInfo.name,
-					sConTryCancel | iStop,
-					NULL,
-					true);
+				ret = AlertUserAboutMutex();
 				switch (ret)
 				{
 				case MsgButton::bTryAgain:
@@ -336,12 +332,7 @@
 			time_out:
 				// hello - you have reached this point if mutex was frozen.
 				CPL_BREAKIFDEBUGGED();
-				ret = Misc::MsgBox("Deadlock detected in spinlock: Protected resource is not released after max interval. "
-					"Wait again (try again), release resource (continue) - can create async issues - or exit (cancel)?",
-					cpl::programInfo.name + " Error!",
-					sConTryCancel | iStop,
-					NULL,
-					true);
+				ret = AlertUserAboutMutex();
 				switch (ret)
 				{
 				case MsgButton::bTryAgain:

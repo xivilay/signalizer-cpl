@@ -60,6 +60,7 @@
 
 		namespace Utility 
 		{
+
 			/*
 				Use this code inside frequently run code, where you dont want to pollute the code with conditional
 				check swapping.
@@ -239,6 +240,72 @@
 				#endif
 			};
 
+
+			template<class T>
+				struct LazyStackPointer : CNoncopyable
+				{
+					typedef LazyStackPointer<T> this_t;
+
+					LazyStackPointer()
+						: pointer(nullptr)
+					{
+
+					}
+
+					static_assert(std::is_default_constructible<T>::value, "LazyStackPointer<T> must be default constructible!");
+
+					T * operator -> ()
+					{
+						if (!pointer)
+							construct();
+
+						return pointer;
+					}
+
+					T & reference()
+					{
+						return *pointer;
+					}
+
+					~LazyStackPointer()
+					{
+						if (pointer)
+						{
+							pointer->~T();
+						}
+						pointer = nullptr;
+					}
+
+				private:
+
+					void construct()
+					{
+						::new ((void*)std::addressof(storage)) T();
+						pointer = reinterpret_cast<T *>(std::addressof(storage));
+					}
+
+					T * pointer;
+					typename std::aligned_storage<sizeof T, alignof(T)>::type storage;
+				};
+
+
+			template<class func>
+				struct OnScopeExit
+				{
+					OnScopeExit(func codeToRun)
+						: function(function)
+					{
+
+					}
+
+					~OnScopeExit()
+					{
+						function();
+					}
+
+				private:
+					func function;
+				};
 
 			/*********************************************************************************************
 

@@ -430,7 +430,7 @@
 				const float C = static_cast<float>(-4 / (M_PI*M_PI));
 				// if(x > PI) x -= 2 * PI
 				x -= static_cast<float>((x > M_PI) * (TAU));
-				float y = B * x + C * x * fastabs(x);
+				float y = B * x + C * x * std::abs(x);
 
 				#ifdef EXTRA_PRECISION
 					//  const float Q = 0.775;

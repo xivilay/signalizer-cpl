@@ -42,7 +42,7 @@
 		*********************************************************************************************/
 		class CKnobSlider 
 		: 
-			protected juce::Slider,
+			public juce::Slider,
 			public CBaseControl
 		{
 

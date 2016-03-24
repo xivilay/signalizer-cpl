@@ -35,16 +35,23 @@
 #ifndef CPL_PROTECTED_H
 	#define CPL_PROTECTED_H
 
+	#include "LibraryOptions.h"
 	#include "PlatformSpecific.h"
 	#include "Misc.h"
-	#include <assert.h>
-	#include "MacroConstants.h"
 	#include <vector>
 	#include <exception>
 	#include <signal.h>
 	#include <thread>
 	#include "CMutex.h"
     #include <map>
+	#include <sstream>
+	#include "Utility.h"
+
+#define CPL_TRACEGUARD_START \
+	cpl::CProtected::instance().topLevelTraceGuardedCode([&]() {
+
+#define CPL_TRACEGUARD_STOP(traceGuardName) \
+	}, traceGuardName)
 
 
 	namespace cpl
@@ -57,7 +64,29 @@
 
 			struct CSystemException;
 
+			struct PreembeddedFormatter
+			{
+				PreembeddedFormatter(const char * prefixToEmbed)
+					: prefix(prefixToEmbed)
+				{
 
+				}
+
+				std::stringstream & get()
+				{
+					if (!hasBeenConstructed)
+					{
+						stream->operator<<(prefix);
+						hasBeenConstructed = true;
+					}
+					return stream.reference();
+				}
+
+			private:
+				const char * prefix;
+				bool hasBeenConstructed = false;
+				Utility::LazyStackPointer<std::stringstream> stream;
+			};
 			static void useFPUExceptions(bool b);
 			static std::string formatExceptionMessage(const CSystemException &);
 
@@ -142,6 +171,41 @@
 						}
 					 */
 					threadData.isInStack = false;
+				}
+
+			template <class func>
+				auto topLevelTraceGuardedCode(
+					func && function,
+					const char * levelDescription = "Top-level exception/signal handler")
+					-> decltype(function())
+				{
+
+					PreembeddedFormatter debugOutput(levelDescription);
+
+					threadData.isInStack = true;
+					threadData.traceIntercept = true;
+					threadData.propagate = true;
+					threadData.debugTraceBuffer = &debugOutput;
+
+					auto scopeRelease = []()
+					{
+						threadData.isInStack = false;
+						threadData.traceIntercept = false;
+						threadData.propagate = false;
+						threadData.debugTraceBuffer = nullptr;
+					};
+
+					Utility::OnScopeExit<decltype(scopeRelease)> releaser(
+						scopeRelease
+					);
+
+					// in this frame we catch signals and SEH exceptions. 
+					#ifdef CPL_MSVC
+						return internalSEHTraceInterceptor(debugOutput, function);
+					#else
+						// async signals will be captured further up
+						return internalCxxTraceInterceptor(out, function);
+					#endif
 				}
 
 			template <class func>
@@ -265,6 +329,62 @@
 
 		private:
 			
+			template <class func>
+				auto internalCxxTraceInterceptor(PreembeddedFormatter & out, func && function)
+					-> decltype(function())
+				{
+					// in this frame, we catch C++ software exceptions
+					try
+					{
+						return function();
+					}
+					catch (CProtected::CSystemException & cs)
+					{
+						out.get() << "Hardware -> " << CProtected::formatExceptionMessage(cs) << newl;
+						out.get() << "what() -> " << cs.what() << newl;
+						Misc::LogException(out.get().str());
+						Misc::CrashIfUserDoesntDebug(out.get().str());
+						throw;
+					}
+					catch (std::exception & e)
+					{
+						out.get() << "Software -> " << e.what() << newl;
+						Misc::LogException(out.get().str());
+						Misc::CrashIfUserDoesntDebug(out.get().str());
+						throw;
+					}
+					catch (...)
+					{
+						out.get() << "Unknown software exception";
+						Misc::LogException(out.get().str());
+						Misc::CrashIfUserDoesntDebug(out.get().str());
+						throw;
+					}
+
+				}
+
+			template <class func>
+				auto internalSEHTraceInterceptor(PreembeddedFormatter & out, func && function)
+					-> decltype(function())
+				{
+					CSystemException::eStorage exceptionInformation;
+					#ifdef CPL_MSVC
+						__try
+						{
+							return internalCxxTraceInterceptor(out, function);
+						}
+						__except (structuredExceptionHandlerTraceInterceptor(
+							out,
+							GetExceptionCode(),
+							exceptionInformation,
+							GetExceptionInformation())
+							)
+						{
+							std::terminate();
+						}
+					#endif
+				}
+
 			 static struct StaticData
 			 {
 				#ifndef CPL_WINDOWS
@@ -283,14 +403,31 @@
 				/// Thread local set on entry and exit of protected code stack frames.
 				/// </summary>
 				bool isInStack;
+				/// <summary>
+				/// If set, exception will be propagated further in the handler chain
+				/// </summary>
+				bool propagate;
+				/// <summary>
+				/// If set, logs debug output, presents a message box with debugging abilities
+				/// </summary>
+				bool traceIntercept;
+
+				/// <summary>
+				/// A pre-allocated buffer that can be used for scratch space
+				/// </summary>
+				PreembeddedFormatter * debugTraceBuffer;
+
 				#ifndef CPL_MSVC
 					sigjmp_buf threadJumpBuffer;
-				CSystemException::eStorage currentExceptionData;
+					CSystemException::eStorage currentExceptionData;
 				#endif
 				unsigned fpuMask;
 			} threadData;
-			 
+
 			XWORD structuredExceptionHandler(XWORD _code, CSystemException::eStorage & e, void * _systemInformation);
+			XWORD structuredExceptionHandlerTraceInterceptor(PreembeddedFormatter & outputStream, XWORD _code, CSystemException::eStorage & e, void * _systemInformation);
+
+			static void signalTraceInterceptor(CSystemException::eStorage & e);
 			static void signalHandler(int some_number);
 			static void signalActionHandler(int signal, siginfo_t * siginfo, void * extraData);
 			static bool registerHandlers();

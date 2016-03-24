@@ -1,0 +1,6 @@
+http://www.juce.com/forum/topic/new-stack-trace-functions?page=1
+
+1) C/C++/General; Set Debug Info Format to Program Database (/Zi)
+2) Linker/Debugging; Set Generate Debug Info to Yes (/DEBUG)
+3) Linker/Optimizations; Set References to Eliminate Unref Data (/OPT:REF)
+4) Linker/Enable COMDAT Folding; Set to Remove Redundant COMDATs (/OPT:ICF)

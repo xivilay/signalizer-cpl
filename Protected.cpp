@@ -28,6 +28,11 @@
 *************************************************************************************/
 
 #include "Protected.h"
+#include "lib/StackBuffer.h"
+
+#ifdef CPL_MSVC
+	#include <dbghelp.h>
+#endif
 
 namespace cpl
 {
@@ -98,9 +103,34 @@ namespace cpl
 	 *********************************************************************************************/
 	std::string CProtected::formatExceptionMessage(const CSystemException & e) 
 	{
+		auto imageBase = (const void *)Misc::GetImageBase();
 		Misc::CStringFormatter base;
-		base << "Exception at " << std::hex << e.data.faultAddr 
-			 << "(base + 0x" << ((const char*)e.data.faultAddr - Misc::GetImageBase()) << "): ";
+
+		char sign = '+';
+
+		const void * deltaAddress = nullptr;
+
+		if (e.data.faultAddr > imageBase)
+		{
+			sign = '+';
+			deltaAddress = (const void*) ((const char*)e.data.faultAddr - (const char *)imageBase);
+		}
+		else
+		{
+			sign = '-';
+			deltaAddress = (const void*)((const char *)imageBase - (const char*)e.data.faultAddr);
+		}
+
+		base << "Exception at 0x" << std::hex << e.data.faultAddr 
+			 << " (at image base = 0x" << (std::ptrdiff_t)imageBase << " " << sign 
+			 << " 0x" << deltaAddress << ")" << newl;
+
+		base << "Exception code: " << e.data.exceptCode 
+			 << ", actual code: " << e.data.actualCode
+			 << ", extra info: " << e.data.extraInfoCode << newl;
+
+		base << "Formatted message: ";
+
 		switch(e.data.exceptCode)
 		{
 		case CSystemException::status::intdiv_zero:
@@ -181,7 +211,7 @@ namespace cpl
 
 
 				#endif
-				fmt << " address " << std::hex << e.data.attemptedAddr << ".";
+				fmt << "address " << std::hex << e.data.attemptedAddr << ".";
 				return base.str() + fmt.str();
 			}
 		default:
@@ -237,8 +267,7 @@ namespace cpl
 			case EXCEPTION_FLT_DENORMAL_OPERAND:
 				_clearfp();
 				safeToContinue = true;
-
-					e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress);
+				e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress);
 
 				return EXCEPTION_EXECUTE_HANDLER;
 
@@ -251,9 +280,128 @@ namespace cpl
 		return 0;
 	}
 
+	void WindowsBackTrace(std::ostream & f, PEXCEPTION_POINTERS pExceptionInfo)
+	{
+		// http://stackoverflow.com/questions/28099965/windows-c-how-can-i-get-a-useful-stack-trace-from-a-signal-handler
+		HANDLE process = GetCurrentProcess();
+		SymInitialize(process, NULL, TRUE);
+
+		// StackWalk64() may modify context record passed to it, so we will
+		// use a copy.
+		CONTEXT context_record = *pExceptionInfo->ContextRecord;
+		// Initialize stack walking.
+		STACKFRAME64 stack_frame;
+		memset(&stack_frame, 0, sizeof(stack_frame));
+		#if defined(_WIN64)
+			int machine_type = IMAGE_FILE_MACHINE_AMD64;
+			stack_frame.AddrPC.Offset = context_record.Rip;
+			stack_frame.AddrFrame.Offset = context_record.Rbp;
+			stack_frame.AddrStack.Offset = context_record.Rsp;
+		#else
+			int machine_type = IMAGE_FILE_MACHINE_I386;
+			stack_frame.AddrPC.Offset = context_record.Eip;
+			stack_frame.AddrFrame.Offset = context_record.Ebp;
+			stack_frame.AddrStack.Offset = context_record.Esp;
+		#endif
+		stack_frame.AddrPC.Mode = AddrModeFlat;
+		stack_frame.AddrFrame.Mode = AddrModeFlat;
+		stack_frame.AddrStack.Mode = AddrModeFlat;
+
+		StackBuffer<SYMBOL_INFO, 256> symbol;
+		symbol.zero();
+		symbol->MaxNameLen = 255;
+		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+		f << std::hex;
+
+		while (StackWalk64(machine_type,
+			GetCurrentProcess(),
+			GetCurrentThread(),
+			&stack_frame,
+			&context_record,
+			NULL,
+			&SymFunctionTableAccess64,
+			&SymGetModuleBase64,
+			NULL)) {
+
+			DWORD64 displacement = 0;
+
+			if (SymFromAddr(process, (DWORD64)stack_frame.AddrPC.Offset, &displacement, &symbol.get()))
+			{
+				IMAGEHLP_MODULE64 moduleInfo;
+				juce::zerostruct(moduleInfo);
+				moduleInfo.SizeOfStruct = sizeof(moduleInfo);
+
+				if (::SymGetModuleInfo64(process, symbol->ModBase, &moduleInfo))
+					f << moduleInfo.ModuleName << ": ";
+
+				f << symbol->Name << " + 0x" << displacement << newl;
+			}
+			else
+			{
+				// no symbols loaded.
+				f << "0x" << stack_frame.AddrPC.Offset << newl;
+			}
+		}
+
+		SymCleanup(GetCurrentProcess());
+
+	}
+
+	XWORD CProtected::structuredExceptionHandlerTraceInterceptor(CProtected::PreembeddedFormatter & output, XWORD code, CSystemException::eStorage & e, void * systemInformation)
+	{
+
+		XWORD ret = 0;
+		#ifdef CPL_WINDOWS
+			auto & outputStream = output.get();
+			CPL_BREAKIFDEBUGGED();
+			CSystemException::eStorage exceptionInformation;
+			// ignore return and basically use it to fill in the exception information
+			structuredExceptionHandler(code, exceptionInformation, systemInformation);
+
+			auto exceptionString = formatExceptionMessage(exceptionInformation);
+
+			outputStream << "- SEH exception description: " << newl << exceptionString << newl;
+			outputStream << "- Stack backtrace: " << newl;
+			WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS) systemInformation);
+			ret = EXCEPTION_CONTINUE_SEARCH;
+		#endif
+
+		cpl::Misc::LogException(outputStream.str());
+		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+
+		return ret;
+	}
+
+	void CProtected::signalTraceInterceptor(CSystemException::eStorage & exceptionInformation)
+	{
+		CPL_BREAKIFDEBUGGED();
+		#ifdef CPL_UNIXC
+			if (threadData.debugTraceBuffer == nullptr)
+				return;
+
+			std::stringstream & outputStream = *threadData.debugTraceBuffer;
+
+			auto exceptionString = formatExceptionMessage(exceptionInformation);
+
+			outputStream << "Sigaction exception description: " << exceptionString << newl;
+		
+			void* stack[128];
+			int frames = backtrace(stack, numElementsInArray(stack));
+			char** frameStrings = backtrace_symbols(stack, frames);
+
+			for (int i = 0; i < frames; ++i)
+				outputStream << frameStrings[i] << newLine;
+
+			::free(frameStrings);
+
+			cpl::Misc::LogException(outputStream.str());
+			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+		#endif
+	}
 	/*********************************************************************************************
 
-		Implementation specefic exception handlers for unix systems.
+		Implementation specific exception handlers for unix systems.
 
 	 *********************************************************************************************/
 	void CProtected::signalHandler(int some_number)
@@ -291,18 +439,25 @@ namespace cpl
 					case SIGSEGV:
 					{
 
-					
-						threadData.currentExceptionData = CSystemException::eStorage::create(CSystemException::access_violation,
-												 safeToContinue,
-												 nullptr,
-												 fault_address,
-												 ecode,
-												 sig);
+						threadData.currentExceptionData = CSystemException::eStorage::create(
+							CSystemException::access_violation,
+							safeToContinue,
+							nullptr,
+							fault_address,
+							ecode,
+							sig
+						);
+
+						if (threadData.traceIntercept)
+							signalTraceInterceptor(threadData.currentExceptionData);
+
 						// jump back to CState::runProtectedCode. Note, we know that function was called
 						// earlier in the stackframe, because threadData.activeStateObject is non-null
 						// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
 						// IS valid.
-						siglongjmp(threadData.threadJumpBuffer, 1);
+
+						if(!threadData.propagate)
+							siglongjmp(threadData.threadJumpBuffer, 1);
 						break;
 					}
 					case SIGFPE:
@@ -338,14 +493,24 @@ namespace cpl
 								code_status = CSystemException::status::intoverflow;
 								break;
 						}
+
 						safeToContinue = true;
-						threadData.currentExceptionData = CSystemException::eStorage::create(code_status, safeToContinue, fault_address);
+
+						threadData.currentExceptionData = CSystemException::eStorage::create(
+							code_status, 
+							safeToContinue, 
+							fault_address
+						);
 					
+						if(threadData.traceIntercept)
+							signalTraceInterceptor(threadData.currentExceptionData);
+
 						// jump back to CState::runProtectedCode. Note, we know that function was called
 						// earlier in the stackframe, because threadData.activeStateObject is non-null
 						// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
 						// IS valid. 
-						siglongjmp(threadData.threadJumpBuffer, 1);
+						if (!threadData.propagate)
+							siglongjmp(threadData.threadJumpBuffer, 1);
 						break;
 					}
 					default:
@@ -354,11 +519,10 @@ namespace cpl
 			} // if threadData.activeStateObject
 		
 			/*
-				Exception happened in some arbitrary place we have no knowledge off.
+				Exception happened in some arbitrary place we have no knowledge off, or we are 
+				propagating the exception.
 				First we try to call the old signal handlers
 			*/
-		
-		
 		default_handler:
 			/*
 				consider checking here that sa_handler/sa_sigaction is actually valid and not something like

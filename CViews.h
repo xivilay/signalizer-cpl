@@ -258,14 +258,18 @@
 
 				CPL_DEBUGCHECKGL();
 
-				CProtected::runProtectedCodeErrorHandling
-				(
-					[&]()
-					{
-						onOpenGLRendering();
-					}
-				);
-
+				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+					CProtected::instance().topLevelTraceGuardedCode
+					(
+						[&]()
+						{
+							onOpenGLRendering();
+						},
+						"OpenGL rendering thread entry"
+					);
+				#else
+					onOpenGLRendering();
+				#endif
 
 				CPL_DEBUGCHECKGL();
 

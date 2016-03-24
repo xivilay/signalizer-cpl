@@ -598,6 +598,9 @@
 			/// <returns>True if incoming audio was changed</returns>
 			bool processIncomingRTAudio(T ** buffer, std::size_t numChannels, std::size_t numSamples)
 			{
+				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+					return CPL_TRACEGUARD_START
+				#endif
 				cpl::CProcessorTimer overhead, all;
 				overhead.start(); all.start();
 
@@ -720,6 +723,10 @@
 
 				// return whether any data was changed.
 				return mask ? true : false;
+
+				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+					CPL_TRACEGUARD_STOP("AudioStream real-time processor");
+				#endif
 			}
 
 			/// <summary>
@@ -742,7 +749,7 @@
 				return internalInfo;
 			}
 
-			~CAudioStream() throw(...)
+			~CAudioStream() noexcept(false)
 			{
 				// the audio thread is created inside this flag.
 				// and that flag is set by this thread. 
@@ -1083,13 +1090,17 @@
 
 			void protectedAsyncSystemEntry()
 			{
-				CProtected::runProtectedCodeErrorHandling
-				(
-					[this]()
-					{
-						asyncAudioSystem();
-					}
-				);
+				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+					CProtected::instance().topLevelTraceGuardedCode
+					(
+						[this]()
+						{
+
+						}
+					);
+				#else
+					asyncAudioSystem();
+				#endif
 			}
 
 			/// <summary>
