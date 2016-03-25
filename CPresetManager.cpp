@@ -142,7 +142,7 @@ namespace cpl
 		if (!file.open(path))
 			return false;
 
-		auto content = archive.compile();
+		auto content = archive.compile(true);
 
 		if (file.write(content.getBlock(), (std::int64_t)content.getSize()))
 		{

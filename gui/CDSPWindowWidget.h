@@ -81,8 +81,8 @@
 					return dsp::windowScale(ltype, w, N, lsym, lalpha, lbeta);
 				}
 
-			virtual void serialize(CSerializer::Archiver & ar, long long int version) override;
-			virtual void deserialize(CSerializer::Builder & ar, long long int version) override;
+			virtual void serialize(CSerializer::Archiver & ar, Version version) override;
+			virtual void deserialize(CSerializer::Builder & ar, Version version) override;
 			
 			struct Params
 			{

@@ -87,7 +87,7 @@ namespace cpl
 			exceptionLog.newline();
 			exceptionLog.write(("----------------" + GetDate() + ", " + GetTime() + "----------------").c_str());
 			exceptionLog.newline();
-			exceptionLog.write(("- Exception in \"" + programInfo.name + "\" v.\"" + programInfo.version + "\"").c_str());
+			exceptionLog.write(("- Exception in \"" + programInfo.name + "\" v.\"" + std::to_string(programInfo.version) + "\"").c_str());
 			exceptionLog.newline();
 			exceptionLog.write(errorMessage.data(), errorMessage.size());
 			exceptionLog.newline();

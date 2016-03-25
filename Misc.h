@@ -79,7 +79,6 @@
 			unsigned int QuickTime();
 			int GetSizeRequiredFormat(const char * fmt, va_list pargs);
 
-			std::string StringFromVersion(unsigned int version);
 			std::uint64_t ClockCounter();
 			long long TimeCounter();
 			double TimeDifference(long long);
@@ -441,7 +440,7 @@
 			#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert, exceptionT) \
 				do \
 				{ \
-					std::string message = std::string("Runtime exception (" #exceptionT ") in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
+					std::string message = std::string("Runtime exception (" #exceptionT ") in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version.toString() + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
 					CPL_DEBUGOUT(message.c_str()); \
 					cpl::Misc::LogException(message); \
 					if(CPL_ISDEBUGGED()) DBG_BREAK(); \

@@ -74,8 +74,8 @@
 			virtual void onValueChange() override;
 			virtual void paint(juce::Graphics& g) override;
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
-			virtual void serialize(CSerializer::Archiver & ar, long long int version) override;
-			virtual void deserialize(CSerializer::Builder & ar, long long int version) override;
+			virtual void serialize(CSerializer::Archiver & ar, Version version) override;
+			virtual void deserialize(CSerializer::Builder & ar, Version version) override;
 
 
 			// new functions

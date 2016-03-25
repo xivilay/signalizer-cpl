@@ -35,11 +35,11 @@
 namespace cpl
 {
 
-	bool SafeSerializableObject::serializeObject(CSerializer::Archiver & ar, long long int version)
+	bool SafeSerializableObject::serializeObject(CSerializer::Archiver & ar, Version version)
 	{
 		bool serializedCorrectly = false;
 
-		const char * options = "Do you want to propagate the error, "
+		const std::string options = "Emulated version is " + std::to_string(version) + ". Do you want to propagate the error, "
 			"potentially crashing the program (YES), ignore the error and keep the changes as is - no guarantees about object behaviour - (NO) "
 			"or null out the stored settings for this object (CANCEL)?";
 
@@ -147,14 +147,14 @@ namespace cpl
 		return serializedCorrectly;
 	}
 
-	bool SafeSerializableObject::deserializeObject(CSerializer::Builder & ar, long long int version)
+	bool SafeSerializableObject::deserializeObject(CSerializer::Builder & ar, Version version)
 	{
 		using namespace std;
 		bool deserializedCorrectly = false;
 		CSerializer::Builder safeState;
 		serializeObject(safeState, version);
 
-		const std::string versionComparison = "This software is version " + std::to_string(programInfo.versionInteger) 
+		const std::string versionComparison = "This software is version " + std::to_string(programInfo.version) 
 			+ ", while the serialized data is from version " + std::to_string(version) + ".\n";
 
 		const std::string options = versionComparison + "Do you want to propagate the error, "

@@ -93,6 +93,7 @@
 			/// <returns></returns>
 			bool loadDefaultPreset();
 			void updatePresetList();
+			void setEmulatedVersion(cpl::Version newVersion);
 
 		protected:
 			std::string presetWithoutExtension(juce::File preset);
@@ -111,6 +112,7 @@
 			std::string name;
 			std::string ext;
 			Setup layoutSetup;
+			Version version;
 		};
 
 	};

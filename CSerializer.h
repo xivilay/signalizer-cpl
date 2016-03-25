@@ -45,7 +45,7 @@
 			std::string text;
 			MyObject * child;
  
-			void save(CSerializer::Archiver & archive, long long int version) {
+			void save(CSerializer::Archiver & archive, Version version) {
  
 				archive << data;
 				archive << text;
@@ -56,7 +56,7 @@
 				}
 			}
  
-			void load(CSerializer::Builder & builder, long long int version) {
+			void load(CSerializer::Builder & builder, Version version) {
  
 				if(version != supported_version)
 					return;
@@ -118,6 +118,7 @@
 	#include "stdext.h"
 	#include "PlatformSpecific.h"
 	#include "Misc.h"
+	#include "ProgramVersion.h"
 
 	namespace cpl
 	{
@@ -325,7 +326,7 @@
 		{
 		public:
 			virtual bool build(const WeakContentWrapper & cr) = 0;
-			virtual ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const = 0;
+			virtual ContentWrapper compile(bool addMasterHeader = false) const = 0;
 			virtual void clear() = 0;
 			virtual bool isEmpty() const noexcept = 0;
 			virtual ~ISerializerSystem() {};
@@ -353,8 +354,16 @@
 			public:
 				virtual ~Serializable() {};
 
-				virtual void serialize(Archiver & ar, long long int version) {};
-				virtual void deserialize(Builder & ar, long long int version) {};
+				/// <summary>
+				/// Serialize the object state to the archiver, in a version
+				/// compatible with the argument version
+				/// </summary>
+				virtual void serialize(Archiver & ar, Version version) {};
+				/// <summary>
+				/// Deserialize the content to your object. The content comes from
+				/// version argument version.
+				/// </summary>
+				virtual void deserialize(Builder & ar, Version version) {};
 			};
 
 			enum class HeaderType : std::uint16_t
@@ -395,7 +404,7 @@
 			struct MasterHeaderInfo
 			{
 				std::uint64_t totalSize;
-				std::int64_t versionID;
+				std::uint64_t versionID;
 			};
 
 			struct KeyHeaderInfo
@@ -552,8 +561,8 @@
 				}
 				data.reset();
 			}
-			void setMasterVersion(long long int v) noexcept { version = v; }
-			long long int getMasterVersion() const noexcept { return version; }
+			void setMasterVersion(Version v) noexcept { version = v; }
+			Version getMasterVersion() const noexcept { return version; }
 			virtual bool build(const WeakContentWrapper & cr) override
 			{
 				if (!cr.getBlock() || !cr.getSize())
@@ -784,7 +793,7 @@
 				
 			}
 
-			virtual ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const override
+			virtual ContentWrapper compile(bool addMasterHeader = false) const override
 			{
 				BinaryBuilder dataOut;
 				// write the master header.
@@ -792,7 +801,7 @@
 				{
 					MasterHeader header;
 					header.type = HeaderType::Start;
-					header.info.versionID = version;
+					header.info.versionID = version.compiled;
 					header.dataSize = 0;
 					dataOut.appendBytes(&header, sizeof(header));
 				}
@@ -976,7 +985,7 @@
 			std::map<Key, CSerializer> content;
 			Key key;
 			bool throwOnExhaustion;
-			long long version;
+			Version version;
 
 			// iterator interface. must be placed after declaration in MSVC
 		public:
@@ -1002,7 +1011,7 @@
 			}
 
 
-			virtual ContentWrapper compile(bool addMasterHeader = false, long long version = 0) const override
+			virtual ContentWrapper compile(bool addMasterHeader = false) const override
 			{
 				BinaryBuilder b;
 
@@ -1012,7 +1021,7 @@
 				{
 					const std::uint64_t md5SizeInBytes = 16;
 
-					auto cw = contentEntry->compile(addMasterHeader, version);
+					auto cw = contentEntry->compile(addMasterHeader);
 
 					auto md5 = juce::MD5(cw.getBlock(), cw.getSize());
 					
@@ -1082,7 +1091,9 @@
 
 			bool isEmpty() const noexcept override
 			{
-				return internalSerializer.isEmpty();
+				if (auto content = internalSerializer.findForKey("Content"))
+					return content->isEmpty();
+				return true;
 			}
 
 			CSerializer::Archiver & getArchiver()

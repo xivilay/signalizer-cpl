@@ -38,7 +38,8 @@ namespace cpl
 		name(uName), 
 		parent(content),
 		ext(uName + "." + programInfo.programAbbr),
-		layoutSetup(s)
+		layoutSetup(s),
+		version(programInfo.version)
 
 	{
 		initControls();
@@ -71,7 +72,8 @@ namespace cpl
 		if (c == &ksavePreset)
 		{
 			SerializerType serializer(name);
-			parent->serializeObject(serializer.getArchiver(), programInfo.versionInteger);
+			serializer.getArchiver().setMasterVersion(version);
+			parent->serializeObject(serializer.getArchiver(), serializer.getArchiver().getMasterVersion());
 			juce::File location;
 			bool result = CPresetManager::instance().savePresetAs(serializer, location, name);
 			// update list anyway; user may delete files in dialog etc.
@@ -97,7 +99,8 @@ namespace cpl
 		else if (c == &ksaveDefault)
 		{
 			SerializerType serializer(name);
-			parent->serializeObject(serializer.getArchiver(), programInfo.versionInteger);
+			serializer.getArchiver().setMasterVersion(version);
+			parent->serializeObject(serializer.getArchiver(), serializer.getArchiver().getMasterVersion());
 			juce::File location;
 			bool result = CPresetManager::instance().savePreset(fullPathToPreset("default"), serializer, location);
 			// update list anyway; user may delete files in dialog etc.
@@ -193,6 +196,11 @@ namespace cpl
 
 		kpresetList.setValues(shortList);
 
+	}
+
+	void CPresetWidget::setEmulatedVersion(cpl::Version newVersion)
+	{
+		version = newVersion;
 	}
 
 	void CPresetWidget::initControls()

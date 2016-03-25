@@ -239,6 +239,13 @@
 				#define AddSimdComparisonpd(name, op, type, prefix) \
 					inline type operator op (const type left, const type right) { return prefix ## _cmp_pd(left, right, name); }
 
+				// unfortunately, the generic _mm_cmp_ps is an AVX instruction so for SSE we will have to use the more terse model
+				#define AddSimdComparison128(name, op) \
+					inline __m128 operator op (const __m128 left, const __m128 right) { return _mm_cmp ## name ## _ps(left, right);} \
+					inline __m128d operator op (const __m128d left, const __m128d right) { return _mm_cmp ## name ## _pd(left, right);}
+
+
+
 				#define AddOperatorForArchs(name, op) \
 					AddSimdOperatorps(name, op, __m128, _mm); \
 					AddSimdOperatorps(name, op, __m256, _mm256); \
@@ -251,9 +258,7 @@
 
 
 				#define AddComparisonForArchs(name, op) \
-					AddSimdComparisonps(name, op, __m128, _mm); \
 					AddSimdComparisonps(name, op, __m256, _mm256); \
-					AddSimdComparisonpd(name, op, __m128d, _mm); \
 					AddSimdComparisonpd(name, op, __m256d, _mm256); 
 
 				AddOperatorForArchs(add, +);
@@ -263,10 +268,20 @@
 				AddOperatorForArchs(or, |);
 				AddOperatorForArchs(and, &);
 				AddOperatorForArchs(xor, ^);
+
 				AddComparisonForArchs(_CMP_LE_OQ, <= ); // less than or equal, ordered, non-signaling
 				AddComparisonForArchs(_CMP_LT_OQ, < ); // less than, ordered, non-signaling
 				AddComparisonForArchs(_CMP_GT_OQ, > ); // greater than, -//-
+				AddComparisonForArchs(_CMP_GE_OQ, >=); // greater than or equal, -//-
 				AddComparisonForArchs(_CMP_EQ_OQ, == ); // equality, -//-
+				
+				// force SSE code generation for v4sf, v2sd
+				AddSimdComparison128(le, <= );
+				AddSimdComparison128(lt, < );
+				AddSimdComparison128(ge, >=);
+				AddSimdComparison128(gt, > );
+				AddSimdComparison128(eq, == );
+
 				#undef AddSimdOperatorps
 				#undef AddSimdCOperatorps
 				#undef AddSimdOperatorpd

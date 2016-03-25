@@ -32,14 +32,14 @@
 #ifndef CPL_COMMON_H
 	#define CPL_COMMON_H
 
+	#include "ProgramVersion.h"
 	#include <string>
 	#include <cstdint>
 
 	struct ProgramInfo
 	{
 		std::string name; // the name of the program
-		std::string version; // a version string of the program
-		std::int64_t versionInteger; // an integer version literal, that follows compare semantics
+		cpl::Version version;
 		std::string author; // your (company's) name
 		std::string programAbbr; // abbreviation of the program's name for small spaces (and file extensions)
 		// cpl has a generic tree structure, it looks for in the current working directory.

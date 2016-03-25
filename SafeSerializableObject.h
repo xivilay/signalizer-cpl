@@ -45,13 +45,13 @@
 			/// The end-user is responsible for whatever is serialized, so you have to trust that person.
 			/// The return code indicates if there were errors, though.
 			/// </summary>
-			bool serializeObject(CSerializer::Archiver & ar, long long int version);
+			bool serializeObject(CSerializer::Archiver & ar, Version version);
 
 			/// <summary>
 			/// The end-user is responsible for whatever is serialized, so you have to trust that person.
 			/// The return code indicates if there were errors, though.
 			/// </summary>
-			bool deserializeObject(CSerializer::Builder & ar, long long int version);
+			bool deserializeObject(CSerializer::Builder & ar, Version version);
 
 		private:
 

@@ -283,7 +283,7 @@ namespace cpl
 	}
 	/*********************************************************************************************/
 
-	void CColourControl::serialize(CSerializer::Archiver & ar, long long int version)
+	void CColourControl::serialize(CSerializer::Archiver & ar, Version version)
 	{
 		CKnobSlider::serialize(ar, version);
 		
@@ -291,7 +291,7 @@ namespace cpl
 		ar << a; ar << r; ar << g; ar << b;
 		ar << getType();
 	}
-	void CColourControl::deserialize(CSerializer::Builder & ar, long long int version)
+	void CColourControl::deserialize(CSerializer::Builder & ar, Version version)
 	{
 		CKnobSlider::deserialize(ar, version);
 		decltype(getType()) newType;
