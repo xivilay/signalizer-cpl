@@ -121,7 +121,7 @@ namespace cpl
 			deltaAddress = (const void*)((const char *)imageBase - (const char*)e.data.faultAddr);
 		}
 
-		base << "Exception at 0x" << std::hex << e.data.faultAddr 
+		base << "Non-software exception at 0x" << std::hex << e.data.faultAddr 
 			 << " (at image base = 0x" << (std::ptrdiff_t)imageBase << " " << sign 
 			 << " 0x" << deltaAddress << ")" << newl;
 
@@ -284,7 +284,7 @@ namespace cpl
 	{
 		// http://stackoverflow.com/questions/28099965/windows-c-how-can-i-get-a-useful-stack-trace-from-a-signal-handler
 		HANDLE process = GetCurrentProcess();
-		SymInitialize(process, NULL, TRUE);
+		SymInitialize(process, Misc::GetDirectoryPath().c_str(), TRUE);
 
 		// StackWalk64() may modify context record passed to it, so we will
 		// use a copy.

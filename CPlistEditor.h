@@ -163,7 +163,7 @@
 				return false;
 			}
 			
-			bool save()
+			bool serialize()
 			{
 				if (xml) {
 					return xml->writeToFile(plist, getplistDTD());

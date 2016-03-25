@@ -31,9 +31,6 @@
 #include "LibraryOptions.h"
 
 #include "Common.h"
-#include "Misc.cpp"
-#include "stdext.cpp"
-#include "CMutex.cpp"
 
 #ifdef CPL_JUCE
 
@@ -68,21 +65,24 @@
 
 
 #endif	
-#include "CExclusiveFile.cpp"
-#include "ffts/dustfft.cpp"
 
 #ifdef CPL_INC_KISS
 	#include "ffts/kiss_fft/tools/kiss_fft.c"
 	#include "ffts/kiss_fft/tools/kiss_fftr.c"
 #endif
 
+#include "Misc.cpp"
+#include "stdext.cpp"
+#include "CMutex.cpp"
+#include "CExclusiveFile.cpp"
+#include "ffts/dustfft.cpp"
 #include "InstructionSet.cpp"
 #include "CTimer.cpp"
 #include "simd/simd_consts.cpp"
 #include "SigMathImp.cpp"
 #include "octave/octave_all.cpp"
 #include "Protected.cpp"
-
+#include "SafeSerializableObject.cpp"
 
 #if defined(CPL_HINT_FONT)
 	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"

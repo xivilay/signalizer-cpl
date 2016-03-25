@@ -47,6 +47,19 @@
 				
 			};
 			
+			template<typename Vto, typename Vfrom>
+				inline typename std::enable_if<
+					sizeof(Vfrom) == sizeof(Vto) &&
+					!is_simd<Vfrom>::value &&
+					!is_simd<Vto>::value, 
+					Vto>::type
+					reinterpret_vector_cast(Vfrom Vin)
+				{
+					Vto to;
+					std::memcpy(&to, &Vin, sizeof(Vto));
+					return to;
+				}
+
 			//////////////////////////////////////
 
 			/*

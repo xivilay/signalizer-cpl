@@ -625,11 +625,11 @@
 				Serialization
 
 			*********************************************************************************************/
-			virtual void save(CSerializer::Archiver & ar, long long int version) override
+			virtual void serialize(CSerializer::Archiver & ar, long long int version) override
 			{
 				ar << bGetValue();
 			}
-			virtual void load(CSerializer::Builder & ar, long long int version) override
+			virtual void deserialize(CSerializer::Builder & ar, long long int version) override
 			{
 				iCtrlPrec_t value(0);
 

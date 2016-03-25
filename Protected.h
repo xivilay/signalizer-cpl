@@ -76,7 +76,7 @@
 				{
 					if (!hasBeenConstructed)
 					{
-						stream->operator<<(prefix);
+						stream.reference() << "Handler: " << prefix << newl;
 						hasBeenConstructed = true;
 					}
 					return stream.reference();
@@ -226,7 +226,7 @@
 						auto error = CProtected::formatExceptionMessage(cs);
 						Misc::LogException(error);
 						Misc::CrashIfUserDoesntDebug(error);
-						throw;
+						cs.reraise();
 					}
 					catch (std::exception & e)
 					{
@@ -310,6 +310,15 @@
 				CSystemException(const eStorage & eData)
 				{
 					data = eData;
+				}
+
+				void reraise() const
+				{
+					#ifdef CPL_WINDOWS
+						RaiseException(data.exceptCode, 0, 0, nullptr);
+					#else
+						raise(data.exceptCode);
+					#endif
 				}
 
 				CSystemException(XWORD exp, bool resolved = true, const void * faultAddress = nullptr, const void * attemptedAddress = nullptr, int extraCode = 0, int actualCode = 0)

@@ -52,7 +52,7 @@
 				if(child)
 				{
 					// will recursively save any childs.
-					archive.getKey("child") << *child;
+					archive.getContent("child") << *child;
 				}
 			}
  
@@ -63,7 +63,7 @@
  
 				builder >> data;
 				builder >> text;
-				auto & entry = builder.getKey("child");
+				auto & entry = builder.getContent("child");
  
 				if(!entry.isEmpty())
 				{
@@ -338,14 +338,24 @@
 			typedef CSerializer Archiver;
 			typedef CSerializer Builder;
 
+			class ExhaustedException : public Misc::CPLRuntimeException
+			{
+			public:
+				ExhaustedException(const std::string & error)
+					: CPLRuntimeException(error)
+				{
+
+				}
+			};
+
 			class Serializable
 			{
 			public:
 				virtual ~Serializable() {};
-				virtual void save(Archiver & ar, long long int version) {};
-				virtual void load(Builder & ar, long long int version) {};
-			};
 
+				virtual void serialize(Archiver & ar, long long int version) {};
+				virtual void deserialize(Builder & ar, long long int version) {};
+			};
 
 			enum class HeaderType : std::uint16_t
 			{
@@ -510,6 +520,10 @@
 			{
 				clear();
 			}
+
+			/// <summary>
+			/// Clears all content and children in this object, resetting it's state
+			/// </summary>
 			void clear() override
 			{
 				content.clear();
@@ -594,7 +608,7 @@
 										+ std::to_string((const char*)current - cr.getBlock())
 										+ " bytes."
 									);
-								auto & cs = getKey(currentKey);
+								auto & cs = getContent(currentKey);
 								// build child hierachy.
 								cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
 
@@ -697,7 +711,7 @@
 									+ std::to_string((const char*)current - cr.getBlock())
 									+ " bytes."
 								);
-							auto & cs = getKey(currentKey);
+							auto & cs = getContent(currentKey);
 							// build child hierachy.
 							cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
 
@@ -875,7 +889,7 @@
 				{
 
 					if (!data.readBytes(&object, sizeof(T)) && throwOnExhaustion)
-						CPL_RUNTIME_EXCEPTION("CSerializer exhausted; probably incompatible serialized object.");
+						CPL_RUNTIME_EXCEPTION_SPECIFIC("CSerializer exhausted; probably incompatible serialized object.", ExhaustedException);
 
 					return *this;
 				}
@@ -883,25 +897,25 @@
 			inline CSerializer & operator >> (Serializable * object)
 			{
 				
-				object->load(*this, version);
+				object->deserialize(*this, version);
 				return *this;
 			}
 
 			inline CSerializer & operator << (Serializable * object)
 			{
-				object->save(*this, version);
+				object->serialize(*this, version);
 				return *this;
 			}
 				
 			inline CSerializer & operator >> (Serializable & object)
 			{
-				object.load(*this, version);
+				object.deserialize(*this, version);
 				return *this;
 			}
 
 			inline CSerializer & operator << (Serializable & object)
 			{
-				object.save(*this, version);
+				object.serialize(*this, version);
 				return *this;
 			}
 
@@ -918,7 +932,7 @@
 				return *this;
 			}
 							
-			CSerializer & getKey(const Key & k)
+			CSerializer & getContent(const Key & k)
 			{
 				/**/
 				//auto count = content.count(k);
@@ -942,7 +956,7 @@
 				return it->second;
 				// possible to get recursion here if emplace_back fails, but in that case
 				// we are screwed either way....
-				//return getKey(k);
+				//return getContent(k);
 			}
 
 			const CSerializer * findForKey(const Key & k) const noexcept
@@ -1054,7 +1068,7 @@
 					CPL_RUNTIME_EXCEPTION("Checked header for " + nameReference + "'s MD5 checksum is wrong!");
 
 				// build self
-				auto ret = internalSerializer.getKey("Content").build({ dataBlock, dataSize });
+				auto ret = internalSerializer.getContent("Content").build({ dataBlock, dataSize });
 
 				// must contain 'content'
 				return ret && internalSerializer.findForKey("Content");
@@ -1073,12 +1087,12 @@
 
 			CSerializer::Archiver & getArchiver()
 			{
-				return internalSerializer.getKey("Content");
+				return internalSerializer.getContent("Content");
 			}
 
 			CSerializer::Builder & getBuilder()
 			{
-				return internalSerializer.getKey("Content");
+				return internalSerializer.getContent("Content");
 			}
 
 		private:

@@ -39,6 +39,8 @@
 	#include "rendering/OpenGLRendering.h"
 	#include "Protected.h"
 	#include "GUIUtils.h"
+	#include "SafeSerializableObject.h"
+		
 
 	namespace cpl
 	{
@@ -48,15 +50,21 @@
 		/// </summary>
 		class CView
 		:
-			public CSerializer::Serializable,
-			public DestructionNotifier
+			public SafeSerializableObject,
+			public DestructionNotifier,
+			public Utility::CNoncopyable
 		{
 			
 		public:
 
 			
-			CView()
-				: isFullScreen(false), isSynced(false), oglc(nullptr), bufferSwapInterval(0), refreshRate(0)
+			CView(const std::string & name)
+				: isFullScreen(false)
+				, isSynced(false)
+				, oglc(nullptr)
+				, bufferSwapInterval(0)
+				, refreshRate(0)
+				, viewName(name)
 			{
 			}
 			
@@ -65,7 +73,7 @@
 			{
 
 			}
-
+			const std::string & getName() const noexcept { return viewName; }
 			virtual juce::Component * getWindow() = 0;
 			virtual bool setFullScreenMode(bool toggle) { isFullScreen = toggle; return false; }
 			bool getIsFullScreen() const { return isFullScreen; }
@@ -123,7 +131,7 @@
 			int bufferSwapInterval;
 
 			juce::OpenGLContext * oglc;
-			
+			std::string viewName;
 		};
 
 		/*
@@ -135,6 +143,13 @@
 			public juce::Component
 		{
 		public:
+
+			CSubView(const std::string & name)
+				: CView(name)
+			{
+
+			}
+
 			juce::Component * getWindow() override { return this; }
 
 		};
@@ -163,7 +178,8 @@
 				virtual ~OpenGLEventListener() {}
 			};
 
-			COpenGLView()
+			COpenGLView(const std::string & name)
+				: CSubView(name)
 			{
 				graphicsStamp = juce::Time::getHighResolutionTicks();
 				openGLStamp = juce::Time::getHighResolutionTicks();
@@ -365,8 +381,8 @@
 		{
 
 		public:
-			CTopView(juce::Component * parent)
-				: isTooltipsOn(false), tipWindow(nullptr), editSpawner(*parent)
+			CTopView(juce::Component * parent, const std::string & name)
+				: CView(name), isTooltipsOn(false), tipWindow(nullptr), editSpawner(*parent)
 			{
 				parent->setLookAndFeel(&CLookAndFeel_CPL::defaultLook());
 			}

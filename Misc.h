@@ -288,6 +288,7 @@
 			{
 				#ifdef CPL_WINDOWS
 					sOk = MB_OK,
+					sYesNo = MB_YESNO,
 					sYesNoCancel = MB_YESNOCANCEL,
 					sConTryCancel = MB_CANCELTRYCONTINUE
 				#elif defined(APE_IPLUG)
@@ -416,11 +417,31 @@
 					return false;
 				}
 
+				class CPLRuntimeException : public std::runtime_error
+				{
+				public:
+					CPLRuntimeException(const std::string & error)
+						: runtime_error(error)
+					{
 
-			#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert) \
+					}
+				};
+
+
+				class CPLAssertionException : public CPLRuntimeException
+				{
+				public:
+					CPLAssertionException(const std::string & error)
+						: CPLRuntimeException(error)
+					{
+
+					}
+				};
+
+			#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert, exceptionT) \
 				do \
 				{ \
-					std::string message = std::string("Runtime exception in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
+					std::string message = std::string("Runtime exception (" #exceptionT ") in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
 					CPL_DEBUGOUT(message.c_str()); \
 					cpl::Misc::LogException(message); \
 					if(CPL_ISDEBUGGED()) DBG_BREAK(); \
@@ -428,16 +449,21 @@
 					if(doAbort) \
 						std::abort(); \
 					else \
-						throw std::runtime_error(message); \
+						throw exceptionT(message); \
 				} while(0) 
 
 
 			#define CPL_RUNTIME_EXCEPTION(msg) \
-				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false)
+				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false, cpl::Misc::CPLRuntimeException)
+
+			#define CPL_RUNTIME_EXCEPTION_SPECIFIC(msg, exceptionT) \
+				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false, exceptionT)
+
 
 			#define CPL_RUNTIME_ASSERTION(expression) \
 				if(!(expression)) \
-					CPL_INTERNAL_EXCEPTION("Runtime assertion failed: " #expression, __FILE__, __LINE__, __func__, true)
+					CPL_INTERNAL_EXCEPTION("Runtime assertion failed: " #expression, \
+					__FILE__, __LINE__, __func__, true, cpl::Misc::CPLAssertionException)
 
 		}; // Misc
 	}; // APE

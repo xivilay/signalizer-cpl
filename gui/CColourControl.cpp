@@ -283,17 +283,17 @@ namespace cpl
 	}
 	/*********************************************************************************************/
 
-	void CColourControl::save(CSerializer::Archiver & ar, long long int version)
+	void CColourControl::serialize(CSerializer::Archiver & ar, long long int version)
 	{
-		CKnobSlider::save(ar, version);
+		CKnobSlider::serialize(ar, version);
 		
 		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
 		ar << a; ar << r; ar << g; ar << b;
 		ar << getType();
 	}
-	void CColourControl::load(CSerializer::Builder & ar, long long int version)
+	void CColourControl::deserialize(CSerializer::Builder & ar, long long int version)
 	{
-		CKnobSlider::load(ar, version);
+		CKnobSlider::deserialize(ar, version);
 		decltype(getType()) newType;
 		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
 		ar >> a; ar >> r; ar >> g; ar >> b;

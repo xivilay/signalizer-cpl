@@ -76,8 +76,8 @@
 
 			// overrides
 			virtual void onValueChange() override;
-			virtual void save(CSerializer::Archiver & ar, long long int version) override;
-			virtual void load(CSerializer::Builder & ar, long long int version) override;
+			virtual void serialize(CSerializer::Archiver & ar, long long int version) override;
+			virtual void deserialize(CSerializer::Builder & ar, long long int version) override;
 			virtual void paint(juce::Graphics & g) override;
 			//virtual iCtrlPrec_t bGetValue() const override;
 			//virtual void bSetValue(iCtrlPrec_t val) override;

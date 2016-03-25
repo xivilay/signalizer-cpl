@@ -59,20 +59,18 @@
 			template<typename V>
 				inline V broadcast(const typename scalar_of<V>::type * );
 			
+			template<>
 				inline float zero()
 				{
 					return 0;
 				}
 
-				inline float load(const float * V1)
+			template<>
+				inline double zero()
 				{
-					return *V1;
+					return 0;
 				}
 
-				inline double load(const double * V1)
-				{
-					return *V1;
-				}
 
 				inline float broadcast(const float * V1)
 				{
@@ -345,12 +343,18 @@
 				{
 					return _mm_load_pd(in);
 				}
+
+			template<>
+				inline double loadu(const double * in)
+				{
+					return *in;
+				}
+
 			template<>
 				inline v4sf load(const float *in)
 				{
 					return _mm_load_ps(in);
 				}
-
 
 			template<>
 				inline v4sf loadu(const float * in)
@@ -358,6 +362,11 @@
 					return _mm_loadu_ps(in);
 				}
 
+			template<>
+				inline float loadu(const float * in)
+				{
+					return *in;
+				}
 
 			// broadcasts has to be declared after set1<>'s because the broadcasts may explicitly initialize the templates
 

@@ -302,7 +302,7 @@ namespace cpl
 		// (getValue() - getMinimum()) / (getMaximum() - getMinimum())
 		return static_cast<iCtrlPrec_t>(getValue());
 	}
-	void CKnobSlider::save(CSerializer::Archiver & ar, long long int version)
+	void CKnobSlider::serialize(CSerializer::Archiver & ar, long long int version)
 	{
 		ar << bGetValue();
 		ar << isKnob;
@@ -310,7 +310,7 @@ namespace cpl
 		ar << getMouseDragSensitivity();
 		ar << getSliderStyle();
 	}
-	void CKnobSlider::load(CSerializer::Builder & ar, long long int version)
+	void CKnobSlider::deserialize(CSerializer::Builder & ar, long long int version)
 	{
 		iCtrlPrec_t value(0);
 		bool vel(false);

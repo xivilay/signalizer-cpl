@@ -264,6 +264,9 @@
 
 					T & reference()
 					{
+						if (!pointer)
+							construct();
+
 						return *pointer;
 					}
 

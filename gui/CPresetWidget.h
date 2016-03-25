@@ -35,6 +35,7 @@
 	#include "ControlBase.h"
 	#include "CButton.h"
 	#include "CComboBox.h"
+	#include "../SafeSerializableObject.h"
 
 	namespace cpl
 	{
@@ -71,7 +72,7 @@
 			/// The unique name/ID that identifies the parent. This will be a part of the filename and file,
 			/// ensures only this name can load presets saved with that name.
 			/// </param>
-			CPresetWidget(CSerializer::Serializable * contentToBeSerialized, const std::string & uniqueName, Setup s = Minimal);
+			CPresetWidget(SafeSerializableObject * contentToBeSerialized, const std::string & uniqueName, Setup s = Minimal);
 
 			// overrides
 			virtual void valueChanged(const cpl::CBaseControl * c) override;
@@ -106,7 +107,7 @@
 			CButton kloadPreset, ksavePreset, kloadDefault, ksaveDefault;
 			CComboBox kpresetList;
 			MatrixSection layout;
-			CSerializer::Serializable * parent;
+			SafeSerializableObject * parent;
 			std::string name;
 			std::string ext;
 			Setup layoutSetup;

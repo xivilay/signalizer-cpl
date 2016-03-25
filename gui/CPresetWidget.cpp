@@ -32,7 +32,7 @@
 
 namespace cpl
 {
-	CPresetWidget::CPresetWidget(CSerializer::Serializable * content, const std::string & uName, Setup s)
+	CPresetWidget::CPresetWidget(SafeSerializableObject * content, const std::string & uName, Setup s)
 	: 
 		CBaseControl(this), 
 		name(uName), 
@@ -71,7 +71,7 @@ namespace cpl
 		if (c == &ksavePreset)
 		{
 			SerializerType serializer(name);
-			parent->save(serializer.getArchiver(), programInfo.versionInteger);
+			parent->serializeObject(serializer.getArchiver(), programInfo.versionInteger);
 			juce::File location;
 			bool result = CPresetManager::instance().savePresetAs(serializer, location, name);
 			// update list anyway; user may delete files in dialog etc.
@@ -90,14 +90,14 @@ namespace cpl
 			updatePresetList();
 			if (result)
 			{
-				parent->load(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+				parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
 				setDisplayedPreset(location);
 			}
 		}
 		else if (c == &ksaveDefault)
 		{
 			SerializerType serializer(name);
-			parent->save(serializer.getArchiver(), programInfo.versionInteger);
+			parent->serializeObject(serializer.getArchiver(), programInfo.versionInteger);
 			juce::File location;
 			bool result = CPresetManager::instance().savePreset(fullPathToPreset("default"), serializer, location);
 			// update list anyway; user may delete files in dialog etc.
@@ -116,7 +116,7 @@ namespace cpl
 			updatePresetList();
 			if (result)
 			{
-				parent->load(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+				parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
 				setDisplayedPreset(location);
 			}
 		}
@@ -130,7 +130,7 @@ namespace cpl
 				SerializerType serializer(name);
 				if (CPresetManager::instance().loadPreset(fullPathToPreset(presetName), serializer, location))
 				{
-					parent->load(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+					parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
 					setSelectedPreset(location);
 				}
 			}

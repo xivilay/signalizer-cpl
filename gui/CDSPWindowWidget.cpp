@@ -174,7 +174,7 @@ namespace cpl
 		return p;
 	}
 
-	void CDSPWindowWidget::save(CSerializer::Archiver & ar, long long int version)
+	void CDSPWindowWidget::serialize(CSerializer::Archiver & ar, long long int version)
 	{
 		ar << kalpha;
 		ar << kbeta;
@@ -182,7 +182,7 @@ namespace cpl
 		ar << ksymmetryList;
 	}
 
-	void CDSPWindowWidget::load(CSerializer::Builder & ar, long long int version)
+	void CDSPWindowWidget::deserialize(CSerializer::Builder & ar, long long int version)
 	{
 		ar >> kalpha;
 		ar >> kbeta;

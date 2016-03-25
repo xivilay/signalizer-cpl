@@ -137,6 +137,10 @@ namespace cpl
 
 
 			// all_bits - need a better solution here, that doesn't involve intrinsics.
+
+			template<> const float consts<float>::all_bits = *(float*)&bit_helper::bits;
+			template<> const double consts<double>::all_bits = *(double*)&bit_helper::bits;
+
 			template<> const v4sf consts<v4sf>::all_bits = { *(float*)&bit_helper::bits, *(float*)&bit_helper::bits, 
 															 *(float*)&bit_helper::bits, *(float*)&bit_helper::bits };
 			template<> const v8sf consts<v8sf>::all_bits = { *(float*)&bit_helper::bits, *(float*)&bit_helper::bits,
@@ -148,6 +152,9 @@ namespace cpl
 															 *(double*)&bit_helper::bits, *(double*)&bit_helper::bits };
 
 			// sign mask - need a better solution here, that doesn't involve intrinsics.
+			template<> const float consts<float>::sign_mask = *(float*)&bit_helper::fsm;
+			template<> const double consts<double>::sign_mask = *(double*)&bit_helper::dsm;
+
 			template<> const v4sf consts<v4sf>::sign_mask = { *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm,
 															 *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm };
 			template<> const v8sf consts<v8sf>::sign_mask = { *(float*)&bit_helper::fsm, *(float*)&bit_helper::fsm,

@@ -116,6 +116,18 @@
 			inline v4sd vor(v4sd a, v4sd b) { return _mm256_or_pd(a, b); }
 			inline v2sd vor(v2sd a, v2sd b) { return _mm_or_pd(a, b); }
 
+			inline float vor(float a, float b)
+			{
+				auto result = reinterpret_vector_cast<std::uint32_t>(a) | reinterpret_vector_cast<std::uint32_t>(b);
+				return reinterpret_vector_cast<float>(result);
+			}
+
+			inline double vor(double a, double b)
+			{
+				auto result = reinterpret_vector_cast<std::uint64_t>(a) | reinterpret_vector_cast<std::uint64_t>(b);
+				return reinterpret_vector_cast<double>(result);
+			}
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Select elements from two vectors depending on a third.
@@ -124,10 +136,11 @@
 
 					note that mask should strictly be either all 0 or 1 bits (like, from comparisons)
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vselect(v4sf a, v4sf b, v4sf mask) { return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b)); }
-			inline v8sf vselect(v8sf a, v8sf b, v8sf mask) { return _mm256_or_ps(_mm256_and_ps(mask, a), _mm256_andnot_ps(mask, b)); }
-			inline v4sd vselect(v4sd a, v4sd b, v4sd mask) { return _mm256_or_pd(_mm256_and_pd(mask, a), _mm256_andnot_pd(mask, b)); }
-			inline v2sd vselect(v2sd a, v2sd b, v2sd mask) { return _mm_or_pd(_mm_and_pd(mask, a), _mm_andnot_pd(mask, b)); }
+			template<typename V>
+			inline V vselect(V a, V b, V mask)
+			{
+				return vor(vand(mask, a), vandnot(mask, b));
+			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -148,6 +161,18 @@
 			inline v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
 			inline v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
 			inline v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
+
+			inline float vand(float a, float b)
+			{ 
+				auto result = reinterpret_vector_cast<std::uint32_t>(a) & reinterpret_vector_cast<std::uint32_t>(b);
+				return reinterpret_vector_cast<float>(result); 
+			}
+
+			inline double vand(double a, double b) 
+			{ 
+				auto result = reinterpret_vector_cast<std::uint64_t>(a) & reinterpret_vector_cast<std::uint64_t>(b);
+				return reinterpret_vector_cast<double>(result);
+			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -204,6 +229,12 @@
 			inline v4sd vandnot(v4sd a, v4sd b) { return _mm256_andnot_pd(a, b); }
 			inline v2sd vandnot(v2sd a, v2sd b) { return _mm_andnot_pd(a, b); }
 
+			template<typename V>
+				inline V vandnot(V a, V b)
+				{
+					return vand(a, vnot(b));
+				}
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector floating point bit not operations, emulated through andnot intrinsic
@@ -225,6 +256,19 @@
 			{
 				return _mm_andnot_pd(a, consts<v2sd>::all_bits);
 			}
+
+			inline float vnot(float a)
+			{
+				auto result = ~reinterpret_vector_cast<std::uint32_t>(a);
+				return reinterpret_vector_cast<float>(result);
+			}
+
+			inline double vand(double a)
+			{
+				auto result = ~reinterpret_vector_cast<std::uint64_t>(a);
+				return reinterpret_vector_cast<double>(result);
+			}
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 			 
 				Vector max
@@ -237,6 +281,19 @@
 					auto mask = a > b;
 					return vor(vand(a, mask), vandnot(mask, b));
 				}
+
+			template<>
+				inline float max(float a, float b)
+				{
+					return std::max(a, b);
+				}
+
+			template<>
+				inline double max(double a, double b)
+				{
+					return std::max(a, b);
+				}
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector floating point sign extraction (only the MSB is set)

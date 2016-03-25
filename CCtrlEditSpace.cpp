@@ -49,8 +49,8 @@ namespace cpl
 		else if (ctrl == switchWithOld.get())
 		{
 			CSerializer newValue;
-			parentControl->save(newValue, 1);
-			parentControl->load(oldValue, 1);
+			parentControl->serialize(newValue, 1);
+			parentControl->deserialize(oldValue, 1);
 			parentControl->bForceEvent();
 			oldValue = newValue;
 
@@ -74,7 +74,7 @@ namespace cpl
 		}
 
 		// store old value of control:
-		parent->save(oldValue, 1);
+		parent->serialize(oldValue, 1);
 		switchWithOld.reset(new CButton("Switch to A", "Switch to B"));
 		switchWithOld->setToggleable(true);
 		switchWithOld->bSetDescription("Switch back to the other settings (A/B compare).");
