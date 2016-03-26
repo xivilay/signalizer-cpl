@@ -100,9 +100,6 @@
 
 			juce::Slider::SliderStyle oldStyle;
 			ControlType type;
-			juce::Image knobGraphics;
-			int numFrames;
-			int sideLength;
 			std::string title, text;
 		};
 	};

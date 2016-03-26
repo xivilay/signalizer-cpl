@@ -35,7 +35,6 @@
 	#include <string>
 	#include "MacroConstants.h"
 	#include <sstream>
-	//#include "Common.h"
 	#include "PlatformSpecific.h"
 	#include "Types.h"
 	#include <typeinfo>
@@ -117,7 +116,7 @@
 
 						#ifdef CPL_MAC
 							// all allocations on OS X are aligned to 16-byte boundaries
-							if(aligment <= 16)
+							if(alignment <= 16)
 								return reinterpret_cast<Type *>(std::malloc(numObjects * sizeof(Type)));
 						#endif
 					
@@ -147,7 +146,7 @@
 					#else
 						#ifdef CPL_MAC
 							// all allocations on OS X are aligned to 16-byte boundaries
-							if(aligment <= 16)
+							if(alignment <= 16)
 								return reinterpret_cast<Type *>(std::realloc(ptr, numObjects * sizeof(Type)));
 						#endif
 						// https://github.com/numpy/numpy/issues/5312
@@ -296,8 +295,9 @@
 					sConTryCancel = sYesNoCancel
 				#elif defined(CPL_MAC)
 					sOk = 0,
-					sYesNoCancel = 3,
-					sConTryCancel = 6
+					sYesNo = 3,
+					sYesNoCancel = 6,
+					sConTryCancel = 9
 				#endif
 			};
 			enum MsgIcon : int
@@ -349,10 +349,10 @@
 					// deadlock occurs
 
 				time_out:
-
+					// TODO: refactor to separate file.. so we access the name of the program without cyclic dependencies.
 					ret = MsgBox("Deadlock detected in spinlock: Protected resource is not released after max interval. "
 							"Wait again (try again), release resource (continue) - can create async issues - or exit (cancel)?", 
-							_PROGRAM_NAME_ABRV " Error!", 
+								 "cpl sync error!",
 							sConTryCancel | iStop);
 					switch(ret) 
 					{
@@ -401,7 +401,7 @@
 					}
 					ret = MsgBox("Deadlock detected in conditional wait: Protected resource is not released after max interval. "
 							"Wait again (try again, breaks if debugged), continue anyway (continue) - can create async issues - or exit (cancel)?", 
-							programInfo.name + " Error!", 
+							"cpl conditional wait error!", 
 							sConTryCancel | iStop);
 					switch(ret) 
 					{

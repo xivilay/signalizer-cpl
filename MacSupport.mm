@@ -74,6 +74,22 @@ int MacBox(void * hwndParent, const char *text, const char *caption, int type)
 				break;
 		};
 	}
+	else if ((type & 0xF) == sYesNo)
+	{
+		ret = (int)NSRunAlertPanel(tit, @"%@", @"Yes", @"No", @"",text2);
+		switch(ret)
+		{
+			case -1:
+				ret = bCancel;
+				break;
+			case 0:
+				ret = bNo;
+				break;
+			case 1:
+				ret = bYes;
+				break;
+		};
+	}
 	else if ((type & 0xF) == sConTryCancel)
 	{
 		ret = (int)NSRunAlertPanel(tit,@"%@",@"Continue",@"Try Again",@"Cancel",text2);

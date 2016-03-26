@@ -32,6 +32,9 @@
 
 #ifdef CPL_MSVC
 	#include <dbghelp.h>
+#elif defined(CPL_UNIXC)
+	#include <execinfo.h>
+	#include <cxxabi.h>
 #endif
 
 namespace cpl
@@ -279,7 +282,8 @@ namespace cpl
 		#endif
 		return 0;
 	}
-
+	
+#ifdef CPL_WINDOWS
 	void WindowsBackTrace(std::ostream & f, PEXCEPTION_POINTERS pExceptionInfo)
 	{
 		// http://stackoverflow.com/questions/28099965/windows-c-how-can-i-get-a-useful-stack-trace-from-a-signal-handler
@@ -347,7 +351,7 @@ namespace cpl
 		SymCleanup(GetCurrentProcess());
 
 	}
-
+#endif
 	XWORD CProtected::structuredExceptionHandlerTraceInterceptor(CProtected::PreembeddedFormatter & output, XWORD code, CSystemException::eStorage & e, void * systemInformation)
 	{
 
@@ -365,10 +369,11 @@ namespace cpl
 			outputStream << "- Stack backtrace: " << newl;
 			WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS) systemInformation);
 			ret = EXCEPTION_CONTINUE_SEARCH;
-		#endif
+		
+			cpl::Misc::LogException(outputStream.str());
+			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
 
-		cpl::Misc::LogException(outputStream.str());
-		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+		#endif
 
 		return ret;
 	}
@@ -380,20 +385,38 @@ namespace cpl
 			if (threadData.debugTraceBuffer == nullptr)
 				return;
 
-			std::stringstream & outputStream = *threadData.debugTraceBuffer;
+			std::stringstream & outputStream = threadData.debugTraceBuffer->get();
 
 			auto exceptionString = formatExceptionMessage(exceptionInformation);
 
 			outputStream << "Sigaction exception description: " << exceptionString << newl;
 		
-			void* stack[128];
-			int frames = backtrace(stack, numElementsInArray(stack));
-			char** frameStrings = backtrace_symbols(stack, frames);
-
-			for (int i = 0; i < frames; ++i)
-				outputStream << frameStrings[i] << newLine;
-
-			::free(frameStrings);
+			void *callstack[128];
+			const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
+			char buf[1024];
+			int nFrames = backtrace(callstack, nMaxFrames);
+			char **symbols = backtrace_symbols(callstack, nFrames);
+			
+			for (int i = 0; i < nFrames; i++) {
+				Dl_info info;
+				if (dladdr(callstack[i], &info) && info.dli_sname) {
+					char *demangled = NULL;
+					int status = -1;
+					if (info.dli_sname[0] == '_')
+						demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
+					snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n",
+							 i, int(2 + sizeof(void*) * 2), callstack[i],
+							 status == 0 ? demangled :
+							 info.dli_sname == 0 ? symbols[i] : info.dli_sname,
+							 (char *)callstack[i] - (char *)info.dli_saddr);
+					free(demangled);
+				} else {
+					snprintf(buf, sizeof(buf), "%-3d %*p %s\n",
+							 i, int(2 + sizeof(void*) * 2), callstack[i], symbols[i]);
+				}
+				outputStream << buf;
+			}
+			free(symbols);
 
 			cpl::Misc::LogException(outputStream.str());
 			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);

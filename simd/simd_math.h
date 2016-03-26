@@ -106,6 +106,16 @@
 				return _mm256_and_pd(val, consts<v4sd>::sign_mask);
 			}
 
+			inline float abs(float val)
+			{
+				return std::abs(val);
+			}
+			
+			inline double abs(double val)
+			{
+				return std::abs(val);
+			}
+			
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector floating point bit or
@@ -129,17 +139,25 @@
 			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
-
-				Select elements from two vectors depending on a third.
-					output[n] = mask[n] ? a[n] : b[n] 
-						(return (a & mask) | (b & ~mask))
-
-					note that mask should strictly be either all 0 or 1 bits (like, from comparisons)
-			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			template<typename V>
-			inline V vselect(V a, V b, V mask)
+			 
+			 Floating point bit-ands
+			 
+			 /////////////////////////////////////////////////////////////////////////////////////////////////*/
+			inline v4sf vand(v4sf a, v4sf b) { return _mm_and_ps(a, b); }
+			inline v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
+			inline v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
+			inline v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
+			
+			inline float vand(float a, float b)
 			{
-				return vor(vand(mask, a), vandnot(mask, b));
+				auto result = reinterpret_vector_cast<std::uint32_t>(a) & reinterpret_vector_cast<std::uint32_t>(b);
+				return reinterpret_vector_cast<float>(result);
+			}
+			
+			inline double vand(double a, double b)
+			{
+				auto result = reinterpret_vector_cast<std::uint64_t>(a) & reinterpret_vector_cast<std::uint64_t>(b);
+				return reinterpret_vector_cast<double>(result);
 			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,26 +169,16 @@
 			inline v8sf vxor(v8sf a, v8sf b) { return _mm256_xor_ps(a, b); }
 			inline v4sd vxor(v4sd a, v4sd b) { return _mm256_xor_pd(a, b); }
 			inline v2sd vxor(v2sd a, v2sd b) { return _mm_xor_pd(a, b); }
-
-			/*///////////////////////////////////////////////////////////////////////////////////////////////////
-
-				Floating point bit-ands
-
-			/////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vand(v4sf a, v4sf b) { return _mm_and_ps(a, b); }
-			inline v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
-			inline v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
-			inline v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
-
-			inline float vand(float a, float b)
-			{ 
-				auto result = reinterpret_vector_cast<std::uint32_t>(a) & reinterpret_vector_cast<std::uint32_t>(b);
-				return reinterpret_vector_cast<float>(result); 
+			
+			inline float vxor(float a, float b)
+			{
+				auto result = reinterpret_vector_cast<std::uint32_t>(a) ^ reinterpret_vector_cast<std::uint32_t>(b);
+				return reinterpret_vector_cast<float>(result);
 			}
-
-			inline double vand(double a, double b) 
-			{ 
-				auto result = reinterpret_vector_cast<std::uint64_t>(a) & reinterpret_vector_cast<std::uint64_t>(b);
+			
+			inline double vxor(double a, double b)
+			{
+				auto result = reinterpret_vector_cast<std::uint64_t>(a) ^ reinterpret_vector_cast<std::uint64_t>(b);
 				return reinterpret_vector_cast<double>(result);
 			}
 
@@ -220,23 +228,6 @@
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
-				Vector floating point bit-andnots
-				ret = ~a & b
-
-			/////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vandnot(v4sf a, v4sf b) { return _mm_andnot_ps(a, b); }
-			inline v8sf vandnot(v8sf a, v8sf b) { return _mm256_andnot_ps(a, b); }
-			inline v4sd vandnot(v4sd a, v4sd b) { return _mm256_andnot_pd(a, b); }
-			inline v2sd vandnot(v2sd a, v2sd b) { return _mm_andnot_pd(a, b); }
-
-			template<typename V>
-				inline V vandnot(V a, V b)
-				{
-					return vand(a, vnot(b));
-				}
-
-			/*///////////////////////////////////////////////////////////////////////////////////////////////////
-
 				Vector floating point bit not operations, emulated through andnot intrinsic
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -263,12 +254,43 @@
 				return reinterpret_vector_cast<float>(result);
 			}
 
-			inline double vand(double a)
+			inline double vnot(double a)
 			{
 				auto result = ~reinterpret_vector_cast<std::uint64_t>(a);
 				return reinterpret_vector_cast<double>(result);
 			}
 
+			/*///////////////////////////////////////////////////////////////////////////////////////////////////
+
+				Vector floating point bit-andnots
+				ret = ~a & b
+
+			/////////////////////////////////////////////////////////////////////////////////////////////////*/
+			inline v4sf vandnot(v4sf a, v4sf b) { return _mm_andnot_ps(a, b); }
+			inline v8sf vandnot(v8sf a, v8sf b) { return _mm256_andnot_ps(a, b); }
+			inline v4sd vandnot(v4sd a, v4sd b) { return _mm256_andnot_pd(a, b); }
+			inline v2sd vandnot(v2sd a, v2sd b) { return _mm_andnot_pd(a, b); }
+
+			template<typename V>
+				inline V vandnot(V a, V b)
+				{
+					return vand(a, vnot(b));
+				}
+			
+			/*///////////////////////////////////////////////////////////////////////////////////////////////////
+
+				Select elements from two vectors depending on a third.
+					output[n] = mask[n] ? a[n] : b[n] 
+						(return (a & mask) | (b & ~mask))
+
+					note that mask should strictly be either all 0 or 1 bits (like, from comparisons)
+			///////////////////////////////////////////////////////////////////////////////////////////////////*/
+			template<typename V>
+			inline V vselect(V a, V b, V mask)
+			{
+				return vor(vand(mask, a), vandnot(mask, b));
+			}
+			
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 			 
 				Vector max

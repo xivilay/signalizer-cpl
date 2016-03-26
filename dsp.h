@@ -517,7 +517,7 @@
 				float unpreal[4];
 				float  unpimag[4];
 
-				cpl::sse::v4sf
+				cpl::Types::v4sf
 					xmmsin, // the next 4 sines
 					xmmcos, // the next 4 cosines
 					xmmsignal, // the next 4 signals
@@ -533,7 +533,7 @@
 				*/
 				Scalar omega = 2 * frequency * Scalar(PI) / sampleRate;
 				xmmtemp1 = _mm_setr_ps(0, omega, omega * 2, omega * 3);
-				cpl::simd::sincos_ps(xmmtemp1, &xmmsin, &xmmcos);
+				cpl::simd::sincos(xmmtemp1, &xmmsin, &xmmcos);
 
 
 

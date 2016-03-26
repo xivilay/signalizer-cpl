@@ -40,7 +40,7 @@
 	#include <array>
 	#include "../ffts.h"
 	#include <numeric>
-
+	#include "../lib/AlignedAllocator.h"
 
 	namespace cpl
 	{

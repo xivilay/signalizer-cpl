@@ -31,6 +31,7 @@
 #include "LibraryOptions.h"
 
 #include "Common.h"
+#include "simd/simd_consts.cpp"
 
 #ifdef CPL_JUCE
 
@@ -78,7 +79,6 @@
 #include "ffts/dustfft.cpp"
 #include "InstructionSet.cpp"
 #include "CTimer.cpp"
-#include "simd/simd_consts.cpp"
 #include "SigMathImp.cpp"
 #include "octave/octave_all.cpp"
 #include "Protected.cpp"

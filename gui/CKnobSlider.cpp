@@ -47,7 +47,6 @@ namespace cpl
 
 	CKnobSlider::CKnobSlider(const std::string & name, ControlType typeToUse)
 		: juce::Slider("CKnobSlider")
-		, knobGraphics(CResourceManager::instance().getImage("bmps/knob.png"))
 		, CBaseControl(this)
 		, title(name)
 		, type(typeToUse)
@@ -58,8 +57,6 @@ namespace cpl
 		setRange(0.0, 1.0);
 		isEditSpacesAllowed = true;
 		addListener(this);
-		numFrames = knobGraphics.getHeight() / knobGraphics.getWidth();
-		sideLength = knobGraphics.getWidth();
 		setTextBoxStyle(NoTextBox, 0, 0, 0);
 		setIsKnob(true);
 		enableTooltip(true);

@@ -31,6 +31,7 @@
 	#define CPL_UTILITY_H
 
 	#include "MacroConstants.h"
+	#include "Common.h"
 	#include "Mathext.h"
 	#include <functional>
 	#include <set>
@@ -288,7 +289,7 @@
 					}
 
 					T * pointer;
-					typename std::aligned_storage<sizeof T, alignof(T)>::type storage;
+					typename std::aligned_storage<sizeof(T), alignof(T)>::type storage;
 				};
 
 

@@ -103,7 +103,7 @@ namespace cpl
 		void CrashIfUserDoesntDebug(const std::string & errorMessage)
 		{
 			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", programInfo.name + ": Fatal error", 
-				MsgStyle::sYesNoCancel | MsgIcon::iStop);
+				MsgStyle::sYesNo | MsgIcon::iStop);
 			if (ret == MsgButton::bYes)
 			{
 				CPL_BREAKIFDEBUGGED();
@@ -130,8 +130,7 @@ namespace cpl
 				}
 				catch (const std::exception & e)
 				{
-					using namespace std;
-					auto what = "Software exception at std::terminate_hook: "s + e.what();
+					auto what = std::string("Software exception at std::terminate_hook: ") + e.what();
 					LogException(what);
 					MsgBox(what, cpl::programInfo.name + ": Software exception", MsgStyle::sOk | MsgIcon::iStop);
 				}
@@ -191,7 +190,7 @@ namespace cpl
 		/*********************************************************************************************
 		 
 			Returns the path of our directory.
-			For macs, this is <pathtobundle>/contents/
+			For macs, this is <pathtobundle>/contents/resources/
 			for windows, this is the directory of the DLL.
 		 
 		 *********************************************************************************************/
@@ -266,7 +265,7 @@ namespace cpl
 				return ret;
 			#else
 #warning fix this
-				return "";
+			return "Error: " + std::to_string(lastError);
 			#endif
 		}
 		/*********************************************************************************************
@@ -359,14 +358,14 @@ namespace cpl
 				HMODULE hMod;
 				if (GetModuleHandleExA(
 					GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-					(char*)&GetDirectoryPath, &hMod))
+					(const char*)&GetDirectoryPath, &hMod))
 				{
 					return reinterpret_cast<char *>(hMod);
 				}
-			#elif CPL_MAC
-#error Implement GetImageBase for your platform
-			#elif CPL_UNIXC
-#error Implement GetImageBase for your platform
+			#elif defined(CPL_MAC) || defined(CPL_UNIXC)
+				Dl_info exeInfo;
+				dladdr ((void*) GetImageBase, &exeInfo);
+				return (const char*)exeInfo.dli_fbase;
 			#endif
 			return nullptr;
 		}
@@ -612,9 +611,12 @@ namespace cpl
 					// directory slash detected
 					if (CPL_DIRC_COMP(fullPath[i]))
 						z++;
-					// return minus 2 directories
 					if(z == 2)
-						return std::string(fullPath.begin(), fullPath.begin() + (long)i);
+					{
+						return std::string(fullPath.begin(), fullPath.begin() + (long)i) +
+						"/resources/";
+					}
+
 				}
 			#endif
 			return "<Error getting directory of executable>";

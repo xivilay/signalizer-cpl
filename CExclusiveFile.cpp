@@ -101,37 +101,55 @@ namespace cpl
 			}
 
 		#elif defined(CPL_UNIXC)
-
 			int openMask = m & mode::writeMode ? O_WRONLY | O_CREAT : O_RDONLY;
-			openMask |= m & mode::append ? O_APPEND : 0;
-			if(m == mode::writeMode)
+			openMask |= m & mode::append ? O_APPEND : m & mode::writeMode ? O_TRUNC : 0;
+		
+			auto start = Misc::QuickTime();
+			auto lockGranted = 0;
+		
+			// TODO: refactor using open_excl on linux and O_EXLOCK on BSD
+			do
 			{
+				if(m & mode::writeMode)
+				{
 
-				mode_t permission = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
+					mode_t permission = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
 
-				handle = ::open(fileName.c_str(), openMask, permission);
-			}
-			else
-			{
-				handle = ::open(fileName.c_str(), openMask);
+					handle = ::open(fileName.c_str(), openMask, permission);
+				}
+				else
+				{
+					handle = ::open(fileName.c_str(), openMask);
 
-			}
-			if (handle < 0)
-			{
-				isOpen = false;
-				handle = 0;
-				return false;
-			}
-			int mask = waitForLock ? 0 : LOCK_NB;
-			mask |= LOCK_EX;
-			auto ret = ::flock(handle, mask);
+				}
+				if (handle < 0)
+				{
+					isOpen = false;
+					handle = 0;
+					return false;
+				}
+				int mask = waitForLock ? 0 : LOCK_NB;
+				mask |= LOCK_EX;
+				lockGranted = ::flock(handle, mask);
+				
+				if(lockGranted == 0)
+					break;
+				else
+					::close(handle);
+				
+				// timed out.
+				if (Misc::QuickTime() > start + 2000)
+					return false;
+				
+				Misc::Delay(10); // yield to other threads.
+				
+			} while (waitForLock);
+		
 			// could not obtain lock on file, file is opened in another instance
-			if (ret)
+			if (lockGranted == 0)
 			{
-				this->close();
-				return false;
+				isOpen = true;
 			}
-			isOpen = true;
 
 		#endif
 

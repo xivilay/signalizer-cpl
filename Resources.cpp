@@ -68,6 +68,12 @@ namespace cpl
 				drawableImage = juce::Drawable::createFromSVG(*element);
 				return true;
 			}
+			else
+			{
+				auto drawable = new juce::DrawableImage();
+				drawable->setImage(juce::Image::null);
+				drawableImage = drawable;
+			}
 		}
 		else
 		{
@@ -115,7 +121,10 @@ namespace cpl
 	{
 		auto it = resources.find(name);
 		if (it != resources.end())
+		{
 			return &it->second;
+		}
+
 
 		std::string dir = Misc::DirectoryPath() + "/resources/";
 

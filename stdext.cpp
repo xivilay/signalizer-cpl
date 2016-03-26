@@ -32,6 +32,6 @@ namespace cpl
 	#ifdef CPL_WINDOWS
 		const char * newl = "\r\n";
 	#else
-		const char newl = "\n";
+		const char * newl = "\n";
 	#endif
 };

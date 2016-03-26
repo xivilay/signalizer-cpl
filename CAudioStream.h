@@ -570,7 +570,7 @@
 
 				if (enableAsyncSubsystem)
 				{
-					asyncAudioThread = std::thread(&CAudioStream::asyncAudioSystem, this);
+					asyncAudioThread = std::thread(&CAudioStream::protectedAsyncSystemEntry, this);
 					asyncAudioThreadCreated.store(true);
 					
 				}
@@ -1095,7 +1095,7 @@
 					(
 						[this]()
 						{
-
+							asyncAudioSystem();
 						}
 					);
 				#else

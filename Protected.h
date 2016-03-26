@@ -204,7 +204,7 @@
 						return internalSEHTraceInterceptor(debugOutput, function);
 					#else
 						// async signals will be captured further up
-						return internalCxxTraceInterceptor(out, function);
+						return internalCxxTraceInterceptor(debugOutput, function);
 					#endif
 				}
 
@@ -376,8 +376,9 @@
 				auto internalSEHTraceInterceptor(PreembeddedFormatter & out, func && function)
 					-> decltype(function())
 				{
+
+					#ifdef CPL_MSVC					
 					CSystemException::eStorage exceptionInformation;
-					#ifdef CPL_MSVC
 						__try
 						{
 							return internalCxxTraceInterceptor(out, function);

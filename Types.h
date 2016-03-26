@@ -32,6 +32,7 @@
 
 	#include <type_traits>
 	#include <cstdint>
+	#include <errno.h>
 	#include "PlatformSpecific.h"
 	#include <emmintrin.h>
 	#include <immintrin.h>
