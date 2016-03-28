@@ -682,15 +682,48 @@ namespace cpl
 		*********************************************************************************************/
 		inline static int _mbx(void * systemData, const char * text, const char * title, int nStyle = 0)
 		{
-			#ifdef CPL_WINDOWS 
-				if (!systemData)
-					nStyle |=  MB_DEFAULT_DESKTOP_ONLY;
-				return (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
-			#elif defined(CPL_MAC)
-				return MacBox(systemData, text, title, nStyle);
-			#else
+			std::promise<int> promise;
+			auto future = promise.get_future();
+			
+			// this pattern ensures the message box is called on the main thread, no matter what thread we're in.
+			
+			auto boxGenerator = [&]()
+			{
+				#ifdef CPL_WINDOWS
+					if (!systemData)
+						nStyle |=  MB_DEFAULT_DESKTOP_ONLY;
+					auto ret = (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
+				#elif defined(CPL_MAC)
+					auto ret = MacBox(systemData, text, title, nStyle);
+				#else
 				#error "Implement a similar messagebox for your target"
-			#endif
+				#endif
+				
+				promise.set_value(ret);
+			};
+			
+			
+			if(juce::MessageManager::getInstance()->isThisTheMessageThread())
+			{
+				boxGenerator();
+			}
+			else if(
+					// deadlock: we are not the main thread, but we have it locked and we are currently blocking progress
+					juce::MessageManager::getInstance()->currentThreadHasLockedMessageManager()
+					// deadlock: OS X always finds a weird way to query the context about something random.
+					// in this situation, the context is locked, so we also create a deadlock here.
+					|| juce::OpenGLContext::getCurrentContext())
+			{
+				return MsgButton::bError;
+
+			}
+			else
+			{
+				cpl::GUIUtils::MainEvent(boxGenerator);
+			}
+			
+			future.wait();
+			return future.get();
 		}
 
 		/*********************************************************************************************
@@ -718,7 +751,7 @@ namespace cpl
 		static void * ThreadedMessageBox(void * imp_data)
 		{
 			//Global for all instances of this plugin: But we do not want to spam screen with msgboxes
-			static volatile int nOpenMsgBoxes = 0; 
+			static std::atomic<int> nOpenMsgBoxes {0};
 			const int nMaxBoxes = 10;
 
 			if(nOpenMsgBoxes >= nMaxBoxes)

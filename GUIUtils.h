@@ -281,6 +281,21 @@
 					new CustomMessage(functionToRun, notifServer);
 				}
 
+		template<typename Functor>
+			void MainEvent(Functor functionToRun)
+			{
+				struct CustomMessage : public juce::MessageManager::MessageBase
+				{
+					CustomMessage(Functor func) : f(func) { post(); }
+					
+					virtual void messageCallback() override { f(); }
+					
+					Functor f;
+				};
+				
+				new CustomMessage(functionToRun);
+			}
+		
 			inline bool ForceFocusTo(const juce::Component & window)
 			{
 				#ifdef CPL_WINDOWS

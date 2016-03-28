@@ -1,1 +1,3 @@
 https://support.microsoft.com/en-us/kb/2752274
+
+Crashes around unloadtextures are driver problems. See: https://bugs.chromium.org/p/chromium/issues/detail?id=94103

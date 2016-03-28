@@ -256,6 +256,9 @@
 			
 			void renderOpenGL() override final
 			{
+#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+				CPL_TRACEGUARD_START
+#endif
 				{
 					std::lock_guard<std::mutex> lock(hookMutex);
 					for (auto && l : oglEventListeners)
@@ -274,22 +277,15 @@
 
 				CPL_DEBUGCHECKGL();
 
-				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
-					CProtected::instance().topLevelTraceGuardedCode
-					(
-						[&]()
-						{
-							onOpenGLRendering();
-						},
-						"OpenGL rendering thread entry"
-					);
-				#else
-					onOpenGLRendering();
-				#endif
+				onOpenGLRendering();
 
 				CPL_DEBUGCHECKGL();
 
 				openGLStamp = juce::Time::getHighResolutionTicks();
+				
+#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+				CPL_TRACEGUARD_STOP("OpenGL rendering entry");
+#endif
 			}
 
 			void paint(juce::Graphics & g) override final

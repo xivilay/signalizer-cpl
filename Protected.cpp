@@ -189,6 +189,34 @@ namespace cpl
 							break;
 							
 						}
+							
+						case SIGILL:
+						{
+							fmt << "Illegal instruction ";
+							switch(e.data.extraInfoCode)
+							{
+									
+								case ILL_ILLOPC:
+									fmt << "(Illegal opcode) "; break;
+								case ILL_ILLOPN:
+									fmt << "(Illegal operand) "; break;
+								case ILL_ILLADR:
+									fmt << "(Illegal addressing mode) "; break;
+								case ILL_ILLTRP:
+									fmt << "(Illegal trap) "; break;
+								case ILL_PRVOPC:
+									fmt << "(Privileged opcode) "; break;
+								case ILL_PRVREG:
+									fmt << "(Privileged register) "; break;
+								case ILL_COPROC:
+									fmt << "(Coprocessor error) "; break;
+								case ILL_BADSTK:
+									fmt << "(Internal stack error) "; break;
+							}
+							break;
+							
+						}
+							
 						default:
 							fmt << "Access violation ";
 							break;
@@ -458,6 +486,7 @@ namespace cpl
 			
 				switch(sig)
 				{
+					case SIGILL:
 					case SIGBUS:
 					case SIGSEGV:
 					{
@@ -637,6 +666,7 @@ namespace cpl
 				staticData.newHandler.sa_flags = SA_SIGINFO;
 				staticData.newHandler.sa_mask = 0;
 				sigemptyset(&staticData.newHandler.sa_mask);
+				sigaction(SIGILL, &staticData.newHandler, &staticData.oldHandlers[SIGILL]);
 				sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
 				sigaction(SIGFPE, &staticData.newHandler, &staticData.oldHandlers[SIGFPE]);
 				sigaction(SIGBUS, &staticData.newHandler, &staticData.oldHandlers[SIGBUS]);

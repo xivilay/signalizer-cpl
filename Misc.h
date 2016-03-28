@@ -264,7 +264,7 @@
 					bTryAgain = IDTRYAGAIN,
 					bContinue = IDCONTINUE,
 					bCancel = IDCANCEL, 
-					bError = 0
+					bError = -1
 				#elif defined(APE_IPLUG)
 					bYes = IDYES,
 					bNo = IDNO,
@@ -273,6 +273,7 @@
 					bContinue = bYes,
 					bCancel = IDCANCEL
 				#elif defined(CPL_MAC)
+					bError = -1,
 					bYes = 6,
 					bNo = 7,
 					bRetry = 4,

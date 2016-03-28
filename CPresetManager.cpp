@@ -96,8 +96,12 @@ namespace cpl
 		std::string extension = uniqueExt.length() ? uniqueExt + "." + programInfo.programAbbr : programInfo.programAbbr;
 
 		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...",
-			juce::File(presetDirectory()), "*." + extension);
-
+			juce::File(presetDirectory()),
+#ifdef CPL_MAC
+									  "*." + programInfo.programAbbr); // it just doesn't work..
+#else
+									  "*." + extension);
+#endif
 		if (fileChooser.browseForFileToOpen())
 		{
 			auto result = fileChooser.getResult();
@@ -108,10 +112,29 @@ namespace cpl
 			if (!result.existsAsFile())
 			{
 				auto userAnswer = Misc::MsgBox("Error opening file:\n" + path + "\nTry another location?",
-					programInfo.name + "Error loading preset from file...", Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning);
+					programInfo.name + "Error loading preset from file...", Misc::MsgStyle::sYesNo | Misc::MsgIcon::iQuestion);
 				if (userAnswer == Misc::MsgButton::bYes)
 				{
-					return loadPresetAs(builder, location);
+					return loadPresetAs(builder, location, uniqueExt);
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else if(!result.getFileName().contains(extension.c_str()))
+			{
+				auto userAnswer = Misc::MsgBox("Warning: The selected file:\n" + result.getFileName().toStdString() + "\nDoes not have the verifiable extension " + extension +
+											   "\nDo you want to load another file (Yes), proceed with the current (No) or discard the loading query (Cancel)?",
+														   programInfo.name + ": Query about loading preset from file...",
+											   Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning);
+				if (userAnswer == Misc::MsgButton::bYes)
+				{
+					return loadPresetAs(builder, location, uniqueExt);
+				}
+				else if (userAnswer == Misc::MsgButton::bNo)
+				{
+					return loadPreset(path, builder, location);
 				}
 				else
 				{
