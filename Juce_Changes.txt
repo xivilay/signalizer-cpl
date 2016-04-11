@@ -197,3 +197,23 @@ void Desktop::setKioskComponent (Component* kioskComp, bool shouldBeEnabled, boo
 
 -----------------------------------------------------------------------------------------------------------
 
+juce::OpenGLContext (fix for http://forum.juce.com/t/race-conditions-thread-safety-and-crashes-in-openglcontext/17214)
+
+ReferenceCountedObject* OpenGLContext::getAssociatedObject (const char* name) const
+{
+    jassert (name != nullptr);
+
+    CachedImage* const c = getCachedImage();
+
+    // This method must only be called from an openGL rendering callback.
+    jassert (c != nullptr && nativeContext != nullptr);
+    jassert (getCurrentContext() != nullptr);
+
+	if (c == nullptr || nativeContext == nullptr)
+		return nullptr;
+
+    const int index = c->associatedObjectNames.indexOf (name);
+    return index >= 0 ? c->associatedObjects.getUnchecked (index) : nullptr;
+}
+
+------------------------------------------------------------------------------

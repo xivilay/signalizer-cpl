@@ -51,7 +51,7 @@
 		class CView
 		:
 			public SafeSerializableObject,
-			public DestructionNotifier,
+			virtual public DestructionNotifier,
 			public Utility::CNoncopyable
 		{
 			

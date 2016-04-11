@@ -79,7 +79,7 @@
 			/// <returns></returns>
 			bool cas(bool newVal = false)
 			{
-				bool expected = true;
+				bool expected = !newVal;
 				// TODO: figure out less strict ordering possible.
 				return flag.compare_exchange_strong(expected, newVal, std::memory_order_acquire);
 			}
@@ -93,7 +93,7 @@
 		/// where the 'consumer' is considered the thread, that actively uses the object, while
 		/// the producer thread allows inserting new objects the consumer will use, obliviously.
 		/// Example usage: Real-time thread has a list of listeners it calls each loop, however
-		/// it cannot resize these (cause of memory allocations).
+		/// it cannot resize or alter these (cause of memory allocations).
 		/// The producer, or non-real time thread swaps in a larger copy
 		/// of the listeners any time it wants.
 		/// All consumer operations are guaranteed real-time suitable (lock-free)

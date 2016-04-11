@@ -23,7 +23,8 @@
 
 	file:CPLSource.cpp
 	
-		All the source code needed to compile the cpl lib. Add this file to your project.
+		All the source code needed to compile the cpl lib ('unity' build).
+		Add this file to your project.
 
 *************************************************************************************/
 
@@ -40,7 +41,7 @@
 	#include "CBaseControl.cpp"
 	#include "CToolTip.cpp"
 	#include "CCtrlEditSpace.cpp"
-	
+	#include "CSerializer.cpp"
 	//#include "fonts/tahoma.cpp"
 
 	// gui elements

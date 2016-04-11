@@ -23,7 +23,7 @@
 
 	file:StackBuffer.h
 	
-		A helper type for dealing with bogous C structs
+		A helper type for dealing with bogus C structs
 
 *************************************************************************************/
 

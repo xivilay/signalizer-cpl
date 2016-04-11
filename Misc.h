@@ -427,6 +427,16 @@
 					}
 				};
 
+				class CPLNotImplementedException : public std::runtime_error
+				{
+				public:
+					CPLNotImplementedException(const std::string & error)
+						: runtime_error(error)
+					{
+
+					}
+				};
+
 
 				class CPLAssertionException : public CPLRuntimeException
 				{
@@ -464,6 +474,10 @@
 				if(!(expression)) \
 					CPL_INTERNAL_EXCEPTION("Runtime assertion failed: " #expression, \
 					__FILE__, __LINE__, __func__, true, cpl::Misc::CPLAssertionException)
+
+			#define CPL_NOTIMPLEMENTED_EXCEPTION() \
+				CPL_RUNTIME_EXCEPTION_SPECIFIC("The requested behaviour is not implemented (yet)", cpl::Misc::CPLNotImplementedException)
+
 
 		}; // Misc
 	}; // APE

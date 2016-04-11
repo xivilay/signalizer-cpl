@@ -180,7 +180,7 @@ namespace cpl
 	const std::vector<std::string>& CPresetWidget::getPresets()
 	{
 		// TODO: insert return statement here
-		return{};
+		CPL_NOTIMPLEMENTED_EXCEPTION();
 	}
 
 	void CPresetWidget::updatePresetList()
