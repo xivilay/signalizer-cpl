@@ -61,12 +61,26 @@ namespace cpl
 		if (fileChooser.browseForFileToSave(true))
 		{
 			auto result = fileChooser.getResult();
-
-			bool hasExt = result.hasFileExtension(extension.c_str());
-
+			
+			juce::String dotExt = "." + extension;
+			
+			bool hasExt = false;
+			
+			juce::String tempString = result.getFullPathName();
+			juce::String finalString = tempString;
+			
+			// OS X handles multiple endings by duplicating them.. litterally.
+			// how nice.
+			while(tempString.endsWith(dotExt))
+			{
+				hasExt = true;
+				finalString = tempString;
+				tempString = tempString.dropLastCharacters(dotExt.length());
+			}
+			
 			std::string path = 
 				hasExt ? 
-					result.getFullPathName().toStdString() : 
+					finalString.toStdString() :
 					result.withFileExtension(extension.c_str()).getFullPathName().toStdString();
 
 			if (!savePreset(path, archive, location))
@@ -95,7 +109,7 @@ namespace cpl
 
 		std::string extension = uniqueExt.length() ? uniqueExt + "." + programInfo.programAbbr : programInfo.programAbbr;
 
-		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...",
+		juce::FileChooser fileChooser(programInfo.name + ": Load preset from a file...",
 			juce::File(presetDirectory()),
 #ifdef CPL_MAC
 									  "*." + programInfo.programAbbr); // it just doesn't work..
