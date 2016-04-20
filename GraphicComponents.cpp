@@ -54,6 +54,11 @@ namespace cpl
 		
 	}
 
+	CEditSpaceSpawner::~CEditSpaceSpawner()
+	{
+		parent.removeMouseListener(this);
+	}
+
 	void CEditSpaceSpawner::onObjectDestruction(const CCtrlEditSpace::ObjectProxy & dyingSpace)
 	{
 		if (dyingSpace == currentEditSpace.get())

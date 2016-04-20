@@ -38,17 +38,36 @@
 
 	struct ProgramInfo
 	{
-		std::string name; // the name of the program
+		/// <summary>
+		/// The name of the program
+		/// </summary>
+		std::string name;
+		/// <summary>
+		/// Versioning info for this program
+		/// </summary>
 		cpl::Version version;
-		std::string author; // your (company's) name
-		std::string programAbbr; // abbreviation of the program's name for small spaces (and file extensions)
-		// cpl has a generic tree structure, it looks for in the current working directory.
-		// you can specify your own here - will affect filechoosers, temporary files, resources etc.
-		// set this to true if you specify your own.
+		/// <summary>
+		/// Your (company's) name
+		/// </summary>
+		std::string author;
+		/// <summary>
+		/// Abbreviation of the program's name for small spaces (and file extensions)
+		/// </summary>
+		std::string programAbbr;
+		/// <summary>
+		/// cpl has a generic tree structure, it looks for in the current working directory.
+		/// you can specify your own here - will affect filechoosers, temporary files, resources etc.
+		/// set this to true if you specify your own.
+		/// </summary>
 		bool hasCustomDirectory; 
-		// a function returning the path (or relative offset) to your custom directory.
+		/// <summary>
+		/// A function returning the path (or relative offset) to your custom directory.
+		/// </summary>
 		std::string (*customDirectory)();
-
+		/// <summary>
+		/// An optional string identifying this build through other means than versioning (branches etc)
+		/// </summary>
+		std::string customBuildInfo;
 	};
 
 	namespace cpl

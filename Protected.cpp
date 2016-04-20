@@ -73,11 +73,6 @@ namespace cpl
 		}
 	}
 
-	/*********************************************************************************************
-
-		le constructor
-
-	 *********************************************************************************************/
 	CProtected::CProtected()
 	{
 		checkCounter.fetch_add(1);
@@ -87,17 +82,39 @@ namespace cpl
 			registerHandlers();
 		#endif
 	}
-	/*********************************************************************************************
 
-		Deconstructor
-
-	 *********************************************************************************************/
 	CProtected::~CProtected() 
 	{
 		unregisterHandlers();
 		checkCounter.fetch_sub(1);
 	}
 
+	/// <summary>
+	/// Includes 0x
+	/// </summary>
+	static std::string formatDifferenceAddress(const void * base, const void * site)
+	{
+		char sign = '+';
+
+		const void * deltaAddress = nullptr;
+
+		if (site > base)
+		{
+			sign = '+';
+			deltaAddress = (const void*)((const char*)site - (const char *)base);
+		}
+		else
+		{
+			sign = '-';
+			deltaAddress = (const void*)((const char *)base - (const char*)site);
+		}
+
+		char buf[100];
+
+		sprintf_s(buf, "0x%p %c 0x%p", base, sign, deltaAddress);
+
+		return buf;
+	}
 
 	/*********************************************************************************************
 
@@ -109,24 +126,8 @@ namespace cpl
 		auto imageBase = (const void *)Misc::GetImageBase();
 		Misc::CStringFormatter base;
 
-		char sign = '+';
-
-		const void * deltaAddress = nullptr;
-
-		if (e.data.faultAddr > imageBase)
-		{
-			sign = '+';
-			deltaAddress = (const void*) ((const char*)e.data.faultAddr - (const char *)imageBase);
-		}
-		else
-		{
-			sign = '-';
-			deltaAddress = (const void*)((const char *)imageBase - (const char*)e.data.faultAddr);
-		}
-
 		base << "Non-software exception at 0x" << std::hex << e.data.faultAddr 
-			 << " (at image base = 0x" << (std::ptrdiff_t)imageBase << " " << sign 
-			 << " 0x" << deltaAddress << ")" << newl;
+			 << " (at image base " + formatDifferenceAddress(imageBase, e.data.faultAddr) + ")" << newl;
 
 		base << "Exception code: " << e.data.exceptCode 
 			 << ", actual code: " << e.data.actualCode
@@ -346,6 +347,8 @@ namespace cpl
 
 		f << std::hex;
 
+		auto imageBase = Misc::GetImageBase();
+
 		while (StackWalk64(machine_type,
 			GetCurrentProcess(),
 			GetCurrentThread(),
@@ -366,13 +369,13 @@ namespace cpl
 
 				if (::SymGetModuleInfo64(process, symbol->ModBase, &moduleInfo))
 					f << moduleInfo.ModuleName << ": ";
-
-				f << symbol->Name << " + 0x" << displacement << newl;
+				
+				f << formatDifferenceAddress(imageBase, (const void*)symbol->Address) << " + 0x" << displacement << " | " << symbol->Name << newl;
 			}
 			else
 			{
 				// no symbols loaded.
-				f << "0x" << stack_frame.AddrPC.Offset << newl;
+				f << formatDifferenceAddress(imageBase, (const void *) stack_frame.AddrPC.Offset) << newl;
 			}
 		}
 
@@ -392,14 +395,14 @@ namespace cpl
 			structuredExceptionHandler(code, exceptionInformation, systemInformation);
 
 			auto exceptionString = formatExceptionMessage(exceptionInformation);
-
+			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
 			outputStream << "- SEH exception description: " << newl << exceptionString << newl;
 			outputStream << "- Stack backtrace: " << newl;
 			WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS) systemInformation);
 			ret = EXCEPTION_CONTINUE_SEARCH;
 		
 			cpl::Misc::LogException(outputStream.str());
-			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+
 
 		#endif
 

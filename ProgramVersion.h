@@ -86,6 +86,15 @@
 				return std::to_string(parts.major) + "." + std::to_string(parts.minor) + "." + std::to_string(parts.build);
 			}
 
+			bool operator < (const Version & other) const
+			{
+				return compiled < other.compiled;
+			}
+
+			bool operator > (const Version & other) const
+			{
+				return other.compiled > compiled;
+			}
 
 			std::uint64_t compiled;
 			struct parts_t

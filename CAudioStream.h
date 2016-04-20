@@ -1091,15 +1091,11 @@
 			void protectedAsyncSystemEntry()
 			{
 				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
-					CProtected::instance().topLevelTraceGuardedCode
-					(
-						[this]()
-						{
-							asyncAudioSystem();
-						}
-					);
-				#else
-					asyncAudioSystem();
+					CPL_TRACEGUARD_START
+				#endif
+				asyncAudioSystem();
+				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
+					CPL_TRACEGUARD_STOP("Async audio thread");
 				#endif
 			}
 
