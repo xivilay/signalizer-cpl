@@ -86,6 +86,69 @@
 		}
 	}
 
+	namespace cpl
+	{
+		namespace rendering
+		{
+
+			bool OrientationToRadians(ORIENTATION orientation, double & rads)
+			{
+				switch (orientation)
+				{
+				case ORIENTATION::LANDSCAPE:
+					rads = 0.0; return true;
+				case ORIENTATION::PORTRAIT:
+					rads = M_PI / 2; return true;
+				case ORIENTATION::LANDSCAPE_FLIPPED:
+					rads = M_PI; return true;
+				case ORIENTATION::PORTRAIT_FLIPPED:
+					rads = M_PI * 1.5; return true;
+				default:
+					rads = 0.0; return false;
+				}
+			}
+			
+			bool OrientationToDegrees(ORIENTATION orientation, double & degrees)
+			{
+				switch (orientation)
+				{
+					case ORIENTATION::LANDSCAPE:
+						degrees = 0.0; return true;
+					case ORIENTATION::PORTRAIT:
+						degrees = 90; return true;
+					case ORIENTATION::LANDSCAPE_FLIPPED:
+						degrees = 180; return true;
+					case ORIENTATION::PORTRAIT_FLIPPED:
+						degrees = 270; return true;
+					default:
+						degrees = 0.0; return false;
+				}
+			}
+
+			bool GetScreenOrientation(const std::pair<int, int> & pos, double & o)
+			{
+				HMONITOR hMonitor = MonitorFromPoint({ pos.first, pos.second }, MONITOR_DEFAULTTONEAREST);
+
+				if (hMonitor != NULL)
+				{
+					ORIENTATION orientation = GetOrientationFromCurrentMode(hMonitor);
+					double rotation;
+					if (OrientationToDegrees(orientation, rotation))
+					{
+						o = rotation;
+						return true;
+					}
+				}
+				// error somewhere.
+				o = 0.0;
+				return false;
+			}
+		};
+	};
+
+
+#if CPL_MINIMUM_WINDOWS_SUPPORT > NTDDI_WIN7
+
 	// Returns true if this is an integrated display panel e.g. the screen attached to tablets or laptops.
 	bool IsInternalVideoOutput(const DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY VideoOutputTechnologyType)
 	{
@@ -360,72 +423,6 @@
 			return GetOrientationFromCurrentMode(hPrimaryMon);
 		}
 	}
+#endif
 
-	namespace cpl
-	{
-		namespace rendering
-		{
-
-			bool OrientationToRadians(ORIENTATION orientation, double & rads)
-			{
-				switch (orientation)
-				{
-				case ORIENTATION::LANDSCAPE:
-					rads = 0.0; return true;
-				case ORIENTATION::PORTRAIT:
-					rads = M_PI / 2; return true;
-				case ORIENTATION::LANDSCAPE_FLIPPED:
-					rads = M_PI; return true;
-				case ORIENTATION::PORTRAIT_FLIPPED:
-					rads = M_PI * 1.5; return true;
-				default:
-					rads = 0.0; return false;
-				}
-			}
-			
-			bool OrientationToDegrees(ORIENTATION orientation, double & degrees)
-			{
-				switch (orientation)
-				{
-					case ORIENTATION::LANDSCAPE:
-						degrees = 0.0; return true;
-					case ORIENTATION::PORTRAIT:
-						degrees = 90; return true;
-					case ORIENTATION::LANDSCAPE_FLIPPED:
-						degrees = 180; return true;
-					case ORIENTATION::PORTRAIT_FLIPPED:
-						degrees = 270; return true;
-					default:
-						degrees = 0.0; return false;
-				}
-			}
-
-			bool GetScreenOrientation(const std::pair<int, int> & pos, double & o)
-			{
-				HRESULT hr = E_FAIL;
-
-				HMONITOR hMonitor = MonitorFromPoint({ pos.first, pos.second }, MONITOR_DEFAULTTONEAREST);
-				if (hMonitor != NULL)
-				{
-					DISPLAYCONFIG_PATH_INFO PathInfo = {};
-
-					hr = GetPathInfo(hMonitor, &PathInfo);
-					if (SUCCEEDED(hr))
-					{
-						ORIENTATION orientation = GetOrientationFromPathInfo(&PathInfo);
-						double rotation;
-						if (OrientationToDegrees(orientation, rotation))
-						{
-							o = rotation;
-							return true;
-						}
-					}
-
-				}
-				// error somewhere.
-				o = 0.0;
-				return false;
-			}
-		};
-	};
 #endif

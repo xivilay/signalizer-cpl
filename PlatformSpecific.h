@@ -29,8 +29,8 @@
 *************************************************************************************/
 
 #ifndef CPL_PLATFORMDEPENDENT_H
-
 	#define CPL_PLATFORMDEPENDENT_H
+
 	#include "MacroConstants.h"
 
 	#ifdef CPL_WINDOWS
