@@ -61,6 +61,7 @@ namespace cpl
 		setIsKnob(true);
 		enableTooltip(true);
 		setVisible(true);
+		setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
 		setPopupMenuEnabled(true);
 
 	}

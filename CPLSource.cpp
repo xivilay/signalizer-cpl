@@ -57,6 +57,7 @@
 	#include "gui/CPresetWidget.cpp"
 	#include "gui/CInputControl.cpp"
 	#include "gui/CDSPWindowWidget.cpp"
+	#include "gui/CPowerSlopeWidget.cpp"
 	// rendering
 	#include "rendering/CSubpixelSoftwareGraphics.cpp"
 	#include "rendering/CDisplaySetup.cpp"

@@ -37,5 +37,7 @@
 	#include "CTransformWidget.h"
 	#include "CInputControl.h"
 	#include "CPresetWidget.h"
+	#include "CDSPWindowWidget.h"
+	#include "CPowerSlopeWidget.h"
 
 #endif

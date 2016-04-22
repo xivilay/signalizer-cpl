@@ -33,6 +33,7 @@
 	#define CPL_MISC_H
 
 	#include <string>
+	#include "Common.h"
 	#include "MacroConstants.h"
 	#include <sstream>
 	#include "PlatformSpecific.h"

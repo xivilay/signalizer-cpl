@@ -34,11 +34,6 @@
 
 	namespace cpl
 	{
-		/*********************************************************************************************
-
-			CValueControl - an extended knob that shows a list of values instead.
-
-		*********************************************************************************************/
 		class CTransformWidget
 		: 
 			public CBaseControl,

@@ -100,7 +100,7 @@
 				}
 
 				/// <summary>
-				/// Resonates the system (processing the data). Safe and wait-free from any thread.
+				/// Resonates the system (processing the data). Safe from any thread.
 				/// Treats input data is real.
 				/// </summary>
 				template<typename V, class MultiVector>
@@ -149,7 +149,7 @@
 
 
 				/// <summary>
-				/// Resonates the system (processing the data). Safe and wait-free from any thread.
+				/// Resonates the system (processing the data). Safe from any thread.
 				/// </summary>
 				/// <param name="data">
 				/// A multidimensioal array of following (supported) dimensions: [2][numSamples]

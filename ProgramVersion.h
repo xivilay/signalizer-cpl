@@ -30,6 +30,10 @@
 #ifndef CPL_PROGRAMVERSION_H
 	#define CPL_PROGRAMVERSION_H
 
+#ifdef CPL_BIGENDIAN
+#error Version routine does not yet support big-endianness
+#endif
+
 	#include <cstdint>
 	#include <cstdio>
 	#include <string>
@@ -88,12 +92,22 @@
 
 			bool operator < (const Version & other) const
 			{
-				return compiled < other.compiled;
+				// yes, endianness fucks us all.
+				if (parts.major < other.parts.major)
+					return true;
+
+				if (parts.minor < other.parts.minor)
+					return true;
+
+				if (parts.build < other.parts.build)
+					return true;
+
+				return false;
 			}
 
 			bool operator > (const Version & other) const
 			{
-				return other.compiled > compiled;
+				return other.operator<(*this);
 			}
 
 			std::uint64_t compiled;
