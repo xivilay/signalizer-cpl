@@ -186,6 +186,11 @@ namespace cpl
 		{ juce::TextEditor::textColourId, ColourEntry::AuxillaryText },
 		{ juce::TextEditor::highlightedTextColourId, ColourEntry::SelectedText },
 
+		{ juce::Slider::textBoxTextColourId, ColourEntry::AuxillaryText },
+		{ juce::Slider::textBoxBackgroundColourId, ColourEntry::Deactivated },
+		{ juce::Slider::textBoxHighlightColourId, ColourEntry::SelectedText },
+		{ juce::Slider::textBoxOutlineColourId, ColourEntry::Separator },
+
 		// colour selectors
 		{ ColourSelector::backgroundColourId, ColourEntry::Deactivated },
 		{ ColourSelector::labelTextColourId, ColourEntry::AuxillaryText },

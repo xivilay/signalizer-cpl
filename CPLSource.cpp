@@ -36,28 +36,12 @@
 
 #ifdef CPL_JUCE
 
-	#include "GraphicComponents.cpp"
 	#include "Resources.cpp"
-	#include "CBaseControl.cpp"
-	#include "CToolTip.cpp"
-	#include "CCtrlEditSpace.cpp"
 	#include "CSerializer.cpp"
 	//#include "fonts/tahoma.cpp"
 
 	// gui elements
-	#include "gui/DesignBase.cpp"
-	#include "gui/Controls.h"
-	#include "gui/CColourControl.cpp"
-	#include "gui/CKnobSlider.cpp"
-	#include "gui/CKnobSliderEditor.cpp"
-	#include "gui/CValueControl.cpp"
-	#include "gui/CComboBox.cpp"
-	#include "gui/CButton.cpp"
-	#include "gui/CTransformWidget.cpp"
-	#include "gui/CPresetWidget.cpp"
-	#include "gui/CInputControl.cpp"
-	#include "gui/CDSPWindowWidget.cpp"
-	#include "gui/CPowerSlopeWidget.cpp"
+	#include "gui/GUI.cpp"
 	// rendering
 	#include "rendering/CSubpixelSoftwareGraphics.cpp"
 	#include "rendering/CDisplaySetup.cpp"

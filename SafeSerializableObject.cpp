@@ -29,8 +29,7 @@
 
 #include "SafeSerializableObject.h"
 #include "Protected.h"
-#include "CViews.h"
-#include "CBaseControl.h"
+#include "gui/gui.h"
 
 namespace cpl
 {

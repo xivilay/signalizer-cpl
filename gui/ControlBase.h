@@ -24,6 +24,7 @@
 	file:ControlBase.h
  
 		Contains the necessary definitions for creating CPL widgets
+		Remove.
  
 *************************************************************************************/
 
@@ -33,7 +34,6 @@
 	#include "../Common.h"
 	#include "DesignBase.h"
 	#include "../Misc.h"
-	#include "CKnobSlider.h"
-	#include "CKnobSliderEditor.h"
+	#include "Controls/Controls.h"
 	#include "WidgetContainers.h"
 #endif

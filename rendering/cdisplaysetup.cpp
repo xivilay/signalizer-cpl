@@ -29,7 +29,7 @@
 
 #include "CDisplaySetup.h"
 #include "../MacroConstants.h"
-#include "../GUIUtils.h"
+#include "../gui/tools.h"
 
 
 #ifdef CPL_WINDOWS

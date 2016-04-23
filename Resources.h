@@ -31,6 +31,7 @@
 	#define CPL_RESOURCES_H
 
 	#include "Common.h"
+	#include <mutex>
 	#include <memory>
 
 	namespace cpl

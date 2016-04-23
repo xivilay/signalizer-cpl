@@ -31,7 +31,7 @@
 	#define CPL_OPENRENDERING_H
 
 	#include "../Common.h"
-	#include "../Graphics.h"
+	#include "Graphics.h"
 	#include <vector>
 
 	#ifndef GL_MULTISAMPLE
