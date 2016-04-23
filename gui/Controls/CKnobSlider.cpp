@@ -37,7 +37,7 @@ namespace cpl
 
 	std::unique_ptr<CCtrlEditSpace> CKnobSlider::bCreateEditSpace()
 	{
-		if (isEditSpacesAllowed)
+		if (bGetEditSpacesAllowed())
 		{
 			return std::unique_ptr<CCtrlEditSpace>(new CKnobSliderEditor(this));
 		}
@@ -55,7 +55,7 @@ namespace cpl
 	{
 		// IF you change the range, please change the scaling back to what is found in the comments.
 		setRange(0.0, 1.0);
-		isEditSpacesAllowed = true;
+		bToggleEditSpaces(true);
 		addListener(this);
 		setTextBoxStyle(NoTextBox, 0, 0, 0);
 		setIsKnob(true);
@@ -63,7 +63,7 @@ namespace cpl
 		setVisible(true);
 		setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
 		setPopupMenuEnabled(true);
-
+		bSetIsDefaultResettable(true);
 	}
 
 
@@ -300,7 +300,8 @@ namespace cpl
 		// (getValue() - getMinimum()) / (getMaximum() - getMinimum())
 		return static_cast<iCtrlPrec_t>(getValue());
 	}
-	void CKnobSlider::serialize(CSerializer::Archiver & ar, Version version)
+
+	void CKnobSlider::onControlSerialization(CSerializer::Archiver & ar, Version version)
 	{
 		ar << bGetValue();
 		ar << isKnob;
@@ -308,7 +309,7 @@ namespace cpl
 		ar << getMouseDragSensitivity();
 		ar << getSliderStyle();
 	}
-	void CKnobSlider::deserialize(CSerializer::Builder & ar, Version version)
+	void CKnobSlider::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
 		iCtrlPrec_t value(0);
 		bool vel(false);

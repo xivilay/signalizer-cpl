@@ -64,10 +64,11 @@
 			virtual bool stringToValue(const CBaseControl * ctrl, const std::string & buffer, iCtrlPrec_t & value) override;
 			virtual bool valueToString(const CBaseControl * ctrl, std::string & buffer, iCtrlPrec_t value) override;
 
-			virtual void serialize(CSerializer::Archiver & ar, Version version) override;
-			virtual void deserialize(CSerializer::Builder & ar, Version version) override;
 
 		protected:
+
+			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
+			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
 			void initUI();
 

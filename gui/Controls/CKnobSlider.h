@@ -74,9 +74,6 @@
 			virtual void onValueChange() override;
 			virtual void paint(juce::Graphics& g) override;
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
-			virtual void serialize(CSerializer::Archiver & ar, Version version) override;
-			virtual void deserialize(CSerializer::Builder & ar, Version version) override;
-
 
 			// new functions
 			virtual void setCtrlType(ControlType newType);
@@ -84,7 +81,12 @@
 			virtual bool getIsKnob() const;
 			virtual juce::Rectangle<int> getTextRect() const;
 			virtual juce::Rectangle<int> getTitleRect() const;
+
 		protected:
+
+			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
+			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
+
 			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 

@@ -49,24 +49,27 @@
 
 	namespace cpl
 	{
-		// the internal precision of all controls
+		/// <summary>
+		/// the internal value type of all controls
+		/// </summary>
 		typedef double iCtrlPrec_t;
 
-		/*
-			The base class of all controls represented through
-			a graphical interface.
-		*/
 		class CBaseControl;
 		class CSerializer;
 		class CCtrlEditSpace;
 		class CBaseControl;
+		class ResetListener;
 
-		/*********************************************************************************************
+		class DelegatedInternalDelete
+		{
+		public:
+			void operator()(ResetListener *) const noexcept;
+		};
 
-			The base class of all controls supported in this SDK that are represented through a 
-			graphic interface.
-
-		*********************************************************************************************/
+		/// <summary>
+		/// The base class of all controls supported in this SDK that are represented through a 
+		///	graphic interface.
+		/// </summary>
 		class CBaseControl 
 		: 
 			public CMutex::Lockable,
@@ -80,28 +83,28 @@
 		{
 		public:
 
-			/*********************************************************************************************
 
-				A CBaseControl can call a listener back on events.
-				A listener can override the controls own event handler by returning true from valueChanged
-				A return value of false will cause the next handler in the chain to handle the event.
-				Otherwise, the event is considered handled, and no other handlers will be called.
 
-				There will be a default handler. The handlers are called from newest added to the first.
+			friend class CCtrlEditSpace;
 
-			*********************************************************************************************/
+			/// <summary>
+			/// A CBaseControl can call a listener back on events.
+			/// A listener can override the controls own event handler by returning true from valueChanged.
+			/// A return value of false will cause the next handler in the chain to handle the event.
+			/// Otherwise, the event is considered handled, and no other handlers will be called.
+			/// There will be a default handler. The handlers are called from newest added to the first.
+			/// </summary>
 			class Listener : virtual public Utility::DestructionServer<CBaseControl>::Client
 			{
 			public:
 				virtual bool valueChanged(CBaseControl *) = 0;
 				virtual ~Listener() {};
 			};
-			/*********************************************************************************************
 
-				The same as a Listener, however it is NOT able to change the control's status, and
-				it will be called AFTER the listener change.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// The same as a Listener, however it is NOT able to change the control's status, and
+			/// it will be called AFTER the listener change.
+			/// </summary>
 			class PassiveListener : virtual public Utility::DestructionServer<CBaseControl>::Client
 			{
 			public:
@@ -109,19 +112,16 @@
 				virtual ~PassiveListener() {};
 			};
 
-			/*********************************************************************************************
-
-				Most controls have an associated string-field that maps the internal value to a
-				meaningful human-readable string. A control having the range 0-1 can represent -100 to 0 dB,
-				for example. This can be manually set using bSetText(). Note that the control may
-				independently change this (even inbetween paints).
-				A return value of false will cause the next handler in the chain to handle the event.
-				Otherwise, the event is considered handled, and no other handlers will be called.
-				Add a valueformatter to this class (CBaseControl) to handle mapping of values to strings.
-
-				There will be a default handler. The handlers are called from newest added to the first.
-
-			*********************************************************************************************/
+			///	<summary>
+			///	Most controls have an associated string-field that maps the internal value to a
+			///	meaningful human-readable string. A control having the range 0-1 can represent -100 to 0 dB,
+			///	for example. This can be manually set using bSetText(). Note that the control may
+			///	independently change this (even inbetween paints).
+			///	A return value of false will cause the next handler in the chain to handle the event.
+			///	Otherwise, the event is considered handled, and no other handlers will be called.
+			///	Add a valueformatter to this class (CBaseControl) to handle mapping of values to strings.
+			///	There will be a default handler. The handlers are called from newest added to the first.
+			///	</summary>
 			class ValueFormatter : virtual public Utility::DestructionServer<CBaseControl>::Client
 			{
 			public:
@@ -130,178 +130,99 @@
 				virtual ~ValueFormatter() {};
 			};
 
-		protected:
-			/*
-				All controls have a unique associated tag.
-			*/
-			long tag;
-			/*
-				Whether the control is attached to anything
-			*/
-			bool isAttached, tipsEnabled;
-			/*
-				The implementation specific context of controls
-			*/
-			GraphicComponent * base;
-			/*
-				The callback listeners
-			*/
-			std::vector<Listener *> listeners;
-			/*
-				The passive callback listeners
-			*/
-			std::vector<PassiveListener *> passiveListeners;
-			/*
-				The value formatters
-			*/
-			std::vector<ValueFormatter *> formatters;
-			/*
-				The description of this control to show in a tooltip
-			*/
-			std::string tooltip;
-			/*
-				Whether this control allows to spawn edit spaces
-			*/
-			bool isEditSpacesAllowed;
-		public:
-			/*********************************************************************************************
-
-				Returns whether the control is attached to anything - deprecated
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Returns whether the control is attached to anything - deprecated
+			/// </summary>
 			bool bIsAttached() const
 			{ 
 				return isAttached; 
 			}
-			/*********************************************************************************************
 
-				Constructor
-
-			*********************************************************************************************/
 			CBaseControl(GraphicComponent * b) 
 				: tag(0), isAttached(false), base(b), isEditSpacesAllowed(false), tipsEnabled(false)
 
 			{
 			
 			}
-			/*********************************************************************************************
-
-				Constructor
-
-			*********************************************************************************************/
 			CBaseControl(GraphicComponent * b,  int tag, bool bIsAttached = false) 
 				: tag(tag), isAttached(bIsAttached), tipsEnabled(true), base(b), isEditSpacesAllowed(false)
 			{
 			
 			}
-			/*********************************************************************************************
 
-				Virtual destructor, of course
-
-			*********************************************************************************************/
-			virtual ~CBaseControl()
-			{
-			}
-			/*********************************************************************************************
-			 
-				Tooltip interface
-			 
-			 *********************************************************************************************/
+			virtual ~CBaseControl();
+			/// <summary>
+			/// Returns the tooltop for this control (if they are set to be enabled)
+			/// </summary>
 			juce::String bGetToolTip() const override
 			{
 				return tipsEnabled ? (tooltip.size() ? tooltip : bGetTitle()) : "";
 			}
-			/*********************************************************************************************
-
-				Sets the displayed tooltip. Remember to call enableTooltip(true) if you want to use this.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the displayed tooltip. Remember to call enableTooltip(true) if you want to use this.
+			/// </summary>
 			void bSetDescription(const std::string & tip)
 			{
 				tooltip = tip;
 			}
+
 			void enableTooltip(bool toggle = true)
 			{
 				tipsEnabled = toggle;
 			}
-			/*********************************************************************************************
-
-				Creates an edit space linked to this control. If toggleEditSpace() is set to false,
-				it may return a nullptr instead.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Creates an edit space linked to this control. If toggleEditSpace() is set to false,
+			/// it may return a nullptr instead.
+			/// </summary>
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace();
-			/*********************************************************************************************
 
-				Creates an edit space linked to this control. If toggleEditSpace() is set to false,
-				it may return a nullptr instead.
-
-			*********************************************************************************************/
 			virtual void bToggleEditSpaces(bool toggle)
 			{
 				isEditSpacesAllowed = toggle;
 			}
-			/*********************************************************************************************
 
-				Whether edit spaces are allowed.
-
-			*********************************************************************************************/
-			bool bGetEditSpaceSettings() const noexcept
+			bool bGetEditSpacesAllowed() const noexcept
 			{
 				return isEditSpacesAllowed;
 			}
-			/*********************************************************************************************
 
-				Set visibility of control
-
-			*********************************************************************************************/
 			void bSetVisible(bool bVisibility)
 			{
 				if(base)
 					base->setVisible(bVisibility);
 			}
-			/*********************************************************************************************
-
-				Attach to a parent 
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Attach to a parent. DEPRECATED.
+			/// </summary>
 			virtual void addToParent(GraphicComponent * parent)
 			{
 				parent->addChildComponent(base);
 			}
-			/*********************************************************************************************
-
-				Remove from a parent
-
-			*********************************************************************************************/
+			/// <summary>
+			/// DEPRECATED.
+			/// </summary>
 			virtual void removeFromParent(GraphicComponent * parent)
 			{
 				parent->removeChildComponent(base);
 			}
-			/*********************************************************************************************
-
-				Gets the internal value of the control.
-				Ranges from 0.0 to 1.0
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Gets the internal value of the control.
+			///	Ranges from 0.0 to 1.0
+			/// </summary>
 			virtual iCtrlPrec_t bGetValue() const 
 			{ 
 				return iCtrlPrec_t(0.0);
 			}
-			/*********************************************************************************************
-
-				Gets the internal value as a boolean toggle.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Gets the internal value as a boolean toggle.
+			/// </summary>
 			bool bGetBoolState() const
 			{ 
 				return bGetValue () > 0.5;
 			}
-			/*********************************************************************************************
-
-				Formats the value val, and returns true if a conversion was succesful.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Formats the value val, and returns true if a conversion was succesful.
+			/// </summary>
 			virtual bool bFormatValue(std::string & valueString, iCtrlPrec_t val) const
 			{ 
 				for (auto rit = formatters.rbegin(); rit != formatters.rend(); ++rit)
@@ -316,23 +237,28 @@
 
 				return false;
 			}
-			/*********************************************************************************************
-
-				Sets the value of the control.
-				Input must be between 0.0f and 1.0f, inclusive
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the value of the control.
+			/// Input must be between 0.0 and 1.0, inclusive
+			/// </summary>
+			/// <param name="synchronizedEvent">
+			/// If set, the event will be handled immediately
+			/// </param>
 			virtual void bSetValue(iCtrlPrec_t val, bool synchronizedEvent = false)
 			{
 
 			}
-			/*********************************************************************************************
-
-				Sets the value of the control, interpretting the string using a formatter,
-				and setting the value to the control using bSetValue.
-				Returns true if the value was succesfully interpreted and set.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the value of the control, interpretting the string using a formatter,
+			/// and setting the value to the control using bSetValue.
+			/// Returns true if the value was succesfully interpreted and set.
+			/// </summary>
+			/// <param name="setInternal">
+			/// Whether this command should propagate an event
+			/// </param>
+			/// <param name="synchronizedEvent">
+			/// Whether the propagated event is synchronized
+			/// </param>
 			virtual bool bInterpretAndSet(const std::string & valueString, bool setInternal = false, bool synchronizedEvent = false)
 			{
 				iCtrlPrec_t val(0);
@@ -346,11 +272,9 @@
 				}
 				return false;
 			}
-			/*********************************************************************************************
-
-				Maps the string to a 0-1 range, if it was succesfully interpreted.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Maps the string to a 0-1 range, if it was succesfully interpreted.
+			/// </summary>
 			virtual bool bInterpret(const std::string & valueString, iCtrlPrec_t & val) const
 			{
 				for (auto rit = formatters.rbegin(); rit != formatters.rend(); ++rit)
@@ -366,89 +290,73 @@
 				else
 					return false;
 			}
-			/*********************************************************************************************
-
-				Sets the internal value of the control.
-				Input must be between 0.0f and 1.0f, inclusive.
-				Guaranteed to have no sideeffects (ie. doesn't call listeners)
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the internal value of the control.
+			/// Input must be between 0.0f and 1.0f, inclusive.
+			/// Guaranteed to have no sideeffects (ie.doesn't call listeners) or event propagation
+			/// </summary>
 			virtual void bSetInternal(iCtrlPrec_t val)
 			{
 			
 			}
-			/*********************************************************************************************
-
-				Sets the title of a control.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the display title of the control
+			/// </summary>
 			virtual void bSetTitle(const std::string & text)
 			{
 			
 			}
-			/*********************************************************************************************
-
-				Gets the title of a control
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Gets the display title of the control
+			/// </summary>
+			/// <returns></returns>
 			virtual std::string bGetTitle() const
 			{ 
 				return ""; 
 			}
-			/*********************************************************************************************
-
-				Sets the text of the control
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the text value of the control. This may not be visible and/or included in the control.
+			/// You probably want the formatter interface.
+			/// </summary>
 			virtual void bSetText(const std::string & text) 
 			{
 			
 			}
-			/*********************************************************************************************
-
-				Returns the text of a control
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Returns the text value of the control.
+			/// </summary>
 			virtual std::string bGetText() const
 			{ 
 				return ""; 
 			}
-			/*********************************************************************************************
-
-				Returns the associated tag with this control
-
-			*********************************************************************************************/
+			/// <summary>
+			/// DEPRECATED.
+			/// </summary>
 			virtual long bGetTag() const
 			{ 
 				return tag; 
 			}
-			/*********************************************************************************************
-
-				Sets the tag of this control
-
-			*********************************************************************************************/
+			/// <summary>
+			/// DEPRECATED.
+			/// </summary>
 			virtual void bSetTag(long newTag) 
 			{
 				tag = newTag;
 			}
-			/*********************************************************************************************
-
-				Returns the size of this control.
-				X and Y are relative to the parent coordinates.
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Returns the size of this control.
+			/// X and Y are relative to the parent coordinates.
+			/// </summary>
 			virtual CRect bGetSize() const
 			{
 				if (base)
 					return base->getBounds();
 				return CRect();
 			}
-			/*********************************************************************************************
-
-				Returns the size of this control.
-				X and Y are absolute coordinates (that is, relative to the top-level window).
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Returns the size of this control.
+			///	X and Y are absolute coordinates(that is, relative to the top - level window).
+			/// </summary>
 			virtual CRect bGetAbsSize() const
 			{
 				if (base)
@@ -470,61 +378,66 @@
 				}
 				return CRect();
 			}
-			/*********************************************************************************************
-
-				Sets the x, y position of this control
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Sets the x, y position of this control
+			/// </summary>
 			virtual void bSetPos(int x, int y)
 			{
 				if (base)
 					base->setBounds(x, y, base->getWidth(), base->getHeight());
 			}
-			/*********************************************************************************************
-
-				Sets the size of this control
-
-			*********************************************************************************************/
+			
 			virtual void bSetSize(const CRect & size)
 			{
 				if (base)
 					base->setBounds(size);
-				// set pos?
 			}
-			/*********************************************************************************************
-
-				Called before any repainting is done.
-				If a control wishes to repaint itself, it should call the relevant repaint command
-				(usually base->repaint())
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Issues a command to repaint the control
+			/// </summary>
 			virtual void bRedraw() 
 			{ 
 			
 			}
-			/*********************************************************************************************
-			 
-				Get the view / component associated with this control
-			 
-			 *********************************************************************************************/
+			/// <summary>
+			/// Get the view / component associated with this control
+			/// </summary>
 			GraphicComponent * bGetView() const
 			{
 				return base;
 			}
-			/*********************************************************************************************
 
-				Internal use
+			void bSetIsDefaultResettable(bool shouldBePossible);
 
-			*********************************************************************************************/
+			bool bIsDefaultResettable()
+			{
+				return serializedState.get() != nullptr;
+			}
+
+			bool bResetToDefaultState()
+			{
+				if (bIsDefaultResettable() && !serializedState->isEmpty() && queryResetOk())
+				{
+					onControlDeserialization(*serializedState.get(), serializedState->getMasterVersion());
+					serializedState->rewindReader();
+					return true;
+				}
+
+				return false;
+			}
+
+
+
+			/// <summary>
+			/// DEPRECATED.
+			/// </summary>
 			void setDirty()
 			{
 				bRedraw();
 			}
-			/*********************************************************************************************
-
-				Adds a listener (if not present) to be called back on value changes
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Adds a listener (if not present) to be called back on value changes
+			/// </summary>
 			void bAddChangeListener(Listener * listener)
 			{
 				if (listener && !contains(listeners, listener))
@@ -533,11 +446,9 @@
 					addClientDestructor(listener);
 				}
 			}
-			/*********************************************************************************************
-
-				Removes a change-listener (if present)
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Removes a change-listener (if present)
+			/// </summary>
 			void bRemoveChangeListener(Listener * listener)
 			{
 				auto it = std::find(listeners.begin(), listeners.end(), listener);
@@ -547,11 +458,9 @@
 				}
 			}
 
-			/*********************************************************************************************
-
-			Adds a passive listener (if not present) to be called back on value changes
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Adds a passive listener (if not present) to be called back on value changes
+			/// </summary>
 			void bAddPassiveChangeListener(PassiveListener * listener)
 			{
 				if (listener && !contains(passiveListeners, listener))
@@ -560,11 +469,9 @@
 					addClientDestructor(listener);
 				}
 			}
-			/*********************************************************************************************
-
-			Removes a change-listener (if present)
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Removes a change-listener (if present)
+			/// </summary>
 			void bRemovePassiveChangeListener(PassiveListener * listener)
 			{
 				auto it = std::find(passiveListeners.begin(), passiveListeners.end(), listener);
@@ -574,11 +481,9 @@
 				}
 			}
 
-			/*********************************************************************************************
-
-				Adds a formatter (if not present)
-				
-			*********************************************************************************************/
+			/// <summary>
+			/// Adds a formatter (if not present)
+			/// </summary>
 			void bAddFormatter(ValueFormatter * formatter)
 			{
 				if (!contains(formatters, formatter))
@@ -588,11 +493,9 @@
 					bRedraw();
 				}
 			}
-			/*********************************************************************************************
-
-				Removes a formatter (if not present)
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Removes a formatter (if not present)
+			/// </summary>
 			void bRemoveFormatter(ValueFormatter * formatter)
 			{
 				auto it = std::find(formatters.begin(), formatters.end(), formatter);
@@ -601,42 +504,76 @@
 					formatters.erase(it);
 				}
 			}
-			/*********************************************************************************************
-
-				Force a valueChanged event, and a callback
-
-			*********************************************************************************************/
+			/// <summary>
+			/// Issues a valueChanged event
+			/// </summary>
 			virtual void bForceEvent()
 			{
 				postEvent();
 			}
-			/*********************************************************************************************
 
-				The control's internal event callback. This is called whenever the controls value is changed.
-
-			*********************************************************************************************/
-			virtual void onValueChange() 
+			/// <summary>
+			/// public serialization of the control
+			/// </summary>
+			virtual void serialize(CSerializer::Archiver & ar, Version version) override final
 			{
+				onControlSerialization(ar, version);
+			}
+			/// <summary>
+			/// public deserialization of the control
+			/// </summary>
+			virtual void deserialize(CSerializer::Builder & ar, Version version) override final
+			{
+				onControlDeserialization(ar, version);
 
+				if (bIsDefaultResettable())
+				{
+					onControlSerialization(*serializedState.get(), cpl::programInfo.version);
+				}
 			}
 
-			/*********************************************************************************************
+			virtual bool bStringToValue(const std::string & stringInput, iCtrlPrec_t & val) const
+			{
+				return bMapStringToInternal(stringInput, val);
+			}
 
-				Serialization
+			virtual bool bValueToString(std::string & stringBuf, iCtrlPrec_t  val) const
+			{
+				return bMapIntValueToString(stringBuf, val);
+			}
 
-			*********************************************************************************************/
-			virtual void serialize(CSerializer::Archiver & ar, Version version) override
+
+		protected:
+
+			/// <summary>
+			/// This function is called just before resetting this control.
+			/// The reset is only done if this function returns true.
+			/// You can additionally use as a logic point for doing stuff before a reset.
+			/// </summary>
+			virtual bool queryResetOk() { return true; }
+
+			/// <summary>
+			/// The control's internal event callback. This is called whenever the controls value is changed.
+			/// </summary>
+			virtual void onValueChange() {}
+
+			/// <summary>
+			/// Internal serialization. If you override this, do not call the base.
+			/// </summary>
+			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) 
 			{
 				ar << bGetValue();
 			}
-			virtual void deserialize(CSerializer::Builder & ar, Version version) override
+			/// <summary>
+			/// Internal serialization. If you override this, do not call the base.
+			/// </summary>
+			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) 
 			{
 				iCtrlPrec_t value(0);
 
 				ar >> value;
 				bSetValue(value, true);
 			}
-
 
 			static bool bMapStringToInternal(const std::string & stringInput, iCtrlPrec_t & val)
 			{
@@ -665,67 +602,77 @@
 				return true;
 			}
 
-			protected:
-				/*
-					some layers of indirection is needed here, since juce doesn't
-					share the same class for listeners.
-					the base object works as a proxy that turns all the events
-					into cbasecontrol listener callbacks.
-				*/
 
-				virtual void buttonClicked(juce::Button * c)
-				{
-					postEvent();
-				}
-				virtual void sliderValueChanged(juce::Slider * c)
-				{
-					postEvent();
-				}
-				virtual void scrollBarMoved(juce::ScrollBar * c, double newRange)
-				{
-					postEvent();
-				}
-				virtual void comboBoxChanged(juce::ComboBox * c)
-				{
-					postEvent();
-				}
+			// some layers of indirection is needed here, since juce doesn't
+			// share the same class for listeners.
+			// the base object works as a proxy that turns all the events
+			// into cbasecontrol listener callbacks.
 
-				/*
-					Basic formatters.
-				*/
-				virtual bool bStringToValue(const std::string & stringInput, iCtrlPrec_t & val) const
-				{
-					return bMapStringToInternal(stringInput, val);
-				}
-				virtual bool bValueToString(std::string & stringBuf, iCtrlPrec_t  val) const
-				{
-					return bMapIntValueToString(stringBuf, val);
-				}
+			virtual void buttonClicked(juce::Button * c)
+			{
+				postEvent();
+			}
+			virtual void sliderValueChanged(juce::Slider * c)
+			{
+				postEvent();
+			}
+			virtual void scrollBarMoved(juce::ScrollBar * c, double newRange)
+			{
+				postEvent();
+			}
+			virtual void comboBoxChanged(juce::ComboBox * c)
+			{
+				postEvent();
+			}
 
-			private:
+		private:
 
-				void postEvent()
-				{
-					if (!listenerChangeHandling())
-						onValueChange();
-					notifyPassiveListeners();
-				}
+			void postEvent()
+			{
+				if (!listenerChangeHandling())
+					onValueChange();
+				notifyPassiveListeners();
+			}
 
-				void notifyPassiveListeners()
-				{
-					for (auto const & listener : passiveListeners)
-						listener->valueChanged(this);
-				}
+			void notifyPassiveListeners()
+			{
+				for (auto const & listener : passiveListeners)
+					listener->valueChanged(this);
+			}
 
-				bool listenerChangeHandling()
+			bool listenerChangeHandling()
+			{
+				for (auto rit = listeners.rbegin(); rit != listeners.rend(); ++rit)
 				{
-					for (auto rit = listeners.rbegin(); rit != listeners.rend(); ++rit)
-					{
-						if ((*rit)->valueChanged(this))
-							return true;
-					}
-					return false;
+					if ((*rit)->valueChanged(this))
+						return true;
 				}
+				return false;
+			}
+
+			/// <summary>
+			/// All controls have a unique associated tag.
+			/// </summary>
+			long tag;
+
+			/// <summary>
+			/// Whether the control is attached to anything
+			/// DEPRECATED.
+			/// </summary>
+			bool isAttached;
+			bool tipsEnabled;
+			bool isEditSpacesAllowed;
+
+			/// <summary>
+			/// The implementation specific context of controls
+			/// </summary>
+			GraphicComponent * base;
+			std::vector<Listener *> listeners;
+			std::vector<PassiveListener *> passiveListeners;
+			std::vector<ValueFormatter *> formatters;
+			std::string tooltip;
+			std::unique_ptr<cpl::CSerializer> serializedState;
+			std::unique_ptr<ResetListener, DelegatedInternalDelete> mouseResetter;
 		};
 
 		typedef CBaseControl::Listener CCtrlListener;

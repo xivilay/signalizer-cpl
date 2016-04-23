@@ -31,18 +31,14 @@
 
 namespace cpl
 {
-	/*********************************************************************************************
 
-		CComboBox - constructor
-
-	*********************************************************************************************/
 	CInputControl::CInputControl(const std::string & name)
 		: CBaseControl(this), title(name)
 	{
-		isEditSpacesAllowed = false;
+		bToggleEditSpaces(false);
 		initialize();
 	}
-	/*********************************************************************************************/
+
 	void CInputControl::initialize()
 	{
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);
@@ -62,7 +58,6 @@ namespace cpl
 		}
 	}
 
-	/*********************************************************************************************/
 	void CInputControl::resized()
 	{
 		stringBounds = CRect(5, 0, getWidth(), std::min(20, getHeight() / 2));
@@ -78,7 +73,7 @@ namespace cpl
 	{
 		return title.toStdString();
 	}
-	/*********************************************************************************************/
+
 	void CInputControl::paint(juce::Graphics & g)
 	{
 		//g.setFont(systemFont.withHeight(TextSize::normalText)); EDIT_TYPE_NEWFONTS
@@ -89,6 +84,7 @@ namespace cpl
 		g.fillRect(box.getBounds());
 
 	}
+
 	CInputControl::~CInputControl()
 	{
 		notifyDestruction();
@@ -112,6 +108,7 @@ namespace cpl
 		getAnimator().animateComponent(&errorVisualizer, errorVisualizer.getBounds(), 0.f, 300, false, 1.0, 1.0);
 
 	}
+
 	void CInputControl::indicateError()
 	{
 		if (getAnimator().isAnimating(&errorVisualizer))
@@ -129,7 +126,7 @@ namespace cpl
 
 		getAnimator().animateComponent(&errorVisualizer, errorVisualizer.getBounds(), 0.f, 300, false, 1.0, 1.0);
 	}
-	/*********************************************************************************************/
+
 	void CInputControl::setInputValue(const std::string & inputValue, bool sync)
 	{
 		box.setText(inputValue, sync ? juce::NotificationType::sendNotificationSync : juce::sendNotificationAsync);

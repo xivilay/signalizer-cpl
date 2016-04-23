@@ -77,9 +77,6 @@
 
 					return dsp::windowScale(ltype, w, N, lsym, lalpha, lbeta);
 				}
-
-			virtual void serialize(CSerializer::Archiver & ar, Version version) override;
-			virtual void deserialize(CSerializer::Builder & ar, Version version) override;
 			
 			struct Params
 			{
@@ -94,6 +91,9 @@
 			CComboBox & getWindowList() noexcept { return kwindowList; }
 
 		protected:
+
+			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
+			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
 			class WindowAnalyzer : public juce::Component
 			{

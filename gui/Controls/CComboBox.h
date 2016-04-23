@@ -98,7 +98,7 @@
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 			virtual void resized() override;
 			virtual void onValueChange() override;
-
+			virtual bool queryResetOk() override;
 		private:
 			void initialize();
 

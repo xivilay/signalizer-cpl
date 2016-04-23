@@ -28,44 +28,31 @@
 *************************************************************************************/
 
 #include "CComboBox.h"
-#include "../Mathext.h"
+#include "../../Mathext.h"
 
 namespace cpl
 {
-	/*********************************************************************************************
-
-		CComboBox - constructor
-
-	*********************************************************************************************/
 	CComboBox::CComboBox(const std::string & name, const std::string & inputValues)
 		: CBaseControl(this), title(name), internalValue(0.0), recursionFlag(false)
 	{
-		isEditSpacesAllowed = true;
+		bToggleEditSpaces(true);
 		setValues(inputValues);
 		initialize();
 	}
-	/*********************************************************************************************
-	
-		CComboBox - constructor
 
-	*********************************************************************************************/
 	CComboBox::CComboBox(const std::string & name, const std::vector<std::string> & inputValues)
 		: CBaseControl(this), title(name), values(inputValues), internalValue(0.0), recursionFlag(false)
 	{
 		initialize();
 	}
 
-	/*********************************************************************************************
 
-		CComboBox - constructor
-
-	*********************************************************************************************/
 	CComboBox::CComboBox()
 		: CBaseControl(this), internalValue(0.0), recursionFlag(false)
 	{
 		initialize();
 	}
-	/*********************************************************************************************/
+
 	void CComboBox::initialize()
 	{
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);
@@ -74,8 +61,14 @@ namespace cpl
 		box.addListener(this);
 		box.setRepaintsOnMouseActivity(true);
 		//box.setSelectedId(1, dontSendNotification);
+		bSetIsDefaultResettable(true);
 	}
-	/*********************************************************************************************/
+
+	bool CComboBox::queryResetOk()
+	{
+		return !box.isPopupActive();
+	}
+
 	void CComboBox::resized()
 	{
 		stringBounds = CRect(5, 0, getWidth(), std::min(20, getHeight() / 2));
@@ -90,7 +83,8 @@ namespace cpl
 	{
 		return title.toStdString();
 	}
-	/*********************************************************************************************/
+
+
 	void CComboBox::paint(juce::Graphics & g)
 	{
 		//g.setFont(systemFont.withHeight(TextSize::normalText)); EDIT_TYPE_NEWFONTS
@@ -98,7 +92,8 @@ namespace cpl
 		g.setColour(cpl::GetColour(cpl::ColourEntry::ControlText));
 		g.drawFittedText(title, stringBounds, juce::Justification::centredLeft, 1, 1);
 	}
-	/*********************************************************************************************/
+
+
 	void CComboBox::setValues(const std::string & inputValues)
 	{
 		values.clear();

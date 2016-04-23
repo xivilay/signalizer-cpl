@@ -224,7 +224,7 @@ namespace cpl
 
 	std::unique_ptr<CCtrlEditSpace> CColourControl::bCreateEditSpace()
 	{
-		if (isEditSpacesAllowed)
+		if (bGetEditSpacesAllowed())
 			return std::unique_ptr<CCtrlEditSpace>(new ColourEditor(this));
 		else
 			return nullptr;
@@ -284,22 +284,22 @@ namespace cpl
 	CColourControl::CColourControl(const std::string & name, ColourType typeToUse)
 		: CKnobSlider(name), colourType(typeToUse), colour(0xFF, 0, 0, 0), channel(Channels::Red)
 	{
-		isEditSpacesAllowed = true;
+		bToggleEditSpaces(true);
 		onValueChange();
 	}
 	/*********************************************************************************************/
 
-	void CColourControl::serialize(CSerializer::Archiver & ar, Version version)
+	void CColourControl::onControlSerialization(CSerializer::Archiver & ar, Version version)
 	{
-		CKnobSlider::serialize(ar, version);
+		CKnobSlider::onControlSerialization(ar, version);
 		
 		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
 		ar << a; ar << r; ar << g; ar << b;
 		ar << getType();
 	}
-	void CColourControl::deserialize(CSerializer::Builder & ar, Version version)
+	void CColourControl::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
-		CKnobSlider::deserialize(ar, version);
+		CKnobSlider::onControlDeserialization(ar, version);
 		decltype(getType()) newType;
 		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
 		ar >> a; ar >> r; ar >> g; ar >> b;

@@ -67,6 +67,9 @@
 			
 		protected:
 			
+			void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
+			void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
+
 			GraphicsND::Transform3D<float> transform;
 			juce::TextEditor labels[3][3];
 			juce::MouseCursor horizontalDragCursor;

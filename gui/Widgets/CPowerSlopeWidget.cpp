@@ -55,6 +55,7 @@ namespace cpl
 		enableTooltip(true);
 		addAndMakeVisible(layout);
 		initUI();
+		bSetIsDefaultResettable(true);
 	}
 
 	CPowerSlopeWidget::PowerFunction CPowerSlopeWidget::derive()
@@ -152,14 +153,14 @@ namespace cpl
 
 	}
 
-	void CPowerSlopeWidget::serialize(CSerializer::Archiver & ar, Version version)
+	void CPowerSlopeWidget::onControlSerialization(CSerializer::Archiver & ar, Version version)
 	{
 		ar << kbase;
 		ar << kslope;
 		ar << kpivot;
 	}
 
-	void CPowerSlopeWidget::deserialize(CSerializer::Builder & ar, Version version)
+	void CPowerSlopeWidget::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
 		ar >> kbase;
 		ar >> kslope;

@@ -594,10 +594,15 @@
 			void rewindReader()
 			{
 				data.rewindRead();
+				for (auto & s : content)
+					s.second.rewindReader();
+
 			}
 			void rewindWriter()
 			{
 				data.rewindWrite();
+				for (auto & s : content)
+					s.second.rewindWriter();
 			}
 			
 			/// <summary>

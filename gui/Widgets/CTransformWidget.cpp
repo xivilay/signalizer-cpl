@@ -65,7 +65,18 @@ namespace cpl
 		}
 		syncEditor();
 		setSize((elementWidth + 15) * 3 , elementHeight * 6);
+		bSetIsDefaultResettable(true);
+	}
 
+	void CTransformWidget::onControlSerialization(CSerializer::Archiver & ar, Version version)
+	{
+		ar << transform;
+	}
+
+	void CTransformWidget::onControlDeserialization(CSerializer::Builder & ar, Version version)
+	{
+		ar >> transform;
+		syncEditor();
 	}
 
 	void CTransformWidget::syncEditor()

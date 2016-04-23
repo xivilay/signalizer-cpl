@@ -166,6 +166,7 @@ namespace cpl
 		p.wBeta.store(0.0, std::memory_order_relaxed);
 		initControls();
 		enableTooltip();
+		bSetIsDefaultResettable(true);
 	}
 
 	const CDSPWindowWidget::Params & CDSPWindowWidget::getParams() const noexcept
@@ -173,7 +174,7 @@ namespace cpl
 		return p;
 	}
 
-	void CDSPWindowWidget::serialize(CSerializer::Archiver & ar, Version version)
+	void CDSPWindowWidget::onControlSerialization(CSerializer::Archiver & ar, Version version)
 	{
 		ar << kalpha;
 		ar << kbeta;
@@ -181,7 +182,7 @@ namespace cpl
 		ar << ksymmetryList;
 	}
 
-	void CDSPWindowWidget::deserialize(CSerializer::Builder & ar, Version version)
+	void CDSPWindowWidget::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
 		ar >> kalpha;
 		ar >> kbeta;
