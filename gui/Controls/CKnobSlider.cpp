@@ -29,7 +29,7 @@
 
 #include "CKnobSlider.h"
 #include "CKnobSliderEditor.h"
-#include "../simd/simd_consts.h"
+#include "../../simd/simd_consts.h"
 
 
 namespace cpl

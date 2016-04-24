@@ -30,7 +30,6 @@
 #ifndef _CKNOBSLIDEREDITOR_H
 	#define _CKNOBSLIDEREDITOR_H
 
-	#include "../Common.h"
 	#include "../CBaseControl.h"
 
 	namespace cpl

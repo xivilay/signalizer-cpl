@@ -35,6 +35,6 @@
 	#include "../../Misc.h"
 	#include "../Controls/Controls.h"
 	#include "../WidgetContainers.h"
-	#include "../LexicalConversion.h"
+	#include "../../LexicalConversion.h"
 
 #endif

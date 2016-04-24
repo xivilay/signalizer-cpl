@@ -28,8 +28,8 @@
 *************************************************************************************/
 
 #include "CTransformWidget.h"
-#include "../Mathext.h"
-#include "../LexicalConversion.h"
+#include "../../Mathext.h"
+#include "../../LexicalConversion.h"
 
 namespace cpl
 {

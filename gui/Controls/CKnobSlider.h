@@ -30,7 +30,7 @@
 #ifndef CPL_CKNOBSLIDER_H
 	#define CPL_CKNOBSLIDER_H
 
-	#include "../Common.h"
+	#include "../../Common.h"
 	#include "../CBaseControl.h"
 
 	namespace cpl
