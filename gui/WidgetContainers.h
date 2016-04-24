@@ -31,7 +31,7 @@
 	#define CPL_WIDGETCONTAINERS_H
 
 	#include "../Common.h"
-	#include "../CBaseControl.h"
+	#include "CBaseControl.h"
 
 	namespace cpl
 	{

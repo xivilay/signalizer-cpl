@@ -37,6 +37,7 @@
 #include "stdext.h"
 #include <atomic>
 #include "CExclusiveFile.h"
+#include <typeinfo>
 
 #ifdef __GNUG__
 	#include <cstdlib>

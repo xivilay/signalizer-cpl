@@ -31,11 +31,10 @@
 
 *************************************************************************************/
 
-#ifndef _CMUTEX_H
-	#define _CMUTEX_H
+#ifndef CPL_CMUTEX_H
+	#define CPL_CMUTEX_H
 
 	#include "MacroConstants.h"
-	#include "Misc.h"
 	#ifndef __CPP11__
 		#error "No mutex support!"
 	#else
@@ -69,8 +68,7 @@
 					return std::this_thread::get_id() == ownerThread ? refCount : 0;
 				}
 			};
-		private:
-			Lockable * resource;
+
 		public:
 
 			/// <summary>
@@ -131,42 +129,7 @@
 			/// attempts to acquire the other resource.
 			/// </summary>
 			/// <param name="l"></param>
-			void acquire(Lockable * l)
-			{
-				auto this_id = std::this_thread::get_id();
-
-				// TODO: fix race condition
-				bool lockOwnedByThread = l->ownerThread == this_id;
-
-				if (resource)
-				{
-					if (lockOwnedByThread && l == resource)
-					{
-						// mutex owned by self
-						return;
-					}
-					else
-					{
-						release(resource);
-					}
-				}
-
-				if (!lockOwnedByThread)
-				{
-					if (!spinLock(2000, l))
-					{
-						//explode here
-						return;
-					}
-					l->ownerThread = this_id;
-					if (l->refCount != 0)
-						CPL_RUNTIME_EXCEPTION("Acquired non-recursed mutex had non-zero ref count");
-				}
-				l->refCount++;
-				resource = l;
-
-				std::atomic_thread_fence(std::memory_order_acquire);
-			}
+			void acquire(Lockable * l);
 
 			/// <summary>
 			/// Attemps to acquire the resource.
@@ -181,9 +144,9 @@
 				acquire(&l);
 			}
 
-		/// <summary>
-		/// Releases the resource. Called automatically on destruction.
-		/// </summary>
+			/// <summary>
+			/// Releases the resource. Called automatically on destruction.
+			/// </summary>
 			void release()
 			{
 				
@@ -191,67 +154,9 @@
 					release(resource);
 			}
 		private:
-			void release(Lockable * l)
-			{
-				// default value
-				if (l->refCount == 0)
-				{
-					CPL_RUNTIME_EXCEPTION("Releasing CMutex with a ref-count of zero!");
-				}
-				l->refCount--;
-				if (l->refCount == 0)
-				{
-					l->ownerThread = std::thread::id();
-
-					if (l)
-						l->flag.clear();
-					std::atomic_thread_fence(std::memory_order_release);
-					resource = nullptr;
-				}
-
-			}
-			static bool spinLock(unsigned ms, Lockable *  bVal)
-			{
-				using namespace Misc;
-				unsigned int start;
-				int ret;
-			loop:
-				int count = 0;
-				start = QuickTime();
-				while (bVal->flag.test_and_set(std::memory_order_relaxed)) {
-					count++;
-					if (count > 200)
-					{
-						count = 0;
-						if ((QuickTime() - start) > ms)
-							goto time_out;
-						Delay(0);
-					}
-
-				}
-
-				// normal exitpoint
-				return true;
-				// deadlock occurs
-
-			time_out:
-				// hello - you have reached this point if mutex was frozen.
-				CPL_BREAKIFDEBUGGED();
-				ret = AlertUserAboutMutex();
-				switch (ret)
-				{
-				case MsgButton::bTryAgain:
-					goto loop;
-				case MsgButton::bContinue:
-					bVal->flag.clear(); // flip val
-					// try again 
-					goto loop;
-				case MsgButton::bCancel:
-					exit(-1);
-				}
-				// not needed (except for warns)
-				return false;
-			}
+			void release(Lockable * l);
+			static bool spinLock(unsigned ms, Lockable *  bVal);
+			Lockable * resource;
 		};
 		
 		
@@ -311,42 +216,7 @@
 					release(resource);
 
 			}
-			void acquire(Lockable * l)
-			{
-				auto this_id = std::this_thread::get_id();
-
-				// TODO: fix race condition
-				bool lockOwnedByThread = l->ownerThread == this_id;
-
-				if (resource)
-				{
-					if (lockOwnedByThread && l == resource)
-					{
-						// mutex owned by self
-						return;
-					}
-					else
-					{
-						release(resource);
-					}
-				}
-
-				if (!lockOwnedByThread)
-				{
-					if (!spinLock(l))
-					{
-						//explode here
-						return;
-					}
-					l->ownerThread = this_id;
-					if (l->refCount != 0)
-						CPL_RUNTIME_EXCEPTION("Acquired non-recursed mutex had non-zero ref count");
-				}
-				l->refCount++;
-				resource = l;
-
-				std::atomic_thread_fence(std::memory_order_acquire);
-			}
+			void acquire(Lockable * l);
 			void acquire(Lockable & l)
 			{
 				acquire(&l);
@@ -357,65 +227,8 @@
 					release(resource);
 			}
 		private:
-			void release(Lockable * l)
-			{
-				if (l->refCount == 0)
-				{
-					CPL_RUNTIME_EXCEPTION("Releasing CMutex with a ref-count of zero!");
-				}
-				l->refCount--;
-				if (l->refCount == 0)
-				{
-					l->ownerThread = std::thread::id();
-					if (l)
-						l->flag.clear();
-					resource = nullptr;
-
-					std::atomic_thread_fence(std::memory_order_release);
-				}
-
-			}
-			static bool spinLock(Lockable *  bVal)
-			{
-				using namespace Misc;
-				unsigned int start;
-				int ret;
-				unsigned int ms = 2000;
-			loop:
-
-				start = QuickTime();
-				int count = 0;
-				while (bVal->flag.test_and_set(std::memory_order_relaxed)) {
-					count++;
-					if (count > 2000)
-					{
-						count = 0;
-						if ((QuickTime() - start) > ms)
-							goto time_out;
-					}
-				}
-				// normal exitpoint
-				return true;
-				// deadlock occurs
-
-			time_out:
-				// hello - you have reached this point if mutex was frozen.
-				CPL_BREAKIFDEBUGGED();
-				ret = AlertUserAboutMutex();
-				switch (ret)
-				{
-				case MsgButton::bTryAgain:
-					goto loop;
-				case MsgButton::bContinue:
-					bVal->flag.clear(); // flip val
-										// try again 
-					goto loop;
-				case MsgButton::bCancel:
-					exit(-1);
-				}
-				// not needed (except for warns)
-				return false;
-			}
+			void release(Lockable * l);
+			static bool spinLock(Lockable *  bVal);
 		};
 	};
 #endif

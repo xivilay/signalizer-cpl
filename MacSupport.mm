@@ -27,6 +27,7 @@
  
  *************************************************************************************/
 #include "MacSupport.h"
+
 #include "Misc.h"
 // i dont know why. i seriously dont.
 // but all hell breaks loose if this is not here.
@@ -40,7 +41,7 @@
 #import <IOKit/graphics/IOGraphicsLib.h>
 
 #include <string.h>
-
+#include "Common.h"
 /*********************************************************************************************
  
 	Spawns a messagebox using NSRunAlertPanel
@@ -120,17 +121,7 @@ int MacBox(void * hwndParent, const char *text, const char *caption, int type)
 	
 	return ret;
 }
-/*
- this could be anything apparantly
- */
-@interface dummyObject : NSObject
-- (void) dummyMethod;
-@end
 
-@implementation dummyObject
-- (void) dummyMethod {
-}
-@end
 /*********************************************************************************************
  
 	Reurns the path of our bundle.
@@ -139,16 +130,7 @@ int MacBox(void * hwndParent, const char *text, const char *caption, int type)
  *********************************************************************************************/
 std::size_t GetBundlePath(char * buf, std::size_t bufSize)
 {
-	// bundleForClass retrieves a reference to the bundle that holds the definition
-	// for dummyObject. We then call bundlePath on the bundle to retrieve the path of
-	// the bundle.
-	NSString * path = [[NSBundle bundleForClass:[[dummyObject alloc] class]]bundlePath];
-	const char * intString = [path UTF8String];
-	auto length = strlen(intString);
-	auto smallestLength = length > bufSize ? bufSize : length;
-	memcpy(buf, intString, smallestLength);
-	[path release];
-	return smallestLength;
+	CPL_NOTIMPLEMENTED_EXCEPTION();
 }
 
 int GetSystemFontSmoothingLevel()

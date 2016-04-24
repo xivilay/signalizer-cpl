@@ -28,7 +28,7 @@
 *************************************************************************************/
 
 #include "GraphicComponents.h"
-#include "Misc.h"
+#include "../Misc.h"
 
 namespace cpl
 {

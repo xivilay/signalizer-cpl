@@ -28,13 +28,13 @@
  
 *************************************************************************************/
 
-#ifndef _CINPUTCONTROL_H
-	#define _CINPUTCONTROL_H
+#ifndef CPL_CINPUTCONTROL_H
+	#define CPL_CINPUTCONTROL_H
 
 	#include "ControlBase.h"
 	#include <string>
 	#include <vector>
-	#include "BuildingBlocks.h"
+	#include "../BuildingBlocks.h"
 
 	namespace cpl
 	{
