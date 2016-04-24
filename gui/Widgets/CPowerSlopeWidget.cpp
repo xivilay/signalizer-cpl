@@ -169,9 +169,9 @@ namespace cpl
 
 	void CPowerSlopeWidget::initUI()
 	{
-		kbase.bSetTitle("Base");
-		kslope.bSetTitle("Slope");
-		kpivot.bSetTitle("Pivot");
+		kbase.bSetTitle("Slope base");
+		kslope.bSetTitle("Slope value");
+		kpivot.bSetTitle("Slope pivot");
 
 		for (auto c : { &kbase, &kslope, &kpivot })
 		{
