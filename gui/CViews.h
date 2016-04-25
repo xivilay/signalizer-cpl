@@ -270,8 +270,8 @@
 				/// If the stack gets corrupted, the next variable should not have been overwritten, and can be used
 				/// for debugging
 				/// </summary>
-				#ifdef DEBUG
-					volatile thread_local COpenGLView * _stackSafeThis = this;
+				#if defined(DEBUG) || defined(_DEBUG)
+					volatile CPL_THREAD_LOCAL COpenGLView * _stackSafeThis = this;
 					(void)_stackSafeThis;
 				#endif
 				openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);

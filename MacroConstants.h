@@ -173,12 +173,14 @@
 		#define CPL_llvm_DummyNoExcept
 
 		#if _MSC_VER >= 1900
-			#define CPL_ALIGNAS(x) alignas(x)
+			#define CPL_ALIGNAS(x) alignas(x)		
+			#define CPL_THREAD_LOCAL thread_local
 		#else
 			#define CPL_ALIGNAS(x) __declspec(align(x))
+			#define CPL_THREAD_LOCAL __declspec(thread)
 		#endif
 
-		#define CPL_THREAD_LOCAL __declspec(thread)
+
 		#define siginfo_t void
 		#define CPL_NOEXCEPT
 
