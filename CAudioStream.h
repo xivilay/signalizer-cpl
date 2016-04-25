@@ -38,6 +38,7 @@
 	#include "Utility.h"
 	#include <vector>
 	#include <mutex>
+	#include "AtomicCompability.h"
 	#include "ConcurrentServices.h"
 	#include "lib/BlockingLockFreeQueue.h"
 	#include "lib/CLIFOStream.h"
@@ -179,7 +180,7 @@
 
 				AudioStreamInfo & operator = (const AudioStreamInfo & other) noexcept
 				{
-					std::atomic_thread_fence(std::memory_order_acquire);
+					std_memory_fence(std::memory_order_acquire);
 
 					copyA(sampleRate, other.sampleRate);
 					copyA(anticipatedSize, other.anticipatedSize);
@@ -193,14 +194,14 @@
 					copyA(storeAudioHistory, other.storeAudioHistory);
 					copyA(blockOnHistoryBuffer, other.blockOnHistoryBuffer);
 
-					std::atomic_thread_fence(std::memory_order_release);
+					std_memory_fence(std::memory_order_release);
 
 					return *this;
 				}
 
 				AudioStreamInfo()
 				{
-					std::atomic_thread_fence(std::memory_order_acquire);
+					std_memory_fence(std::memory_order_acquire);
 
 					sampleRate.store(0, std::memory_order_relaxed);
 					anticipatedSize.store(0, std::memory_order_relaxed);
@@ -214,7 +215,7 @@
 					storeAudioHistory.store(0, std::memory_order_relaxed);
 					blockOnHistoryBuffer.store(0, std::memory_order_relaxed);
 
-					std::atomic_thread_fence(std::memory_order_release);
+					std_memory_fence(std::memory_order_release);
 
 				}
 
@@ -1055,7 +1056,7 @@
 					}
 				}
 				// fixes all the relaxed stores
-				std::atomic_thread_fence(std::memory_order::memory_order_release);
+				std_memory_fence(std::memory_order::memory_order_release);
 				return false;
 			}
 			/// <summary>
@@ -1076,7 +1077,7 @@
 					newListeners->operator[](i).store(curListeners[i].load(std::memory_order_relaxed), std::memory_order_relaxed);
 				}
 
-				std::atomic_thread_fence(std::memory_order_release);
+				std_memory_fence(std::memory_order_release);
 
 				if (audioListeners.tryReplace(newListeners.get()))
 				{

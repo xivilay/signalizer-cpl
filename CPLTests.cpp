@@ -31,6 +31,7 @@
 #include <numeric>
 #include <iostream>
 #include <map>
+#include "AtomicCompability.h"
 namespace cpl
 {
 	const auto warn = DiagnosticLevel::Warnings;
@@ -58,7 +59,7 @@ namespace cpl
 							data[i] = (float)std::rand();
 						}
 
-						std::atomic_thread_fence(std::memory_order::memory_order_release);
+						std_memory_fence(std::memory_order::memory_order_release);
 					}
 				}
 			}
@@ -73,7 +74,7 @@ namespace cpl
 					if (lock.owns_lock())
 					{
 						// guaranteed that any changes from thread one to 'data' is seen after this fence?
-						std::atomic_thread_fence(std::memory_order::memory_order_acquire);
+						std_memory_fence(std::memory_order::memory_order_acquire);
 
 						auto res = std::accumulate(data.begin(), data.end(), 0.0f);
 						std::cout << "Accumulated result is: " << res << std::endl;
