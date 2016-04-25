@@ -30,6 +30,8 @@
 #ifndef CPL_ATOMICCOMPABILITY_H
 	#define CPL_ATOMICCOMPABILITY_H
 
+	#include "MacroConstants.h"
+
 	#ifndef _MSC_VER
 		#include <stdatomic>
 	#endif

@@ -207,7 +207,8 @@
 		#if 1
 			#define __CPP11__
 		#endif
-		#define __LLVM__
+		#define __LLVM__	
+		#define CPL_CLANG
 		#ifndef CPL_ALL_WARNINGS
 			#pragma clang diagnostic ignored "-Wreorder"
 			#pragma clang diagnostic ignored "-Wswitch"
@@ -273,7 +274,7 @@
 		#define APE_API_VARI __cdecl
 		#define __GCC__
 		#define CPL_llvm_DummyNoExcept
-
+		#define CPL_GCC
 		#define cwarn(exp) ("warning: " exp)
 
 
