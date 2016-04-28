@@ -33,6 +33,10 @@
 	#include "Common.h"
 	#include <mutex>
 	#include <memory>
+	#include "CMutex.h"
+	#include "Utility.h"
+	#include <map>
+
 
 	namespace cpl
 	{

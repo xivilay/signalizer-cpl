@@ -271,7 +271,7 @@
 				/// for debugging
 				/// </summary>
 				#if defined(DEBUG) || defined(_DEBUG)
-					volatile CPL_THREAD_LOCAL COpenGLView * _stackSafeThis = this;
+					volatile thread_local COpenGLView * _stackSafeThis = this;
 					(void)_stackSafeThis;
 				#endif
 				openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);
