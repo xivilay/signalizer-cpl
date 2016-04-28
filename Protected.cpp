@@ -29,7 +29,7 @@
 
 #include "Protected.h"
 #include "lib/StackBuffer.h"
-
+#include <memory>
 #ifdef CPL_MSVC
 	#include <dbghelp.h>
 #elif defined(CPL_UNIXC)

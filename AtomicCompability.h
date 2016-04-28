@@ -32,8 +32,8 @@
 
 	#include "MacroConstants.h"
 
-	#ifndef _MSC_VER
-		#include <stdatomic>
+	#ifndef _MSC_VER && !defined(CPL_CLANG) && defined(__C11__)
+		#include <stdatomic.h>
 	#endif
 	#include <atomic>
 

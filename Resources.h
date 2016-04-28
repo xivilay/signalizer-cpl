@@ -79,7 +79,7 @@
 
 			CImage * loadResource(const std::string & name);
 			CImage defaultImage;
-			static std::atomic<CResourceManager *> internalInstance;
+			static std::atomic<CResourceManager *> internalResourceInstance;
 			std::map<std::string, CImage> resources;
 			~CResourceManager();
 			CResourceManager();

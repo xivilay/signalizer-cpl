@@ -31,7 +31,7 @@
 namespace cpl
 {
 	std::mutex CResourceManager::loadMutex;
-	std::atomic<CResourceManager *> CResourceManager::internalInstance { nullptr };
+	std::atomic<CResourceManager *> CResourceManager::internalResourceInstance { nullptr };
 
 	/*********************************************************************************************
 	 
@@ -148,7 +148,7 @@ namespace cpl
 	
 	CResourceManager::~CResourceManager()
 	{
-		internalInstance = nullptr;
+		internalResourceInstance = nullptr;
 	}
 
 	std::unique_ptr<juce::Drawable> CResourceManager::createDrawable(const std::string & name)
@@ -185,20 +185,20 @@ namespace cpl
 	
 	CResourceManager & CResourceManager::instance()
 	{
-		auto instance = internalInstance.load(std::memory_order_acquire);
+		auto instance = internalResourceInstance.load(std::memory_order_acquire);
 
 		if (instance == nullptr)
 		{
 			std::lock_guard<std::mutex> lock(loadMutex);
 
-			instance = internalInstance.load(std::memory_order_acquire);
+			instance = internalResourceInstance.load(std::memory_order_acquire);
 			if (instance == nullptr)
 			{
-				internalInstance.store(new CResourceManager(), std::memory_order_release);
+				internalResourceInstance.store(new CResourceManager(), std::memory_order_release);
 			}
 		}
 
-		return * (instance ? instance : internalInstance.load(std::memory_order_acquire));
+		return * (instance ? instance : internalResourceInstance.load(std::memory_order_acquire));
 	}
 
 };
