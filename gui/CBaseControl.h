@@ -72,7 +72,6 @@
 		/// </summary>
 		class CBaseControl 
 		: 
-			public CMutex::Lockable,
 			public juce::Slider::Listener,
 			public juce::Button::Listener,
 			public juce::ScrollBar::Listener,
@@ -144,7 +143,7 @@
 			{
 			
 			}
-			CBaseControl(GraphicComponent * b,  int tag, bool bIsAttached = false) 
+			CBaseControl(GraphicComponent * b, int tag, bool bIsAttached = false) 
 				: tag(tag), isAttached(bIsAttached), tipsEnabled(true), base(b), isEditSpacesAllowed(false)
 			{
 			

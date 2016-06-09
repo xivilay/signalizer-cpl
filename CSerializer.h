@@ -556,6 +556,13 @@
 				}
 				data.reset();
 			}
+
+			/// <summary>
+			/// Sets the master version for all subsequent operations. Notice this has an recursive
+			/// effect, unlike any load/save calls with explicit parameters, that are local instead.
+			/// </summary>
+			/// <param name="v"></param>
+			/// <returns></returns>
 			void setMasterVersion(Version v) noexcept { version = v; }
 			Version getMasterVersion() const noexcept { return version; }
 			virtual bool build(const WeakContentWrapper & cr) override;

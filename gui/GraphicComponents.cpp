@@ -201,7 +201,6 @@ namespace cpl
 	
 	void CToggle::paint(juce::Graphics & g)
 	{
-		CMutex lockGuard(this);
 		auto width = cbox.getWidth();
 		bool toggled = getToggleState();
 		g.drawImage(cbox, 0, 0, width, width, 0, toggled ? width : 0, width, width);
@@ -212,7 +211,6 @@ namespace cpl
 	
 	void CToggle::bSetText(const std::string & in)
 	{
-		CMutex lockGuard(this);
 		text = in;
 	}
 	
@@ -356,17 +354,14 @@ namespace cpl
 	}
 	void CTextControl::bSetText(const std::string & newText)
 	{
-		CMutex lockGuard(this);
 		CTextLabel::setText(newText);
 	}
 	std::string CTextControl::bGetText() const
 	{
-		//CMutex lockGuard(this);
 		return text.toStdString();
 	}
 	void CTextControl::paint(juce::Graphics & g)
 	{
-		CMutex lockGuard(this);
 		CTextLabel::paint(g);
 	}
 };

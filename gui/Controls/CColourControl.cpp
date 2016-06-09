@@ -72,7 +72,7 @@ namespace cpl
 			// for this widget, we only need to display two characters,
 			// so we shrink them a little bit.
 
-			char * names[] = { "a", "r", "b", "g" };
+			char * names[] = { "r", "b", "g", "a" };
 
 			for (int i = 0; i < getNumChildComponents(); ++i)
 			{
@@ -276,11 +276,6 @@ namespace cpl
 	 */
 	
 
-	/*********************************************************************************************
-
-	CKnobEx
-
-	*********************************************************************************************/
 	CColourControl::CColourControl(const std::string & name, ColourType typeToUse)
 		: CKnobSlider(name), colourType(typeToUse), colour(0xFF, 0, 0, 0), channel(Channels::Red)
 	{
@@ -380,6 +375,7 @@ namespace cpl
 			auto colourCopy = colour;
 			switch(channel)
 			{
+				// TODO: fix bias here and other places by multiplying the float by 0x100, and saturating to 0xFF
 				case Red:	colourCopy.getRed() = static_cast<std::uint8_t>(val * 0xFF); break;
 				case Green: colourCopy.getGreen() = static_cast<std::uint8_t>(val * 0xFF); break;
 				case Blue:	colourCopy.getBlue() = static_cast<std::uint8_t>(val * 0xFF); break;

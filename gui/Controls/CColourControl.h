@@ -63,10 +63,10 @@
 				Green,
 				Blue,
 				Alpha
-				
 			};
 
 		public:
+
 			CColourControl(const std::string & name = "", ColourType typeToUse = ColourType::RGB);
 
 			ColourType getType() const;
@@ -84,14 +84,14 @@
 			virtual bool bValueToString(std::string &, iCtrlPrec_t ) const override;
 			// new functions
 			juce::PixelARGB getControlColour();
+
 			juce::Colour getControlColourAsColour();
 			void setControlColour(juce::PixelARGB newColour);
 
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
 
-
 		protected:
-			
+
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 

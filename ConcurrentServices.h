@@ -143,7 +143,6 @@
 			};
 
 			ConcurrentObjectSwapper()
-				: wrapIdx()
 			{
 				current.store(wrappers);
 				old = wrappers + 1;
@@ -248,7 +247,6 @@
 		private:
 			std::atomic<ConcurrentEntry<Object> *> current;
 			ConcurrentEntry<Object> * old;
-			std::size_t wrapIdx;
 			ConcurrentEntry<Object> wrappers[2];
 		};
 

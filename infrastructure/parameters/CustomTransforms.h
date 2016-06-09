@@ -1,0 +1,160 @@
+#ifndef CPL_CUSTOMTRANSFORMS_H
+#define CPL_CUSTOMTRANSFORMS_H
+
+#include <string>
+#include <type_traits>
+#include "../../Mathext.h"
+
+namespace cpl
+{
+	template<typename T>
+	class VirtualTransformer
+	{
+	public:
+		/// <summary>
+		/// Transforms a normalized value (bounded by a Restrictor, usually 0-1) to 
+		/// a semantic value.
+		/// </summary>
+		virtual T transform(T val) = 0;
+		/// <summary>
+		/// Normalized a transformed value, ie. the reversed process of transform()
+		/// </summary>
+		virtual T normalize(T val) = 0;
+		/// <summary>
+		/// Retrieve the reciprocal quantization, i.e. the amount of uniquely represented values.
+		/// Negative values means this transformer is not quantized
+		/// </summary>
+		virtual int getQuantization() { return -1; }
+		/// <summary>
+		/// Retrieve the reciprocal quantization, i.e. the amount of uniquely represented values.
+		/// </summary>
+		virtual void setQuantization(int) { }
+		virtual ~VirtualTransformer() {}
+	};
+
+	template<typename T>
+	class ChoiceTransformer : public VirtualTransformer<T>
+	{
+	public:
+		virtual T transform(T val) override
+		{
+			if (quantization <= 1)
+				return 0;
+			
+			return std::round(val * (quantization - 1));
+		}
+
+		virtual T normalize(T val) override
+		{
+			if (quantization <= 1)
+				return 0;
+			
+			return val / (quantization - 1);
+		}
+		/// <summary>
+		/// Retrieve the quantization, i.e. the amount of uniquely represented values.
+		/// Negative values means this transformer is not quantized
+		/// </summary>
+		virtual int getQuantization() { return quantization; }
+		/// <summary>
+		/// Sets the quantization steps. Notice that values below 2 are not meaningful.
+		/// </summary>
+		virtual void setQuantization(int rquantization) override
+		{
+			if (rquantization <= 1)
+			{
+				CPL_BREAKIFDEBUGGED();
+			}
+			quantization = rquantization; 
+		}
+	
+	private:
+		int quantization = 0;
+	};
+
+	template<typename T>
+	class RangedVirtualTransformerBase : public VirtualTransformer<T>
+	{
+	public:
+		RangedVirtualTransformerBase(T minimum, T maximum) : min(minimum), max(maximum) {}
+		RangedVirtualTransformerBase() : min(0), max(1) {}
+
+		void setMinimum(T minimum) { min = minimum; }
+		void setMaximum(T maximum) { max = maximum; }
+		void setRange(T minimum, T maximum) { setMinimum(minimum); setMaximum(maximum); }
+
+	protected:
+		T min, max;
+	};
+
+	template<typename T>
+	class UnityRange : public VirtualTransformer<T>
+	{
+	public:
+		T normalize(T val) override
+		{
+			return val;
+		}
+
+		T transform(T val) override
+		{
+			return val;
+		}
+	};
+
+	template<typename T>
+	class BooleanRange : public VirtualTransformer<T>
+	{
+	public:
+		T normalize(T val) override
+		{
+			return val >= 0.5 ? 1 : 0;
+		}
+
+		T transform(T val) override
+		{
+			return val >= 0.5 ? 1 : 0;
+		}
+	};
+
+
+	template<typename T>
+	class LinearRange : public RangedVirtualTransformerBase<T>
+	{
+	public:
+
+		LinearRange(T minimum, T maximum) : RangedVirtualTransformerBase(minimum, maximum) {}
+		LinearRange() {}
+
+		T normalize(T val) override
+		{
+			return Math::UnityScale::Inv::linear(val, min, max);
+		}
+
+		T transform(T val) override
+		{
+			return Math::UnityScale::linear(val, min, max);
+		}
+	};
+
+	template<typename T>
+	class ExponentialRange : public RangedVirtualTransformerBase<T>
+	{
+	public:
+
+		ExponentialRange(T minimum, T maximum) : RangedVirtualTransformerBase(minimum, maximum) {}
+		ExponentialRange() {}
+
+		T normalize(T val) override
+		{
+			return Math::UnityScale::Inv::exp(val, min, max);
+		}
+
+		T transform(T val) override
+		{
+			return Math::UnityScale::exp(val, min, max);
+		}
+	};
+};
+
+#endif

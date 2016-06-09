@@ -177,6 +177,7 @@ namespace cpl
 			return CRect(sideKnobLength + 5, getHeight() / 2, getWidth() - (sideKnobLength + 5), getHeight() / 2);
 		}
 	}
+
 	juce::Rectangle<int> CKnobSlider::getTitleRect() const
 	{
 		if (getHeight() >= ControlSize::Square.height)
@@ -389,6 +390,7 @@ namespace cpl
 	}
 	void CKnobSlider::onValueChange()
 	{
+		
 		bFormatValue(text, bGetValue());
 		bSetText(text);
 	}

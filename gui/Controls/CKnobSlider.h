@@ -57,6 +57,7 @@
 				ms // 0 .. 1000 ms
 			};
 
+
 			const float hzLimit = 8000.0f;
 			const int msLimit = 1000;
 
@@ -71,8 +72,7 @@
 			virtual void bRedraw() override;
 			virtual std::string bGetText() const override;
 			virtual std::string bGetTitle() const override;
-			virtual void onValueChange() override;
-			virtual void paint(juce::Graphics& g) override;
+
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
 
 			// new functions
@@ -83,6 +83,9 @@
 			virtual juce::Rectangle<int> getTitleRect() const;
 
 		protected:
+
+			virtual void onValueChange() override;
+			virtual void paint(juce::Graphics& g) override;
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
