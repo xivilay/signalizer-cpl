@@ -48,9 +48,6 @@ namespace cpl
 		, transformedSlope(0)
 		, a(0)
 		, b(0)
-		, kbase("Slope base")
-		, kslope("Slope value")
-		, kpivot("Slope pivot")
 	{
 		enableTooltip(true);
 		addAndMakeVisible(layout);

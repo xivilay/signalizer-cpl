@@ -39,7 +39,7 @@
 		: 
 			public CBaseControl,
 			public juce::Component,
-			public CBaseControl::PassiveListener,
+			public CBaseControl::Listener,
 			public CBaseControl::ValueFormatter
 		{
 

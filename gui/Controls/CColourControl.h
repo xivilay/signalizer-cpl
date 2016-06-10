@@ -44,64 +44,43 @@
 		*********************************************************************************************/
 		class CColourControl 
 		:
-			public CKnobSlider
+			public CKnobSlider,
+			private ValueEntityBase::ValueEntityListener
 		{
 
-		public:
-			enum ColourType
-			{
-				RGB,
-				ARGB,
-				GreyTone,
-				SingleChannel
-
-			};
-
-			enum Channels
-			{
-				Red = 0,
-				Green,
-				Blue,
-				Alpha
-			};
 
 		public:
 
-			CColourControl(const std::string & name = "", ColourType typeToUse = ColourType::RGB);
+			CColourControl(ColourValue * valueToReferTo = nullptr, bool takeOwnerShip = false);
 
-			ColourType getType() const;
-			void setType(ColourType);
+			void setValueReference(ColourValue * valueToReferTo, bool takeOwnerShip = false);
 
-			int getChannel() const;
-			void setChannel(int channel);
+
 
 			// overrides
 			virtual void onValueChange() override;
 			virtual void paint(juce::Graphics & g) override;
-			//virtual iCtrlPrec_t bGetValue() const override;
-			//virtual void bSetValue(iCtrlPrec_t val) override;
+			virtual iCtrlPrec_t bGetValue() const override;
+			virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
 			virtual bool bStringToValue(const std::string &, iCtrlPrec_t &) const override;
 			virtual bool bValueToString(std::string &, iCtrlPrec_t ) const override;
-			// new functions
-			juce::PixelARGB getControlColour();
 
+			// used to be different -- stored for legacy
+			juce::Colour getControlColour();
 			juce::Colour getControlColourAsColour();
-			void setControlColour(juce::PixelARGB newColour);
+
+			void setControlColour(juce::Colour newColour);
 
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
+			ColourValue & getValueObject();
 
 		protected:
+			virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
-			juce::PixelARGB floatToInt(iCtrlPrec_t val) const;
-			iCtrlPrec_t intToFloat(juce::PixelARGB val) const;
-			iCtrlPrec_t internalValue;
-			bool wasOwnAdjustment;
-			ColourType colourType;
-			int channel;
-			juce::PixelARGB colour;
+			std::unique_ptr<ColourValue, Utility::MaybeDelete<ColourValue>> valueObject;
 		};
 
 	};

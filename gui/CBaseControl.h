@@ -82,33 +82,17 @@
 		{
 		public:
 
-
-
 			friend class CCtrlEditSpace;
-
-			/// <summary>
-			/// A CBaseControl can call a listener back on events.
-			/// A listener can override the controls own event handler by returning true from valueChanged.
-			/// A return value of false will cause the next handler in the chain to handle the event.
-			/// Otherwise, the event is considered handled, and no other handlers will be called.
-			/// There will be a default handler. The handlers are called from newest added to the first.
-			/// </summary>
-			class Listener : virtual public Utility::DestructionServer<CBaseControl>::Client
-			{
-			public:
-				virtual bool valueChanged(CBaseControl *) = 0;
-				virtual ~Listener() {};
-			};
 
 			/// <summary>
 			/// The same as a Listener, however it is NOT able to change the control's status, and
 			/// it will be called AFTER the listener change.
 			/// </summary>
-			class PassiveListener : virtual public Utility::DestructionServer<CBaseControl>::Client
+			class Listener : virtual public Utility::DestructionServer<CBaseControl>::Client
 			{
 			public:
 				virtual void valueChanged(const CBaseControl *) = 0;
-				virtual ~PassiveListener() {};
+				virtual ~Listener() {};
 			};
 
 			///	<summary>
@@ -129,22 +113,9 @@
 				virtual ~ValueFormatter() {};
 			};
 
-			/// <summary>
-			/// Returns whether the control is attached to anything - deprecated
-			/// </summary>
-			bool bIsAttached() const
-			{ 
-				return isAttached; 
-			}
-
 			CBaseControl(GraphicComponent * b) 
-				: tag(0), isAttached(false), base(b), isEditSpacesAllowed(false), tipsEnabled(false)
+				: base(b), isEditSpacesAllowed(false), tipsEnabled(false)
 
-			{
-			
-			}
-			CBaseControl(GraphicComponent * b, int tag, bool bIsAttached = false) 
-				: tag(tag), isAttached(bIsAttached), tipsEnabled(true), base(b), isEditSpacesAllowed(false)
 			{
 			
 			}
@@ -329,20 +300,6 @@
 				return ""; 
 			}
 			/// <summary>
-			/// DEPRECATED.
-			/// </summary>
-			virtual long bGetTag() const
-			{ 
-				return tag; 
-			}
-			/// <summary>
-			/// DEPRECATED.
-			/// </summary>
-			virtual void bSetTag(long newTag) 
-			{
-				tag = newTag;
-			}
-			/// <summary>
 			/// Returns the size of this control.
 			/// X and Y are relative to the parent coordinates.
 			/// </summary>
@@ -425,15 +382,6 @@
 				return false;
 			}
 
-
-
-			/// <summary>
-			/// DEPRECATED.
-			/// </summary>
-			void setDirty()
-			{
-				bRedraw();
-			}
 			/// <summary>
 			/// Adds a listener (if not present) to be called back on value changes
 			/// </summary>
@@ -460,7 +408,7 @@
 			/// <summary>
 			/// Adds a passive listener (if not present) to be called back on value changes
 			/// </summary>
-			void bAddPassiveChangeListener(PassiveListener * listener)
+			void bAddPassiveChangeListener(Listener * listener)
 			{
 				if (listener && !contains(passiveListeners, listener))
 				{
@@ -471,7 +419,7 @@
 			/// <summary>
 			/// Removes a change-listener (if present)
 			/// </summary>
-			void bRemovePassiveChangeListener(PassiveListener * listener)
+			void bRemovePassiveChangeListener(Listener * listener)
 			{
 				auto it = std::find(passiveListeners.begin(), passiveListeners.end(), listener);
 				if (it != passiveListeners.end())
@@ -639,26 +587,6 @@
 					listener->valueChanged(this);
 			}
 
-			bool listenerChangeHandling()
-			{
-				for (auto rit = listeners.rbegin(); rit != listeners.rend(); ++rit)
-				{
-					if ((*rit)->valueChanged(this))
-						return true;
-				}
-				return false;
-			}
-
-			/// <summary>
-			/// All controls have a unique associated tag.
-			/// </summary>
-			long tag;
-
-			/// <summary>
-			/// Whether the control is attached to anything
-			/// DEPRECATED.
-			/// </summary>
-			bool isAttached;
 			bool tipsEnabled;
 			bool isEditSpacesAllowed;
 
@@ -666,8 +594,7 @@
 			/// The implementation specific context of controls
 			/// </summary>
 			GraphicComponent * base;
-			std::vector<Listener *> listeners;
-			std::vector<PassiveListener *> passiveListeners;
+			std::vector<Listener *> passiveListeners;
 			std::vector<ValueFormatter *> formatters;
 			std::string tooltip;
 			std::unique_ptr<cpl::CSerializer> serializedState;

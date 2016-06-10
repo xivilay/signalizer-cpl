@@ -61,6 +61,12 @@
 
 		namespace Utility 
 		{
+			template<typename Ty>
+			struct MaybeDelete
+			{
+				void operator()(Ty * content) { if (doDelete) delete content; }
+				bool doDelete = true;
+			};
 
 			/*
 				Use this code inside frequently run code, where you dont want to pollute the code with conditional

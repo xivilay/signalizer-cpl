@@ -43,7 +43,6 @@
 		{
 
 		public:
-
 			typedef std::pair<juce::Point<int>, juce::TextEditor *> LabelDescriptor;
 
 			CTransformWidget();
@@ -67,6 +66,7 @@
 			
 		protected:
 			
+
 			void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 

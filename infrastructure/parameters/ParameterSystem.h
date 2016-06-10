@@ -101,12 +101,6 @@ namespace cpl
 			virtual ~UserContent() {};
 		};
 
-		struct UserContentDeleter
-		{
-			void operator()(UserContent * content) { if (doDelete) delete content; }
-			bool doDelete = true;
-		};
-
 		template<typename UIParameterView>
 		struct CallbackParameterRecord
 		{
@@ -640,7 +634,7 @@ namespace cpl
 		std::unique_ptr<std::vector<BundleInstallReference>> bundleInstalledReferences;
 		std::unique_ptr<std::vector<SingleInstallReference>> singleInstalledReferences;
 
-		std::unique_ptr<Parameters::UserContent, Parameters::UserContentDeleter> userContent;
+		std::unique_ptr<Parameters::UserContent, Utility::MaybeDelete<Parameters::UserContent>> userContent;
 		std::string prefix;
 		std::string groupName;
 		std::map<std::string, Parameters::Handle> nameMap;

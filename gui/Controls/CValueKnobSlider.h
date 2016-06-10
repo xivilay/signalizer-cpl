@@ -21,17 +21,17 @@
  
 **************************************************************************************
  
-	file:CKnobSlider.h
+	file:CValueKnobSlider.h
 
-		Base class of all knobsliders.
+		A self-contained slider with defined value semantics.
  
 *************************************************************************************/
 
-#ifndef CPL_CKNOBSLIDER_H
-	#define CPL_CKNOBSLIDER_H
+#ifndef CPL_CVALUEKNOBSLIDER_H
+	#define CPL_CVALUEKNOBSLIDER_H
 
-	#include "../../Common.h"
-	#include "../CBaseControl.h"
+	#include "CKnobSlider.h"
+	#include "ControlBase.h"
 
 	namespace cpl
 	{
@@ -40,32 +40,22 @@
 			Basic slider / knob interface.
 
 		*********************************************************************************************/
-		class CKnobSlider 
-		: 
-			public juce::Slider,
-			public CBaseControl
+		class CValueKnobSlider 
+			: public CKnobSlider
+			, private ValueEntityBase::ValueEntityListener
 		{
 		public:
 
-			CKnobSlider();
+
+			CValueKnobSlider(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false);
+
+			void setValueReference(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false);
 
 			// overrides
 			virtual iCtrlPrec_t bGetValue() const override;
 			virtual void bSetInternal(iCtrlPrec_t) override;
-			virtual void bSetText(const std::string & in) override;
-			virtual void bSetTitle(const std::string & in) override;
 			virtual void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
-			virtual void bRedraw() override;
-			virtual std::string bGetText() const override;
-			virtual std::string bGetTitle() const override;
-
-			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
-
-			// new functions
-			virtual void setIsKnob(bool shouldBeKnob);
-			virtual bool getIsKnob() const;
-			virtual juce::Rectangle<int> getTextRect() const;
-			virtual juce::Rectangle<int> getTitleRect() const;
+			//virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
 
 		protected:
 
@@ -78,18 +68,11 @@
 			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 
-			// true if this is displayed as a knob, otherwise it is a slider.
-			bool isKnob;
-			void computePaths();
-			juce::Slider & getSlider() { return *this; }
-			iCtrlPrec_t laggedValue;
+			virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;
 
 		private:
 
-			juce::Path pie, pointer;
-
-			juce::Slider::SliderStyle oldStyle;
-			std::string title, text;
+			std::unique_ptr<ValueEntityBase, Utility::MaybeDelete<ValueEntityBase>> valueObject;
 		};
 	};
 #endif

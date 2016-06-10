@@ -50,7 +50,7 @@
 		: 
 			public juce::Component,
 			public juce::Label::Listener,
-			public CBaseControl::PassiveListener,
+			public CBaseControl::Listener,
 			public juce::TextEditor::Listener,
 			public Utility::DestructionServer<CCtrlEditSpace>,
 			public juce::ChangeListener,

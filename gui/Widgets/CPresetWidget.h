@@ -43,7 +43,7 @@
 		:
 			public juce::Component,
 			public CBaseControl,
-			protected CBaseControl::PassiveListener
+			protected CBaseControl::Listener
 		{
 		public:
 

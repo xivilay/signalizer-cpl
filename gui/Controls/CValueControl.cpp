@@ -38,20 +38,15 @@ namespace cpl
 
 	*********************************************************************************************/
 	CValueControl::CValueControl(const std::string & name, const std::string & inputValues, const std::string & unit)
-		: CKnobSlider(name, pct), unit(unit)
+		: unit(unit)
 	{
 
 		setValues(inputValues);
-		//bForceEvent();
-		//CKnobEx::bRedraw();
-	}
-	/*********************************************************************************************
-	
-		CValueControl - constructor
 
-	*********************************************************************************************/
+	}
+
 	CValueControl::CValueControl(const std::string & name, const std::vector<std::string> & inputValues, const std::string & unit)
-		: CKnobSlider(name, pct), unit(unit), values(inputValues)
+		: unit(unit), values(inputValues)
 	{
 
 	}

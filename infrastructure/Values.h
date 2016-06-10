@@ -18,7 +18,8 @@ namespace cpl
 
 	typedef double ValueT;
 
-	class ValueEntityBase : public CSerializer::Serializable
+	class ValueEntityBase 
+		: public CSerializer::Serializable
 	{
 	public:
 
@@ -37,7 +38,7 @@ namespace cpl
 		virtual VirtualFormatter<ValueT> & getFormatter() = 0;
 		virtual ValueT getNormalizedValue() = 0;
 		virtual void setNormalizedValue(ValueT parameter) = 0;
-		virtual std::string getContextualName() {};
+		virtual std::string getContextualName() { return {}; };
 
 		virtual void beginChangeGesture() {};
 		virtual void endChangeGesture() {};
@@ -62,6 +63,27 @@ namespace cpl
 		{
 			R, G, B, A
 		};
+#ifdef CPL_JUCE
+		juce::Colour getAsJuceColour() {
+			auto index = [&](Index i) { return static_cast<float>(getValueIndex(i).getNormalizedValue()); };
+			return juce::Colour::fromFloatRGBA(index(R), index(G), index(B), index(A));
+		}
+
+		void setFromJuceColour(juce::Colour colour)
+		{
+			getValueIndex(R).setNormalizedValue(colour.getFloatRed());
+			getValueIndex(G).setNormalizedValue(colour.getFloatGreen());
+			getValueIndex(B).setNormalizedValue(colour.getFloatBlue());
+			getValueIndex(A).setNormalizedValue(colour.getFloatAlpha());
+		}
+#endif
+		template<std::size_t bits>
+		typename std::enable_if<bits < 32, std::uint32_t>::type getIntValueFor(Index i)
+		{
+			auto cap = (1 << bits);
+			auto fpoint = getValueIndex(i).getNormalizedValue();
+			return fpoint == (ValueT)1.0 ? (cap - 1) : static_cast<std::uint32_t>(fpoint * cap);
+		}
 
 		virtual ValueEntityBase & getValueIndex(Index i) = 0;
 		virtual ~ColourValue() {}
@@ -106,7 +128,7 @@ namespace cpl
 	{
 	public:
 		SelfcontainedValue(Transformer * transformer, Formatter * formatter)
-			: value(0)
+			: internalValue(0)
 			, transformer(transformer)
 			, formatter(formatter)
 		{
@@ -138,6 +160,32 @@ namespace cpl
 	private:
 		Transformer hostedTransformer;
 		Formatter hostedFormatter;
+	};
+
+	class CompleteColour 
+		: private HexFormatter<ValueT>
+		, public ColourValue
+	{
+	public:
+
+		CompleteColour()
+			: range(0, 0xFF)
+			, values{
+				{ &range, this },
+				{ &range, this },
+				{ &range, this },
+				{ &range, this },
+			}
+		{
+
+		}
+
+		virtual ValueEntityBase & getValueIndex(Index i) override { return values[i]; }
+
+		SelfcontainedValue<> values[4];
+
+	private:
+		LinearRange<ValueT> range;
 	};
 
 	template<typename UIParameterView>

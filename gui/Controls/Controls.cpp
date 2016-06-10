@@ -32,5 +32,6 @@
 #include "CComboBox.cpp"
 #include "CInputControl.cpp"
 #include "CKnobSlider.cpp"
+#include "CValueKnobSlider.h"
 #include "CKnobSliderEditor.cpp"
 #include "CValueControl.cpp"

@@ -32,5 +32,5 @@
 
 	#include "../../Common.h"
 	#include "../CBaseControl.h"
-	#include "../../infrastructure/parameters/ParameterSystem.h"
+	#include "../../infrastructure/Values.h"
 #endif

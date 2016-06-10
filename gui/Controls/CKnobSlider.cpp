@@ -45,11 +45,9 @@ namespace cpl
 			return nullptr;
 	}
 
-	CKnobSlider::CKnobSlider(const std::string & name, ControlType typeToUse)
+	CKnobSlider::CKnobSlider()
 		: juce::Slider("CKnobSlider")
 		, CBaseControl(this)
-		, title(name)
-		, type(typeToUse)
 		, oldStyle(Slider::SliderStyle::RotaryVerticalDrag)
 		, laggedValue(0)
 	{
@@ -70,99 +68,11 @@ namespace cpl
 
 	bool CKnobSlider::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
 	{
-		switch (type)
-		{
-		case pct:
-		{
-			int intValue = 0;
-			if (sscanf(valueString.c_str(), "%d", &intValue) > 0)
-			{
-				val = cpl::Math::confineTo<iCtrlPrec_t>(iCtrlPrec_t(intValue) / 100.0, 0.0, 1.0);
-				return true;
-			}
-			break;
-		}
-		case hz:
-		{
-			double fVal = 0;
-			char * endPtr = nullptr;
-			fVal = std::strtod(valueString.c_str(), &endPtr);
-			if (endPtr > valueString.c_str()) // can only happen if number was parsed
-			{
-				val = cpl::Math::confineTo<iCtrlPrec_t>(fVal, 0.0, hzLimit) / hzLimit;
-				return true;
-			}
-			break;
-		}
-		case db:
-		{
-			double fVal = 0;
-			char * endPtr = nullptr;
-			fVal = std::strtod(valueString.c_str(), &endPtr);
-			if (endPtr > valueString.c_str()) // can only happen if number was parsed
-			{
-				val = cpl::Math::confineTo<iCtrlPrec_t>(std::pow(10, fVal / 20), 0.0, 1.0);
-				return true;
-			}
-			break;
-		}
-		case ft:
-		{
-			double fVal = 0;
-			char * endPtr = nullptr;
-			fVal = std::strtod(valueString.c_str(), &endPtr);
-			if (endPtr > valueString.c_str()) // can only happen if number was parsed
-			{
-				val = cpl::Math::confineTo<iCtrlPrec_t>(fVal, 0.0, 1.0);
-				return true;
-			}
-			break;
-		}
-		case ms:
-		{
-			double fVal = 0;
-			char * endPtr = nullptr;
-			fVal = std::strtod(valueString.c_str(), &endPtr);
-			if (endPtr > valueString.c_str()) // can only happen if number was parsed
-			{
-				val = cpl::Math::confineTo<iCtrlPrec_t>(fVal / msLimit, 0.0, 1.0);
-				return true;
-			}
-			break;
-		}
-		};
-		return false;
+		return cpl::lexicalConversion(valueString, val);
 	}
 	bool CKnobSlider::bValueToString(std::string & valueString, iCtrlPrec_t val) const
 	{
-		char buf[100];
-		switch (type)
-		{
-		case pct:
-			sprintf_s(buf, "%d %%", cpl::Math::round<int>(val * 100));
-			valueString = buf;
-			return true;
-		case hz:
-			sprintf_s(buf, "%.1f Hz", val * hzLimit);
-			valueString = buf;
-			return true;
-		case db:
-			if (val == iCtrlPrec_t(0.0))
-				sprintf_s(buf, "-oo dB");
-			else
-				sprintf_s(buf, "%.3f dB", 20 * log10(val));
-			valueString = buf;
-			return true;
-		case ft:
-			sprintf_s(buf, "%.3f", val);
-			valueString = buf;
-			return true;
-		case ms:
-			sprintf_s(buf, "%d ms", cpl::Math::round<int>(val * msLimit));
-			valueString = buf;
-			return true;
-		};
-		return false;
+		return cpl::lexicalConversion(val, valueString);
 	}
 
 	juce::Rectangle<int> CKnobSlider::getTextRect() const
@@ -352,11 +262,6 @@ namespace cpl
 		bSetText(text);
 		repaint();
 	}
-	void CKnobSlider::setCtrlType(ControlType newType)
-	{
-		if(newType > 0 && newType <= ControlType::ms)
-			type = newType;
-	}
 
 	void CKnobSlider::setIsKnob(bool shouldBeKnob)
 	{
@@ -384,10 +289,12 @@ namespace cpl
 	{
 		return title;
 	}
+
 	std::string CKnobSlider::bGetText() const
 	{
 		return text;
 	}
+
 	void CKnobSlider::onValueChange()
 	{
 		
