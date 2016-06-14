@@ -53,12 +53,13 @@
 
 			CColourControl(ColourValue * valueToReferTo = nullptr, bool takeOwnerShip = false);
 
-			void setValueReference(ColourValue * valueToReferTo, bool takeOwnerShip = false);
 
-
+			virtual void valueChanged() override;
+			virtual void startedDragging() override;
+			virtual void stoppedDragging() override;
 
 			// overrides
-			virtual void onValueChange() override;
+			virtual void baseControlValueChanged() override;
 			virtual void paint(juce::Graphics & g) override;
 			virtual iCtrlPrec_t bGetValue() const override;
 			virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
@@ -72,15 +73,20 @@
 			void setControlColour(juce::Colour newColour);
 
 			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
-			ColourValue & getValueObject();
+			ColourValue & getValueReference() { return *valueObject; }
 
 		protected:
+			virtual std::string bGetExportedName() override { return valueObject->getContextualName(); }
 			virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
 			std::unique_ptr<ColourValue, Utility::MaybeDelete<ColourValue>> valueObject;
+
+		private:
+			void setValueReference(ColourValue * valueToReferTo, bool takeOwnerShip = false);
+
 		};
 
 	};

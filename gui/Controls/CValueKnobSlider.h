@@ -35,21 +35,14 @@
 
 	namespace cpl
 	{
-		/*********************************************************************************************
-
-			Basic slider / knob interface.
-
-		*********************************************************************************************/
+		// TODO : change to ValueControl
 		class CValueKnobSlider 
 			: public CKnobSlider
 			, private ValueEntityBase::ValueEntityListener
 		{
 		public:
 
-
 			CValueKnobSlider(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false);
-
-			void setValueReference(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false);
 
 			// overrides
 			virtual iCtrlPrec_t bGetValue() const override;
@@ -57,13 +50,13 @@
 			virtual void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 			//virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
 
+			virtual std::string bGetExportedName() override;
+
 		protected:
 
-			virtual void onValueChange() override;
-			virtual void paint(juce::Graphics& g) override;
-
-			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
-			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
+			virtual void valueChanged() override;
+			virtual void startedDragging() override;
+			virtual void stoppedDragging() override;
 
 			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
@@ -71,7 +64,7 @@
 			virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;
 
 		private:
-
+			void setValueReference(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false);
 			std::unique_ptr<ValueEntityBase, Utility::MaybeDelete<ValueEntityBase>> valueObject;
 		};
 	};

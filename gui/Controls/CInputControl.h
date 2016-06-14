@@ -82,7 +82,7 @@
 			/*virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override; */
 			virtual void resized() override;
-			//virtual void onValueChange() override;
+			//virtual void baseControlValueChanged() override;
 
 		private:
 			void initialize();

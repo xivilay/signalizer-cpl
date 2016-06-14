@@ -139,7 +139,7 @@
 		#if _MSC_VER >= 1700
 			#define __CPP11__
 		#endif
-		#if _MSC_VER >= 2100
+		#if _MSC_VER >= 1900
 			#define CPL_HAS_CONSTEXPR
 		#endif
 
@@ -166,7 +166,7 @@
 			#pragma warning(disable:4091) // same
 
 
-			#ifndef CPL_HAS_CONSTEXPR
+			#if 1 /*ndef CPL_HAS_CONSTEXPR*/
 				#pragma warning(disable:4127) // conditional expression is constant
 			#endif
 		#endif

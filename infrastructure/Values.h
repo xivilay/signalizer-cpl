@@ -18,8 +18,16 @@ namespace cpl
 
 	typedef double ValueT;
 
+	class ContextualName
+	{
+	public:
+		virtual std::string getContextualName() { return{}; }
+		virtual ~ContextualName() {}
+	};
+
 	class ValueEntityBase 
 		: public CSerializer::Serializable
+		, public ContextualName
 	{
 	public:
 
@@ -38,7 +46,6 @@ namespace cpl
 		virtual VirtualFormatter<ValueT> & getFormatter() = 0;
 		virtual ValueT getNormalizedValue() = 0;
 		virtual void setNormalizedValue(ValueT parameter) = 0;
-		virtual std::string getContextualName() { return {}; };
 
 		virtual void beginChangeGesture() {};
 		virtual void endChangeGesture() {};
@@ -56,13 +63,21 @@ namespace cpl
 		virtual ~ValueEntityBase() {}
 	};
 
-	class ColourValue
+	class ValueGroup : public ContextualName
+	{
+	public:
+		virtual ValueEntityBase & getValueIndex(std::size_t i) = 0;
+		virtual std::size_t getNumValues() const noexcept = 0;
+	};
+
+	class ColourValue : public ValueGroup
 	{
 	public:
 		enum Index
 		{
-			R, G, B, A
+			R, G, B, A, ColourChannels
 		};
+
 #ifdef CPL_JUCE
 		juce::Colour getAsJuceColour() {
 			auto index = [&](Index i) { return static_cast<float>(getValueIndex(i).getNormalizedValue()); };
@@ -77,19 +92,20 @@ namespace cpl
 			getValueIndex(A).setNormalizedValue(colour.getFloatAlpha());
 		}
 #endif
-		template<std::size_t bits>
-		typename std::enable_if<bits < 32, std::uint32_t>::type getIntValueFor(Index i)
+		template<std::size_t bits, typename ret = std::uint32_t>
+		typename std::enable_if<bits < 32, ret>::type getIntValueFor(Index i)
 		{
 			auto cap = (1 << bits);
 			auto fpoint = getValueIndex(i).getNormalizedValue();
-			return fpoint == (ValueT)1.0 ? (cap - 1) : static_cast<std::uint32_t>(fpoint * cap);
+			return fpoint == (ValueT)1.0 ? static_cast<ret>(cap - 1) : static_cast<ret>(fpoint * cap);
 		}
 
-		virtual ValueEntityBase & getValueIndex(Index i) = 0;
-		virtual ~ColourValue() {}
+		virtual std::size_t getNumValues() const noexcept override { return ColourChannels; }
+
+		virtual std::string getContextualName() { return{}; }
 	};
 
-	class TransformValue
+	class TransformValue : public ValueGroup
 	{
 	public:
 		enum Index
@@ -103,7 +119,13 @@ namespace cpl
 		};
 
 		virtual ValueEntityBase & getValueIndex(Aspect a, Index i) = 0;
-		virtual ~TransformValue() {}
+		virtual ValueEntityBase & getValueIndex(std::size_t i) override
+		{ 
+			std::div_t res = std::div(i, 3); 
+			return getValueIndex((Aspect)res.quot, (Index)res.rem);
+		}
+
+		virtual std::size_t getNumValues() const noexcept override { return 9; }
 	};
 
 	class DefaultValueListenerEntity : public ValueEntityBase
@@ -180,7 +202,7 @@ namespace cpl
 
 		}
 
-		virtual ValueEntityBase & getValueIndex(Index i) override { return values[i]; }
+		virtual ValueEntityBase & getValueIndex(std::size_t i) override { return values[i]; }
 
 		SelfcontainedValue<> values[4];
 
@@ -199,13 +221,13 @@ namespace cpl
 			setParameterReference(parameterToRef);
 		}
 
-		void setParameterReference(UIParameterView * parameterView) 
+		void setParameterReference(UIParameterView * parameterReference) 
 		{ 
 			if (parameterView != nullptr)
 			{
 				parameterView->removeListener(this);
 			}
-			parameterView = parameterView; 
+			parameterView = parameterReference; 
 			if (parameterView != nullptr)
 			{
 				parameterView->addListener(this);
@@ -214,10 +236,12 @@ namespace cpl
 
 		void parameterChanged(Parameters::Handle, Parameters::Handle, UIParameterView * parameterThatChanged)
 		{
-			if (parameterView == parameterThatChanged)
-				notifyListeners();
+			if (parameterView != parameterThatChanged)
+			{
+				CPL_RUNTIME_EXCEPTION("Unknown parameter callback; corruption");
+			}
 
-			CPL_RUNTIME_EXCEPTION("Unknown parameter callback; corruption");
+			notifyListeners();
 		}
 
 		virtual VirtualTransformer<ValueT> & getTransformer() override { return parameterView->getTransformer(); }
@@ -265,7 +289,8 @@ namespace cpl
 		class Updater : public Parameters::SingleUpdate<UIParameterView>
 		{
 		public:
-			Updater(ParameterValue<UIParameterView> * parent, bool isAutomatable = true, bool canChangeOthers = false)
+			Updater(ParameterValue<UIParameterView> * parentToRef, bool isAutomatable = true, bool canChangeOthers = false)
+				: parent(parentToRef)
 			{
 				entry.parameter = &parent->parameter;
 				entry.shouldBeAutomatable = isAutomatable;
@@ -312,15 +337,18 @@ namespace cpl
 			std::string context;
 		};
 
-		ParameterColourValue(SharedBehaviour & b)
+		ParameterColourValue(SharedBehaviour & b, const std::string & name = "")
 			: r("R", b.getTransformer(), &b.getFormatter())
 			, g("G", b.getTransformer(), &b.getFormatter())
 			, b("B", b.getTransformer(), &b.getFormatter())
 			, a("A", b.getTransformer(), &b.getFormatter())
 			, behaviour(b)
+			, contextName(name)
 		{
 
 		}
+
+		virtual std::string getContextualName() override { return contextName; }
 
 		virtual const std::string & getBundleContext() const noexcept override
 		{
@@ -347,7 +375,7 @@ namespace cpl
 			add(r); add(g); add(b); add(a);
 		}
 
-		ValueEntityBase & getValueIndex(Index i) override
+		ValueEntityBase & getValueIndex(std::size_t i) override
 		{
 			return values[i];
 		}
@@ -356,7 +384,7 @@ namespace cpl
 		std::array<ParameterValueWrapper<UIParameterView>, 4> values;
 
 	private:
-
+		std::string contextName;
 		std::unique_ptr<std::vector<Entry>> parameters;
 		SharedBehaviour & behaviour;
 	};
@@ -377,7 +405,7 @@ namespace cpl
 		{
 		public:
 			SharedBehaviour()
-				: context("TSF")
+				: context("tsf")
 				, degreeFormatter("degs")
 				, degreeRange(0, 360)
 				, magnitudeRange(0, 50)

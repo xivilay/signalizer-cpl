@@ -44,7 +44,6 @@ namespace cpl
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
 		texts[1] = textToggled.size() ? textToggled : text;
 		enableTooltip(true);
-		addListener(this);
 	}
 
 	CButton::CButton()
@@ -52,7 +51,6 @@ namespace cpl
 	{
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
 		enableTooltip(true);
-		addListener(this);
 	}
 
 	CButton::~CButton() {};
@@ -74,9 +72,7 @@ namespace cpl
 
 	void CButton::bSetInternal(iCtrlPrec_t newValue)
 	{
-		removeListener(this);
 		setToggleState(newValue > 0.5f ? true : false, juce::NotificationType::dontSendNotification);
-		addListener(this);
 	}
 	void CButton::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
@@ -94,6 +90,17 @@ namespace cpl
 	void CButton::setToggledText(const std::string & newText)
 	{
 		this->texts[1] = newText;
+	}
+
+	void CButton::clicked()
+	{
+		baseControlValueChanged();
+	}
+
+	void CButton::baseControlValueChanged()
+	{
+		notifyListeners();
+		//repaint();
 	}
 
 	void CButton::paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown)

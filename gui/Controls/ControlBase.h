@@ -33,4 +33,6 @@
 	#include "../../Common.h"
 	#include "../CBaseControl.h"
 	#include "../../infrastructure/Values.h"
+	#include "../../SerializerModifiers.h"
+
 #endif

@@ -38,48 +38,7 @@
 
 	namespace cpl
 	{
-		
-		class CRenderButton : public juce::Button, public CBaseControl
-		{
-			juce::Colour c;
-			juce::String texts[2];
-			bool toggle;
-		public:
-			CRenderButton(const std::string & text, const std::string & textToggled = "");
-			~CRenderButton();
-			
-			void setToggleable(bool isAble);
-			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
-			iCtrlPrec_t bGetValue() const override;
-			void setUntoggledText(const std::string &);
-			void setToggledText(const std::string &);
-			void setButtonColour(juce::Colour newColour);
-			std::string bGetTitle() const override;
-			void bSetTitle(const std::string & ) override;
-			juce::Colour getButtonColour();
-		private:
-			void paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown);
-
-		};
-
-		/*********************************************************************************************
-
-			Toggle interface
-
-		*********************************************************************************************/
-		class CToggle : public juce::ToggleButton, public CBaseControl
-		{
-			const juce::Image & cbox;
-			juce::String text;
-		public:
-			CToggle();
-			void paint(juce::Graphics & g) override;
-			iCtrlPrec_t bGetValue() const override;
-			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
-			void bSetText(const std::string & in) override;
-		};
+	
 		/*********************************************************************************************
 
 			Textlabel interface
@@ -122,7 +81,10 @@
 			Name says it all. Holds a virtual container of larger size, that is scrollable.
 
 		*********************************************************************************************/
-		class CScrollableContainer : public juce::Component, public CBaseControl
+		class CScrollableContainer 
+			: public juce::Component
+			, public CBaseControl
+			, private juce::ScrollBar::Listener
 		{
 		protected:
 			juce::ScrollBar * scb;
@@ -139,7 +101,7 @@
 			void setBackground(const juce::Image & b) {	background = &b; }
 			juce::ScrollBar * getSCB() { return scb; }
 			juce::Component * getVContainer() { return virtualContainer; }
-			void scrollBarMoved(juce::ScrollBar * b, double newRange);
+			void scrollBarMoved(juce::ScrollBar * b, double newRange) override;
 			virtual void paint(juce::Graphics & g) override;
 			virtual ~CScrollableContainer() CPL_llvm_DummyNoExcept;
 

@@ -172,7 +172,7 @@ namespace cpl
 
 		for (auto c : { &kbase, &kslope, &kpivot })
 		{
-			c->bAddPassiveChangeListener(this);
+			c->bAddChangeListener(this);
 			c->bAddFormatter(this);
 		}
 

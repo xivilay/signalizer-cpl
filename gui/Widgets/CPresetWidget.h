@@ -75,7 +75,7 @@
 
 			// overrides
 			virtual void valueChanged(const cpl::CBaseControl * c) override;
-			virtual void onValueChange() override;
+			virtual void baseControlValueChanged() override;
 			virtual void onObjectDestruction(const ObjectProxy & object) override;
 			// api
 			const std::string & getName() const noexcept;

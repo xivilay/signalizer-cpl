@@ -35,3 +35,5 @@
 #include "CValueKnobSlider.h"
 #include "CKnobSliderEditor.cpp"
 #include "CValueControl.cpp"
+#include "CValueKnobSlider.cpp"
+#include "CValueComboBox.cpp"

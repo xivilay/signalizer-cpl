@@ -36,7 +36,9 @@
 	namespace cpl
 	{
 
-		class CButton : public juce::Button, public CBaseControl
+		class CButton 
+			: public juce::Button
+			, public CBaseControl
 		{
 			juce::String texts[2];
 			bool toggle;
@@ -45,6 +47,8 @@
 			CButton();
 			~CButton();
 
+			virtual void baseControlValueChanged() override;
+			virtual void clicked() override;
 			void setToggleable(bool isAble);
 			void bSetInternal(iCtrlPrec_t newValue) override;
 			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;

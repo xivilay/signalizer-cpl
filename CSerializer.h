@@ -336,6 +336,17 @@
 		{
 		public:
 
+			enum class Modifiers
+			{
+				/// <summary>
+				/// Stack-modified. If set (internally), all writes & reads modify read ptrs, but do not
+				/// store or read data; any references passed in are unmodified.
+				/// </summary>
+				Virtual,
+				RestoreValue,
+				RestoreSettings
+			};
+
 			typedef CSerializer Archiver;
 			typedef CSerializer Builder;
 
@@ -515,8 +526,39 @@
 
 
 			CSerializer(Key k = Key(1), Version v = Version())
-				: key(k), version(v), throwOnExhaustion(true)
+				: key(k)
+				, version(v)
+				, throwOnExhaustion(true)
+				, virtualCount(0)
+				, restoreSettings(true)
+				, restoreValue(true)
 			{
+
+			}
+
+			void modify(Modifiers m, bool toggle = true)
+			{
+				switch (m)
+				{
+				case Modifiers::Virtual: virtualCount += toggle ? 1 : -1; break;
+				case Modifiers::RestoreSettings: restoreSettings = !!toggle; break;
+				case Modifiers::RestoreValue: restoreValue = !!toggle; break;
+				}
+
+				if (virtualCount < 0)
+					CPL_RUNTIME_EXCEPTION("Virtual count modified to below zero; mismatch");
+			}
+
+			bool getModifier(Modifiers m)
+			{
+				switch (m)
+				{
+				case Modifiers::Virtual: return virtualCount > 0; 
+				case Modifiers::RestoreSettings: return restoreSettings;
+				case Modifiers::RestoreValue: return restoreValue; 
+				default:
+					return false;
+				}
 
 			}
 
@@ -580,7 +622,10 @@
 					size = sizeof(T);
 				}
 
-				data.appendBytes(object, size);
+				if (virtualCount > 0)
+					fill(size);
+				else
+					data.appendBytes(object, size);
 			}
 
 			/// <summary>
@@ -592,11 +637,37 @@
 				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
 					operator << (const T & object)
 				{
-
-					data.appendBytes(&object, sizeof(T));
+					if (virtualCount > 0)
+						fill(sizeof(T));
+					else
+						data.appendBytes(&object, sizeof(T));
 
 					return *this;
 				}
+
+			/// <summary>
+			/// Advances the read pointer by N.
+			/// </summary>
+			bool discard(std::size_t bytes)
+			{
+				unsigned char c = 0;
+				bool res = true;
+				for (std::size_t i = 0; res && i < bytes; ++i)
+					res = res && data.readBytes(&c, 1);
+
+				return res;
+			}
+
+			/// <summary>
+			/// Fills in N bytes, intended to be discarded()
+			/// </summary>
+			void fill(std::size_t bytes)
+			{
+				unsigned char c = 0;
+
+				for (std::size_t i = 0; i < bytes; ++i)
+					data.appendBytes(&c, 1);
+			}
 
 			void rewindReader()
 			{
@@ -621,8 +692,18 @@
 				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
 					operator >> ( T & object)
 				{
+					bool result = false;
 
-					if (!data.readBytes(&object, sizeof(T)) && throwOnExhaustion)
+					if (virtualCount > 0)
+					{
+						result = discard(sizeof(T));
+					}
+					else
+					{
+						result = data.readBytes(&object, sizeof(T));
+					}
+					
+					if (!result && throwOnExhaustion)
 						CPL_RUNTIME_EXCEPTION_SPECIFIC("CSerializer exhausted; probably incompatible serialized object.", ExhaustedException);
 
 					return *this;
@@ -655,13 +736,18 @@
 
 			CSerializer & operator << (const std::string & str)
 			{
-				data.appendBytes(str.c_str(), str.size() + 1);
+				if (virtualCount > 0)
+					fill(str.size() + 1);
+				else
+					data.appendBytes(str.c_str(), str.size() + 1);
 				return *this;
 			}
 			CSerializer & operator >> ( std::string & str)
 			{
-				
-				str = data.getString();
+				if (virtualCount > 0)
+					data.getString();
+				else
+					str = data.getString();
 				
 				return *this;
 			}
@@ -697,7 +783,8 @@
 			Key key;
 			bool throwOnExhaustion;
 			Version version;
-
+			int virtualCount;
+			bool restoreSettings, restoreValue;
 			// iterator interface. must be placed after declaration in MSVC
 		public:
 			auto begin() const noexcept -> decltype(content.begin())
@@ -751,8 +838,8 @@
 		private:
 
 			CSerializer internalSerializer;
-
 			std::string nameReference;
 		};
+
 	};
 #endif

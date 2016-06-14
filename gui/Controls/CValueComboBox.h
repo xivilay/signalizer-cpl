@@ -27,40 +27,28 @@
  
 *************************************************************************************/
 
-#ifndef _CCOMBOBOX_H
-	#define _CCOMBOBOX_H
+#ifndef CPL_CVALUECOMBOBOX_H
+	#define CPL_CVALUECOMBOBOX_H
 
 	#include "ControlBase.h"
-	#include <string>
-	#include <vector>
+	#include "ValueControl.h"
 
 	namespace cpl
 	{
 
-		class CComboBox
+		class CValueComboBox
 			: public juce::Component
-			, public cpl::CBaseControl
 			, private juce::ComboBox::Listener
+			, public ValueControl<ValueEntityBase, CompleteValue<LinearRange<ValueT>, BasicFormatter<ValueT>>>
 		{
 
 		public:
-			// 'C' constructor
-			// 'values' is a list of |-seperated values
-			CComboBox(const std::string & name, const std::string & values);
-			CComboBox(const std::string & name, const std::vector<std::string> & values);
-			CComboBox();
-
-			// list of |-seperated values
-			virtual void setValues(const std::string & values);
-			virtual void setValues(const std::vector<std::string> & values);
+			CValueComboBox(ValueEntityBase * valueToReferTo = nullptr, bool takeOwnerShip = false);
 
 			// overrides
 			virtual void bSetTitle(const std::string & newTitle) override;
 			virtual std::string bGetTitle() const override;
 	
-			virtual iCtrlPrec_t bGetValue() const override;
-			virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
-			virtual void bSetInternal(iCtrlPrec_t val) override;
 			virtual void paint(juce::Graphics & g) override;
 
 			int getZeroBasedSelIndex() const;
@@ -73,31 +61,37 @@
 			template<typename T>
 				T getZeroBasedSelIndex() const
 				{
-					return (T)(box.getSelectedId() - 1);
+					return (T)(valueObject->getTransformer().transform(valueObject->getNormalizedValue()));
 				}
 			
 			template<typename T>
 				void setZeroBasedIndex(T input)
 				{
-					box.setSelectedId(((int)input) - 1);
+					valueObject->setNormalizedValue(valueObject->getTransformer().normalize(static_cast<ValueT>(input)));
 				}
 
 			bool setEnabledStateFor(const std::string & idx, bool toggle);
 			bool setEnabledStateFor(std::size_t idx, bool toggle);
+
+
+
 		protected:
-			
+
+			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
+
 			std::size_t indexOfValue(const std::string & idx) const noexcept;
 
 			void setZeroBasedSelIndex(int index);
 			// overrides
-			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
-			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 			virtual void resized() override;
 			virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
 			virtual void baseControlValueChanged() override;
 			virtual bool queryResetOk() override;
 
 		private:
+			// list of |-seperated values
+			virtual void setValues(const std::vector<std::string> & values);
+
 			void initialize();
 
 			// data
@@ -105,8 +99,6 @@
 			juce::ComboBox box;
 			juce::String title;
 			juce::Rectangle<int> stringBounds;
-			iCtrlPrec_t internalValue;
-			bool recursionFlag;
 		};
 	};
 #endif

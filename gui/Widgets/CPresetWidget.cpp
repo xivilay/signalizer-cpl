@@ -152,7 +152,7 @@ namespace cpl
 		return false;
 	}
 
-	void CPresetWidget::onValueChange()
+	void CPresetWidget::baseControlValueChanged()
 	{
 	}
 
@@ -206,11 +206,11 @@ namespace cpl
 	void CPresetWidget::initControls()
 	{
 
-		kloadPreset.bAddPassiveChangeListener(this);
-		ksavePreset.bAddPassiveChangeListener(this);
-		kpresetList.bAddPassiveChangeListener(this);
-		kloadDefault.bAddPassiveChangeListener(this);
-		ksaveDefault.bAddPassiveChangeListener(this);
+		kloadPreset.bAddChangeListener(this);
+		ksavePreset.bAddChangeListener(this);
+		kpresetList.bAddChangeListener(this);
+		kloadDefault.bAddChangeListener(this);
+		ksaveDefault.bAddChangeListener(this);
 
 
 		kloadPreset.bSetTitle("Load preset...");

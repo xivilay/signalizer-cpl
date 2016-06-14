@@ -30,8 +30,7 @@
 #ifndef CPL_CKNOBSLIDER_H
 	#define CPL_CKNOBSLIDER_H
 
-	#include "../../Common.h"
-	#include "../CBaseControl.h"
+	#include "ControlBase.h"
 
 	namespace cpl
 	{
@@ -69,7 +68,8 @@
 
 		protected:
 
-			virtual void onValueChange() override;
+			virtual void valueChanged() override;
+			virtual void baseControlValueChanged() override;
 			virtual void paint(juce::Graphics& g) override;
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;

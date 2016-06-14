@@ -289,10 +289,10 @@ namespace cpl
 		kalpha.bAddFormatter(this);
 		kbeta.bAddFormatter(this);
 		
-		kwindowList.bAddPassiveChangeListener(this);
-		ksymmetryList.bAddPassiveChangeListener(this);
-		kalpha.bAddPassiveChangeListener(this);
-		kbeta.bAddPassiveChangeListener(this);
+		kwindowList.bAddChangeListener(this);
+		ksymmetryList.bAddChangeListener(this);
+		kalpha.bAddChangeListener(this);
+		kbeta.bAddChangeListener(this);
 
 
 		kwindowList.bSetDescription("The window function describes a kernel applied to the input signal that alters the spectral leakage through controlling the ratio between main lobe width and side-lobes, including inherit patterns.");

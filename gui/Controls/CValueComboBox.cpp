@@ -21,39 +21,39 @@
  
 **************************************************************************************
  
-	file:CComboBox.cpp
+	file:CValueComboBox.cpp
  
-		Source code for CComboBox.h
+		Source code for CValueComboBox.h
  
 *************************************************************************************/
 
-#include "CComboBox.h"
+#include "CValueComboBox.h"
 #include "../../Mathext.h"
+#include "../../SerializerModifiers.h"
+
 
 namespace cpl
 {
-	CComboBox::CComboBox(const std::string & name, const std::string & inputValues)
-		: CBaseControl(this), title(name), internalValue(0.0), recursionFlag(false)
+
+	CValueComboBox::CValueComboBox(ValueEntityBase * valueToReferTo, bool takeOwnership)
+		: ValueControl(this, valueToReferTo, takeOwnership)
 	{
-		bToggleEditSpaces(true);
-		setValues(inputValues);
+		int numValues = valueObject->getTransformer().getQuantization();
+		if (numValues < 1)
+			CPL_RUNTIME_EXCEPTION("Initializating a value combobox with a value with quantization < 1");
+		std::vector<std::string> values(numValues);
+		for (std::size_t i = 0; i < values.size(); ++i)
+		{
+			if (!valueObject->getFormatter().format(static_cast<ValueT>(i), values[i]))
+				CPL_RUNTIME_EXCEPTION("Error formatting a value index");
+		}
+
+		setValues(values);
+
 		initialize();
 	}
 
-	CComboBox::CComboBox(const std::string & name, const std::vector<std::string> & inputValues)
-		: CBaseControl(this), title(name), values(inputValues), internalValue(0.0), recursionFlag(false)
-	{
-		initialize();
-	}
-
-
-	CComboBox::CComboBox()
-		: CBaseControl(this), internalValue(0.0), recursionFlag(false)
-	{
-		initialize();
-	}
-
-	void CComboBox::initialize()
+	void CValueComboBox::initialize()
 	{
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);
 		addAndMakeVisible(box);
@@ -64,28 +64,27 @@ namespace cpl
 		bSetIsDefaultResettable(true);
 	}
 
-	bool CComboBox::queryResetOk()
+	bool CValueComboBox::queryResetOk()
 	{
 		return !box.isPopupActive();
 	}
 
-	void CComboBox::resized()
+	void CValueComboBox::resized()
 	{
 		stringBounds = CRect(5, 0, getWidth(), std::min(20, getHeight() / 2));
 		box.setBounds(0, stringBounds.getBottom(), getWidth(), getHeight() - stringBounds.getHeight());
 
 	}
-	void CComboBox::bSetTitle(const std::string & newTitle)
+	void CValueComboBox::bSetTitle(const std::string & newTitle)
 	{
 		title = newTitle;
 	}
-	std::string CComboBox::bGetTitle() const
+	std::string CValueComboBox::bGetTitle() const
 	{
 		return title.toStdString();
 	}
 
-
-	void CComboBox::paint(juce::Graphics & g)
+	void CValueComboBox::paint(juce::Graphics & g)
 	{
 		//g.setFont(systemFont.withHeight(TextSize::normalText)); EDIT_TYPE_NEWFONTS
 		g.setFont(TextSize::normalText);
@@ -93,55 +92,7 @@ namespace cpl
 		g.drawFittedText(title, stringBounds, juce::Justification::centredLeft, 1, 1);
 	}
 
-
-	void CComboBox::setValues(const std::string & inputValues)
-	{
-		values.clear();
-		std::size_t iter_pos(0);
-		auto len = inputValues.size();
-		for (std::size_t i = 0; i < len; i++)
-		{
-			if (inputValues[i] == '|') 
-			{
-				values.push_back(inputValues.substr(iter_pos, i - iter_pos));
-				iter_pos = i + 1;
-			}
-			else if (i == (len - 1)) 
-			{
-				values.push_back(inputValues.substr(iter_pos, i + 1 - iter_pos));
-
-			}
-		}
-		setValues(values);
-	}
-
-	/*int floatToInt(iCtrlPrec_t inVal, int size)
-	{
-		if (1 >= size)
-		{
-			return 0;
-		}
-		else
-		{
-			return cpl::Math::round<int>(1 + inVal * size);
-		}
-	}
-
-	iCtrlPrec_t intToFloat2(int idx, int size)
-	{
-		if (!idx)
-			return 0;
-		if (1 >= size)
-		{
-			return 0;
-		}
-		else
-		{
-			return iCtrlPrec_t(idx - 1) / (size - 1);
-		}
-	}*/
-
-	int floatToInt(iCtrlPrec_t inVal, int size)
+	int floatToInt2(iCtrlPrec_t inVal, int size)
 	{
 		inVal = cpl::Math::confineTo(inVal, 0.0, 1.0);
 		if (1 > size)
@@ -149,7 +100,7 @@ namespace cpl
 		return cpl::Math::round<int>(1 + inVal * (size - 1));
 	}
 
-	iCtrlPrec_t intToFloat(int idx, int size)
+	iCtrlPrec_t intToFloat2(int idx, int size)
 	{
 		if (2 > size)
 			size = 2;
@@ -158,15 +109,15 @@ namespace cpl
 		return iCtrlPrec_t(idx - 1) / (size - 1);
 	}
 
-	int CComboBox::getZeroBasedSelIndex() const
+	int CValueComboBox::getZeroBasedSelIndex() const
 	{
-		auto value = box.getSelectedId() - 1;
+		auto value = getZeroBasedSelIndex<int>();
 		if (value < 0)
 			value = 0;
 		return value;
 	}
 
-	void CComboBox::setValues(const std::vector<std::string> & inputValues)
+	void CValueComboBox::setValues(const std::vector<std::string> & inputValues)
 	{
 		values = inputValues;
 		auto currentIndex = box.getItemText(box.getSelectedItemIndex() - 1);
@@ -186,56 +137,26 @@ namespace cpl
 		//bSetInternal(bGetValue());
 	}
 
-	void CComboBox::bSetValue(iCtrlPrec_t val, bool sync)
+	void CValueComboBox::onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value)
 	{
-		box.setSelectedId(floatToInt(val, (int)values.size()), 
-			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
+		box.setSelectedId(floatToInt2(value->getNormalizedValue(), (int)values.size()), dontSendNotification);
 	}
 
-	void CComboBox::bSetInternal(iCtrlPrec_t val)
+	void CValueComboBox::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged)
 	{
-		box.setSelectedId(floatToInt(val, (int)values.size()), juce::dontSendNotification);
-	}
-
-	void CComboBox::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged)
-	{
+		valueObject->setNormalizedValue(intToFloat(box.getSelectedId(), (int)values.size()));
 		baseControlValueChanged();
 	}
 
 
-	void CComboBox::baseControlValueChanged()
+	void CValueComboBox::baseControlValueChanged()
 	{
+		repaint();
 		notifyListeners();
 	}
 
-	iCtrlPrec_t CComboBox::bGetValue() const
-	{
-		return intToFloat(box.getSelectedId(), (int)values.size());
-	}
 
-	bool CComboBox::bValueToString(std::string & valueString, iCtrlPrec_t val) const
-	{
-		int idx = floatToInt(Math::confineTo<iCtrlPrec_t>(val, 0.0, 1.0), (int)values.size());
-		valueString = values[(unsigned)idx - 1];
-		return true;
-	}
-
-
-	bool CComboBox::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
-	{
-		auto idx = indexOfValue(valueString);
-		if (idx != -1)
-		{
-			// can never divide by zero here, since the for loop won't enter in that case
-			//val = iCtrlPrec_t(i) / (values.size() > 1 ? values.size() - 1 : 1);
-			val = intToFloat((int)idx + 1, (int)values.size());
-			return true;
-		}
-
-		return false;
-	}
-
-	std::size_t CComboBox::indexOfValue(const std::string & idx) const noexcept
+	std::size_t CValueComboBox::indexOfValue(const std::string & idx) const noexcept
 	{
 		for (std::size_t i = 0; i < values.size(); ++i)
 		{
@@ -247,12 +168,12 @@ namespace cpl
 		return (std::size_t)-1;
 	}
 
-	bool CComboBox::setEnabledStateFor(const std::string & idx, bool toggle)
+	bool CValueComboBox::setEnabledStateFor(const std::string & idx, bool toggle)
 	{
 		return setEnabledStateFor(indexOfValue(idx), toggle);
 	}
 
-	bool CComboBox::setEnabledStateFor(std::size_t entry, bool toggle)
+	bool CValueComboBox::setEnabledStateFor(std::size_t entry, bool toggle)
 	{
 		if (entry < values.size() && entry != -1)
 		{

@@ -72,10 +72,6 @@
 		/// </summary>
 		class CBaseControl 
 		: 
-			public juce::Slider::Listener,
-			public juce::Button::Listener,
-			public juce::ScrollBar::Listener,
-			public juce::ComboBox::Listener,
 			public CToolTipClient,
 			public Utility::DestructionServer<CBaseControl>,
 			public CSerializer::Serializable
@@ -276,6 +272,13 @@
 			{
 			
 			}
+
+			/// <summary>
+			/// Returns the visible, exported name of this control, since
+			/// the title may not uniquely identify external automation.
+			/// </summary>
+			virtual std::string bGetExportedName() { return{}; }
+
 			/// <summary>
 			/// Gets the display title of the control
 			/// </summary>
@@ -383,32 +386,9 @@
 			}
 
 			/// <summary>
-			/// Adds a listener (if not present) to be called back on value changes
-			/// </summary>
-			void bAddChangeListener(Listener * listener)
-			{
-				if (listener && !contains(listeners, listener))
-				{
-					listeners.push_back(listener);
-					addClientDestructor(listener);
-				}
-			}
-			/// <summary>
-			/// Removes a change-listener (if present)
-			/// </summary>
-			void bRemoveChangeListener(Listener * listener)
-			{
-				auto it = std::find(listeners.begin(), listeners.end(), listener);
-				if (it != listeners.end())
-				{
-					listeners.erase(it);
-				}
-			}
-
-			/// <summary>
 			/// Adds a passive listener (if not present) to be called back on value changes
 			/// </summary>
-			void bAddPassiveChangeListener(Listener * listener)
+			void bAddChangeListener(Listener * listener)
 			{
 				if (listener && !contains(passiveListeners, listener))
 				{
@@ -419,7 +399,7 @@
 			/// <summary>
 			/// Removes a change-listener (if present)
 			/// </summary>
-			void bRemovePassiveChangeListener(Listener * listener)
+			void bRemoveChangeListener(Listener * listener)
 			{
 				auto it = std::find(passiveListeners.begin(), passiveListeners.end(), listener);
 				if (it != passiveListeners.end())
@@ -501,8 +481,9 @@
 
 			/// <summary>
 			/// The control's internal event callback. This is called whenever the controls value is changed.
+			/// THis is responsible for calling listeners + updating info + redrawing.
 			/// </summary>
-			virtual void onValueChange() {}
+			virtual void baseControlValueChanged() {}
 
 			/// <summary>
 			/// Internal serialization. If you override this, do not call the base.
@@ -517,9 +498,10 @@
 			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) 
 			{
 				iCtrlPrec_t value(0);
-
 				ar >> value;
-				bSetValue(value, true);
+
+				if(ar.getModifier(CSerializer::Modifiers::RestoreValue))
+					bSetValue(value, true);
 			}
 
 			static bool bMapStringToInternal(const std::string & stringInput, iCtrlPrec_t & val)
@@ -549,42 +531,17 @@
 				return true;
 			}
 
-
-			// some layers of indirection is needed here, since juce doesn't
-			// share the same class for listeners.
-			// the base object works as a proxy that turns all the events
-			// into cbasecontrol listener callbacks.
-
-			virtual void buttonClicked(juce::Button * c)
+			void notifyListeners()
 			{
-				postEvent();
-			}
-			virtual void sliderValueChanged(juce::Slider * c)
-			{
-				postEvent();
-			}
-			virtual void scrollBarMoved(juce::ScrollBar * c, double newRange)
-			{
-				postEvent();
-			}
-			virtual void comboBoxChanged(juce::ComboBox * c)
-			{
-				postEvent();
+				for (auto const & listener : passiveListeners)
+					listener->valueChanged(this);
 			}
 
 		private:
 
 			void postEvent()
 			{
-				if (!listenerChangeHandling())
-					onValueChange();
-				notifyPassiveListeners();
-			}
-
-			void notifyPassiveListeners()
-			{
-				for (auto const & listener : passiveListeners)
-					listener->valueChanged(this);
+				baseControlValueChanged();
 			}
 
 			bool tipsEnabled;

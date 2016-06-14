@@ -61,7 +61,7 @@
 			// overrides
 			virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
 			virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
-			//virtual void onValueChange() override;
+			//virtual void baseControlValueChanged() override;
 
 			// data
 			std::vector<std::string> values;

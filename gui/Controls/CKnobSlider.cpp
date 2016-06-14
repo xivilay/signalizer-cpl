@@ -31,7 +31,6 @@
 #include "CKnobSliderEditor.h"
 #include "../../simd/simd_consts.h"
 
-
 namespace cpl
 {
 
@@ -54,7 +53,6 @@ namespace cpl
 		// IF you change the range, please change the scaling back to what is found in the comments.
 		setRange(0.0, 1.0);
 		bToggleEditSpaces(true);
-		addListener(this);
 		setTextBoxStyle(NoTextBox, 0, 0, 0);
 		setIsKnob(true);
 		enableTooltip(true);
@@ -208,7 +206,6 @@ namespace cpl
 
 	iCtrlPrec_t CKnobSlider::bGetValue() const
 	{
-		// (getValue() - getMinimum()) / (getMaximum() - getMinimum())
 		return static_cast<iCtrlPrec_t>(getValue());
 	}
 
@@ -220,22 +217,33 @@ namespace cpl
 		ar << getMouseDragSensitivity();
 		ar << getSliderStyle();
 	}
+
 	void CKnobSlider::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
 		iCtrlPrec_t value(0);
 		bool vel(false);
 		int sens(0);
-		Slider::SliderStyle style;
+		Slider::SliderStyle style(Slider::SliderStyle::RotaryVerticalDrag);
+
 		ar >> value;
 		ar >> isKnob;
 		ar >> vel;
 		ar >> sens;
 		ar >> style;
-		setIsKnob(isKnob);
-		setVelocityBasedMode(vel);
-		setMouseDragSensitivity(sens);
-		setSliderStyle(style);
-		bSetValue(value, true);
+
+		if (ar.getModifier(CSerializer::Modifiers::RestoreSettings))
+		{
+			setIsKnob(isKnob);
+			setVelocityBasedMode(vel);
+			setMouseDragSensitivity(sens);
+			setSliderStyle(style);
+		}
+
+		if (ar.getModifier(CSerializer::Modifiers::RestoreValue))
+		{
+			bSetValue(value, true);
+		}
+
 	}
 
 	void CKnobSlider::bSetText(const std::string & in)
@@ -244,18 +252,19 @@ namespace cpl
 	}
 	void CKnobSlider::bSetInternal(iCtrlPrec_t newValue)
 	{
-		// newValue * (getMaximum() - getMinimum()) + getMinimum()
 		setValue(newValue, dontSendNotification);
 	}
+
 	void CKnobSlider::bSetTitle(const std::string & in)
 	{
 		title = in;
 	}
+
 	void CKnobSlider::bSetValue(iCtrlPrec_t newValue, bool sync)
 	{
-		// newValue * (getMaximum() - getMinimum()) + getMinimum()
-		setValue(newValue, sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
+		setValue(newValue, sync ? sendNotificationSync : sendNotification);
 	}
+
 	void CKnobSlider::bRedraw()
 	{
 		bFormatValue(text, bGetValue());
@@ -265,7 +274,7 @@ namespace cpl
 
 	void CKnobSlider::setIsKnob(bool shouldBeKnob)
 	{
-		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);//setSize(ControlSize::Square.width, ControlSize::Square.height);
+		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);
 
 		if (shouldBeKnob && !isKnob)
 		{
@@ -295,11 +304,18 @@ namespace cpl
 		return text;
 	}
 
-	void CKnobSlider::onValueChange()
+	void CKnobSlider::valueChanged()
 	{
-		
+		// called whenever the slider changes.
+		baseControlValueChanged();
+	}
+
+	void CKnobSlider::baseControlValueChanged()
+	{
 		bFormatValue(text, bGetValue());
 		bSetText(text);
+		notifyListeners();
+		repaint();
 	}
 
 };

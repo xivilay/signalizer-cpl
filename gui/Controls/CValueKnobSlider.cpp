@@ -33,13 +33,18 @@
 namespace cpl
 {
 
-	CValueKnobSlider::CValueKnobSlider(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false)
+	CValueKnobSlider::CValueKnobSlider(ValueEntityBase * valueToReferTo, bool takeOwnerShip)
 		: valueObject(nullptr)
 	{
 		setValueReference(valueToReferTo, takeOwnerShip);
 	}
 
-	void CValueKnobSlider::setValueReference(ValueEntityBase * valueToReferTo, bool takeOwnerShip = false)
+	std::string CValueKnobSlider::bGetExportedName()
+	{
+		return valueObject->getContextualName();
+	}
+
+	void CValueKnobSlider::setValueReference(ValueEntityBase * valueToReferTo, bool takeOwnerShip)
 	{
 		if (valueObject != nullptr)
 		{
@@ -49,7 +54,7 @@ namespace cpl
 
 		if (valueToReferTo == nullptr)
 		{
-			valueToReferTo = new CompleteValue<LinearRange<iCtrlPrec_T>, BasicFormatter<iCtrlPrec_t>>();
+			valueToReferTo = new CompleteValue<LinearRange<iCtrlPrec_t>, BasicFormatter<iCtrlPrec_t>>();
 			takeOwnerShip = true;
 		}
 
@@ -75,28 +80,15 @@ namespace cpl
 	}
 
 
-	iCtrlPrec_t CKnobSlider::bGetValue() const
+	iCtrlPrec_t CValueKnobSlider::bGetValue() const
 	{
 		return valueObject->getNormalizedValue();
 	}
 
-	void CValueKnobSlider::onControlSerialization(CSerializer::Archiver & ar, Version version)
-	{
-		return CKnobSlider::onControlDeserialization(ar, version);
-	}
-
-	void CValueKnobSlider::onControlDeserialization(CSerializer::Builder & ar, Version version)
-	{
-		return CKnobSlider::onControlDeserialization(ar, version);
-	}
-
 	void CValueKnobSlider::valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value)
 	{
-		setValue(newValue, juce::Notification::DontSendNotification);
-		bFormatValue(text, bGetValue());
-		bSetText(text);
-		bForceEvent();
-		repaint();
+		setValue(valueObject->getNormalizedValue(), dontSendNotification);
+		baseControlValueChanged();
 	}
 
 	void CValueKnobSlider::bSetInternal(iCtrlPrec_t newValue)
@@ -109,9 +101,19 @@ namespace cpl
 		valueObject->setNormalizedValue(newValue);
 	}
 
-	void CValueKnobSlider::onValueChange()
+	void CValueKnobSlider::valueChanged()
 	{
-		valueObject->setNormalizedValue(static_cast<iCtrlPrec_t>(getValue());
+		valueObject->setNormalizedValue(Slider::getValue());
+	}
+
+	void CValueKnobSlider::startedDragging()
+	{
+		valueObject->beginChangeGesture();
+	}
+
+	void CValueKnobSlider::stoppedDragging()
+	{
+		valueObject->endChangeGesture();
 	}
 
 };

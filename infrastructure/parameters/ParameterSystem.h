@@ -22,7 +22,7 @@ namespace cpl
 
 	// Concecpt of Parameters: has T getValue(), setValue(T), std::string getName()
 
-	template<typename T, typename class TransformerType = VirtualTransformer<T>, typename class Restricter = ZeroOneClamper<T>>
+	template<typename T, class TransformerType = VirtualTransformer<T>, class Restricter = ZeroOneClamper<T>>
 	class /* alignas(CPL_CACHEALIGNMENT) */ ThreadedParameter : Utility::CNoncopyable
 	{
 	public:
@@ -48,7 +48,7 @@ namespace cpl
 		std::atomic<T> value;
 	};
 
-	template<typename T, class BaseParameter, typename class FormatterType = VirtualFormatter<T>>
+	template<typename T, class BaseParameter, class FormatterType = VirtualFormatter<T>>
 	class FormattedParameter 
 		: public BaseParameter
 		, private BasicFormatter<T> // (compression/EBO)

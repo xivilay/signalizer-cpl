@@ -127,6 +127,7 @@
 			std::string toolTip;
 
 		private:
+			std::string exportedControlName;
 			juce::Point<int> maximumSize;
 			std::unique_ptr<cpl::CButton> switchWithOld;
 			cpl::CBaseControl * parentControl;

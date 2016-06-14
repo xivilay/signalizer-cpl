@@ -72,12 +72,12 @@ namespace cpl
 		}
 
 		// store old value of control:
-		parent->serialize(oldValue, 1);
+		parent->serialize(oldValue, programInfo.version);
 		switchWithOld.reset(new CButton("Switch to A", "Switch to B"));
 		switchWithOld->setToggleable(true);
 		switchWithOld->bSetDescription("Switch back to the other settings (A/B compare).");
 		switchWithOld->enableTooltip(true);
-		switchWithOld->bAddPassiveChangeListener(this);
+		switchWithOld->bAddChangeListener(this);
 
 		iconSucces.setImage(CVectorResource::renderSVGToImage("icons/svg/successtick.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::Success)));
 		iconError.setImage(CVectorResource::renderSVGToImage("icons/svg/errorcross.svg", juce::Rectangle<int>(15, 15), cpl::GetColour(cpl::ColourEntry::Error)));
@@ -99,13 +99,13 @@ namespace cpl
 
 
 		//setWantsKeyboardFocus(true);
-		parentControl->bAddPassiveChangeListener(this);
+		parentControl->bAddChangeListener(this);
 
 		getAnimator().addChangeListener(this);
 
 		expanderButton->addListener(this);
 
-
+		exportedControlName = parentControl->bGetExportedName();
 
 		setBounds(0, 0, compactWidth, compactHeight);
 		addChildComponent(intValueLabel);
@@ -153,11 +153,22 @@ namespace cpl
 			g.drawText("Editing ", titleRect.withRight(47), juce::Justification::centredLeft);
 			g.setColour(cpl::GetColour(cpl::ColourEntry::SelectedText));
 
-			juce::String demangled = Misc::DemangledTypeName(*parentControl);
-			if (demangled.startsWith("class "))
-				demangled = demangled.substring(6);
+			juce::String titleText;
 
-			g.drawText(demangled, titleRect.withLeft(50).withRight(getWidth() - elementHeight), juce::Justification::centredLeft);
+			if (exportedControlName.size())
+			{
+				titleText = exportedControlName;
+			}
+			else
+			{
+				titleText = Misc::DemangledTypeName(*parentControl);
+				if (titleText.startsWith("class "))
+					titleText = titleText.substring(6);
+
+				titleText = "(?) " + titleText;
+			}
+
+			g.drawText(titleText, titleRect.withLeft(50).withRight(getWidth() - elementHeight), juce::Justification::centredLeft);
 
 			// draw insides, starting with internal value
 			auto elementPos = titleRect.withY(titleRect.getY() + elementHeight);
@@ -449,7 +460,7 @@ namespace cpl
 		// warning - the control may have been deleted at this point
 		// if so, the callback on onDeathDestruction sets the parentControl pointer to zero.
 		if(parentControl)
-			parentControl->bRemovePassiveChangeListener(this);
+			parentControl->bRemoveChangeListener(this);
 
 		getAnimator().removeChangeListener(this);
 	}

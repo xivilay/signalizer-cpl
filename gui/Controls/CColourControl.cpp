@@ -59,7 +59,21 @@ namespace cpl
 			int gapAroundColourSpaceComponent = 7)
 			: juce::ColourSelector(flags, edgeGap, gapAroundColourSpaceComponent)
 		{
+			acquireLabelReferences();
+		}
 
+		juce::Slider * getColourSlider(ColourValue::Index i) { return colourSliders[i]; }
+
+		void acquireLabelReferences()
+		{
+			for (int i = 0; i < getNumChildComponents(); ++i)
+			{
+				auto currentChild = getChildComponent(i);
+				if (juce::Slider * s = dynamic_cast<juce::Slider*>(currentChild))
+				{
+					colourSliders.push_back(s);
+				}
+			}
 		}
 
 		void shrinkLabels()
@@ -71,28 +85,29 @@ namespace cpl
 
 			char * names[] = { "r", "b", "g", "a" };
 
-			for (int i = 0; i < getNumChildComponents(); ++i)
+			for (std::size_t i = 0; i < std::extent<decltype(names)>::value; ++i)
 			{
-				auto currentChild = getChildComponent(i);
-				if (juce::Slider * s = dynamic_cast<juce::Slider*>(currentChild))
-				{
-					auto currentWidth = s->getTextBoxWidth();
-					auto currentHeight = s->getTextBoxWidth();
-					auto currentPos = s->getTextBoxPosition();
-					s->setTextBoxStyle(currentPos, false, currentWidth / 3, currentHeight);
-					s->setName(names[i]);
-					s->setLookAndFeel(&cpl::CLookAndFeel_CPL::defaultLook());
-				}
+				auto s = colourSliders[i];
+				auto currentWidth = s->getTextBoxWidth();
+				auto currentHeight = s->getTextBoxWidth();
+				auto currentPos = s->getTextBoxPosition();
+				s->setTextBoxStyle(currentPos, false, currentWidth / 3, currentHeight);
+				s->setName(names[i]);
+				s->setLookAndFeel(&cpl::CLookAndFeel_CPL::defaultLook());
 			}
 		}
 
+		std::vector<juce::Slider *> colourSliders;
 	};
 
 	class ColourEditor 
-	: 
-		public CKnobSliderEditor
+		: public CKnobSliderEditor
+		, private juce::Slider::Listener
+		, private ValueEntityBase::ValueEntityListener
 	{
+
 	public:
+
 		ColourEditor(CColourControl * parentControl)
 			: CKnobSliderEditor(parentControl), parent(parentControl), selector(15, 5, 5), 
 			recursionFlagWeChanged(false), recursionFlagTheyChanged(false)
@@ -108,6 +123,25 @@ namespace cpl
 
 			setOpaque(false);
 			//addAndMakeVisible(selector);
+
+			colourValue = &parentControl->getValueReference();
+			for (int i = 0; i < 4; i++)
+			{
+				selector.getColourSlider((ColourValue::Index)i)->addListener(this);
+				colourValue->getValueIndex((ColourValue::Index)i).addListener(this);
+			}
+
+			selector.addMouseListener(this, true);
+
+		}
+
+		ColourEditor::~ColourEditor()
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				selector.getColourSlider((ColourValue::Index)i)->removeListener(this);
+				colourValue->getValueIndex((ColourValue::Index)i).removeListener(this);
+			}
 		}
 
 		virtual void resized() override
@@ -116,32 +150,156 @@ namespace cpl
 			CKnobSliderEditor::resized();
 		}
 
-		virtual void changeListenerCallback(ChangeBroadcaster *source) override
+		virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * object) override
 		{
-			if (recursionFlagTheyChanged || recursionFlagWeChanged)
+			auto currentColour = selector.getCurrentColour();
+			auto red = 
+				currentColour.getRed(), 
+				green = currentColour.getGreen(), 
+				blue = currentColour.getBlue(), 
+				alpha = currentColour.getAlpha();
+
+			auto value = object->getNormalizedValue();
+			std::uint8_t componentValue = value == 1.0 ? 0xFF : value * 0x100;
+
+			if (object == &colourValue->getValueIndex(ColourValue::R))
 			{
-				recursionFlagWeChanged = recursionFlagTheyChanged = false;
+				red = componentValue;
 			}
-			else if (source == &selector)
+			else if (object == &colourValue->getValueIndex(ColourValue::G))
 			{
-				recursionFlagWeChanged = true;
-				parent->setControlColour(selector.getCurrentColour());
+				green = componentValue;
 			}
-			CKnobSliderEditor::changeListenerCallback(source);
+			else if (object == &colourValue->getValueIndex(ColourValue::B))
+			{
+				blue = componentValue;
+			}
+			else if (object == &colourValue->getValueIndex(ColourValue::A))
+			{
+				alpha = componentValue;
+			}
+
+
+			selector.setCurrentColour({ red, green, blue, alpha });
 		}
 
-		virtual void valueChanged(const CBaseControl * ctrl) override
+		virtual void sliderDragStarted(juce::Slider * s) override
 		{
-			if (recursionFlagTheyChanged || recursionFlagWeChanged)
+			for (int i = 0; i < 4; ++i)
 			{
-				recursionFlagWeChanged = recursionFlagTheyChanged = false;
+				auto sliderIndex = selector.getColourSlider((ColourValue::Index)i);
+				if (s == sliderIndex)
+				{
+					parent->getValueReference().getValueIndex((ColourValue::Index)i).beginChangeGesture();
+					isGesturingAnySlider = true;
+					break;
+				}
 			}
-			else if (!recursionFlagWeChanged)
+		}
+
+		virtual void sliderDragEnded(juce::Slider * s) override
+		{
+			for (int i = 0; i < 4; ++i)
 			{
-				recursionFlagTheyChanged = true;
-				selector.setCurrentColour(parent->getControlColour());
+				auto sliderIndex = selector.getColourSlider((ColourValue::Index)i);
+				if (s == sliderIndex)
+				{
+					parent->getValueReference().getValueIndex((ColourValue::Index)i).endChangeGesture();
+					isGesturingAnySlider = false;
+					break;
+				}
 			}
-			CKnobSliderEditor::valueChanged(ctrl);
+		}
+
+		virtual void mouseDown(const juce::MouseEvent & me)
+		{
+			// clicked somewhere random
+			if (me.eventComponent == this || me.eventComponent == &selector)
+			{
+				userClickingNonSliderComponent = false;
+				return;
+			}
+
+
+			if (selector.isParentOf(me.eventComponent))
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					auto possibleParent = selector.getColourSlider((ColourValue::Index)i);
+					if (me.eventComponent == possibleParent || selector.getColourSlider((ColourValue::Index)i)->isParentOf(me.eventComponent))
+					{
+						userClickingNonSliderComponent = false;
+						return;
+					}
+				}
+			}
+			// it seems it was inside the component, not the component itself and not the sliders!
+			userClickingNonSliderComponent = true;
+		}
+
+		virtual void mouseDrag(const juce::MouseEvent & me) override
+		{
+
+			constexpr std::size_t lel = sizeof(std::shared_ptr<ColourValue>);
+			userIsDragging = true;
+		}
+
+		virtual void mouseUp(const juce::MouseEvent & me) override
+		{
+			userClickingNonSliderComponent = false;
+			userIsDragging = false;
+			if (stopGesturingOnMouseup)
+			{
+				for (int i = 0; i < 4; ++i)
+					parent->getValueReference().getValueIndex((ColourValue::Index)i).endChangeGesture();
+
+				isGesturingAnySlider = false;
+				stopGesturingOnMouseup = false;
+			}
+		}
+
+		virtual void sliderValueChanged(juce::Slider * s) override
+		{
+			if (userClickingNonSliderComponent && userIsDragging)
+			{
+				if (!isGesturingAnySlider)
+				{
+					// since user is not gesturing any sliders, but still dragging something, we start gesturing all sliders.
+					stopGesturingOnMouseup = true;
+
+					for (int i = 0; i < 4; ++i)
+					{
+						parent->getValueReference().getValueIndex((ColourValue::Index)i).beginChangeGesture();
+					}
+
+					isGesturingAnySlider = true;
+				}
+			}
+
+			for (int i = 0; i < 4; ++i)
+			{
+				if (userClickingNonSliderComponent && userIsDragging)
+				{
+					if (s == selector.getColourSlider((ColourValue::Index)i))
+					{
+						auto value = (s->getValue() - s->getMinimum()) / (s->getMaximum() - s->getMinimum());
+						parent->getValueReference().getValueIndex((ColourValue::Index)i).setNormalizedValue(value);
+						break;
+					}
+				}
+				else
+				{
+					if (s == selector.getColourSlider((ColourValue::Index)i))
+					{
+						auto value = (s->getValue() - s->getMinimum()) / (s->getMaximum() - s->getMinimum());
+						parent->getValueReference().getValueIndex((ColourValue::Index)i).setNormalizedValue(value);
+						break;
+					}
+				}
+
+			}
+
+
 		}
 
 		virtual void setMode(bool newMode)
@@ -158,12 +316,18 @@ namespace cpl
 			}
 			CKnobSliderEditor::setMode(newMode);
 		}
+
 	private:
+		bool stopGesturingOnMouseup = false;
+		bool userClickingNonSliderComponent = false;
+		bool userIsDragging = false;
+		bool isGesturingAnySlider = false;
 		static const int extraHeight = 180;
 		static const int extraWidth = 10;
 		bool recursionFlagWeChanged;
 		bool recursionFlagTheyChanged;
 		int oldHeight, oldWidth;
+		ColourValue * colourValue;
 		CColourControl * parent;
 		CustomColourSelector selector;
 	};
@@ -219,22 +383,21 @@ namespace cpl
 		auto colour = valueObject->getAsJuceColour();
 		std::uint8_t a = colour.getAlpha(), r = colour.getRed(), g = colour.getGreen(), b = colour.getBlue();
 		ar << a; ar << r; ar << g; ar << b;
-		ar << std::int32_t(0);
+		ar << Serialization::Reserve(4);
 	}
 	void CColourControl::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
 		CKnobSlider::onControlDeserialization(ar, version);
-		std::int32_t newType;
 		std::uint8_t a, r, g, b;
 		ar >> a; ar >> r; ar >> g; ar >> b;
-		ar >> newType;
+		ar >> Serialization::Consume(4);
 		setControlColour(juce::Colour(r, g, b, a));
 	}
 
-	void CColourControl::onValueChange()
+	void CColourControl::baseControlValueChanged()
 	{
-		auto val = Slider::getValue();
-		setControlColour((juce::Colour)static_cast<std::uint32_t>(val >= 1.0 ? 0xFFFFFFFF : val * 0x100000000ul));
+		notifyListeners();
+		repaint();
 	}
 
 	void CColourControl::valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value)
@@ -242,7 +405,7 @@ namespace cpl
 		auto colourValue = valueObject->getAsJuceColour();
 		auto sliderValue = colourValue.getARGB() / double(0xFFFFFFFF);
 		getSlider().setValue(sliderValue, juce::NotificationType::dontSendNotification);
-		repaint();
+		baseControlValueChanged();
 	}
 
 	juce::Colour CColourControl::getControlColour()
@@ -298,6 +461,23 @@ namespace cpl
 		auto b = getTextRect().toFloat();
 
 		g.fillRoundedRectangle(b.withTrimmedRight(5).withTrimmedBottom(2), 5.f);
+	}
+
+	void CColourControl::valueChanged()
+	{
+		bSetValue(Slider::getValue());
+	}
+
+	void CColourControl::startedDragging()
+	{
+		for (int i = 0; i < 4; ++i)
+			valueObject->getValueIndex((ColourValue::Index)i).beginChangeGesture();
+	}
+
+	void CColourControl::stoppedDragging()
+	{
+		for (int i = 0; i < 4; ++i)
+			valueObject->getValueIndex((ColourValue::Index)i).beginChangeGesture();
 	}
 
 };

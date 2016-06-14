@@ -767,7 +767,16 @@
 			{
 				setClickingTogglesState(true);
 				enableTooltip(true);
-				addListener(this);
+			}
+
+			void clicked() override
+			{
+				baseControlValueChanged();
+			}
+
+			void baseControlValueChanged() override
+			{
+				notifyListeners();
 			}
 
 			void setImage(std::string imagePath)
