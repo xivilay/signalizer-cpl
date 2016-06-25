@@ -79,7 +79,6 @@ namespace cpl
 		return valueObject->getFormatter().format(valueObject->getTransformer().transform(val), valueString);
 	}
 
-
 	iCtrlPrec_t CValueKnobSlider::bGetValue() const
 	{
 		return valueObject->getNormalizedValue();

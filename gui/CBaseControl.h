@@ -356,7 +356,7 @@
 			/// </summary>
 			virtual void bRedraw() 
 			{ 
-			
+				base->repaint();
 			}
 			/// <summary>
 			/// Get the view / component associated with this control
@@ -483,7 +483,11 @@
 			/// The control's internal event callback. This is called whenever the controls value is changed.
 			/// THis is responsible for calling listeners + updating info + redrawing.
 			/// </summary>
-			virtual void baseControlValueChanged() {}
+			virtual void baseControlValueChanged() 
+			{
+				notifyListeners();
+				bRedraw();
+			}
 
 			/// <summary>
 			/// Internal serialization. If you override this, do not call the base.

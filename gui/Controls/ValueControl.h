@@ -21,9 +21,9 @@
  
 **************************************************************************************
  
-	file:Controls.h
- 
-		Extended include for cpl controls
+	file:ValueControl.h
+		
+		Provides common implementations of CBaseControls and values.
  
 *************************************************************************************/
 
@@ -60,7 +60,7 @@
 				return valueObject->getContextualName();
 			}
 
-			ValueEntityBase & getValueReference() { return *valueObject; }
+			ValueBase & getValueReference() { return *valueObject; }
 
 		protected:
 
@@ -126,8 +126,8 @@
 		};
 
 
-		/*template<typename ValueBase,class Substitute>
-		class ValueControl<ValueBase, Substitute, typename std::enable_if<std::is_base_of<ValueGroup, ValueBase>::value, Substitute>::type>
+		template<typename ValueBase, class Substitute>
+		class ValueControl<ValueBase, Substitute, typename std::enable_if<std::is_base_of<ValueGroup, ValueBase>::value>::type>
 			: public CBaseControl
 			, public ValueEntityBase::ValueEntityListener
 		{
@@ -143,6 +143,8 @@
 			{
 				return valueObject->getContextualName();
 			}
+
+			ValueBase & getValueReference() { return *valueObject; }
 
 		protected:
 
@@ -160,9 +162,9 @@
 				if (valueObject != nullptr)
 				{
 					const auto numValues = valueObject->getNumValues();
-					for (std::size_t i = 0; numValues; ++i)
+					for (std::size_t i = 0; i < numValues; ++i)
 					{
-						valueObject->removeListener(this);
+						valueObject->getValueIndex(i).removeListener(this);
 					}
 					valueObject.reset(nullptr);
 				}
@@ -177,14 +179,14 @@
 				valueObject.get_deleter().doDelete = takeOwnerShip;
 
 				const auto newNumValues = valueObject->getNumValues();
-				for (std::size_t i = 0; newNumValues; ++i)
+				for (std::size_t i = 0; i < newNumValues; ++i)
 				{
-					valueObject->removeListener(this);
+					valueObject->getValueIndex(i).addListener(this);
 				}
 			}
 
 			std::unique_ptr<ValueBase, Utility::MaybeDelete<ValueBase>> valueObject;
-		};*/
+		};
 
 	};
 

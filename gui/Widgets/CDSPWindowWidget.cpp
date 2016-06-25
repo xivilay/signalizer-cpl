@@ -42,7 +42,7 @@ namespace cpl
 	const double fftDBMin = -130;
 	const double fftDBMax = 0;
 
-	CDSPWindowWidget::WindowAnalyzer::WindowAnalyzer(const CDSPWindowWidget & w) : p(w) { }
+	CDSPWindowWidget::WindowAnalyzer::WindowAnalyzer(CDSPWindowWidget & w) : p(w) { }
 
 	void CDSPWindowWidget::WindowAnalyzer::paint(juce::Graphics & g)
 	{
@@ -52,7 +52,7 @@ namespace cpl
 		alignas(32) std::array<std::complex<double>, ON> fftBuf;
 
 
-		double wscale = p.generateWindow<double>(window, window.size()) / N;
+		double wscale = p.getValueReference().generateWindow<double>(window, window.size()) / N;
 
 		g.setColour(GetColour(ColourEntry::SelectedText).withMultipliedBrightness(0.8f));
 
@@ -155,23 +155,42 @@ namespace cpl
 
 	}
 
-	CDSPWindowWidget::CDSPWindowWidget()
-	: 
-		CBaseControl(this),
-		analyzer(*this)
+	CDSPWindowWidget::CDSPWindowWidget(WindowDesignValue * value, bool takeOwnership)
+		: ValueControl<WindowDesignValue, CompleteWindowDesign>(this, value, takeOwnership)
+		, analyzer(*this)
+		, kwindowList(&getValueReference().getValueIndex(WindowDesignValue::Index::Type), false)
+		, ksymmetryList(&getValueReference().getValueIndex(WindowDesignValue::Index::Shape), false)
+		, kalpha(&getValueReference().getValueIndex(WindowDesignValue::Index::Alpha), false)
+		, kbeta(&getValueReference().getValueIndex(WindowDesignValue::Index::Beta), false)
 	{
-		p.wType.store(dsp::WindowTypes::Rectangular, std::memory_order_relaxed);
-		p.wSymmetry.store(dsp::Windows::Shape::Symmetric, std::memory_order_relaxed);
-		p.wAlpha.store(0.0, std::memory_order_relaxed);
-		p.wBeta.store(0.0, std::memory_order_relaxed);
 		initControls();
 		enableTooltip();
 		bSetIsDefaultResettable(true);
 	}
 
-	const CDSPWindowWidget::Params & CDSPWindowWidget::getParams() const noexcept
+
+	void CDSPWindowWidget::setWindowOptions(ChoiceOptions c)
 	{
-		return p;
+		if (c == ChoiceOptions::All)
+		{
+			// enable all windows
+			for (std::size_t i = 0; i < (size_t)cpl::dsp::WindowTypes::End; i++)
+			{
+				kwindowList.setEnabledStateFor(i, true);
+			}
+		}
+		else if (c == ChoiceOptions::FiniteDFTWindows)
+		{
+			// disable the windows unsupported by resonating algorithms
+			for (std::size_t i = 0; i < (size_t)cpl::dsp::WindowTypes::End; i++)
+			{
+				if (cpl::dsp::windowHasFiniteDFT((cpl::dsp::WindowTypes)i))
+					kwindowList.setEnabledStateFor(i, true);
+				else
+					kwindowList.setEnabledStateFor(i, false);
+			}
+		}
+
 	}
 
 	void CDSPWindowWidget::onControlSerialization(CSerializer::Archiver & ar, Version version)
@@ -190,35 +209,9 @@ namespace cpl
 		ar >> ksymmetryList;
 	}
 
-	void CDSPWindowWidget::valueChanged(const CBaseControl * c)
+	void CDSPWindowWidget::onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value)
 	{
-		if (c == &kalpha)
-		{
-			p.wAlpha.store(Math::UnityScale::linear(kalpha.bGetValue(), dbMin, dbMax), std::memory_order_release);
-		}
-		else if (c == &kbeta)
-		{
-			p.wBeta.store(Math::UnityScale::linear(kbeta.bGetValue(), betaMin, betaMax), std::memory_order_release);
-		}
-		else if (c == &kwindowList)
-		{
-			p.wType.store(kwindowList.getZeroBasedSelIndex<dsp::WindowTypes>(), std::memory_order_release);
-		}
-		else
-		{
-			p.wSymmetry.store(ksymmetryList.getZeroBasedSelIndex<dsp::Windows::Shape>(), std::memory_order_release);
-		}
-
 		analyzer.repaint();
-
-		bForceEvent();
-	}
-
-
-
-	void CDSPWindowWidget::onObjectDestruction(const ObjectProxy & object)
-	{
-
 	}
 
 	void CDSPWindowWidget::resized()
@@ -226,74 +219,12 @@ namespace cpl
 		analyzer.setBounds(layout.getRight(), 0, spaceForAnalyzer, getHeight());
 	}
 
-
-	bool CDSPWindowWidget::stringToValue(const CBaseControl * ctrl, const std::string & buffer, iCtrlPrec_t & value)
-	{
-		double newVal = 0;
-		if (ctrl == &kalpha)
-		{
-			if (lexicalConversion(buffer, newVal))
-			{
-				newVal = Math::confineTo(newVal, dbMin, dbMax);
-				value = Math::UnityScale::Inv::linear(newVal, dbMin, dbMax);
-				return true;
-			}
-		}
-		else if (ctrl == &kbeta)
-		{
-			if (lexicalConversion(buffer, newVal))
-			{
-				newVal = Math::confineTo(newVal, betaMin, betaMax);
-				value = Math::UnityScale::Inv::linear(newVal, betaMin, betaMax);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool CDSPWindowWidget::valueToString(const CBaseControl * ctrl, std::string & buffer, iCtrlPrec_t value)
-	{
-		char buf[100];
-		if (ctrl == &kalpha)
-		{
-			sprintf_s(buf, u8"%d dB (%.1f\u03B1)", int(-1 * Math::UnityScale::linear(value, dbMin, dbMax)), -1 * Math::UnityScale::linear(value, dbMin, dbMax) / 20);
-			buffer = buf;
-			return true;
-		}
-		else if (ctrl == &kbeta)
-		{
-			sprintf_s(buf, "%.4f", Math::UnityScale::linear(value, betaMin, betaMax));
-			buffer = buf;
-			return true;
-		}
-		return false;
-	}
-
-
 	void CDSPWindowWidget::initControls()
 	{
 		kwindowList.bSetTitle("Window function");
 		ksymmetryList.bSetTitle("Symmetry");
 		kalpha.bSetTitle(u8"\u03B1"); // greek small alpha
 		kbeta.bSetTitle(u8"\u03B2"); // greek small beta
-
-		ksymmetryList.setValues({ "Symmetric", "Periodic", "DFT-even" });
-
-		std::vector <std::string> windows((std::size_t)dsp::WindowTypes::End);
-
-		for (std::size_t i = 0; i < windows.size(); ++i)
-			windows[i] = dsp::Windows::stringFromEnum((dsp::WindowTypes)i);
-
-		kwindowList.setValues(windows);
-
-		kalpha.bAddFormatter(this);
-		kbeta.bAddFormatter(this);
-		
-		kwindowList.bAddChangeListener(this);
-		ksymmetryList.bAddChangeListener(this);
-		kalpha.bAddChangeListener(this);
-		kbeta.bAddChangeListener(this);
-
 
 		kwindowList.bSetDescription("The window function describes a kernel applied to the input signal that alters the spectral leakage through controlling the ratio between main lobe width and side-lobes, including inherit patterns.");
 		ksymmetryList.bSetDescription("The symmetry of a window function alters its frequency-domain representation. "

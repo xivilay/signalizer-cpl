@@ -477,7 +477,7 @@ namespace cpl
 	void CColourControl::stoppedDragging()
 	{
 		for (int i = 0; i < 4; ++i)
-			valueObject->getValueIndex((ColourValue::Index)i).beginChangeGesture();
+			valueObject->getValueIndex((ColourValue::Index)i).endChangeGesture();
 	}
 
 };

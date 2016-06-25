@@ -36,7 +36,7 @@ namespace cpl
 {
 
 	CValueComboBox::CValueComboBox(ValueEntityBase * valueToReferTo, bool takeOwnership)
-		: ValueControl(this, valueToReferTo, takeOwnership)
+		: ValueControl<ValueEntityBase, CompleteValue<LinearRange<ValueT>, BasicFormatter<ValueT>>>(this, valueToReferTo, takeOwnership)
 	{
 		int numValues = valueObject->getTransformer().getQuantization();
 		if (numValues < 1)

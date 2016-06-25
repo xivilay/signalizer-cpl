@@ -40,14 +40,19 @@
 
 	namespace cpl
 	{
+		template<typename To, typename From>
+		inline To enum_cast(const From & f)
+		{
+			return static_cast<To>(static_cast<std::int64_t>(f));
+		}
+
 		namespace Misc 
 		{
 
 			std::string GetTime ();
 			std::string GetDate();
 			std::string DemangleRawName(const std::string & name);
-			
-			
+					
 			template<class T>
 				std::string DemangledTypeName(const T & object)
 				{

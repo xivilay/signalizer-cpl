@@ -33,64 +33,34 @@
 	#define CDSPWINDOWWIDGET_H
 
 	#include "WidgetBase.h"
-	#include <atomic>
 	#include "../../dsp/DSPWindows.h"
 
 	namespace cpl
 	{
 
 		class CDSPWindowWidget
-		:
-			public juce::Component,
-			public CBaseControl,
-			protected CBaseControl::Listener,
-			protected CBaseControl::ValueFormatter
+			: public juce::Component
+			, public ValueControl<WindowDesignValue, CompleteWindowDesign>
 		{
 		public:
 
-			enum Setup
+			enum ChoiceOptions
 			{
-
+				All,
+				FiniteDFTWindows
 			};
 
 			/// <summary>
 			/// 
 			/// </summary>
-			CDSPWindowWidget();
+			CDSPWindowWidget(WindowDesignValue * value = nullptr, bool takeOwnership = false);
 
-			/// <summary>
-			/// Generates the window according to the user-specified settings in the GUI.
-			/// Safe, deterministic and wait-free to call from any thread.
-			/// OutVector is a random-access indexable container of T, sized N.
-			/// 
-			/// Returns the time-domain scaling coefficient for the window.
-			/// </summary>
-			template<typename T, class OutVector>
-				T generateWindow(OutVector & w, std::size_t N) const
-				{
-					auto ltype = p.wType.load(std::memory_order_acquire);
-					auto lsym = p.wSymmetry.load(std::memory_order_acquire);
-					auto lalpha = (T)p.wAlpha.load(std::memory_order_acquire);
-					auto lbeta = (T)p.wBeta.load(std::memory_order_acquire);
+			void setWindowOptions(ChoiceOptions c);
 
-					dsp::windowFunction(ltype, w, N, lsym, lalpha, lbeta);
-
-					return dsp::windowScale(ltype, w, N, lsym, lalpha, lbeta);
-				}
-			
-			struct Params
-			{
-				//
-				std::atomic<dsp::WindowTypes> wType;
-				std::atomic<dsp::Windows::Shape> wSymmetry;
-				std::atomic<double> wAlpha, wBeta;
-			};
-
-			virtual const Params & getParams() const noexcept;
-
-			CComboBox & getWindowList() noexcept { return kwindowList; }
 
 		protected:
+
+			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
@@ -99,33 +69,22 @@
 			{
 			public:
 
-				WindowAnalyzer(const CDSPWindowWidget & parent);
+				WindowAnalyzer(CDSPWindowWidget & parent);
 				void paint(juce::Graphics & g) override;
 
 			private:
-				const CDSPWindowWidget & p;
+				CDSPWindowWidget & p;
 			};
 
-			// overrides
-			virtual void valueChanged(const CBaseControl * c) override;
-			virtual void onObjectDestruction(const ObjectProxy & object) override;
-
 			virtual void resized() override;
-
-			virtual bool stringToValue(const CBaseControl * ctrl, const std::string & buffer, iCtrlPrec_t & value) override;
-			virtual bool valueToString(const CBaseControl * ctrl, std::string & buffer, iCtrlPrec_t value) override;
-
 			void initControls();
 
 			// data
-			CComboBox kwindowList;
-			CComboBox ksymmetryList;
-			CKnobSlider kalpha, kbeta;
+			CValueComboBox kwindowList;
+			CValueComboBox ksymmetryList;
+			CValueKnobSlider kalpha, kbeta;
 			MatrixSection layout;
-			Setup layoutSetup;
 			WindowAnalyzer analyzer;
-
-			Params p;
 
 		};
 

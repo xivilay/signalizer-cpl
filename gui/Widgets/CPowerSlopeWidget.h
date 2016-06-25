@@ -37,33 +37,13 @@
 
 		class CPowerSlopeWidget
 		: 
-			public CBaseControl,
 			public juce::Component,
-			public CBaseControl::Listener,
-			public CBaseControl::ValueFormatter
+			public ValueControl<PowerSlopeValue, CompletePowerSlopeValue>
 		{
 
 		public:
 
-			struct PowerFunction
-			{
-				double a, b;
-			};
-
-			CPowerSlopeWidget();
-
-			/// <summary>
-			/// Safe and wait-free from any thread
-			/// </summary>
-			/// <returns></returns>
-			PowerFunction derive();
-			void paint(juce::Graphics & g) override;
-
-			virtual void valueChanged(const CBaseControl * ctrl) override;
-			virtual void onObjectDestruction(const ObjectProxy & destroyedObject) override;
-			virtual bool stringToValue(const CBaseControl * ctrl, const std::string & buffer, iCtrlPrec_t & value) override;
-			virtual bool valueToString(const CBaseControl * ctrl, std::string & buffer, iCtrlPrec_t value) override;
-
+			CPowerSlopeWidget(PowerSlopeValue * value = nullptr, bool takeOwnership = false);
 
 		protected:
 
@@ -72,9 +52,7 @@
 
 			void initUI();
 
-			std::atomic<iCtrlPrec_t> a, b;
-			double transformedBase, transformedPivot, transformedSlope;
-			cpl::CKnobSlider kbase, kpivot, kslope;
+			cpl::CValueKnobSlider kbase, kpivot, kslope;
 			cpl::MatrixSection layout;
 		};
 	};

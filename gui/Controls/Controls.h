@@ -37,4 +37,9 @@
 	#include "CButton.h"
 	#include "CInputControl.h"
 
+	// value-based
+
+	#include "CValueKnobSlider.h"
+	#include "CValueComboBox.h"
+
 #endif
