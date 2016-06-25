@@ -454,10 +454,10 @@
 							{
 								switch (symmetry)
 								{
+								default:
 								//case Shape::Symmetric: return (T)4.7095873015873009;
 								case Shape::Periodic: return (T)4.6360000000000001;
 								//case Shape::DFTEven: return (T)4.7094943766265196;
-								default:
 									return 0;
 								}
 							}
