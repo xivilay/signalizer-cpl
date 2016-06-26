@@ -27,7 +27,7 @@ namespace cpl
 				: context("tsf")
 				, degreeFormatter("degs")
 				, degreeRange(0, 360)
-				, magnitudeRange(0, 50)
+				, magnitudeRange(-50, 50)
 			{
 
 			}
@@ -44,6 +44,31 @@ namespace cpl
 			LinearRange<T> magnitudeRange, degreeRange;
 		};
 
+		/// <summary>
+		/// Fills in the transform using virtual dispatch
+		/// </summary>
+		template<typename T>
+		void fillTransform3D(GraphicsND::Transform3D<T> & transform)
+		{
+			for (int x = 0; x < 3; ++x)
+				for (int y = 0; y < 3; ++y)
+				{
+					auto & element = getValueIndex((Aspect)x, (Index)y);
+					transform.element(x, y) = element.getTransformer().transform(element.getNormalizedValue());
+				}
+		}
+
+
+		template<typename T>
+		void setFromTransform3D(const GraphicsND::Transform3D<T> & transform)
+		{
+			for (int x = 0; x < 3; ++x)
+				for (int y = 0; y < 3; ++y)
+				{
+					getValueIndex((Aspect)x, (Index)y).setTransformedValue(transform.element(x, y));
+				}
+		}
+
 		virtual ValueEntityBase & getValueIndex(Aspect a, Index i) = 0;
 		virtual ValueEntityBase & getValueIndex(std::size_t i) override
 		{ 
@@ -54,14 +79,14 @@ namespace cpl
 		virtual std::size_t getNumValues() const noexcept override { return 9; }
 	};
 
-	class CompleteTransformValue : TransformValue
+	class CompleteTransformValue : public TransformValue
 	{
 	public:
-		CompleteTransformValue(SharedBehaviour<ValueT> & b)
+		CompleteTransformValue()
 			: vectors{
-				{ b.getMagTransformer(), b.getDefaultFormatter() },
-				{ b.getDegreeTransformer(), b.getDegreeFormatter() },
-				{  b.getMagTransformer(), b.getDefaultFormatter() }
+				{ behaviour.getMagTransformer(), behaviour.getDefaultFormatter() },
+				{ behaviour.getDegreeTransformer(), behaviour.getDegreeFormatter() },
+				{  behaviour.getMagTransformer(), behaviour.getDefaultFormatter() }
 			}
 		{
 
@@ -100,6 +125,20 @@ namespace cpl
 			, behaviour(b)
 		{
 
+		}
+
+		/// <summary>
+		/// Fills in the transform with no virtual dispatch
+		/// </summary>
+		template<typename T>
+		void fillDirectTransform3D(GraphicsND::Transform3D<T> & transform)
+		{
+			for (int x = 0; x < 3; ++x)
+				for (int y = 0; y < 3; ++y)
+				{
+					auto & element = vectors[x].axis[y];
+					transform.element(x, y) = element.getTransformer().transform(element.getValue());
+				}
 		}
 
 		virtual const std::string & getBundleContext() const noexcept override

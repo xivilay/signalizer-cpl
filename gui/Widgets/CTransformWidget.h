@@ -37,7 +37,7 @@
 	{
 		class CTransformWidget
 		: 
-			public CBaseControl,
+			public ValueControl<TransformValue, CompleteTransformValue>,
 			public juce::Component,
 			public juce::TextEditor::Listener
 		{
@@ -45,8 +45,16 @@
 		public:
 			typedef std::pair<juce::Point<int>, juce::TextEditor *> LabelDescriptor;
 
-			CTransformWidget();
+			CTransformWidget(TransformValue * value = nullptr, bool takeOwnership = false);
 
+			juce::String bGetToolTipForChild(const Component *) const override;
+			// coordinates are boxes
+			void inputCommand(int x, int y, const String & data);
+			
+		protected:
+			void syncEditor();
+			// coordinates are mouse/graphical
+			LabelDescriptor getDraggableLabelAt(int x, int y);
 			void resized() override;
 			void paint(juce::Graphics & g) override;
 			void textEditorTextChanged(juce::TextEditor &) override;
@@ -56,21 +64,10 @@
 			void mouseUp(const juce::MouseEvent & e) override;
 			void mouseMove(const juce::MouseEvent & e) override;
 			void mouseDrag(const juce::MouseEvent & e) override;
-			GraphicsND::Transform3D<float> & getTransform3D() noexcept { return transform; }
-			juce::String bGetToolTipForChild(const Component *) const override;
-			void syncEditor();
-			// coordinates are boxes
-			void inputCommand(int x, int y, const String & data);
-			// coordinates are mouse/graphical
-			LabelDescriptor getDraggableLabelAt(int x, int y);
-			
-		protected:
-			
 
-			void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
+			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
 
-			GraphicsND::Transform3D<float> transform;
 			juce::TextEditor labels[3][3];
 			juce::MouseCursor horizontalDragCursor;
 			LabelDescriptor currentlyDraggedLabel;

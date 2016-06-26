@@ -36,13 +36,11 @@ namespace cpl
 	auto elementHeight = 15;
 	auto elementWidth = 50;
 
-	CTransformWidget::CTransformWidget()
-	: 
-		CBaseControl(this), 
-		transform(1.0f),
-		horizontalDragCursor(juce::MouseCursor::LeftRightResizeCursor),
-		isAnyLabelBeingDragged(false),
-		cursorSwap([&]() { setMouseCursor(juce::MouseCursor::ParentCursor); }, [&]() { setMouseCursor(horizontalDragCursor); })
+	CTransformWidget::CTransformWidget(TransformValue * value, bool takeOwnership)
+		: ValueControl<TransformValue, CompleteTransformValue>(this, value, takeOwnership)
+		, horizontalDragCursor(juce::MouseCursor::LeftRightResizeCursor)
+		, isAnyLabelBeingDragged(false)
+		, cursorSwap([&]() { setMouseCursor(juce::MouseCursor::ParentCursor); }, [&]() { setMouseCursor(horizontalDragCursor); })
 	{
 
 		bSetDescription("Controls an object's transformation in a visual 3D space.");
@@ -63,33 +61,49 @@ namespace cpl
 				addAndMakeVisible(label);
 			}
 		}
+
 		syncEditor();
 		setSize((elementWidth + 15) * 3 , elementHeight * 6);
 		bSetIsDefaultResettable(true);
 	}
 
-	void CTransformWidget::onControlSerialization(CSerializer::Archiver & ar, Version version)
-	{
-		ar << transform;
-	}
-
 	void CTransformWidget::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
-		ar >> transform;
-		syncEditor();
+		if (version < cpl::Version::fromParts(0, 2, 8))
+		{
+			GraphicsND::Transform3D<float> oldState(1);
+
+			ar >> oldState;
+
+			if (ar.getModifier(CSerializer::Modifiers::RestoreValue))
+			{
+				valueObject->setFromTransform3D(oldState);
+			}
+		}
+		else
+		{
+			ValueControl<TransformValue, CompleteTransformValue>::onControlDeserialization(ar, version);
+		}
 	}
+
 
 	void CTransformWidget::syncEditor()
 	{
-		char textBuf[200];
 		for (unsigned x = 0; x < 3; ++x)
 		{
 			for (unsigned y = 0; y < 3; ++y)
 			{
-				sprintf_s(textBuf, "%.2f", transform.element(x, y));
-				labels[x][y].setText(textBuf, false);
+				auto value = valueObject->getValueIndex((TransformValue::Aspect)x, (TransformValue::Index)y).getTransformedValue();
+				char text[50];
+				sprintf_s(text, "%.2f", static_cast<double>(value));
+				labels[x][y].setText(text, false);
 			}
 		}
+	}
+
+	void CTransformWidget::onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value)
+	{
+		syncEditor();
 	}
 
 	juce::String CTransformWidget::bGetToolTipForChild(const Component * c) const
@@ -116,11 +130,10 @@ namespace cpl
 
 	void CTransformWidget::inputCommand(int x, int y, const String & data)
 	{
-		float input;
+		ValueT input;
 		if (lexicalConversion(data, input))
 		{
-			transform.element(x, y) = (float)input;
-			bForceEvent();
+			valueObject->getValueIndex((TransformValue::Aspect)x, (TransformValue::Index)y).setTransformedValue(input);
 		}
 	}
 
@@ -139,9 +152,7 @@ namespace cpl
 				if (&t == &labels[x][y])
 				{
 					inputCommand(x, y, t.getText());
-					char textBuf[200];
-					sprintf_s(textBuf, "%.2f", transform.element(x, y));
-					t.setText(textBuf, false);
+					t.setText(valueObject->getValueIndex((TransformValue::Aspect)x, (TransformValue::Index)y).getFormattedValue(), false);
 					break;
 				}
 			}
@@ -162,6 +173,10 @@ namespace cpl
 				currentlyDraggedLabel = getDraggableLabelAt(e.x, e.y);
 				if (currentlyDraggedLabel.second)
 				{
+					valueObject->getValueIndex(
+						(TransformValue::Aspect)currentlyDraggedLabel.first.x, (TransformValue::Index)currentlyDraggedLabel.first.y
+					).beginChangeGesture();
+
 					isAnyLabelBeingDragged = true;
 				}
 			}
@@ -172,6 +187,12 @@ namespace cpl
 
 	void CTransformWidget::mouseUp(const juce::MouseEvent & e)
 	{
+		if (isAnyLabelBeingDragged && currentlyDraggedLabel.second != nullptr)
+		{
+			valueObject->getValueIndex(
+				(TransformValue::Aspect)currentlyDraggedLabel.first.x, (TransformValue::Index)currentlyDraggedLabel.first.y
+			).endChangeGesture();
+		}
 		isAnyLabelBeingDragged = false;
 	}
 
@@ -187,9 +208,14 @@ namespace cpl
 				scale *= 0.05f;
 			}
 
+			auto & value = valueObject->getValueIndex(
+				(TransformValue::Aspect)currentlyDraggedLabel.first.x,
+				(TransformValue::Index)currentlyDraggedLabel.first.y
+			);
 
-			auto & now = transform.element(currentlyDraggedLabel.first.x, currentlyDraggedLabel.first.y);
+			auto now = value.getTransformedValue();
 
+			// TODO: use normalized values instead.
 			if (currentlyDraggedLabel.first.x == 1) // rotations
 			{
 				scale *= 0.3f * 360;
@@ -200,8 +226,9 @@ namespace cpl
 				now += scale * deltaDifference.x;
 			}
 			lastMousePos = e.position;
-			bForceEvent();
-			syncEditor();
+
+			value.setTransformedValue(now);
+
 		}
 	}
 

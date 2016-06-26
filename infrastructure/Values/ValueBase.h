@@ -28,6 +28,7 @@ namespace cpl
 	class ValueEntityBase 
 		: public CSerializer::Serializable
 		, public ContextualName
+		, private Utility::CNoncopyable
 	{
 	public:
 
@@ -60,10 +61,40 @@ namespace cpl
 			setNormalizedValue(value);
 		}
 
+		ValueT getTransformedValue()
+		{
+			return getTransformer().transform(getNormalizedValue());
+		}
+
+		void setTransformedValue(ValueT val)
+		{
+			setNormalizedValue(getTransformer().normalize(val));
+		}
+
+		std::string getFormattedValue()
+		{
+			std::string ret;
+			getFormatter().format(getTransformer().transform(getNormalizedValue()), ret);
+			return ret;
+		}
+
+		bool setFormattedValue(const std::string & formattedValue)
+		{
+			ValueT val = 0;
+			if (getFormatter().interpret(formattedValue, val))
+			{
+				setNormalizedValue(getTransformer().normalize(val));
+				return true;
+			}
+			return false;
+		}
+
 		virtual ~ValueEntityBase() {}
 	};
 
-	class ValueGroup : public ContextualName
+	class ValueGroup 
+		: public ContextualName
+		, private Utility::CNoncopyable
 	{
 	public:
 		virtual ValueEntityBase & getValueIndex(std::size_t i) = 0;

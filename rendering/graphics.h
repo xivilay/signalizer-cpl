@@ -61,7 +61,12 @@
 						component scale;
 					};
 
-					T & element(int x, int y)
+					T & element(int x, int y) noexcept
+					{
+						return data[x * 3 + y];
+					}
+					
+					const T & element(int x, int y) const noexcept
 					{
 						return data[x * 3 + y];
 					}

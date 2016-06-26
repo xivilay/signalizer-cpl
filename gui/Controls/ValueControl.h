@@ -64,6 +64,16 @@
 
 		protected:
 
+			virtual void onControlSerialization(CSerializer::Archiver & ar, Version v) override
+			{
+				ar << *valueObject;
+			}
+
+			virtual void onControlDeserialization(CSerializer::Archiver & ar, Version v) override
+			{
+				ar >> *valueObject;
+			}
+
 			void bSetValue(iCtrlPrec_t value, bool sync = false) override
 			{
 				valueObject->setNormalizedValue(value);
@@ -147,6 +157,19 @@
 			ValueBase & getValueReference() { return *valueObject; }
 
 		protected:
+
+			virtual void onControlSerialization(CSerializer::Archiver & ar, Version v) override
+			{
+				for (std::size_t i = 0; i < valueObject->getNumValues(); i++)
+					ar << valueObject->getValueIndex(i);
+			}
+
+			virtual void onControlDeserialization(CSerializer::Archiver & ar, Version v) override
+			{
+				for (std::size_t i = 0; i < valueObject->getNumValues(); i++)
+					ar >> valueObject->getValueIndex(i);
+			}
+
 
 			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) {}
 
