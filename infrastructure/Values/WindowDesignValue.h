@@ -157,16 +157,16 @@ namespace cpl
 	};
 
 
-	template<typename UIParameterView>
+	template<typename ParameterView>
 	class ParameterWindowDesignValue
 		: public WindowDesignValue
-		, public WindowDesignValue::AlphaFormatter<typename UIParameterView::ValueType>
+		, public WindowDesignValue::AlphaFormatter<typename ParameterView::ValueType>
 	{
 	public:
 
-		typedef typename UIParameterView::ValueType ValueType;
-		typedef typename UIParameterView::ParameterType ParameterType;
-		typedef typename Parameters::BundleUpdate<UIParameterView>::Record Entry;
+		typedef typename ParameterView::ValueType ValueType;
+		typedef typename ParameterView::ParameterType ParameterType;
+		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
 		class SharedBehaviour
 		{
@@ -234,7 +234,7 @@ namespace cpl
 		std::string contextName;
 	public:
 
-		std::array<ParameterValueWrapper<UIParameterView>, 4> values;
+		std::array<ParameterValueWrapper<ParameterView>, 4> values;
 		ParameterType type, symmetry, alpha, beta;
 	};
 };

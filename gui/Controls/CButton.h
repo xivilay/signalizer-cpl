@@ -31,34 +31,34 @@
 	#define CPL_CBUTTON_H
 
 	#include "ControlBase.h"
-	#include <string>
+	#include "ValueControl.h"
 
 	namespace cpl
 	{
 
 		class CButton 
 			: public juce::Button
-			, public CBaseControl
+			, public ValueControl<ValueEntityBase, CompleteValue<LinearRange<ValueT>, BasicFormatter<ValueT>>>
 		{
 			juce::String texts[2];
 			bool toggle;
+			typedef ValueControl<ValueEntityBase, CompleteValue<LinearRange<ValueT>, BasicFormatter<ValueT>>> Base;
 		public:
-			CButton(const std::string & text, const std::string & textToggled = "");
-			CButton();
+
+			CButton(ValueEntityBase * valueToReferTo = nullptr, bool takeOwnership = false);
 			~CButton();
 
-			virtual void baseControlValueChanged() override;
 			virtual void clicked() override;
 			void setToggleable(bool isAble);
-			void bSetInternal(iCtrlPrec_t newValue) override;
-			void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
-			iCtrlPrec_t bGetValue() const override;
+
+			void setTexts(const std::string & toggled, const std::string & untoggled);
 			void setUntoggledText(const std::string &);
 			void setToggledText(const std::string &);
 			std::string bGetTitle() const override;
 			void bSetTitle(const std::string &) override;
 
 		private:
+			void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * object) override;
 			void paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown);
 
 		};

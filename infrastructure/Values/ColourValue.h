@@ -67,21 +67,21 @@ namespace cpl
 	};
 
 
-	template<typename UIParameterView>
+	template<typename ParameterView>
 	class ParameterColourValue 
 		: public ColourValue
-		, public Parameters::BundleUpdate<UIParameterView>
+		, public Parameters::BundleUpdate<ParameterView>
 	{
 
 	public:
-		typedef typename UIParameterView::ValueType ValueType;
-		typedef typename UIParameterView::ParameterType ParameterType;
-		typedef typename Parameters::BundleUpdate<UIParameterView>::Record Entry;
+		typedef typename ParameterView::ValueType ValueType;
+		typedef typename ParameterView::ParameterType ParameterType;
+		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
 		class SharedBehaviour : private HexFormatter<ValueType>
 		{
 		public:
-			SharedBehaviour() : range(0, 0xFF), context("CC") {}
+			SharedBehaviour() : range(0, 0xFF), context("C.") {}
 
 			VirtualFormatter<ValueType> & getFormatter() { return *this; }
 			VirtualTransformer<ValueType> & getTransformer() { return range; }
@@ -135,7 +135,7 @@ namespace cpl
 		}
 
 		ParameterType r, g, b, a;
-		std::array<ParameterValueWrapper<UIParameterView>, 4> values;
+		std::array<ParameterValueWrapper<ParameterView>, 4> values;
 
 	private:
 		std::string contextName;

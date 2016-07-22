@@ -73,7 +73,7 @@ namespace cpl
 		{
 			SerializerType serializer(name);
 			serializer.getArchiver().setMasterVersion(version);
-			parent->serializeObject(serializer.getArchiver(), serializer.getArchiver().getMasterVersion());
+			parent->serializeObject(serializer.getArchiver(), serializer.getArchiver().getLocalVersion());
 			juce::File location;
 			bool result = CPresetManager::instance().savePresetAs(serializer, location, name);
 			// update list anyway; user may delete files in dialog etc.
@@ -92,7 +92,7 @@ namespace cpl
 			updatePresetList();
 			if (result)
 			{
-				parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+				parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getLocalVersion());
 				setDisplayedPreset(location);
 			}
 		}
@@ -100,7 +100,7 @@ namespace cpl
 		{
 			SerializerType serializer(name);
 			serializer.getArchiver().setMasterVersion(version);
-			parent->serializeObject(serializer.getArchiver(), serializer.getArchiver().getMasterVersion());
+			parent->serializeObject(serializer.getArchiver(), serializer.getArchiver().getLocalVersion());
 			juce::File location;
 			bool result = CPresetManager::instance().savePreset(fullPathToPreset("default"), serializer, location);
 			// update list anyway; user may delete files in dialog etc.
@@ -119,7 +119,7 @@ namespace cpl
 			updatePresetList();
 			if (result)
 			{
-				parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+				parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getLocalVersion());
 				setDisplayedPreset(location);
 			}
 		}
@@ -133,7 +133,7 @@ namespace cpl
 				SerializerType serializer(name);
 				if (CPresetManager::instance().loadPreset(fullPathToPreset(presetName), serializer, location))
 				{
-					parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getMasterVersion());
+					parent->deserializeObject(serializer.getBuilder(), serializer.getBuilder().getLocalVersion());
 					setSelectedPreset(location);
 				}
 			}

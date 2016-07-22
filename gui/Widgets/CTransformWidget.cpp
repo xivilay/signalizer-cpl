@@ -67,6 +67,21 @@ namespace cpl
 		bSetIsDefaultResettable(true);
 	}
 
+	void CTransformWidget::onControlSerialization(CSerializer::Builder & ar, Version version)
+	{
+		if (version < cpl::Version::fromParts(0, 2, 8))
+		{
+			GraphicsND::Transform3D<float> oldState(1);
+			valueObject->fillTransform3D(oldState);
+
+			ar << oldState;
+		}
+		else
+		{
+			ValueControl<TransformValue, CompleteTransformValue>::onControlSerialization(ar, version);
+		}
+	}
+
 	void CTransformWidget::onControlDeserialization(CSerializer::Builder & ar, Version version)
 	{
 		if (version < cpl::Version::fromParts(0, 2, 8))
@@ -220,6 +235,8 @@ namespace cpl
 			{
 				scale *= 0.3f * 360;
 				now = std::fmod(now + scale * deltaDifference.x, 360.0f);
+				while (now < 0)
+					now += 360;
 			}
 			else
 			{

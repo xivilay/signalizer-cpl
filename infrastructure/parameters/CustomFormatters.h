@@ -151,7 +151,7 @@ namespace cpl
 		void setValues(std::vector<std::string> valuesToConsume) 
 		{
 			this->values = std::move(valuesToConsume); 
-			transformer.setQuantization(values.size()); 
+			transformer.setQuantization(static_cast<int>(values.size()));
 		}
 		const std::vector<std::string> & getValues() const noexcept { return values; }
 

@@ -377,7 +377,7 @@
 			{
 				if (bIsDefaultResettable() && !serializedState->isEmpty() && queryResetOk())
 				{
-					onControlDeserialization(*serializedState.get(), serializedState->getMasterVersion());
+					onControlDeserialization(*serializedState.get(), serializedState->getLocalVersion());
 					serializedState->rewindReader();
 					return true;
 				}

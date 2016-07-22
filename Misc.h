@@ -41,9 +41,23 @@
 	namespace cpl
 	{
 		template<typename To, typename From>
-		inline To enum_cast(const From & f)
+		inline typename std::enable_if<std::is_enum<From>::value, To>::type enum_cast(const From & f)
 		{
-			return static_cast<To>(static_cast<std::int64_t>(f));
+			return static_cast<To>(static_cast<std::underlying_type_t<From>>(f));
+		}
+
+		template<typename To, typename From>
+		inline typename std::enable_if<std::is_enum<To>::value, To>::type enum_cast(const From & f)
+		{
+			return static_cast<To>(static_cast<std::underlying_type_t<To>>(f));
+		}
+
+		template<typename Enum, typename Func>
+		typename std::enable_if<std::is_enum<Enum>::value, void>::type foreach_enum(Func f)
+		{
+			typedef std::underlying_type_t<Enum> T;
+			for (T i = 0; i < enum_cast<T>(Enum::end); ++i)
+				f(enum_cast<Enum>(i));
 		}
 
 		namespace Misc 

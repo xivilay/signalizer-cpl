@@ -110,7 +110,6 @@
 				oglc = nullptr; 
 			}
 			void detachFromOpenGL() { if (oglc) oglc->detach(); oglc = nullptr; }
-			virtual std::unique_ptr<GraphicComponent> createEditor() { return nullptr; }
 
 			bool isOpenGL() const noexcept { return oglc != nullptr; }
 			juce::OpenGLContext * getAttachedContext() const noexcept { return oglc; }

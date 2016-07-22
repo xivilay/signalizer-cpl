@@ -37,6 +37,12 @@ namespace cpl
 		: valueObject(nullptr)
 	{
 		setValueReference(valueToReferTo, takeOwnerShip);
+		baseControlValueChanged();
+	}
+
+	CValueKnobSlider::~CValueKnobSlider()
+	{
+		valueObject->removeListener(this);
 	}
 
 	std::string CValueKnobSlider::bGetExportedName()
@@ -46,6 +52,7 @@ namespace cpl
 
 	void CValueKnobSlider::setValueReference(ValueEntityBase * valueToReferTo, bool takeOwnerShip)
 	{
+		// TODO: Inherit from ValueControl instead
 		if (valueObject != nullptr)
 		{
 			valueObject->removeListener(this);

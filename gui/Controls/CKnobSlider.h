@@ -34,11 +34,7 @@
 
 	namespace cpl
 	{
-		/*********************************************************************************************
-
-			Basic slider / knob interface.
-
-		*********************************************************************************************/
+		// TODO: Should NOT derive from CBaseControl, only ValueControl (mess with the listeners)
 		class CKnobSlider 
 		: 
 			public juce::Slider,

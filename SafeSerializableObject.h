@@ -60,25 +60,25 @@
 
 		inline CSerializer::Archiver & operator << (CSerializer::Archiver & left, SafeSerializableObject & right)
 		{
-			right.serializeObject(left, left.getMasterVersion());
+			right.serializeObject(left, left.getLocalVersion());
 			return left;
 		}
 
 		inline CSerializer::Builder & operator >> (CSerializer::Builder & left, SafeSerializableObject & right)
 		{
-			right.deserializeObject(left, left.getMasterVersion());
+			right.deserializeObject(left, left.getLocalVersion());
 			return left;
 		}
 
 		inline CSerializer::Archiver & operator << (CSerializer::Archiver & left, SafeSerializableObject * right)
 		{
-			right->serializeObject(left, left.getMasterVersion());
+			right->serializeObject(left, left.getLocalVersion());
 			return left;
 		}
 
 		inline CSerializer::Builder & operator >> (CSerializer::Builder & left, SafeSerializableObject * right)
 		{
-			right->deserializeObject(left, left.getMasterVersion());
+			right->deserializeObject(left, left.getLocalVersion());
 			return left;
 		}
 

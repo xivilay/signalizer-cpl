@@ -24,7 +24,7 @@ namespace cpl
 		{
 		public:
 			SharedBehaviour()
-				: context("tsf")
+				: context("Tsf.")
 				, degreeFormatter("degs")
 				, degreeRange(0, 360)
 				, magnitudeRange(-50, 50)
@@ -72,7 +72,7 @@ namespace cpl
 		virtual ValueEntityBase & getValueIndex(Aspect a, Index i) = 0;
 		virtual ValueEntityBase & getValueIndex(std::size_t i) override
 		{ 
-			std::div_t res = std::div(i, 3); 
+			std::div_t res = std::div(static_cast<int>(i), 3); 
 			return getValueIndex((Aspect)res.quot, (Index)res.rem);
 		}
 
@@ -105,22 +105,22 @@ namespace cpl
 		Vector vectors[3];
 	};
 
-	template<typename UIParameterView>
+	template<typename ParameterView>
 	class ParameterTransformValue
 		: public TransformValue
-		, public Parameters::BundleUpdate<UIParameterView>
+		, public Parameters::BundleUpdate<ParameterView>
 	{
 
 	public:
-		typedef typename UIParameterView::ValueType ValueType;
-		typedef typename UIParameterView::ParameterType ParameterType;
-		typedef typename Parameters::BundleUpdate<UIParameterView>::Record Entry;
+		typedef typename ParameterView::ValueType ValueType;
+		typedef typename ParameterView::ParameterType ParameterType;
+		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
 		ParameterTransformValue(SharedBehaviour<ValueType> & b)
 			: vectors { 
-				{ "pos.", b.getMagTransformer(), b.getDefaultFormatter() },
-				{ "rot.", b.getDegreeTransformer(), b.getDegreeFormatter() },
-				{ "scl.", b.getMagTransformer(), b.getDefaultFormatter() }
+				{ "Pos.", b.getMagTransformer(), b.getDefaultFormatter() },
+				{ "Rot.", b.getDegreeTransformer(), b.getDegreeFormatter() },
+				{ "Scl.", b.getMagTransformer(), b.getDefaultFormatter() }
 			}
 			, behaviour(b)
 		{
@@ -175,13 +175,13 @@ namespace cpl
 		struct Vector
 		{
 			Vector(const std::string & context, VirtualTransformer<ValueType> & tsf, VirtualFormatter<ValueType> & fmt)
-				: axis{ {context + "x", tsf, &fmt}, { context + "y", tsf, &fmt }, { context + "z", tsf, &fmt } }
+				: axis{ {context + "X", tsf, &fmt}, { context + "Y", tsf, &fmt }, { context + "Z", tsf, &fmt } }
 			{}
 			ParameterType axis[3];
 		};
 
 		Vector vectors[3];
-		std::array<ParameterValueWrapper<UIParameterView>, 9> values;
+		std::array<ParameterValueWrapper<ParameterView>, 9> values;
 
 	private:
 		std::unique_ptr<std::vector<Entry>> parameters;

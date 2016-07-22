@@ -72,7 +72,7 @@
 				{
 					// you must call notifyListeners() in your destructor!
 					CPL_BREAKIFDEBUGGED();
-					Misc::LogException("A view didn't notify it's listeners upon destruction!");
+					Misc::LogException("A destruction server didn't notify it's listeners upon destruction!");
 				}
 			}
 

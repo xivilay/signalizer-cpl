@@ -81,7 +81,7 @@
 			CSerializer se;
 			se.setMasterVersion(this_program_version);
 			
-			myobject.save(se, se.getMasterVersion());
+			myobject.save(se, se.getLocalVersion());
 			auto data = se.compile();
  
 			writeToFile(data.getBlock(), data.getSize());
@@ -96,7 +96,7 @@
 			// this may throw an exception if file is corrupt.
 			se.build(CSerializer::WeakContentWrapper(data, dataSize));
 			
-			myobject.load(se, se.getMasterVersion());
+			myobject.load(se, se.getLocalVersion());
  
 		}
 	
@@ -568,7 +568,8 @@
 			}
 
 			/// <summary>
-			/// Clears all content and children in this object, resetting it's state
+			/// Clears all content and children in this object, resetting it's state.
+			/// Note: Does currently NOT reset the local version.
 			/// </summary>
 			void clear() override
 			{
@@ -606,7 +607,7 @@
 			/// <param name="v"></param>
 			/// <returns></returns>
 			void setMasterVersion(Version v) noexcept { version = v; }
-			Version getMasterVersion() const noexcept { return version; }
+			Version getLocalVersion() const noexcept { return version; }
 			virtual bool build(const WeakContentWrapper & cr) override;
 			virtual ContentWrapper compile(bool addMasterHeader = false) const override;
 

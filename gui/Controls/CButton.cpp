@@ -36,24 +36,29 @@ namespace cpl
 	CButton
 
 	*********************************************************************************************/
-	CButton::CButton(const std::string & text, const std::string & textToggled)
-		: juce::Button(text), CBaseControl(this), toggle(false)
+	CButton::CButton(ValueEntityBase * value, bool takeOwnership)
+		: juce::Button("CButton")
+		, Base(this, value, takeOwnership)
+		, toggle(false)
 	{
-
-		texts[0] = text;
-		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
-		texts[1] = textToggled.size() ? textToggled : text;
-		enableTooltip(true);
-	}
-
-	CButton::CButton()
-		: juce::Button("CButton"), CBaseControl(this), toggle(false)
-	{
+		/* if (value)
+		{
+			std::string toggled, untoggled;
+			if (value->getFormatter().format(0, untoggled) && value->getFormatter().format(1, toggled))
+			{
+				setTexts(toggled, untoggled);
+			}
+		} */
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
 		enableTooltip(true);
 	}
 
 	CButton::~CButton() {};
+
+	void CButton::onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * object)
+	{
+		setToggleState(object->getNormalizedValue() > 0.5 ? true : false, juce::NotificationType::dontSendNotification);
+	}
 
 	std::string CButton::bGetTitle() const
 	{
@@ -70,38 +75,30 @@ namespace cpl
 		setClickingTogglesState(toggle = isAble);
 	}
 
-	void CButton::bSetInternal(iCtrlPrec_t newValue)
+	void CButton::setTexts(const std::string & untoggled, const std::string & toggled)
 	{
-		setToggleState(newValue > 0.5f ? true : false, juce::NotificationType::dontSendNotification);
+		texts[0] = untoggled;
+		texts[1] = toggled;
+		repaint();
 	}
-	void CButton::bSetValue(iCtrlPrec_t newValue, bool sync)
-	{
-		setToggleState(newValue > 0.5f ? true : false, 
-			sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification);
-	}
-	iCtrlPrec_t CButton::bGetValue() const
-	{
-		return getToggleState() ? 1.0f : 0.0f;
-	}
+
 	void CButton::setUntoggledText(const std::string & newText)
 	{
 		this->texts[0] = newText;
+		repaint();
 	}
+
 	void CButton::setToggledText(const std::string & newText)
 	{
 		this->texts[1] = newText;
+		repaint();
 	}
 
 	void CButton::clicked()
 	{
-		baseControlValueChanged();
+		valueObject->setNormalizedValue(getToggleState() ? 1.0f : 0.0f);
 	}
 
-	void CButton::baseControlValueChanged()
-	{
-		notifyListeners();
-		//repaint();
-	}
 
 	void CButton::paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown)
 	{

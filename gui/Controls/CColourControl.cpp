@@ -83,7 +83,7 @@ namespace cpl
 			// for this widget, we only need to display two characters,
 			// so we shrink them a little bit.
 
-			char * names[] = { "r", "b", "g", "a" };
+			char * names[] = { "r", "g", "b", "a" };
 
 			for (std::size_t i = 0; i < std::extent<decltype(names)>::value; ++i)
 			{
@@ -375,7 +375,11 @@ namespace cpl
 			valueObject->getValueIndex(cpl::ColourValue::A).setNormalizedValue(1.0);
 	}
 
-	/*********************************************************************************************/
+	CColourControl::~CColourControl()
+	{
+		for (int i = 0; i < 4; ++i)
+			valueObject->getValueIndex((cpl::ColourValue::Index)i).removeListener(this);
+	}
 
 	void CColourControl::onControlSerialization(CSerializer::Archiver & ar, Version version)
 	{

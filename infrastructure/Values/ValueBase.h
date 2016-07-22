@@ -45,7 +45,7 @@ namespace cpl
 
 		virtual VirtualTransformer<ValueT> & getTransformer() = 0;
 		virtual VirtualFormatter<ValueT> & getFormatter() = 0;
-		virtual ValueT getNormalizedValue() = 0;
+		virtual ValueT getNormalizedValue() const = 0;
 		virtual void setNormalizedValue(ValueT parameter) = 0;
 
 		virtual void beginChangeGesture() {};
@@ -94,11 +94,28 @@ namespace cpl
 
 	class ValueGroup 
 		: public ContextualName
+		, public CSerializer::Serializable
 		, private Utility::CNoncopyable
 	{
 	public:
 		virtual ValueEntityBase & getValueIndex(std::size_t i) = 0;
 		virtual std::size_t getNumValues() const noexcept = 0;
+
+		void serialize(CSerializer::Archiver & archiver, cpl::Version v) override
+		{
+			for (std::size_t i = 0; i < getNumValues(); ++i)
+				archiver << getValueIndex(i).getNormalizedValue();
+		}
+
+		void deserialize(CSerializer::Builder & builder, cpl::Version v) override
+		{
+			for (std::size_t i = 0; i < getNumValues(); ++i)
+			{
+				ValueT val;
+				builder >> val;
+				getValueIndex(i).setNormalizedValue(val);
+			}
+		}
 	};
 
 	
@@ -133,7 +150,7 @@ namespace cpl
 
 		virtual VirtualTransformer<ValueT> & getTransformer() override { return *transformer; }
 		virtual VirtualFormatter<ValueT> & getFormatter() override { return *formatter; }
-		virtual ValueT getNormalizedValue() override { return internalValue; }
+		virtual ValueT getNormalizedValue() const override { return internalValue; }
 		virtual void setNormalizedValue(ValueT value) override { internalValue = value; notifyListeners(); }
 
 	private:
@@ -158,18 +175,21 @@ namespace cpl
 		Formatter hostedFormatter;
 	};
 	
-	template<typename UIParameterView>
-	class ParameterValueWrapper : public DefaultValueListenerEntity, UIParameterView::Listener
+	/// <summary>
+	/// Note: Lifetime is expected to be tied to the parameter reference, for now.
+	/// </summary>
+	template<typename ParameterView>
+	class ParameterValueWrapper : public DefaultValueListenerEntity, ParameterView::Listener
 	{
 	public:
 
-		ParameterValueWrapper(UIParameterView * parameterToRef = nullptr)
+		ParameterValueWrapper(ParameterView * parameterToRef = nullptr)
 			: parameterView(nullptr)
 		{
 			setParameterReference(parameterToRef);
 		}
 
-		void setParameterReference(UIParameterView * parameterReference) 
+		void setParameterReference(ParameterView * parameterReference) 
 		{ 
 			if (parameterView != nullptr)
 			{
@@ -182,7 +202,7 @@ namespace cpl
 			}
 		}
 
-		void parameterChanged(Parameters::Handle, Parameters::Handle, UIParameterView * parameterThatChanged)
+		void parameterChangedUI(Parameters::Handle, Parameters::Handle, ParameterView * parameterThatChanged)
 		{
 			if (parameterView != parameterThatChanged)
 			{
@@ -192,27 +212,35 @@ namespace cpl
 			notifyListeners();
 		}
 
+		ParameterView & getParameterView() noexcept { return *parameterView; }
+		const ParameterView & getParameterView() const noexcept { return *parameterView; }
+		// : See summary of <this>
+		//~ParameterValueWrapper()
+		//{
+		//	setParameterReference(nullptr);
+		//}
+
 		virtual VirtualTransformer<ValueT> & getTransformer() override { return parameterView->getTransformer(); }
 		virtual VirtualFormatter<ValueT> & getFormatter() override { return parameterView->getFormatter(); }
-		virtual ValueT getNormalizedValue() override { return parameterView->getValueNormalized<ValueT>(); }
-		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<UIParameterView::ValueType>(value)); }
+		virtual ValueT getNormalizedValue() const override { return parameterView->getValueNormalized<ValueT>(); }
+		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<ParameterView::ValueType>(value)); }
 		virtual void beginChangeGesture() override { return parameterView->beginChangeGesture(); }
 		virtual void endChangeGesture() override { return parameterView->endChangeGesture(); }
 		virtual std::string getContextualName() override { return parameterView->getExportedName(); }
 
 	private:
-		UIParameterView * parameterView;
+		ParameterView * parameterView;
 	};
 
 	
 	// TODO: specialize on std::is_base_of<FormattedParameter, UIParamerView::ParameterType>
-	template<typename UIParameterView>
+	template<typename ParameterView>
 	class ParameterValue
-		: public ParameterValueWrapper<UIParameterView>
+		: public ParameterValueWrapper<ParameterView>
 	{
-		typedef typename UIParameterView::ValueType ValueType;
-		typedef typename UIParameterView::ParameterType ParameterType;
-		typedef typename Parameters::BundleUpdate<UIParameterView>::Record Entry;
+		typedef typename ParameterView::ValueType ValueType;
+		typedef typename ParameterView::ParameterType ParameterType;
+		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
 		friend class Updater;
 
@@ -224,7 +252,7 @@ namespace cpl
 
 		}
 
-		Parameters::SingleUpdate<UIParameterView> * generateUpdateRegistrator(bool isAutomatable = true, bool canChangeOthers = false)
+		Parameters::SingleUpdate<ParameterView> * generateUpdateRegistrator(bool isAutomatable = true, bool canChangeOthers = false)
 		{
 			// TODO: reference-count at least?
 			return new Updater(this, isAutomatable, canChangeOthers);
@@ -234,10 +262,10 @@ namespace cpl
 
 	private:
 
-		class Updater : public Parameters::SingleUpdate<UIParameterView>
+		class Updater : public Parameters::SingleUpdate<ParameterView>
 		{
 		public:
-			Updater(ParameterValue<UIParameterView> * parentToRef, bool isAutomatable = true, bool canChangeOthers = false)
+			Updater(ParameterValue<ParameterView> * parentToRef, bool isAutomatable = true, bool canChangeOthers = false)
 				: parent(parentToRef)
 			{
 				entry.parameter = &parent->parameter;
@@ -254,7 +282,7 @@ namespace cpl
 				parent->setParameterReference(entry.uiParameterView);
 				delete this;
 			}
-			ParameterValue<UIParameterView> * parent;
+			ParameterValue<ParameterView> * parent;
 			Entry entry;
 		};
 

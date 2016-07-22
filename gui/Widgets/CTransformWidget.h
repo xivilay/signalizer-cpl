@@ -65,6 +65,7 @@
 			void mouseMove(const juce::MouseEvent & e) override;
 			void mouseDrag(const juce::MouseEvent & e) override;
 
+			void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 			void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
 

@@ -82,14 +82,14 @@ namespace cpl
 		PowerSlopeSemantics<ValueT> semantics;
 	};
 
-	template<typename UIParameterView>
+	template<typename ParameterView>
 	class ParameterPowerSlopeValue : PowerSlopeValue
 	{
 	public:
 
-		typedef typename UIParameterView::ValueType ValueType;
-		typedef typename UIParameterView::ParameterType ParameterType;
-		typedef typename Parameters::BundleUpdate<UIParameterView>::Record Entry;
+		typedef typename ParameterView::ValueType ValueType;
+		typedef typename ParameterView::ParameterType ParameterType;
+		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
 		class SharedBehaviour : PowerSlopeSemantics<ValueType>
 		{
@@ -128,7 +128,7 @@ namespace cpl
 		virtual std::string getContextualName() override { return contextName; }
 		ValueEntityBase & getValueIndex(std::size_t i) override { return values[i]; }
 
-		std::array<ParameterValueWrapper<UIParameterView>, 4> values[3];
+		std::array<ParameterValueWrapper<ParameterView>, 4> values[3];
 		ParameterType base, pivot, slope;
 
 	private:

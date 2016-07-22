@@ -37,11 +37,7 @@
 
 	namespace cpl
 	{
-		/*********************************************************************************************
-
-			CColorKnob - an automatable knob which can display a color
-
-		*********************************************************************************************/
+		// TODO: Inherit from ValueControl instead
 		class CColourControl 
 		:
 			public CKnobSlider,
@@ -52,7 +48,7 @@
 		public:
 
 			CColourControl(ColourValue * valueToReferTo = nullptr, bool takeOwnerShip = false);
-
+			~CColourControl();
 
 			virtual void valueChanged() override;
 			virtual void startedDragging() override;

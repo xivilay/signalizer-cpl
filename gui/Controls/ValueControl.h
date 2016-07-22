@@ -28,7 +28,7 @@
 *************************************************************************************/
 
 #ifndef CPL_VALUECONTROL_H
-	#define CPL_VALUECONTROL_
+	#define CPL_VALUECONTROL_H
 
 	#include "ControlBase.h"
 	#include "../../Utility.h"
@@ -62,6 +62,8 @@
 
 			ValueBase & getValueReference() { return *valueObject; }
 
+
+
 		protected:
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version v) override
@@ -79,7 +81,7 @@
 				valueObject->setNormalizedValue(value);
 			}
 
-			iCtrlPrec_t bGetValue()
+			iCtrlPrec_t bGetValue() const override
 			{
 				return valueObject->getNormalizedValue();
 			}
@@ -132,6 +134,11 @@
 				valueObject->addListener(this);
 			}
 
+			virtual ~ValueControl()
+			{
+				valueObject->removeListener(this);
+			}
+
 			std::unique_ptr<ValueBase, Utility::MaybeDelete<ValueBase>> valueObject;
 		};
 
@@ -155,6 +162,8 @@
 			}
 
 			ValueBase & getValueReference() { return *valueObject; }
+
+
 
 		protected:
 
@@ -205,6 +214,15 @@
 				for (std::size_t i = 0; i < newNumValues; ++i)
 				{
 					valueObject->getValueIndex(i).addListener(this);
+				}
+			}
+
+			virtual ~ValueControl()
+			{
+				const auto newNumValues = valueObject->getNumValues();
+				for (std::size_t i = 0; i < newNumValues; ++i)
+				{
+					valueObject->getValueIndex(i).removeListener(this);
 				}
 			}
 

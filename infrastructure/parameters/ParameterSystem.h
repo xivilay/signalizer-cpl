@@ -5,6 +5,7 @@
 #include <string>
 #include "../../ConcurrentServices.h"
 #include <vector>
+#include <array>
 #include "../../gui/Tools.h"
 #include "CustomFormatters.h"
 #include "CustomTransforms.h"
@@ -35,7 +36,7 @@ namespace cpl
 
 		}
 
-		T getValue() { return value.load(std::memory_order_acquire);}
+		T getValue() const { return value.load(std::memory_order_acquire); }
 		void setValue(T newValue) { value.store(Restricter()(newValue), std::memory_order_release); }
 
 		std::string getName() { return name; }
@@ -74,25 +75,31 @@ namespace cpl
 	{
 		typedef int Handle;
 
-		enum UpdateFlags
+		typedef int UpdateFlagsT;
+
+		enum UpdateFlags : UpdateFlagsT
 		{
 			/// <summary>
 			/// Nothing recieves a notification
 			/// </summary>
 			None = 1 << 0,
 			/// <summary>
+			/// Any real-time listeners that immediately recieves a notification
+			/// </summary>
+			RealTimeListeners = 1 << 1,
+			/// <summary>
 			/// Whatever realtime system is there, recieves a notification.
 			/// For instance, the audio thread (and the host)
 			/// </summary>
-			RealTimeSubSystem = 1 << 1,
+			RealTimeSubSystem = 1 << 2,
 			/// <summary>
 			/// UI receives a notification
 			/// </summary>
-			UI = 1 << 2,
+			UI = 1 << 3,
 			/// <summary>
 			/// Everything recieves a notification
 			/// </summary>
-			All = UI | RealTimeSubSystem
+			All = UI | RealTimeSubSystem | RealTimeListeners
 		};
 
 		class UserContent
@@ -101,14 +108,14 @@ namespace cpl
 			virtual ~UserContent() {};
 		};
 
-		template<typename UIParameterView>
+		template<typename ParameterView>
 		struct CallbackParameterRecord
 		{
-			typename UIParameterView::ParameterType * parameter;
+			typename ParameterView::ParameterType * parameter;
 			bool shouldBeAutomatable;
 			bool canChangeOthers;
 			Parameters::Handle handle;
-			UIParameterView * uiParameterView;
+			ParameterView * uiParameterView;
 		};
 
 		class CallbackRecordInterface
@@ -126,12 +133,12 @@ namespace cpl
 			virtual ~CallbackRecordInterface() {}
 		};
 
-		template<typename UIParameterView>
+		template<typename ParameterView>
 		class BundleUpdate : public CallbackRecordInterface
 		{
 		public:
-			typedef Parameters::CallbackParameterRecord<UIParameterView> Record;
-			typedef BundleUpdate<UIParameterView> QualifedBundle;
+			typedef Parameters::CallbackParameterRecord<ParameterView> Record;
+			typedef BundleUpdate<ParameterView> QualifedBundle;
 
 			/// <summary>
 			/// Returns a short, semantic name for this group of parameters (for instance, a widget name
@@ -139,7 +146,7 @@ namespace cpl
 			/// </summary>
 			virtual const std::string & getBundleContext() const noexcept = 0;
 			/// <summary>
-			/// Queries a list of parameters, and fills in a reference to a UIParameterView.
+			/// Queries a list of parameters, and fills in a reference to a ParameterView.
 			/// Returned data must be valid until parametersInstalled() has been called.
 			/// </summary>
 			virtual std::vector<Record> & queryParameters() = 0;
@@ -152,14 +159,14 @@ namespace cpl
 
 		};
 
-		template<typename UIParameterView>
+		template<typename ParameterView>
 		class SingleUpdate : public CallbackRecordInterface
 		{
 		public:
 			/// <summary>
 			/// Initialize to a valid object after generateInfo() has happened. Not needed after parametersInstalled().
 			/// </summary>
-			Parameters::CallbackParameterRecord<UIParameterView> * parameterQuery;
+			Parameters::CallbackParameterRecord<ParameterView> * parameterQuery;
 		};
 
 	};
@@ -197,22 +204,35 @@ namespace cpl
 			virtual ~AutomatedProcessor() {}
 		};
 
-		class UIParameterView;
+		class ParameterView;
 
+		/// <summary>
+		/// UI listeners recieve parameter notification only for registred controls through the UI thread.
+		/// </summary>
 		class UIListener
 		{
 		public:
-			virtual void parameterChanged(Parameters::Handle globalHandle, Parameters::Handle localHandle, UIParameterView * parameter) = 0;
+			virtual void parameterChangedUI(Parameters::Handle localHandle, Parameters::Handle globalHandle, ParameterView * parameter) = 0;
 		};
 
-		class UIParameterView
+		/// <summary>
+		/// RT listeners recieve notifictions of all parameter changes immediately.
+		/// Unlike UI listeners, RT listeners are not guaranteed to be notified of all changes 
+		/// </summary>
+		class RTListener
+		{
+		public:
+			virtual void parameterChangedRT(Parameters::Handle localHandle, Parameters::Handle globalHandle, BaseParameter * param) = 0;
+		};
+
+		class ParameterView
 		{
 		public:
 			friend class ParameterGroup;
 			typedef UIListener Listener;
 			typedef T ValueType;
 			typedef BaseParameter ParameterType;
-			UIParameterView(
+			ParameterView(
 				QualifiedGroup * parentToRef, 
 				BaseParameter * parameterToRef, 
 				Parameters::Handle handleOfThis, 
@@ -230,7 +250,7 @@ namespace cpl
 
 			}
 
-			UIParameterView(UIParameterView && other)
+			ParameterView(ParameterView && other)
 				: parent(other.parent)
 				, handle(other.handle)
 				, parameter(other.parameter)
@@ -249,35 +269,35 @@ namespace cpl
 			void addListener(UIListener * listener) { parent->addUIListener(handle, listener); }
 			void removeListener(UIListener * listener) { parent->removeUIListener(handle, listener); }
 
-			void updateFromUINormalized(ValueType value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All) 
+			void updateFromUINormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
 			{ 
 				parent->updateFromUINormalized(handle, value, flags); 
 			}
 
-			void updateFromProcessorNormalized(ValueType value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All) 
+			void updateFromProcessorNormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
 			{ 
 				parent->updateFromProcessorNormalized(handle, value, flags); 
 			}
 
-			void updateFromHostNormalized(ValueType value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All) 
+			void updateFromHostNormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
 			{ 
 				parent->updateFromHostNormalized(handle, value, flags); 
 			}
 
 			void beginChangeGesture() { parent->beginChangeGesture(handle); }
-			void endChangeGesture() { parent->beginChangeGesture(handle); }
+			void endChangeGesture() { parent->endChangeGesture(handle); }
 
-			void updateFromUITransformed(ValueType value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All) 
+			void updateFromUITransformed(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
 			{ 
 				return updateFromUINormalized(parameter->getTransformer().normalize(value), flags);
 			}
 
-			void updateFromProcessorTransformed(ValueType value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All)
+			void updateFromProcessorTransformed(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 			{ 
 				return updateFromProcessorNormalized(parameter->getTransformer().normalize(value), flags);
 			}
 
-			bool updateFromUIStringTransformed(const std::string & value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All)
+			bool updateFromUIStringTransformed(const std::string & value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 			{
 				T interpretedValue;
 				if(parameter->getFormatter()->interpret(value, interpretedValue))
@@ -288,7 +308,7 @@ namespace cpl
 			}
 
 			template<typename Ret = T>
-				Ret getValueNormalized() { return static_cast<Ret>(parameter->getValue()); }
+				Ret getValueNormalized() const { return static_cast<Ret>(parameter->getValue()); }
 			template<typename Ret = T>
 				Ret getValueTransformed() { return static_cast<Ret>(parameter->getTransformer().normalize(parameter->getValue())); }
 
@@ -323,6 +343,8 @@ namespace cpl
 			bundleInstalledReferences = std::make_unique<std::vector<BundleInstallReference>>();
 			singleInstalledReferences = std::make_unique<std::vector<SingleInstallReference>>();
 		}
+
+		int getOffset() const noexcept { return parameterOffset; }
 
 		void serialize(CSerializer::Archiver & archive, Version v) override
 		{
@@ -388,7 +410,7 @@ namespace cpl
 		}
 		
 		
-		void registerParameterBundle(Parameters::BundleUpdate<UIParameterView> * bundle, std::string contextStack = "")
+		void registerParameterBundle(Parameters::BundleUpdate<ParameterView> * bundle, std::string contextStack = "")
 		{
 			contextStack += bundle->getBundleContext();
 			bundle->generateInfo();
@@ -410,7 +432,7 @@ namespace cpl
 
 		}
 
-		void registerSingleParameter(Parameters::SingleUpdate<UIParameterView> * singleRef)
+		void registerSingleParameter(Parameters::SingleUpdate<ParameterView> * singleRef)
 		{
 			singleRef->generateInfo();
 			singleRef->parameterQuery->handle = registerParameter(
@@ -448,44 +470,137 @@ namespace cpl
 		/// <summary>
 		/// Only safe to call on the UI thread.
 		/// </summary>
-		void addUIListener(Parameters::Handle handle, UIListener * listener)
+		void addUIListener(Parameters::Handle globalHandle, UIListener * listener)
 		{
-			containedParameters.at(handle - offset).uiListeners.insert(listener);
+			containedParameters.at(globalHandle - offset).uiListeners.insert(listener);
 		}
 
 		/// <summary>
 		/// Only safe to call on the UI thread.
 		/// </summary>
-		void removeUIListener(Parameters::Handle handle, UIListener * listener)
+		void removeUIListener(Parameters::Handle globalHandle, UIListener * listener)
 		{
-			containedParameters.at(handle - offset).uiListeners.insert(listener);
+			containedParameters.at(globalHandle - offset).uiListeners.insert(listener);
 		}
 
 		/// <summary>
-		/// Safe to call from any thread
+		/// Adds a realtime listeners. See documentation for RTListener. Safe to call from any thread.
+		/// If spin is set, the function will always succeed but may spin. May allocate memory.
+		/// If not, the return value indicates whether the operation succeeded.
 		/// </summary>
-		void updateFromProcessorNormalized(Parameters::Handle handle, T value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All)
+		bool addRTListener(RTListener * listener, bool spin = true)
 		{
-			UIParameterView & p = containedParameters.at(handle - offset);
+			for (auto & slot : realtimeListeners)
+			{
+				auto slotListener = slot.listener.load(std::memory_order_acquire);
+				if (slotListener == listener)
+					return true;
+				bool hasLock = false;
+
+				if (!slotListener)
+				{
+
+					if (spin)
+					{
+						while (slot.lock.test_and_set(std::memory_order_relaxed));
+						hasLock = true;
+					}
+					else
+					{
+						hasLock = !slot.lock.test_and_set(std::memory_order_relaxed);
+					}
+
+					if (hasLock)
+					{
+						slot.listener.store(listener, std::memory_order_release);
+						slot.lock.clear(std::memory_order_release);
+					}
+				}
+
+				if (hasLock)
+					return true;
+
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Safe to call from any thread.
+		/// If spin is set, the function will always succeed but may spin.
+		/// If not, the return value indicates whether the operation succeeded.
+		/// </summary>
+		bool removeRTListener(RTListener * listener, bool spin = true)
+		{
+			for (auto & slot : realtimeListeners)
+			{
+				auto slotListener = slot.listener.load(std::memory_order_acquire);
+
+				bool hasLock = false;
+
+				if (slotListener == listener)
+				{
+					if (spin)
+					{
+						while (slot.lock.test_and_set(std::memory_order_relaxed));
+						hasLock = true;
+					}
+					else
+					{
+						hasLock = !slot.lock.test_and_set(std::memory_order_relaxed);
+					}
+
+					if (hasLock)
+					{
+						slot.listener.store(nullptr, std::memory_order_release);
+						slot.lock.clear(std::memory_order_release);
+					}
+				}
+
+				if (hasLock)
+					return true;
+
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Safe to call from any thread.
+		/// Handle = The local handle.
+		/// </summary>
+		void updateFromProcessorNormalized(Parameters::Handle globalHandle, T value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
+		{
+			ParameterView & p = containedParameters.at(globalHandle);
 
 			p.parameter->setValue(value);
+
+			if (flags & Parameters::UpdateFlags::RealTimeListeners)
+			{
+				callRTListenersFor(globalHandle - offset);
+			}
+
 			if(flags & Parameters::UpdateFlags::UI)
 				p.changedFromProcessor = true;
 
 			if (flags & Parameters::UpdateFlags::RealTimeSubSystem && p.isAutomatable)
 			{
-				processor.automatedTransmitChangeMessage(handle - offset, static_cast<FrameworkType>(value));
+				processor.automatedTransmitChangeMessage(globalHandle, static_cast<FrameworkType>(value));
 			}
 		}
 
 		/// <summary>
 		/// Should only be called from a host callback (setParameter)
 		/// </summary>
-		void updateFromHostNormalized(Parameters::Handle handle, T value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All)
+		void updateFromHostNormalized(Parameters::Handle globalHandle, T value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 		{
-			UIParameterView & p = containedParameters.at(handle - offset);
+			ParameterView & p = containedParameters.at(globalHandle - offset);
 
 			p.parameter->setValue(value);
+			
+			if (flags & Parameters::UpdateFlags::RealTimeListeners)
+			{
+				callRTListenersFor(globalHandle - offset);
+			}
+			
 			if(flags & Parameters::UpdateFlags::UI)
 				p.changedFromProcessor = true;
 
@@ -494,21 +609,26 @@ namespace cpl
 		/// <summary>
 		/// Only safe to call on the UI thread.
 		/// </summary>
-		void updateFromUINormalized(Parameters::Handle handle, T value, Parameters::UpdateFlags flags = Parameters::UpdateFlags::All)
+		void updateFromUINormalized(Parameters::Handle globalHandle, T value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 		{
-			UIParameterView & p = containedParameters.at(handle - offset);
+			ParameterView & p = containedParameters.at(globalHandle - offset);
 			p.parameter->setValue(value);
 
 			if (flags & Parameters::UpdateFlags::RealTimeSubSystem && p.isAutomatable)
 			{
-				processor.automatedTransmitChangeMessage(handle - offset, static_cast<FrameworkType>(value));
+				processor.automatedTransmitChangeMessage(globalHandle - offset, static_cast<FrameworkType>(value));
+			}
+
+			if (flags & Parameters::UpdateFlags::RealTimeListeners)
+			{
+				callRTListenersFor(globalHandle - offset);
 			}
 
 			if (flags & Parameters::UpdateFlags::UI)
 			{
 				for (auto listener : p.uiListeners)
 				{
-					listener->parameterChanged(handle, handle - offset, &p);
+					listener->parameterChangedUI(globalHandle - offset, globalHandle, &p);
 				}
 			}
 
@@ -524,22 +644,22 @@ namespace cpl
 			{
 				if (containedParameters[i].changedFromProcessor.cas())
 				{
-					for (auto listener : containedParameters[i].Parameters::UIListeners)
+					for (auto listener : containedParameters[i].uiListeners)
 					{
-						listener->parameterChanged(static_cast<Parameters::Handle>(i) + offset);
+						listener->parameterChangedUI(static_cast<Parameters::Handle>(i), static_cast<Parameters::Handle>(i) + offset, &containedParameters[i]);
 					}
 				}
 			}
 		}
 
-		void beginChangeGesture(Parameters::Handle handle)
+		void beginChangeGesture(Parameters::Handle globalHandle)
 		{
-			processor.automatedBeginChangeGesture(handle - offset);
+			processor.automatedBeginChangeGesture(globalHandle - offset);
 		}
 
-		void endChangeGesture(Parameters::Handle handle)
+		void endChangeGesture(Parameters::Handle globalHandle)
 		{
-			processor.automatedEndChangeGesture(handle - offset);
+			processor.automatedEndChangeGesture(globalHandle - offset);
 		}
 
 		/// <summary>
@@ -584,20 +704,20 @@ namespace cpl
 			return containedParameters.size();
 		}
 
-		UIParameterView * findParameter(Parameters::Handle handle)
+		ParameterView * findParameter(Parameters::Handle globalHandle)
 		{
 			if (!isSealed)
 				CPL_RUNTIME_EXCEPTION("ParameterView being acquired while the system isn't sealed");
 
-			handle -= offset;
-			if (handle != InvalidHandle && static_cast<std::size_t>(handle) < containedParameters.size())
+			globalHandle -= offset;
+			if (globalHandle >= 0 && static_cast<std::size_t>(globalHandle) < containedParameters.size())
 			{
-				return &containedParameters[handle];
+				return &containedParameters[globalHandle];
 			}
 			return nullptr;
 		}
 
-		UIParameterView * findParameter(const std::string & name) noexcept
+		ParameterView * findParameter(const std::string & name) noexcept
 		{
 			if (!isSealed)
 				CPL_RUNTIME_EXCEPTION("ParameterView being acquired while the system isn't sealed");
@@ -608,6 +728,34 @@ namespace cpl
 
 
 	private:
+
+		void callRTListenersFor(Parameters::Handle localHandle)
+		{
+			for (auto & slot : realtimeListeners)
+			{
+				// acquire is a memory fence in-between listener load and lock load,
+				// they must not be reordered
+				auto slotListener = slot.listener.load(std::memory_order_acquire);
+
+				if (slotListener)
+				{
+					// basically a variant of the double-checked lock pattern,
+					// that avoids expensive lock operations when not needed
+					// acquire-release fence?
+					if (!slot.lock.test_and_set(std::memory_order_release))
+					{
+						// call
+						slotListener = slot.listener.load(std::memory_order_acquire);
+						if (slotListener)
+						{
+							slotListener->parameterChangedRT(localHandle, localHandle + offset, containedParameters[localHandle].getParameter());
+						}
+						slot.lock.clear(std::memory_order_release);
+					}
+				}
+
+			}
+		}
 
 		void onServerDestruction(DestructionNotifier * notif)
 		{
@@ -621,26 +769,33 @@ namespace cpl
 
 		struct BundleInstallReference
 		{
-			Parameters::BundleUpdate<UIParameterView> * parent;
-			std::vector<typename Parameters::BundleUpdate<UIParameterView>::Record> * records;
+			Parameters::BundleUpdate<ParameterView> * parent;
+			std::vector<typename Parameters::BundleUpdate<ParameterView>::Record> * records;
 		};
 
 		struct SingleInstallReference
 		{
-			Parameters::SingleUpdate<UIParameterView> * parent;
-			Parameters::CallbackParameterRecord<UIParameterView> * record;
+			Parameters::SingleUpdate<ParameterView> * parent;
+			Parameters::CallbackParameterRecord<ParameterView> * record;
+		};
+
+		struct RTListenerSlot
+		{
+			std::atomic_flag lock = ATOMIC_FLAG_INIT;
+			std::atomic<RTListener *> listener = nullptr;
 		};
 
 		std::unique_ptr<std::vector<BundleInstallReference>> bundleInstalledReferences;
 		std::unique_ptr<std::vector<SingleInstallReference>> singleInstalledReferences;
-
+		std::atomic_flag rtListenerLock;
+		std::array<RTListenerSlot, 8> realtimeListeners;
 		std::unique_ptr<Parameters::UserContent, Utility::MaybeDelete<Parameters::UserContent>> userContent;
 		std::string prefix;
 		std::string groupName;
 		std::map<std::string, Parameters::Handle> nameMap;
 		Parameters::Handle offset;
 		AutomatedProcessor & processor;
-		std::vector<UIParameterView> containedParameters;
+		std::vector<ParameterView> containedParameters;
 	};
 
 

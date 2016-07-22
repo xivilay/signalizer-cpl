@@ -52,6 +52,7 @@
 
 			virtual std::string bGetExportedName() override;
 
+			~CValueKnobSlider();
 		protected:
 
 			virtual void valueChanged() override;

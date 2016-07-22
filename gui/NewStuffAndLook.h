@@ -391,7 +391,7 @@
 			void setSelectedTab(int index)
 			{
 				int size = (int)buttons.size();
-				if (isIndeterminateState || (size > 1 && index >= 0 && index < size))
+				if (isIndeterminateState || (size > 0 && index >= 0 && index < size))
 				{
 					if (isIndeterminateState || index != selectedIndex)
 					{
