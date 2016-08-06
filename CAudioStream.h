@@ -67,6 +67,17 @@
 		template<typename T, std::size_t>
 			class CAudioStream;
 
+		/// <summary>
+		/// Note: You should never delete this class.
+		/// </summary>
+		class IAudioHistoryPropertyView
+		{
+		public:
+			virtual double getAudioHistorySamplerate() const noexcept = 0;
+			virtual std::size_t getAudioHistoryCapacity() const noexcept = 0;
+			virtual std::size_t getAudioHistorySize() const noexcept = 0;
+		};
+
 		#ifdef CPL_MSVC
 			#pragma pack(push, 1)
 		#endif
@@ -142,7 +153,9 @@
 		#endif
 
 		template<typename T, std::size_t PacketSize = 64>
-		class CAudioStream : Utility::CNoncopyable
+		class CAudioStream 
+			: private Utility::CNoncopyable
+			, public IAudioHistoryPropertyView
 		{
 		public:
 
@@ -302,8 +315,6 @@
 
 				AudioBufferAccess(const AudioBufferAccess &) = delete;
 				AudioBufferAccess & operator = (const AudioBufferAccess &) = delete;
-				AudioBufferAccess & operator = (AudioBufferAccess &&) = delete;
-				AudioBufferAccess(AudioBufferAccess &&) = default;
 
 				AudioBufferView getView(std::size_t channel) const
 				{
@@ -557,6 +568,7 @@
 			CAudioStream(std::size_t defaultListenerBankSize = 16, bool enableAsyncSubsystem = false, size_t initialFifoSize = 20, std::size_t maxFifoSize = 1000)
 			: 
 				audioFifo(initialFifoSize, maxFifoSize), 
+				numDeferredAsyncSamples(0),
 				objectIsDead(false)
 			{
 				auto newListeners = std::make_unique<ListenerQueue>(defaultListenerBankSize);
@@ -585,7 +597,8 @@
 			/// </summary>
 			void initializeInfo(const AudioStreamInfo & info)
 			{
-				AudioStreamInfo oldInfo = internalInfo;
+				//AudioStreamInfo oldInfo = internalInfo;
+				// TODO: implement onRtPropertiesChanged here.
 				internalInfo = info;
 				
 				audioSignalChange = true;
@@ -656,8 +669,9 @@
 						auto rawListener = listener.load(std::memory_order_acquire);
 						if (rawListener)
 						{
-							if(signalChange)
-								rawListener->sourcePropertiesChangedRT(*this, oldInfo);
+							// see comment in initializeInfo
+							//if(signalChange)
+							//	rawListener->sourcePropertiesChangedRT(*this, oldInfo);
 
 							// TODO: exception handling?
 							mask |= (unsigned)rawListener->onIncomingRTAudio(*this, buffer, numChannels, numSamples);
@@ -829,7 +843,7 @@
 			/// Safe to call from any thread (wait free).
 			/// The actual current value, may not equal whatever set through setAudioHistorySize()
 			/// </summary>
-			std::size_t getAudioHistorySize() const noexcept
+			virtual std::size_t getAudioHistorySize() const noexcept override
 			{
 				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getSize() : 0;
 			}
@@ -838,9 +852,14 @@
 			/// Safe to call from any thread (wait free).
 			/// The actual current value, may not equal whatever set through setAudioHistoryCapacity()
 			/// </summary>
-			std::size_t getAudioHistoryCapacity() const noexcept
+			virtual std::size_t getAudioHistoryCapacity() const noexcept override
 			{
 				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getCapacity() : 0;
+			}
+
+			virtual double getAudioHistorySamplerate() const noexcept override
+			{
+				return internalInfo.sampleRate.load(std::memory_order_acquire);
 			}
 
 			/// <summary>
@@ -848,8 +867,7 @@
 			/// </summary>
 			void setAudioHistorySize(std::size_t newSize) noexcept
 			{
-				//OutputDebugString("1. Sat audio history size\n");
-				internalInfo.audioHistorySize.store(newSize);
+				internalInfo.audioHistorySize.store(newSize, std::memory_order_relaxed);
 				audioSignalChange = true;
 				asyncSignalChange = true;
 			}
@@ -859,8 +877,8 @@
 			/// </summary>
 			void setAudioHistoryCapacity(std::size_t newCapacity) noexcept
 			{
-				internalInfo.audioHistorySize.store(std::min(internalInfo.audioHistorySize.load(), newCapacity));
-				internalInfo.audioHistoryCapacity.store(newCapacity);
+				internalInfo.audioHistorySize.store(std::min(internalInfo.audioHistorySize.load(), newCapacity), std::memory_order_relaxed);
+				internalInfo.audioHistoryCapacity.store(newCapacity, std::memory_order_relaxed);
 				audioSignalChange = true;
 				asyncSignalChange = true;
 			}
@@ -872,6 +890,8 @@
 			void setAudioHistorySizeAndCapacity(std::size_t newSize, std::size_t newCapacity) noexcept
 			{
 				std::lock_guard<std::mutex> lk(aBufferMutex);
+				oldInfo.audioHistorySize.store(internalInfo.audioHistorySize.load(std::memory_order_relaxed));
+				oldInfo.audioHistoryCapacity.store(internalInfo.audioHistoryCapacity.load(std::memory_order_relaxed));
 				internalInfo.audioHistorySize.store(newSize, std::memory_order_relaxed);
 				internalInfo.audioHistoryCapacity.store(newCapacity, std::memory_order_relaxed);
 				audioSignalChange = true;
@@ -1245,6 +1265,11 @@
 										numSamples[0]
 									);
 								}
+							}
+
+							if (signalChange)
+							{
+								oldInfo = internalInfo;
 							}
 
 							overhead.resume();

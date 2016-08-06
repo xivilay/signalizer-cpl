@@ -56,4 +56,6 @@
 		#define CPL_MINIMUM_WINDOWS_SUPPORT 0
 	#endif
 	#define CPL_CACHEALIGNMENT 64
+
+	#define CPL_REMOVE_CWARN
 #endif

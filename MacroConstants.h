@@ -293,6 +293,12 @@
 		#define PACKED
 	#endif
 
+	#ifdef CPL_REMOVE_CWARN
+		#undef cwarn
+
+		#define cwarn(x) 
+	#endif
+
 	#ifndef MAX_PATH
 		#define MAX_PATH 260
 	#endif

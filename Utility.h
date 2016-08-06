@@ -239,11 +239,15 @@
 					move constructor - c++11 delete ?
 				*/
 			private:
-				CNoncopyable(const CNoncopyable & other);
-				CNoncopyable & operator=(const CNoncopyable & other);
 				#ifdef __CPP11__
-					CNoncopyable & operator=(const CNoncopyable && other);
-					CNoncopyable(CNoncopyable && other);
+					CNoncopyable(const CNoncopyable & other) = delete;
+					CNoncopyable & operator=(const CNoncopyable & other) = delete;
+
+					CNoncopyable & operator=(CNoncopyable && other) = delete;
+					CNoncopyable(CNoncopyable && other) = delete;
+				#else
+					CNoncopyable(const CNoncopyable & other);
+					CNoncopyable & operator=(const CNoncopyable & other);
 				#endif
 			};
 
