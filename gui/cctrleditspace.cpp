@@ -73,7 +73,8 @@ namespace cpl
 
 		// store old value of control:
 		parent->serialize(oldValue, programInfo.version);
-		switchWithOld.reset(new CButton("Switch to A", "Switch to B"));
+		switchWithOld.reset(new CButton());
+		switchWithOld->setTexts("Switch to A", "Switch to B");
 		switchWithOld->setToggleable(true);
 		switchWithOld->bSetDescription("Switch back to the other settings (A/B compare).");
 		switchWithOld->enableTooltip(true);
@@ -369,14 +370,14 @@ namespace cpl
 	void CCtrlEditSpace::focusLost(FocusChangeType cause)
 	{
 		// commit suicide
-		delete this;
+		//delete this;
 	}
 
 	void CCtrlEditSpace::focusOfChildComponentChanged(FocusChangeType cause)
 	{
 		// commit suicide
 		if(!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
-			delete this;
+			/*delete this */;
 	}
 	
 	void CCtrlEditSpace::visibilityChanged()

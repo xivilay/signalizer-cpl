@@ -136,9 +136,31 @@ namespace cpl
 
 			return false;
 		}
+	};
 
-	private:
-		std::string unit;
+	template<typename T>
+	class PercentageFormatter : public UnitFormatter<T>
+	{
+	public:
+
+		PercentageFormatter() : UnitFormatter("%") {}
+
+		virtual bool format(const T & val, std::string & buf) override
+		{
+			return UnitFormatter<T>::format(std::round(val * 100), buf);
+		}
+
+		virtual bool interpret(const std::string & buf, T & val) override
+		{
+			T dbVal;
+			if (UnitFormatter<T>::interpret(buf, dbVal))
+			{
+				val = dbVal / 100;
+				return true;
+			}
+
+			return false;
+		}
 	};
 
 	template<typename T>

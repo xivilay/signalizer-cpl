@@ -29,6 +29,7 @@ namespace cpl
 	public:
 
 		typedef TransformerType Transformer;
+		typedef T ValueType;
 
 		ThreadedParameter(const std::string & name, Transformer & parameterTransformer)
 			: transformer(parameterTransformer), name(name), value(0)
@@ -176,13 +177,14 @@ namespace cpl
 
 
 
-	template<class T, typename InternalFrameworkType, typename BaseParameter>
+	template<class T, typename InternalFrameworkType, typename BaseParameterT>
 	class ParameterGroup 
 		: public CSerializer::Serializable
 		, private DestructionNotifier::EventListener
 	{
 	public:
 
+		typedef BaseParameterT BaseParameter;
 		typedef typename BaseParameter::Transformer Transformer;
 		typedef typename BaseParameter::Formatter Formatter;
 		typedef InternalFrameworkType FrameworkType;
@@ -405,7 +407,7 @@ namespace cpl
 			if (isSealed)
 				CPL_RUNTIME_EXCEPTION("Parameters registered to the system while it's sealed");
 			auto pos = containedParameters.size();
-			containedParameters.emplace_back(this, param, (Parameters::Handle)pos, shouldBeAutomatable, canChangeOthers, nameContext);
+			containedParameters.emplace_back(this, param, (Parameters::Handle)(pos + offset), shouldBeAutomatable, canChangeOthers, nameContext);
 			return static_cast<Parameters::Handle>(pos + offset);
 		}
 		
@@ -569,7 +571,7 @@ namespace cpl
 		/// </summary>
 		void updateFromProcessorNormalized(Parameters::Handle globalHandle, T value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 		{
-			ParameterView & p = containedParameters.at(globalHandle);
+			ParameterView & p = containedParameters.at(globalHandle - offset);
 
 			p.parameter->setValue(value);
 
@@ -616,7 +618,7 @@ namespace cpl
 
 			if (flags & Parameters::UpdateFlags::RealTimeSubSystem && p.isAutomatable)
 			{
-				processor.automatedTransmitChangeMessage(globalHandle - offset, static_cast<FrameworkType>(value));
+				processor.automatedTransmitChangeMessage(globalHandle, static_cast<FrameworkType>(value));
 			}
 
 			if (flags & Parameters::UpdateFlags::RealTimeListeners)
@@ -654,12 +656,12 @@ namespace cpl
 
 		void beginChangeGesture(Parameters::Handle globalHandle)
 		{
-			processor.automatedBeginChangeGesture(globalHandle - offset);
+			processor.automatedBeginChangeGesture(globalHandle);
 		}
 
 		void endChangeGesture(Parameters::Handle globalHandle)
 		{
-			processor.automatedEndChangeGesture(globalHandle - offset);
+			processor.automatedEndChangeGesture(globalHandle);
 		}
 
 		/// <summary>

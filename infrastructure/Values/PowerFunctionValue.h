@@ -83,7 +83,9 @@ namespace cpl
 	};
 
 	template<typename ParameterView>
-	class ParameterPowerSlopeValue : PowerSlopeValue
+	class ParameterPowerSlopeValue 
+		: public PowerSlopeValue
+		, public cpl::Parameters::BundleUpdate<ParameterView>
 	{
 	public:
 
@@ -91,18 +93,26 @@ namespace cpl
 		typedef typename ParameterView::ParameterType ParameterType;
 		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
-		class SharedBehaviour : PowerSlopeSemantics<ValueType>
+		class SharedBehaviour : public PowerSlopeSemantics<ValueType>
 		{
-			const std::string & getContext() { return "PSlp"; }
+		public:
+			const std::string & getContext() { return context; }
+
+			std::string context = "PF.";
 		};
 
 		ParameterPowerSlopeValue(SharedBehaviour & b, const std::string & name = "")
-			: base("base", &b.baseRange, &b.basicFormatter)
-			, pivot("pvt", &b.pivotRange, &b.basicFormatter)
-			, slope("slp", &b.dbRange, &b.dbFormatter)
+			: base("Bs", b.baseRange, &b.basicFormatter)
+			, pivot("Pvt", b.pivotRange, &b.basicFormatter)
+			, slope("Slp", b.dbRange, &b.dbFormatter)
 			, behaviour(b)
 		{
 
+		}
+
+		virtual const std::string & getBundleContext() const noexcept override
+		{
+			return behaviour.getContext();
 		}
 
 		virtual std::vector<Entry> & queryParameters() override
@@ -128,7 +138,7 @@ namespace cpl
 		virtual std::string getContextualName() override { return contextName; }
 		ValueEntityBase & getValueIndex(std::size_t i) override { return values[i]; }
 
-		std::array<ParameterValueWrapper<ParameterView>, 4> values[3];
+		std::array<ParameterValueWrapper<ParameterView>, 3> values;
 		ParameterType base, pivot, slope;
 
 	private:

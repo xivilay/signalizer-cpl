@@ -161,6 +161,7 @@ namespace cpl
 	class ParameterWindowDesignValue
 		: public WindowDesignValue
 		, public WindowDesignValue::AlphaFormatter<typename ParameterView::ValueType>
+		, public Parameters::BundleUpdate<ParameterView>
 	{
 	public:
 
@@ -171,21 +172,24 @@ namespace cpl
 		class SharedBehaviour
 		{
 		public:
-			WindowDesignValue::WindowTypeFormatTransformer windowType;
-			WindowDesignValue::WindowShapeFormatTransformer windowShape;
-			const std::string & getContext() { return "DWin"; }
+			SharedBehaviour() : context("DW.") {}
+
+			WindowDesignValue::WindowTypeFormatTransformer<ValueType> windowType;
+			WindowDesignValue::WindowShapeFormatTransformer<ValueType> windowShape;
+			const std::string & getContext() { return context; }
 		private:
 			std::string context;
 		};
 
 		ParameterWindowDesignValue(SharedBehaviour & b, std::string name = "")
-			: dbRange(Math::dbToFraction(WindowDesignValue::dbMin), Math::dbToFraction(WindowDesignValue::dbMax))
-			, alphaRange(WindowDesignValue::betaMin, WindowDesignValue::betaMax)
-			, type("type", &b.windowType, &b.windowType)
-			, symmetry("shape", &b.windowShape, &b.windowShape)
-			, alpha("alpha", &dbRange, this)
-			, beta("beta", &betaRange, &betaFormatter)
+			: dbRange(WindowDesignValue::dbMin, WindowDesignValue::dbMax)
+			, betaRange(WindowDesignValue::betaMin, WindowDesignValue::betaMax)
+			, type("Tp", b.windowType, &b.windowType)
+			, symmetry("Shp", b.windowShape, &b.windowShape)
+			, alpha("A", dbRange, this)
+			, beta("B", betaRange, &betaFormatter)
 			, contextName(name)
+			, behaviour(b)
 		{
 
 		}
@@ -226,7 +230,7 @@ namespace cpl
 		virtual std::string getContextualName() override { return contextName; }
 
 	private:
-		ExponentialRange<ValueT> dbRange;
+		LinearRange<ValueT> dbRange;
 		LinearRange<ValueT> betaRange;
 		SharedBehaviour & behaviour;
 		BasicFormatter<ValueT> betaFormatter;

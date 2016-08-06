@@ -37,7 +37,7 @@ namespace cpl
 		: valueObject(nullptr)
 	{
 		setValueReference(valueToReferTo, takeOwnerShip);
-		baseControlValueChanged();
+		valueEntityChanged(nullptr, valueObject.get());
 	}
 
 	CValueKnobSlider::~CValueKnobSlider()

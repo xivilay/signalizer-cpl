@@ -58,6 +58,7 @@ namespace cpl
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height);
 		addAndMakeVisible(box);
 		enableTooltip(true);
+		onValueObjectChange(nullptr, valueObject.get());
 		box.addListener(this);
 		box.setRepaintsOnMouseActivity(true);
 		//box.setSelectedId(1, dontSendNotification);

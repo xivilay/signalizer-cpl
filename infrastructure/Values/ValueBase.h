@@ -58,7 +58,8 @@ namespace cpl
 		{
 			ValueT value;
 			builder >> value;
-			setNormalizedValue(value);
+			if(builder.getModifier(CSerializer::Modifiers::RestoreValue))
+				setNormalizedValue(value);
 		}
 
 		ValueT getTransformedValue()
@@ -69,6 +70,12 @@ namespace cpl
 		void setTransformedValue(ValueT val)
 		{
 			setNormalizedValue(getTransformer().normalize(val));
+		}
+
+		template<typename EnumT>
+		EnumT getAsTEnum()
+		{
+			return enum_cast<EnumT>(getTransformedValue());
 		}
 
 		std::string getFormattedValue()
