@@ -315,7 +315,7 @@
 				void reraise() const
 				{
 					#ifdef CPL_WINDOWS
-						RaiseException(data.exceptCode, 0, 0, nullptr);
+						RaiseException(static_cast<DWORD>(data.exceptCode), 0, 0, nullptr);
 					#else
 						raise(data.exceptCode);
 					#endif

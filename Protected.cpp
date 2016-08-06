@@ -32,6 +32,7 @@
 #include <memory>
 #ifdef CPL_MSVC
 	#include <dbghelp.h>
+	#pragma comment(lib, "Dbghelp.lib")
 #elif defined(CPL_UNIXC)
 	#include <execinfo.h>
 	#include <cxxabi.h>
@@ -364,7 +365,7 @@ namespace cpl
 			if (SymFromAddr(process, (DWORD64)stack_frame.AddrPC.Offset, &displacement, &symbol.get()))
 			{
 				IMAGEHLP_MODULE64 moduleInfo;
-				juce::zerostruct(moduleInfo);
+				std::memset(&moduleInfo, 0, sizeof(moduleInfo));
 				moduleInfo.SizeOfStruct = sizeof(moduleInfo);
 
 				if (::SymGetModuleInfo64(process, symbol->ModBase, &moduleInfo))

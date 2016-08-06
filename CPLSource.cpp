@@ -37,7 +37,6 @@
 #ifdef CPL_JUCE
 
 	#include "Resources.cpp"
-	#include "CSerializer.cpp"
 	//#include "fonts/tahoma.cpp"
 
 	// gui elements
@@ -69,6 +68,8 @@
 #include "octave/octave_all.cpp"
 #include "Protected.cpp"
 #include "SafeSerializableObject.cpp"
+#include "CSerializer.cpp"
+#include "lib/md5/md5.cpp"
 
 #if defined(CPL_HINT_FONT)
 	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"

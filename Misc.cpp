@@ -38,6 +38,7 @@
 #include <atomic>
 #include "CExclusiveFile.h"
 #include <typeinfo>
+#include <future>
 
 #ifdef __GNUG__
 	#include <cstdlib>
@@ -57,6 +58,8 @@ namespace cpl
 		static int __unusedInitialization = addHandlers();
 		static std::atomic<std::terminate_handler> oldTerminate;
 		
+		static std::thread::id MainThreadID = std::this_thread::get_id();
+
 		#ifdef __GNUG__
 
 			std::string DemangleRawName(const std::string & name) {
@@ -703,6 +706,7 @@ namespace cpl
 				promise.set_value(ret);
 			};
 			
+#ifdef CPL_JUCE
 			
 			if(juce::MessageManager::getInstance()->isThisTheMessageThread())
 			{
@@ -722,7 +726,16 @@ namespace cpl
 			{
 				cpl::GUIUtils::MainEvent(boxGenerator);
 			}
-			
+#else
+			if (std::this_thread::get_id() == MainThreadID)
+			{
+				boxGenerator();
+			}
+			else
+			{
+				throw CPLNotImplementedException("Non-main thread message boxes not implemented for non-GUI builds.");
+			}
+#endif
 			future.wait();
 			return future.get();
 		}

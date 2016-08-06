@@ -29,8 +29,9 @@
 
 #include "SafeSerializableObject.h"
 #include "Protected.h"
+#ifdef CPL_JUCE
 #include "gui/gui.h"
-
+#endif
 namespace cpl
 {
 
@@ -299,7 +300,7 @@ namespace cpl
 	std::string SafeSerializableObject::tryComposeIdentifiableName()
 	{
 		auto typeName = Misc::DemangledTypeName(*this);
-
+#if CPL_JUCE
 		if (auto control = dynamic_cast<CBaseControl *>(this))
 		{
 			return "(" + typeName + "*) UI control \"" + control->bGetTitle() + "\"";
@@ -309,6 +310,7 @@ namespace cpl
 			return "(" + typeName + "*) view \"" + view->getName() + "\"";
 		}
 		else
+#endif
 		{
 			return "(" + typeName + "*) object";
 		}

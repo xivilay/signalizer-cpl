@@ -39,6 +39,8 @@
 #include "PlatformSpecific.h"
 #include "Misc.h"
 #include "ProgramVersion.h"
+#include "lib/md5/md5.h"
+
 
 namespace cpl
 {
@@ -338,15 +340,13 @@ namespace cpl
 
 		if (contentEntry)
 		{
-			const std::uint64_t md5SizeInBytes = 16;
-
 			auto cw = contentEntry->compile(addMasterHeader);
 
-			auto md5 = juce::MD5(cw.getBlock(), cw.getSize());
+			auto md5 = bzf::md5(cw.getBlock(), cw.getSize());
 
 			CSerializer::MD5CheckedHeader header;
 
-			std::memcpy(header.info, md5.getChecksumDataArray(), md5SizeInBytes);
+			std::memcpy(header.info, md5.result, md5.size);
 			header.dataSize = nameReference.size() + 1;
 			header.type = CSerializer::HeaderType::CheckedHeader;
 
@@ -390,9 +390,9 @@ namespace cpl
 		const void * dataBlock = startHeader->next();
 		std::size_t dataSize = static_cast<std::size_t>(cr.getSize() - ((const char *)startHeader->next() - (const char *)startHeader));
 
-		auto md5 = juce::MD5(dataBlock, dataSize);
+		auto md5 = bzf::md5(dataBlock, dataSize);
 
-		if (std::memcmp(startHeader->info, md5.getChecksumDataArray(), md5SizeInBytes) != 0)
+		if (startHeader->info != md5)
 			CPL_RUNTIME_EXCEPTION("Checked header for " + nameReference + "'s MD5 checksum is wrong!");
 
 		// build self
