@@ -54,7 +54,7 @@ namespace cpl
 		public juce::ColourSelector
 	{
 	public:
-		CustomColourSelector(int flags = (showAlphaChannel | showColourAtTop | showSliders | showColourspace),
+		CustomColourSelector(int flags = (showSliders | showAlphaChannel | showColourAtTop | showColourspace),
 			int edgeGap = 4,
 			int gapAroundColourSpaceComponent = 7)
 			: juce::ColourSelector(flags, edgeGap, gapAroundColourSpaceComponent)
@@ -85,7 +85,7 @@ namespace cpl
 
 			char * names[] = { "r", "g", "b", "a" };
 
-			for (std::size_t i = 0; i < std::extent<decltype(names)>::value; ++i)
+			for (std::size_t i = 0; i < colourSliders.size(); ++i)
 			{
 				auto s = colourSliders[i];
 				auto currentWidth = s->getTextBoxWidth();
@@ -118,7 +118,7 @@ namespace cpl
 			fullHeight = oldHeight + extraHeight;
 			selector.addChangeListener(this);
 
-			selector.setCurrentColour(parent->getControlColour());
+			selector.setCurrentColour(parent->getControlColour(), juce::NotificationType::dontSendNotification);
 			toolTip = "Colour editor space - adjust ARGB values of controls precisely.";
 
 			setOpaque(false);
@@ -180,7 +180,7 @@ namespace cpl
 			}
 
 
-			selector.setCurrentColour({ red, green, blue, alpha });
+			selector.setCurrentColour({ red, green, blue, alpha }, juce::NotificationType::dontSendNotification);
 		}
 
 		virtual void sliderDragStarted(juce::Slider * s) override
@@ -306,7 +306,7 @@ namespace cpl
 		{
 			if (!newMode)
 			{
-				selector.setCurrentColour(parent->getControlColour());
+				selector.setCurrentColour(parent->getControlColour(), juce::NotificationType::dontSendNotification);
 				addAndMakeVisible(&selector);
 				selector.shrinkLabels();
 			}
@@ -395,7 +395,8 @@ namespace cpl
 		std::uint8_t a, r, g, b;
 		ar >> a; ar >> r; ar >> g; ar >> b;
 		ar >> Serialization::Consume(4);
-		setControlColour(juce::Colour(r, g, b, a));
+		if(ar.getModifier(CSerializer::Modifiers::RestoreValue))
+			setControlColour(juce::Colour(r, g, b, a));
 	}
 
 	void CColourControl::baseControlValueChanged()

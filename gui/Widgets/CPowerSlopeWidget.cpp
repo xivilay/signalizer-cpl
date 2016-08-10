@@ -75,13 +75,8 @@ namespace cpl
 		layout.addControl(&kslope, 1);
 		layout.addControl(&kpivot, 0);
 
-		auto && size = layout.getSuggestedSize();
+		auto size = layout.getSuggestedSize();
 		setSize(size.first, size.second);
-
-		// default values.
-		kbase.bInterpretAndSet("2", true);
-		kslope.bInterpretAndSet("0", true);
-		kpivot.bInterpretAndSet("1000", true);
 
 		kbase.bForceEvent();
 		kslope.bForceEvent();

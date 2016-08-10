@@ -300,7 +300,7 @@ namespace cpl
 	std::string SafeSerializableObject::tryComposeIdentifiableName()
 	{
 		auto typeName = Misc::DemangledTypeName(*this);
-#if CPL_JUCE
+#ifdef CPL_JUCE
 		if (auto control = dynamic_cast<CBaseControl *>(this))
 		{
 			return "(" + typeName + "*) UI control \"" + control->bGetTitle() + "\"";
