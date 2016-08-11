@@ -54,7 +54,7 @@ namespace cpl
 				for (int y = 0; y < 3; ++y)
 				{
 					auto & element = getValueIndex((Aspect)x, (Index)y);
-					transform.element(x, y) = element.getTransformer().transform(element.getNormalizedValue());
+					transform.element(x, y) = static_cast<T>(element.getTransformer().transform(element.getNormalizedValue()));
 				}
 		}
 

@@ -466,7 +466,7 @@
 				/// Called when the current source being listened to died.
 				/// May be called from any thread.
 				/// </summary>
-				virtual void onSourceDied(Stream & dyingSource) {};
+				virtual void onSourceDied(Stream & dyingSource) { (void)dyingSource; };
 
 				/// <summary>
 				/// Detaches from currently attached source.

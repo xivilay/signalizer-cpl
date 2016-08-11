@@ -74,8 +74,6 @@
 
 			void setLowerDbs(double ldbs)
 			{
-				if (ldbs > (upperDbs - 3))
-					return;
 				lowerDbs = ldbs;
 			}
 
@@ -86,28 +84,77 @@
 
 			void setUpperDbs(double udbs)
 			{
-				if (lowerDbs + 3 > udbs)
-					return;
 				upperDbs = udbs;
 			}
 
 			void compileDivisions()
 			{
-				double dynamicRange = upperDbs - lowerDbs;
+				double scaleTable[] = { 1, 3, 5, 9, 12, 15, 20, 30 };
+				int size = std::extent<decltype(scaleTable)>::value;
+
+				auto getIncrement = [&](int level)
+				{
+
+					if (level < 0)
+					{
+						return std::pow(2, level);
+					}
+					else if (level >= size)
+					{
+						return (1.5 + 0.5 * (level - size)) * scaleTable[size - 1];
+					}
+					else
+					{
+						return scaleTable[level];
+					}
+				};
+
 				divisions.clear();
-				double flooredMultiplier = std::floor(0.5 + (dynamicRange / numMaxDivisions) / 3.0);
-				// will create divions each 1 db or succesive multipliers of 3
-				double dbsPerMarker = std::max(1.0, flooredMultiplier * 3);
+				auto diff = std::abs(upperDbs - lowerDbs);
+				auto sign = upperDbs > lowerDbs ? 1 : lowerDbs > upperDbs ? -1 : 0;
 
-				double current = cpl::Math::roundToNextMultiplier(lowerDbs, dbsPerMarker);
+				if (sign == 0)
+					return;
 
-				while (current <= upperDbs)
+				bool selected = false;
+				auto index = 0;
+				int count = 0;
+				double inc = 0;
+				int numLines = 0;
+
+				while (!selected)
+				{
+					inc = getIncrement(index);
+					double incz1 = getIncrement(index - 1);
+					int numLinesz1 = static_cast<int>(diff / incz1);
+					numLines = static_cast<int>(diff / inc);
+
+					if (numLines > numMaxDivisions)
+						index++;
+					else if (numLinesz1 > numMaxDivisions)
+						break;
+					else
+						index--;
+
+					count++;
+
+					// TODO: converge problem?
+					if (count > 20)
+						break;
+				}
+
+	
+				auto lowest = std::min(upperDbs, lowerDbs);
+				auto highest = std::max(upperDbs, lowerDbs);
+
+				auto current = cpl::Math::roundToNextMultiplier(lowest, inc);
+
+				while (current <= highest)
 				{
 					double fraction = 1.0 - cpl::Math::UnityScale::Inv::linear(current, lowerDbs, upperDbs);
 					divisions.push_back({ fraction * bounds.dist(), fraction, current });
 
-					current += dbsPerMarker;
-
+					current += inc;
 				}
 			}
 

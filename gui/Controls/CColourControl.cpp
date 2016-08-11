@@ -160,7 +160,7 @@ namespace cpl
 				alpha = currentColour.getAlpha();
 
 			auto value = object->getNormalizedValue();
-			std::uint8_t componentValue = value == 1.0 ? 0xFF : value * 0x100;
+			std::uint8_t componentValue = value == 1.0 ? 0xFF : static_cast<std::uint8_t>(value * 0x100);
 
 			if (object == &colourValue->getValueIndex(ColourValue::R))
 			{

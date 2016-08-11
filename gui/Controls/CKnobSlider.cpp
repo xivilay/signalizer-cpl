@@ -151,11 +151,11 @@ namespace cpl
 
 			// main fill
 			g.setColour(GetColour(ColourEntry::Deactivated));
-			g.fillEllipse(juce::Rectangle<float>(getHeight(), getHeight()));
+			g.fillEllipse(juce::Rectangle<int>(getHeight(), getHeight()).toFloat());
 
 			// center fill
 			g.setColour(GetColour(ColourEntry::Separator));
-			g.fillEllipse(juce::Rectangle<float>(getHeight(), getHeight()).reduced(getHeight() * (1 - thickness * 1.1f)));
+			g.fillEllipse(juce::Rectangle<int>(getHeight(), getHeight()).toFloat().reduced(getHeight() * (1 - thickness * 1.1f)));
 
 			g.setColour(GetColour(ColourEntry::SelectedText)
 				.withMultipliedBrightness(isMouseOver ? 0.8f : 0.7f));

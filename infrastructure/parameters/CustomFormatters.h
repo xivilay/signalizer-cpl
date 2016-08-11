@@ -185,7 +185,7 @@ namespace cpl
 			}
 
 			auto index = static_cast<std::size_t>(
-				std::min<std::size_t>(values.size() - 1, std::max<T>(std::round(val), 0))
+				std::min<std::size_t>(values.size() - 1, static_cast<std::size_t>(std::max<T>(std::round(val), (T)0)))
 			);
 			buf = values[index];
 

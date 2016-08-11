@@ -43,6 +43,8 @@ namespace cpl
 			virtual ~ValueEntityListener() {};
 		};
 
+		typedef ValueEntityListener Listener;
+
 		virtual VirtualTransformer<ValueT> & getTransformer() = 0;
 		virtual VirtualFormatter<ValueT> & getFormatter() = 0;
 		virtual ValueT getNormalizedValue() const = 0;
@@ -128,6 +130,8 @@ namespace cpl
 	
 	class DefaultValueListenerEntity : public ValueEntityBase
 	{
+	public:
+
 		virtual void addListener(ValueEntityListener * listener) override { listeners.insert(listener); }
 		virtual void removeListener(ValueEntityListener * listener) override { listeners.erase(listener); }
 

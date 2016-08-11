@@ -20,8 +20,8 @@ namespace cpl
 		};
 
 		static constexpr double
-			dbMin = -200,
-			dbMax = 50,
+			dbMin = 200,
+			dbMax = -50,
 			betaMin = -1.5,
 			betaMax = 6;
 

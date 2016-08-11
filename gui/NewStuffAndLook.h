@@ -305,22 +305,22 @@
 					//float fontSize = JUCE_LIVE_CONSTANT(11.1);
 					g.setFont(TextSize::normalText);
 					auto size = (float)ceil(double(getWidth()) / buttons.size());
-					juce::Rectangle<int> textRectangle(cornerOffset, 0, size - cornerOffset * 2, getHeight());
+					juce::Rectangle<int> textRectangle(cornerOffset, 0, Math::round<int>(size - cornerOffset * 2), getHeight());
 					for (auto index = 0; index < (int)buttons.size(); ++index)
 					{
-						textRectangle.setX(cpl::Math::round<int>(cornerOffset + size * index));
+						textRectangle.setX(Math::round<int>(cornerOffset + size * index));
 						juce::Colour textColour, color;
 						if (!isIndeterminateState && selectedIndex == index)
 						{
-							color = cpl::GetColour(cpl::ColourEntry::Activated);
-							textColour = cpl::GetColour(cpl::ColourEntry::SelectedText);
-							textRectangle.setRight(triangleVertices.getBounds().getX() - cornerOffset);
+							color = GetColour(ColourEntry::Activated);
+							textColour = GetColour(ColourEntry::SelectedText);
+							textRectangle.setRight(Math::round<int>(triangleVertices.getBounds().getX() - cornerOffset));
 						}
 						else
 						{
-							textRectangle.setWidth(size - cornerOffset * 2);
-							color = cpl::GetColour(cpl::ColourEntry::Deactivated);
-							textColour = cpl::GetColour(cpl::ColourEntry::AuxillaryText);
+							textRectangle.setWidth(Math::round<int>(size - cornerOffset * 2));
+							color = GetColour(ColourEntry::Deactivated);
+							textColour = GetColour(ColourEntry::AuxillaryText);
 						}
 						// enhance brightness
 						if (index == hoverButton)
@@ -334,11 +334,11 @@
 						g.setColour(textColour);
 						g.drawFittedText(buttons[index].c_str(), textRectangle, juce::Justification::centredLeft, 1);
 						
-						g.setColour(cpl::GetColour(cpl::ColourEntry::Separator));
+						g.setColour(GetColour(cpl::ColourEntry::Separator));
 						// vertical borders
-						g.drawVerticalLine(size * index + size, 0.0f, (float)getHeight());
+						g.drawVerticalLine(Math::round<int>(size * index + size), 0.0f, (float)getHeight());
 					}
-					g.setColour(cpl::GetColour(cpl::ColourEntry::Auxillary));
+					g.setColour(GetColour(cpl::ColourEntry::Auxillary));
 					// draw triangle
 					if (isTriangleHovered)
 						g.setOpacity(0.8f);
@@ -354,7 +354,7 @@
 					for (auto index = 0; index < (int)buttons.size() - 1; ++index)
 					{
 						// vertical borders
-						g.drawVerticalLine(size * index + size, 0.0f, (float)getHeight());
+						g.drawVerticalLine(Math::round<int>(size * index + size), 0.0f, (float)getHeight());
 					}
 
 
@@ -502,7 +502,7 @@
 				if (!buttons.size())
 					return;
 
-				auto const offset = cornerOffset * 1.5;
+				auto const offset = cornerOffset * 1.5f;
 
 				triangleSize =  float(orientation == Vertical ? getWidth() : getHeight()) - offset * 2;
 
