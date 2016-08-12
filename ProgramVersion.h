@@ -45,13 +45,15 @@
 		{
 		public:
 
+			typedef std::uint64_t BinaryStorage;
+
 			Version()
 				: compiled(0)
 			{
 
 			}
 
-			Version(std::uint64_t version)
+			explicit Version(BinaryStorage version)
 				: compiled(version)
 			{
 
@@ -110,7 +112,7 @@
 				return other.operator<(*this);
 			}
 
-			std::uint64_t compiled;
+			BinaryStorage compiled;
 			struct parts_t
 			{
 				std::uint16_t major;

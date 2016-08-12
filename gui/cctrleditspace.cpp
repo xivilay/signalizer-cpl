@@ -47,8 +47,8 @@ namespace cpl
 		else if (ctrl == switchWithOld.get())
 		{
 			CSerializer newValue;
-			parentControl->serialize(newValue, 1);
-			parentControl->deserialize(oldValue, 1);
+			parentControl->serialize(newValue, cpl::programInfo.version);
+			parentControl->deserialize(oldValue, cpl::programInfo.version);
 			parentControl->bForceEvent();
 			oldValue = newValue;
 

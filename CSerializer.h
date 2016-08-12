@@ -385,6 +385,7 @@
 				Child,
 				End,
 				CheckedHeader,
+				LocalVersion,
 				Invalid // always add new types before invalid, such that old programs identify new serializable data as invalid
 			};
 			template<typename ExtraHeader>
@@ -415,7 +416,7 @@
 			struct MasterHeaderInfo
 			{
 				std::uint64_t totalSize;
-				std::uint64_t versionID;
+				Version::BinaryStorage versionID;
 			};
 
 			struct KeyHeaderInfo
@@ -429,10 +430,17 @@
 
 			};
 
+			struct LocalVersionInfo
+			{
+				Version::BinaryStorage version;
+			};
+
 			using MasterHeader = BinaryHeader < MasterHeaderInfo > ;
 			using KeyHeader = BinaryHeader < KeyHeaderInfo > ;
 			using StdHeader = BinaryHeader < int > ;
 			using MD5CheckedHeader = BinaryHeader <uint8_t[16]>;
+			using LocalVersionHeader = BinaryHeader <LocalVersionInfo>;
+
 			class Key
 			{
 			public:

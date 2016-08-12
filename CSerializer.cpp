@@ -66,14 +66,14 @@ namespace cpl
 		if (start->type == HeaderType::Start)
 		{
 			const MasterHeader * master = (const MasterHeader*)start;
-			version = master->info.versionID;
+			version = Version(master->info.versionID);
 			// this can be used to see if things fucked up
 			auto totalDataSize = master->info.totalSize;
 			// corrupt header.
 			if (totalDataSize != cr.getSize())
 				throw std::runtime_error("Corrupt header; mismatch between stored size and buffer size at "
 					+ std::to_string(cr.getBlock())
-					);
+				);
 			// skip the master header, and go to next entry
 			current = current->next();
 			// loop over all entries
@@ -85,7 +85,7 @@ namespace cpl
 						+ std::to_string(cr.getBlock()) + " + "
 						+ std::to_string((char*)current - cr.getBlock())
 						+ " bytes."
-						);
+					);
 				// interpret data
 				switch (current->type)
 				{
@@ -98,7 +98,7 @@ namespace cpl
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((const char*)current - cr.getBlock())
 							+ " bytes."
-							);
+						);
 					auto & cs = getContent(currentKey);
 					// build child hierachy.
 					cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
@@ -114,7 +114,7 @@ namespace cpl
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((char*)current - cr.getBlock())
 							+ " bytes."
-							);
+						);
 
 					// copy data into our buffer
 					data.appendBytes(current->getData<char>(), current->dataSize);
@@ -129,7 +129,7 @@ namespace cpl
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((char*)current - cr.getBlock())
 							+ " bytes."
-							);
+						);
 					if ((const char*)current + current->headerSize != (cr.getBlock() + cr.getSize()))
 						throw std::runtime_error("Corrupt header; End entry found at "
 							+ std::to_string(cr.getBlock()) + " + "
@@ -137,7 +137,7 @@ namespace cpl
 							+ " bytes, but should be at "
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string(cr.getSize() - sizeof(StdHeader))
-							);
+						);
 					else
 						// memory block parsed successfully!
 						return true;
@@ -159,13 +159,23 @@ namespace cpl
 					childHasKey = true;
 					break;
 				}
+				case HeaderType::LocalVersion:
+				{
+					throw std::runtime_error("Local version entry found in a master block (already contains versioning info) "
+						+ std::to_string(cr.getBlock()) + " + "
+						+ std::to_string((char*)current - cr.getBlock())
+						+ " bytes."
+					);
+					break;
+				}
 				case HeaderType::Start:
 				{
 					throw std::runtime_error("Multiple start entries found at "
 						+ std::to_string(cr.getBlock()) + " + "
 						+ std::to_string((char*)current - cr.getBlock())
 						+ " bytes."
-						);
+					);
+					break;
 				}
 				default:
 					throw std::runtime_error("Unrecognized HeaderType ("
@@ -173,7 +183,7 @@ namespace cpl
 						+ std::to_string(cr.getBlock()) + " + "
 						+ std::to_string((char*)current - cr.getBlock())
 						+ " bytes."
-						);
+					);
 				}
 
 				// iterate to next entry
@@ -201,7 +211,7 @@ namespace cpl
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((const char*)current - cr.getBlock())
 							+ " bytes."
-							);
+						);
 					auto & cs = getContent(currentKey);
 					// build child hierachy.
 					cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
@@ -217,7 +227,7 @@ namespace cpl
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((char*)current - cr.getBlock())
 							+ " bytes."
-							);
+						);
 
 					// copy data into our buffer
 					data.appendBytes(current->getData<char>(), current->dataSize);
@@ -231,7 +241,8 @@ namespace cpl
 						+ std::to_string(cr.getBlock()) + " + "
 						+ std::to_string((char*)current - cr.getBlock())
 						+ " bytes"
-						);
+					);
+					break;
 				}
 				case HeaderType::Key:
 				{
@@ -240,7 +251,7 @@ namespace cpl
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((char*)current - cr.getBlock())
 							+ " bytes."
-							);
+						);
 					const KeyHeader * kh = (const KeyHeader *)current;
 
 					// see if we can build the key
@@ -250,21 +261,28 @@ namespace cpl
 					childHasKey = true;
 					break;
 				}
+				case HeaderType::LocalVersion:
+				{
+					const LocalVersionHeader * lh = (const LocalVersionHeader*)current;
+					version = cpl::Version(lh->info.version);
+					break;
+				}
 				case HeaderType::Start:
 				{
-					throw std::runtime_error("Multiple start entries found at "
+					throw std::runtime_error("Multiple start entries (as child) found at "
 						+ std::to_string(cr.getBlock()) + " + "
 						+ std::to_string((char*)current - cr.getBlock())
 						+ " bytes."
-						);
+					);
+					break;
 				}
 				default:
-					throw std::runtime_error("Unrecoginized HeaderType ("
+					throw std::runtime_error("Unrecognized HeaderType ("
 						+ std::to_string(static_cast<int>(current->type)) + ") at "
 						+ std::to_string(cr.getBlock()) + " + "
 						+ std::to_string((char*)current - cr.getBlock())
 						+ " bytes."
-						);
+					);
 				}
 
 
@@ -284,6 +302,14 @@ namespace cpl
 			MasterHeader header;
 			header.type = HeaderType::Start;
 			header.info.versionID = version.compiled;
+			header.dataSize = 0;
+			dataOut.appendBytes(&header, sizeof(header));
+		}
+		else
+		{
+			LocalVersionHeader header;
+			header.type = HeaderType::LocalVersion;
+			header.info.version = version.compiled;
 			header.dataSize = 0;
 			dataOut.appendBytes(&header, sizeof(header));
 		}
