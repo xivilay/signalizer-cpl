@@ -444,7 +444,7 @@
 			class Key
 			{
 			public:
-				Key(const KeyHeader * kh);
+				explicit Key(const KeyHeader * kh);
 				Key(const std::string & s) : isString(true), intKey(0), stringKey(s) {};
 				Key(const char * s) : isString(true), intKey(0), stringKey(s) {};
 				Key(long long ID) : isString(false), intKey(ID) {};
@@ -772,6 +772,11 @@
 					return child.first->second;
 				}
 				return it->second;
+			}
+
+			CSerializer & operator[] (const Key & k)
+			{
+				return getContent(k);
 			}
 
 			const CSerializer * findForKey(const Key & k) const noexcept

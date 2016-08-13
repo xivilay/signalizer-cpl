@@ -370,14 +370,14 @@ namespace cpl
 	void CCtrlEditSpace::focusLost(FocusChangeType cause)
 	{
 		// commit suicide
-		//delete this;
+		delete this;
 	}
 
 	void CCtrlEditSpace::focusOfChildComponentChanged(FocusChangeType cause)
 	{
 		// commit suicide
 		if(!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
-			/*delete this */;
+			delete this;
 	}
 	
 	void CCtrlEditSpace::visibilityChanged()
