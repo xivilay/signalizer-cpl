@@ -123,17 +123,17 @@ namespace cpl
 	{
 	public:
 
-		LinearRange(T minimum, T maximum) : RangedVirtualTransformerBase(minimum, maximum) {}
+		LinearRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
 		LinearRange() {}
 
 		T normalize(T val) override
 		{
-			return Math::UnityScale::Inv::linear(val, min, max);
+			return Math::UnityScale::Inv::linear(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
 		}
 
 		T transform(T val) override
 		{
-			return Math::UnityScale::linear(val, min, max);
+			return Math::UnityScale::linear(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
 		}
 	};
 
@@ -142,17 +142,17 @@ namespace cpl
 	{
 	public:
 
-		ExponentialRange(T minimum, T maximum) : RangedVirtualTransformerBase(minimum, maximum) {}
+		ExponentialRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
 		ExponentialRange() {}
 
 		T normalize(T val) override
 		{
-			return Math::UnityScale::Inv::exp(val, min, max);
+			return Math::UnityScale::Inv::exp(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
 		}
 
 		T transform(T val) override
 		{
-			return Math::UnityScale::exp(val, min, max);
+			return Math::UnityScale::exp(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
 		}
 	};
 };

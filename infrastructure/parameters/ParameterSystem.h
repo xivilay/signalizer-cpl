@@ -215,6 +215,7 @@ namespace cpl
 		{
 		public:
 			virtual void parameterChangedUI(Parameters::Handle localHandle, Parameters::Handle globalHandle, ParameterView * parameter) = 0;
+			virtual ~UIListener() {}
 		};
 
 		/// <summary>
@@ -225,6 +226,7 @@ namespace cpl
 		{
 		public:
 			virtual void parameterChangedRT(Parameters::Handle localHandle, Parameters::Handle globalHandle, BaseParameter * param) = 0;
+			virtual ~RTListener() {}
 		};
 
 		class ParameterView
@@ -346,7 +348,7 @@ namespace cpl
 			singleInstalledReferences = std::make_unique<std::vector<SingleInstallReference>>();
 		}
 
-		int getOffset() const noexcept { return parameterOffset; }
+		int getOffset() const noexcept { return offset; }
 
 		void serialize(CSerializer::Archiver & archive, Version v) override
 		{
@@ -688,10 +690,10 @@ namespace cpl
 			auto it = nameMap.find(name);
 			if (it == nameMap.end())
 			{
-				auto handle = findFromName(name);
+				auto handle = handleFromName(name);
 				if (handle != InvalidHandle)
 				{
-					return (mapName[name] = handle) + offset;
+					return (nameMap[name] = handle) + offset;
 				}
 			}
 			else
@@ -784,7 +786,7 @@ namespace cpl
 		struct RTListenerSlot
 		{
 			std::atomic_flag lock = ATOMIC_FLAG_INIT;
-			std::atomic<RTListener *> listener = nullptr;
+			std::atomic<RTListener *> listener {nullptr};
 		};
 
 		std::unique_ptr<std::vector<BundleInstallReference>> bundleInstalledReferences;

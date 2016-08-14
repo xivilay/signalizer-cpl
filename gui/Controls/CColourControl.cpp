@@ -83,7 +83,7 @@ namespace cpl
 			// for this widget, we only need to display two characters,
 			// so we shrink them a little bit.
 
-			char * names[] = { "r", "g", "b", "a" };
+			const char * names[] = { "r", "g", "b", "a" };
 
 			for (std::size_t i = 0; i < colourSliders.size(); ++i)
 			{
@@ -135,7 +135,7 @@ namespace cpl
 
 		}
 
-		ColourEditor::~ColourEditor()
+		~ColourEditor()
 		{
 			for (int i = 0; i < 4; i++)
 			{
@@ -239,8 +239,6 @@ namespace cpl
 
 		virtual void mouseDrag(const juce::MouseEvent & me) override
 		{
-
-			constexpr std::size_t lel = sizeof(std::shared_ptr<ColourValue>);
 			userIsDragging = true;
 		}
 

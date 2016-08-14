@@ -118,7 +118,7 @@ namespace cpl
 	{
 	public:
 		
-		DBFormatter() : UnitFormatter("dB") {}
+		DBFormatter() : UnitFormatter<T>("dB") {}
 
 		virtual bool format(const T & val, std::string & buf) override
 		{
@@ -143,7 +143,7 @@ namespace cpl
 	{
 	public:
 
-		PercentageFormatter() : UnitFormatter("%") {}
+		PercentageFormatter() : UnitFormatter<T>("%") {}
 
 		virtual bool format(const T & val, std::string & buf) override
 		{

@@ -658,7 +658,7 @@
 				// publish all data to listeners
 				unsigned mask(0);
 
-				bool signalChange = audioSignalChange.cas();
+				//bool signalChange = audioSignalChange.cas();
 
 				auto & listeners = *audioListeners.getObject();
 				if (internalInfo.callRTListeners)
@@ -764,7 +764,7 @@
 				return internalInfo;
 			}
 
-			~CAudioStream() noexcept(false)
+			virtual ~CAudioStream() noexcept(false)
 			{
 				// the audio thread is created inside this flag.
 				// and that flag is set by this thread. 

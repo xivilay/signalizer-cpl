@@ -33,7 +33,7 @@ namespace cpl
 
 			WindowTypeFormatTransformer()
 			{
-				setQuantization(enum_cast<ValueType>(cpl::dsp::WindowTypes::End) - 1);
+				this->setQuantization(enum_cast<ValueType>(cpl::dsp::WindowTypes::End) - 1);
 			}
 
 			virtual bool format(const ValueType & val, std::string & buf) override
@@ -59,7 +59,7 @@ namespace cpl
 			WindowShapeFormatTransformer()
 				: ChoiceFormatter<ValueType>(*static_cast<ChoiceTransformer<ValueType> *>(this))
 			{
-				setValues({ "Symmetric", "Periodic", "DFT-even" });
+				ChoiceFormatter<ValueType>::setValues({ "Symmetric", "Periodic", "DFT-even" });
 			}
 
 		};

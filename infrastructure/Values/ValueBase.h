@@ -176,7 +176,7 @@ namespace cpl
 	public:
 
 		CompleteValue()
-			: SelfcontainedValue(&hostedTransformer, &hostedFormatter)
+			: SelfcontainedValue<Transformer, Formatter>(&hostedTransformer, &hostedFormatter)
 		{
 
 		}
@@ -233,8 +233,8 @@ namespace cpl
 
 		virtual VirtualTransformer<ValueT> & getTransformer() override { return parameterView->getTransformer(); }
 		virtual VirtualFormatter<ValueT> & getFormatter() override { return parameterView->getFormatter(); }
-		virtual ValueT getNormalizedValue() const override { return parameterView->getValueNormalized<ValueT>(); }
-		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<ParameterView::ValueType>(value)); }
+		virtual ValueT getNormalizedValue() const override { return parameterView->template getValueNormalized<ValueT>(); }
+		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<typename ParameterView::ValueType>(value)); }
 		virtual void beginChangeGesture() override { return parameterView->beginChangeGesture(); }
 		virtual void endChangeGesture() override { return parameterView->endChangeGesture(); }
 		virtual std::string getContextualName() override { return parameterView->getExportedName(); }
@@ -284,7 +284,7 @@ namespace cpl
 				entry.canChangeOthers = canChangeOthers;
 				entry.uiParameterView = nullptr;
 
-				parameterQuery = &entry;
+				Parameters::SingleUpdate<ParameterView>::parameterQuery = &entry;
 			}
 
 		private:

@@ -391,8 +391,6 @@ namespace cpl
 
 	bool CCheckedSerializer::build(const WeakContentWrapper & cr)
 	{
-		const std::uint64_t md5SizeInBytes = 16;
-
 		std::uint64_t nameSize = nameReference.size() + 1;
 
 		const CSerializer::MD5CheckedHeader * startHeader
