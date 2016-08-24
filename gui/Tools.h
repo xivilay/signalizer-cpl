@@ -114,6 +114,78 @@
 		namespace GUIUtils
 		{
 
+			class NestedMouseInterceptor : private juce::MouseListener, private juce::ComponentListener
+			{
+			public:
+
+				class Listener
+				{
+				public:
+					virtual void nestedOnMouseMove(const juce::MouseEvent& e) = 0;
+					virtual void nestedOnMouseExit(const juce::MouseEvent& e) = 0;
+					virtual ~Listener() {}
+				};
+
+				NestedMouseInterceptor(Listener * listener, juce::Component * source, bool wantsNestedEvents = true)
+				{
+					hook(listener, source, wantsNestedEvents);
+				}
+
+				NestedMouseInterceptor()
+				{
+
+				}
+
+				void hook(Listener * listener, juce::Component * source, bool wantsNestedEvents = true)
+				{
+					CPL_RUNTIME_ASSERTION(listener != nullptr);
+					CPL_RUNTIME_ASSERTION(source != nullptr);
+
+					this->listener = listener;
+					this->source = source;
+					source->addMouseListener(this, wantsNestedEvents);
+					source->addComponentListener(this);
+				}
+
+				void unhook()
+				{
+					if (source)
+					{
+						source->removeMouseListener(this);
+						source->removeComponentListener(this);
+					}
+
+					listener = nullptr;
+				}
+
+				~NestedMouseInterceptor()
+				{
+					unhook();
+				}
+
+			private:
+
+				virtual void componentBeingDeleted(juce::Component & c) override final
+				{
+					if (&c == source)
+						source = nullptr;
+				}
+
+				virtual void mouseMove(const juce::MouseEvent & e) override final
+				{
+					listener->nestedOnMouseMove(e);
+				}
+
+				virtual void mouseExit(const juce::MouseEvent & e) override final
+				{
+					listener->nestedOnMouseExit(e);
+				}
+
+			private:
+				Listener * listener = nullptr;
+				juce::Component * source = nullptr;
+			};
+
 
 			// input polymorphic pointers!
 			// returns true if the child is derived from the parent, or the parent contains the child somehow
