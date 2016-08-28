@@ -38,6 +38,7 @@ namespace cpl
 		virtual std::size_t getNumValues() const noexcept override { return ColourChannels; }
 
 		virtual std::string getContextualName() { return{}; }
+		virtual std::string getBundleName() { return{}; }
 	};
 
 	class CompleteColour 
@@ -97,12 +98,22 @@ namespace cpl
 			, b("B", b.getTransformer(), &b.getFormatter())
 			, a("A", b.getTransformer(), &b.getFormatter())
 			, behaviour(b)
-			, contextName(name)
+			, name(name)
 		{
 
 		}
 
-		virtual std::string getContextualName() override { return contextName; }
+		virtual std::string getBundleName() override 
+		{
+			return name;
+		}
+
+		virtual std::string getContextualName() override
+		{ 
+			auto & view = values[0].getParameterView();
+
+			return view.getParentPrefix() + getBundleName() + "C";
+		}
 
 		virtual const std::string & getBundleContext() const noexcept override
 		{
@@ -138,7 +149,7 @@ namespace cpl
 		std::array<ParameterValueWrapper<ParameterView>, 4> values;
 
 	private:
-		std::string contextName;
+		std::string name;
 		std::unique_ptr<std::vector<Entry>> parameters;
 		SharedBehaviour & behaviour;
 	};

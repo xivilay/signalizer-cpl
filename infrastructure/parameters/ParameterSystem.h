@@ -265,10 +265,12 @@ namespace cpl
 
 			}
 
+			
 			ParameterType * getParameter() noexcept { return parameter; }
-
+			const std::string & getNameContext() const { return nameContext; }
 			std::string getExportedName() { return parent->prefix + nameContext + parameter->getName(); }
 			std::string getLocalName() { return parameter->getName(); }
+			const std::string & getParentPrefix() const { return parent->getExportPrefix(); }
 			Parameters::Handle getHandle() { return handle; }
 			void addListener(UIListener * listener) { parent->addUIListener(handle, listener); }
 			void removeListener(UIListener * listener) { parent->removeUIListener(handle, listener); }
@@ -729,7 +731,7 @@ namespace cpl
 		}
 
 		const std::string & getName() const noexcept { return groupName; }
-
+		const std::string & getExportPrefix() const noexcept { return prefix; }
 
 	private:
 
