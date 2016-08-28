@@ -51,6 +51,8 @@ namespace cpl
 		} */
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
 		enableTooltip(true);
+		
+		setToggleState(getValueReference().getNormalizedValue() > 0.5 ? true : false, juce::NotificationType::dontSendNotification);
 	}
 
 	CButton::~CButton() {};
