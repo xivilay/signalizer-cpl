@@ -33,7 +33,7 @@ namespace cpl
 
 			WindowTypeFormatTransformer()
 			{
-				this->setQuantization(enum_cast<ValueType>(cpl::dsp::WindowTypes::End) - 1);
+				this->setQuantization(enum_cast<int>(cpl::dsp::WindowTypes::End) - 1);
 			}
 
 			virtual bool format(const ValueType & val, std::string & buf) override

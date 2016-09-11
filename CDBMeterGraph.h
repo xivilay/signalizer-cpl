@@ -89,7 +89,7 @@
 
 			void compileDivisions()
 			{
-				double scaleTable[] = { 1, 3, 5, 9, 12, 15, 20, 30 };
+				double scaleTable[] = { 1, 2, 3, 6, 9, 12, 15, 20, 30 };
 				int size = std::extent<decltype(scaleTable)>::value;
 
 				auto getIncrement = [&](int level)
@@ -110,6 +110,7 @@
 				};
 
 				divisions.clear();
+
 				auto diff = std::abs(upperDbs - lowerDbs);
 				auto sign = upperDbs > lowerDbs ? 1 : lowerDbs > upperDbs ? -1 : 0;
 
