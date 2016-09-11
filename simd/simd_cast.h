@@ -48,7 +48,7 @@
 			};
 			
 			template<typename Vto, typename Vfrom>
-				inline typename std::enable_if<
+				CPL_SIMD_FUNC typename std::enable_if<
 					sizeof(Vfrom) == sizeof(Vto) &&
 					!is_simd<Vfrom>::value &&
 					!is_simd<Vto>::value, 
@@ -66,7 +66,7 @@
 				v4sd vector to v256i integer - note requires avx512 for some insane reason.
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
 					static_vector_cast(v4sd Vin)
 				{
 #ifndef _CPL_HAS_AVX_512
@@ -82,7 +82,7 @@
 				v2sd vector to v128i integer - note requires avx512 for some insane reason.
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
 					static_vector_cast(v2sd Vin)
 				{
 #ifndef _CPL_HAS_AVX_512
@@ -99,7 +99,7 @@
 				v8sf vector to v256i integer
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
 					static_vector_cast(v8sf Vin)
 				{
 					return _mm256_cvttps_epi32(Vin);
@@ -109,7 +109,7 @@
 				v4sf vector to v128i integer
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
 					static_vector_cast(v4sf Vin)
 				{
 					return _mm_cvttps_epi32(Vin);
@@ -120,7 +120,7 @@
 				bitwise-cast v128i integer to v4sf vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
 					reinterpret_vector_cast(v128i Vin)
 				{
 					return _mm_castsi128_ps(Vin);
@@ -130,7 +130,7 @@
 				bitwise-cast v256i integer to v8sf vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
 					reinterpret_vector_cast(v256i Vin)
 				{
 					return _mm256_castsi256_ps(Vin);
@@ -140,7 +140,7 @@
 				bitwise-cast v128i integer to v2sd vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type 
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type 
 					reinterpret_vector_cast(v128i Vin)
 				{
 					return _mm_castsi128_pd(Vin);
@@ -150,7 +150,7 @@
 				bitwise-cast v256i integer to v4sd vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
 					reinterpret_vector_cast(v256i Vin)
 				{
 					return _mm256_castsi256_pd(Vin);
@@ -162,7 +162,7 @@
 				bitwise-cast v4sd vector to v256i integer
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
 					reinterpret_vector_cast(v4sd Vin)
 				{
 					return _mm256_castpd_si256(Vin);
@@ -172,7 +172,7 @@
 				bitwise-cast v2sd vector to v128i integer
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
 					reinterpret_vector_cast(v2sd Vin)
 				{
 					return _mm_castpd_si128(Vin);
@@ -183,7 +183,7 @@
 				bitwise-cast v8sf vector to v256i integer
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
 					reinterpret_vector_cast(v8sf Vin)
 				{
 					return _mm256_castps_si256(Vin);
@@ -193,7 +193,7 @@
 				bitwise-cast v4sf vector to v128i integer
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
 					reinterpret_vector_cast(v4sf Vin)
 				{
 					return _mm_castps_si128(Vin);
@@ -203,7 +203,7 @@
 				bitwise-cast v4sf vector to v2sd
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type
 					reinterpret_vector_cast(v4sf Vin)
 				{
 					return _mm_castps_pd(Vin);
@@ -213,7 +213,7 @@
 				bitwise-cast v2sf vector to vv4sf
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
 					reinterpret_vector_cast(v2sd Vin)
 				{
 					return _mm_castpd_ps(Vin);
@@ -223,7 +223,7 @@
 				bitwise-cast v8sf vector to v4sd
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
 					reinterpret_vector_cast(v8sf Vin)
 				{
 					return _mm256_castps_pd(Vin);
@@ -232,7 +232,7 @@
 				bitwise-cast v4sd vector to v8sf
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
 					reinterpret_vector_cast(v4sd Vin)
 				{
 					return _mm256_castpd_ps(Vin);
@@ -242,7 +242,7 @@
 				bitwise-cast v256i vector to v128i
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v128i>::value, v128i>::type
 					reinterpret_vector_cast(v256i Vin)
 				{
 					return _mm256_castsi256_si128(Vin);
@@ -252,7 +252,7 @@
 				bitwise-cast v256i vector to v128i
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v256i>::value, v256i>::type
 					reinterpret_vector_cast(v128i Vin)
 				{
 					return _mm256_castsi128_si256(Vin);
@@ -264,7 +264,7 @@
 				v128i integer to v4sf vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v4sf>::value, v4sf>::type
 					static_vector_cast(v128i Vin)
 				{
 					return _mm_cvtepi32_ps(Vin);
@@ -274,7 +274,7 @@
 				v256i integer to v8sf vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v8sf>::value, v8sf>::type
 					static_vector_cast(v256i Vin)
 				{
 					return _mm256_cvtepi32_ps(Vin);
@@ -284,7 +284,7 @@
 				v128i integer to v2sd vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v2sd>::value, v2sd>::type
 					static_vector_cast(v128i Vin)
 				{
 					return _mm_cvtepi32_pd(Vin);
@@ -294,7 +294,7 @@
 				v256i integer to v4sd vector
 			*/
 			template<typename Vdest>
-				inline typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vdest, v4sd>::value, v4sd>::type
 					static_vector_cast(v256i Vin)
 				{
 					return _mm256_cvtepi32_pd(reinterpret_vector_cast<v128i>(Vin));
@@ -308,11 +308,11 @@
 				are emulated through __m128i types.
 
 			//////////////////////////////////////////////*/
-			inline v128i vdouble_cvt_int32(v4sd in)
+			CPL_SIMD_FUNC v128i vdouble_cvt_int32(v4sd in)
 			{
 				return _mm256_cvttpd_epi32(in);
 			}
-			inline v128i vdouble_cvt_int32(v2sd in)
+			CPL_SIMD_FUNC v128i vdouble_cvt_int32(v2sd in)
 			{
 				return _mm_cvttpd_epi32(in);
 			}
@@ -324,7 +324,7 @@
 
 			// input = [0, 1, 2, 3], output = [0, 1]
 			template<>
-				inline v2sd vint32_reinterpret_double(v128i in)
+				CPL_SIMD_FUNC v2sd vint32_reinterpret_double(v128i in)
 				{
 					return reinterpret_vector_cast<v2sd>(_mm_shuffle_ps(
 						reinterpret_vector_cast<v4sf>(in), reinterpret_vector_cast<v4sf>(in),
@@ -335,7 +335,7 @@
 
 			// input_v128i = [0, 1, 2, 3], output_m256d = [0, 1, 2, 3]
 			template<>
-				inline v4sd vint32_reinterpret_double(v128i in)
+				CPL_SIMD_FUNC v4sd vint32_reinterpret_double(v128i in)
 				{
 					auto const lowerWord = _mm_shuffle_ps(
 						reinterpret_vector_cast<v4sf>(in), reinterpret_vector_cast<v4sf>(in),
@@ -348,7 +348,7 @@
 					return reinterpret_vector_cast<v4sd>(_mm256_set_m128(higherWord, lowerWord));
 				}
 			template<>
-				inline v4sd vfloat_reinterpret_double(v4sf in)
+				CPL_SIMD_FUNC v4sd vfloat_reinterpret_double(v4sf in)
 				{
 					return  vint32_reinterpret_double<v4sd>(reinterpret_vector_cast<v128i>(in));
 				}
@@ -356,7 +356,7 @@
 
 
 			template<>
-				inline v2sd vfloat_reinterpret_double(v4sf in)
+				CPL_SIMD_FUNC v2sd vfloat_reinterpret_double(v4sf in)
 				{
 					return vint32_reinterpret_double<v2sd>(reinterpret_vector_cast<v128i>(in));
 				}
@@ -365,12 +365,12 @@
 				V vint32_cvt_double(v128i);
 
 			template<>
-				inline v4sd vint32_cvt_double(v128i in)
+				CPL_SIMD_FUNC v4sd vint32_cvt_double(v128i in)
 				{
 					return _mm256_cvtepi32_pd(in);
 				}
 			template<>
-				inline v2sd vint32_cvt_double(v128i in)
+				CPL_SIMD_FUNC v2sd vint32_cvt_double(v128i in)
 				{
 					return _mm_cvtepi32_pd(in);
 				}

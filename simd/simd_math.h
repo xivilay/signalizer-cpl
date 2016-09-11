@@ -57,14 +57,14 @@
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
 			template<typename V, typename M>
-			inline typename std::enable_if<!is_simd<V>::value, V>::type
+			CPL_SIMD_FUNC typename std::enable_if<!is_simd<V>::value, V>::type
 				bool_and(V V1, M mask)
 			{
 				return V1 * mask;
 			}
 
 			template<typename V>
-			inline typename std::enable_if<is_simd<V>::value, V>::type
+			CPL_SIMD_FUNC typename std::enable_if<is_simd<V>::value, V>::type
 				bool_and(V V1, V mask)
 			{
 				return V1 & mask;
@@ -74,10 +74,10 @@
 				Vector floating point square roots
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sd sqrt(v4sd x) { return _mm256_sqrt_pd(x); }
-			inline v4sf sqrt(v4sf x) { return _mm_sqrt_ps(x); }
-			inline v8sf sqrt(v8sf x) { return _mm256_sqrt_ps(x); }
-			inline v2sd sqrt(v2sd x) { return _mm_sqrt_pd(x); }
+			CPL_SIMD_FUNC v4sd sqrt(v4sd x) { return _mm256_sqrt_pd(x); }
+			CPL_SIMD_FUNC v4sf sqrt(v4sf x) { return _mm_sqrt_ps(x); }
+			CPL_SIMD_FUNC v8sf sqrt(v8sf x) { return _mm256_sqrt_ps(x); }
+			CPL_SIMD_FUNC v2sd sqrt(v2sd x) { return _mm_sqrt_pd(x); }
 
 
 
@@ -86,32 +86,32 @@
 				Vector floating point absolute values
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf abs(v4sf val)
+			CPL_SIMD_FUNC v4sf abs(v4sf val)
 			{
 				return _mm_and_ps(val, consts<v4sf>::sign_mask);
 			}
 
-			inline v8sf abs(v8sf val)
+			CPL_SIMD_FUNC v8sf abs(v8sf val)
 			{
 				return _mm256_and_ps(val, consts<v8sf>::sign_mask);
 			}
 
-			inline v2sd abs(v2sd val)
+			CPL_SIMD_FUNC v2sd abs(v2sd val)
 			{
 				return _mm_and_pd(val, consts<v2sd>::sign_mask);
 			}
 
-			inline v4sd abs(v4sd val)
+			CPL_SIMD_FUNC v4sd abs(v4sd val)
 			{
 				return _mm256_and_pd(val, consts<v4sd>::sign_mask);
 			}
 
-			inline float abs(float val)
+			CPL_SIMD_FUNC float abs(float val)
 			{
 				return std::abs(val);
 			}
 			
-			inline double abs(double val)
+			CPL_SIMD_FUNC double abs(double val)
 			{
 				return std::abs(val);
 			}
@@ -121,18 +121,18 @@
 				Vector floating point bit or
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vor(v4sf a, v4sf b) { return _mm_or_ps(a, b); }
-			inline v8sf vor(v8sf a, v8sf b) { return _mm256_or_ps(a, b); }
-			inline v4sd vor(v4sd a, v4sd b) { return _mm256_or_pd(a, b); }
-			inline v2sd vor(v2sd a, v2sd b) { return _mm_or_pd(a, b); }
+			CPL_SIMD_FUNC v4sf vor(v4sf a, v4sf b) { return _mm_or_ps(a, b); }
+			CPL_SIMD_FUNC v8sf vor(v8sf a, v8sf b) { return _mm256_or_ps(a, b); }
+			CPL_SIMD_FUNC v4sd vor(v4sd a, v4sd b) { return _mm256_or_pd(a, b); }
+			CPL_SIMD_FUNC v2sd vor(v2sd a, v2sd b) { return _mm_or_pd(a, b); }
 
-			inline float vor(float a, float b)
+			CPL_SIMD_FUNC float vor(float a, float b)
 			{
 				auto result = reinterpret_vector_cast<std::uint32_t>(a) | reinterpret_vector_cast<std::uint32_t>(b);
 				return reinterpret_vector_cast<float>(result);
 			}
 
-			inline double vor(double a, double b)
+			CPL_SIMD_FUNC double vor(double a, double b)
 			{
 				auto result = reinterpret_vector_cast<std::uint64_t>(a) | reinterpret_vector_cast<std::uint64_t>(b);
 				return reinterpret_vector_cast<double>(result);
@@ -143,18 +143,18 @@
 			 Floating point bit-ands
 			 
 			 /////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vand(v4sf a, v4sf b) { return _mm_and_ps(a, b); }
-			inline v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
-			inline v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
-			inline v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
+			CPL_SIMD_FUNC v4sf vand(v4sf a, v4sf b) { return _mm_and_ps(a, b); }
+			CPL_SIMD_FUNC v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
+			CPL_SIMD_FUNC v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
+			CPL_SIMD_FUNC v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
 			
-			inline float vand(float a, float b)
+			CPL_SIMD_FUNC float vand(float a, float b)
 			{
 				auto result = reinterpret_vector_cast<std::uint32_t>(a) & reinterpret_vector_cast<std::uint32_t>(b);
 				return reinterpret_vector_cast<float>(result);
 			}
 			
-			inline double vand(double a, double b)
+			CPL_SIMD_FUNC double vand(double a, double b)
 			{
 				auto result = reinterpret_vector_cast<std::uint64_t>(a) & reinterpret_vector_cast<std::uint64_t>(b);
 				return reinterpret_vector_cast<double>(result);
@@ -165,18 +165,18 @@
 				Vector floating point bit exclusive-or
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vxor(v4sf a, v4sf b) { return _mm_xor_ps(a, b); }
-			inline v8sf vxor(v8sf a, v8sf b) { return _mm256_xor_ps(a, b); }
-			inline v4sd vxor(v4sd a, v4sd b) { return _mm256_xor_pd(a, b); }
-			inline v2sd vxor(v2sd a, v2sd b) { return _mm_xor_pd(a, b); }
+			CPL_SIMD_FUNC v4sf vxor(v4sf a, v4sf b) { return _mm_xor_ps(a, b); }
+			CPL_SIMD_FUNC v8sf vxor(v8sf a, v8sf b) { return _mm256_xor_ps(a, b); }
+			CPL_SIMD_FUNC v4sd vxor(v4sd a, v4sd b) { return _mm256_xor_pd(a, b); }
+			CPL_SIMD_FUNC v2sd vxor(v2sd a, v2sd b) { return _mm_xor_pd(a, b); }
 			
-			inline float vxor(float a, float b)
+			CPL_SIMD_FUNC float vxor(float a, float b)
 			{
 				auto result = reinterpret_vector_cast<std::uint32_t>(a) ^ reinterpret_vector_cast<std::uint32_t>(b);
 				return reinterpret_vector_cast<float>(result);
 			}
 			
-			inline double vxor(double a, double b)
+			CPL_SIMD_FUNC double vxor(double a, double b)
 			{
 				auto result = reinterpret_vector_cast<std::uint64_t>(a) ^ reinterpret_vector_cast<std::uint64_t>(b);
 				return reinterpret_vector_cast<double>(result);
@@ -188,19 +188,19 @@
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-			inline v128i vand(v128i ia, v128i ib)
+			CPL_SIMD_FUNC v128i vand(v128i ia, v128i ib)
 			{
 				return _mm_and_si128(ia, ib);
 			}
 
-			inline v256i vand(v256i ia, v256i ib)
+			CPL_SIMD_FUNC v256i vand(v256i ia, v256i ib)
 			{
 				return _mm256_and_si256(ia, ib);
 			}
 
 			// does a integer and using floating point lines; usable for non-avx512 modes
 			template<typename V>
-				inline typename cpl::simd::to_integer<V>::type
+				CPL_SIMD_FUNC typename cpl::simd::to_integer<V>::type
 					vfloat_and(typename cpl::simd::to_integer<V>::type a, typename cpl::simd::to_integer<V>::type b)
 					{
 						return reinterpret_vector_cast<typename cpl::simd::to_integer<V>::type>
@@ -215,12 +215,12 @@
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-			inline v128i vandnot(v128i ia, v128i ib)
+			CPL_SIMD_FUNC v128i vandnot(v128i ia, v128i ib)
 			{
 				return _mm_andnot_si128(ia, ib);
 			}
 
-			inline v256i vandnot(v256i ia, v256i ib)
+			CPL_SIMD_FUNC v256i vandnot(v256i ia, v256i ib)
 			{
 				return _mm256_andnot_si256(ia, ib);
 			}
@@ -231,30 +231,30 @@
 				Vector floating point bit not operations, emulated through andnot intrinsic
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vnot(v4sf a)
+			CPL_SIMD_FUNC v4sf vnot(v4sf a)
 			{
 				return _mm_andnot_ps(a, consts<v4sf>::all_bits);
 			}
-			inline v8sf vnot(v8sf a)
+			CPL_SIMD_FUNC v8sf vnot(v8sf a)
 			{
 				return _mm256_andnot_ps(a, consts<v8sf>::all_bits);
 			}
-			inline v4sd vnot(v4sd a)
+			CPL_SIMD_FUNC v4sd vnot(v4sd a)
 			{
 				return _mm256_andnot_pd(a, consts<v4sd>::all_bits);
 			}
-			inline v2sd vnot(v2sd a)
+			CPL_SIMD_FUNC v2sd vnot(v2sd a)
 			{
 				return _mm_andnot_pd(a, consts<v2sd>::all_bits);
 			}
 
-			inline float vnot(float a)
+			CPL_SIMD_FUNC float vnot(float a)
 			{
 				auto result = ~reinterpret_vector_cast<std::uint32_t>(a);
 				return reinterpret_vector_cast<float>(result);
 			}
 
-			inline double vnot(double a)
+			CPL_SIMD_FUNC double vnot(double a)
 			{
 				auto result = ~reinterpret_vector_cast<std::uint64_t>(a);
 				return reinterpret_vector_cast<double>(result);
@@ -266,13 +266,13 @@
 				ret = ~a & b
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
-			inline v4sf vandnot(v4sf a, v4sf b) { return _mm_andnot_ps(a, b); }
-			inline v8sf vandnot(v8sf a, v8sf b) { return _mm256_andnot_ps(a, b); }
-			inline v4sd vandnot(v4sd a, v4sd b) { return _mm256_andnot_pd(a, b); }
-			inline v2sd vandnot(v2sd a, v2sd b) { return _mm_andnot_pd(a, b); }
+			CPL_SIMD_FUNC v4sf vandnot(v4sf a, v4sf b) { return _mm_andnot_ps(a, b); }
+			CPL_SIMD_FUNC v8sf vandnot(v8sf a, v8sf b) { return _mm256_andnot_ps(a, b); }
+			CPL_SIMD_FUNC v4sd vandnot(v4sd a, v4sd b) { return _mm256_andnot_pd(a, b); }
+			CPL_SIMD_FUNC v2sd vandnot(v2sd a, v2sd b) { return _mm_andnot_pd(a, b); }
 
 			template<typename V>
-				inline V vandnot(V a, V b)
+				CPL_SIMD_FUNC V vandnot(V a, V b)
 				{
 					return vand(a, vnot(b));
 				}
@@ -286,7 +286,7 @@
 					note that mask should strictly be either all 0 or 1 bits (like, from comparisons)
 			///////////////////////////////////////////////////////////////////////////////////////////////////*/
 			template<typename V>
-			inline V vselect(V a, V b, V mask)
+			CPL_SIMD_FUNC V vselect(V a, V b, V mask)
 			{
 				return vor(vand(mask, a), vandnot(mask, b));
 			}
@@ -298,20 +298,20 @@
 			 ///////////////////////////////////////////////////////////////////////////////////////////////////*/
 			
 			template<typename V>
-				inline V max(V a, V b)
+				CPL_SIMD_FUNC V max(V a, V b)
 				{
 					auto mask = a > b;
 					return vor(vand(a, mask), vandnot(mask, b));
 				}
 
 			template<>
-				inline float max(float a, float b)
+				CPL_SIMD_FUNC float max(float a, float b)
 				{
 					return std::max(a, b);
 				}
 
 			template<>
-				inline double max(double a, double b)
+				CPL_SIMD_FUNC double max(double a, double b)
 				{
 					return std::max(a, b);
 				}
@@ -322,32 +322,32 @@
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-			inline v4sf sign(v4sf val)
+			CPL_SIMD_FUNC v4sf sign(v4sf val)
 			{
 				return _mm_and_ps(val, consts<v4sf>::sign_bit);
 			}
 
-			inline v8sf sign(v8sf val)
+			CPL_SIMD_FUNC v8sf sign(v8sf val)
 			{
 				return _mm256_and_ps(val, consts<v8sf>::sign_bit);
 			}
 
-			inline v2sd sign(v2sd val)
+			CPL_SIMD_FUNC v2sd sign(v2sd val)
 			{
 				return _mm_and_pd(val, consts<v2sd>::sign_bit);
 			}
 
-			inline v4sd sign(v4sd val)
+			CPL_SIMD_FUNC v4sd sign(v4sd val)
 			{
 				return _mm256_and_pd(val, consts<v4sd>::sign_bit);
 			}
 			
-			inline float sign(float val)
+			CPL_SIMD_FUNC float sign(float val)
 			{
 				return (float)std::copysign(1.0, val);
 			}
 			
-			inline double sign(double val)
+			CPL_SIMD_FUNC double sign(double val)
 			{
 				return (double)std::copysign(1.0, val);
 			}
@@ -359,28 +359,28 @@
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<4 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
 					viadd(V ia, V ib)
 				{
 					return _mm_add_epi32(ia, ib);
 				}
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<2 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<2 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
 					viadd(V ia, V ib)
 				{
 					return _mm_add_epi64(ia, ib);
 				}
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					viadd(V ia, V ib)
 				{
 					return _mm256_add_epi32(ia, ib);
 				}
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<4 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					viadd(V ia, V ib)
 				{
 					return _mm256_add_epi64(ia, ib);
@@ -393,28 +393,28 @@
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<4 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
 					visub(V ia, V ib)
 				{
 					return _mm_sub_epi32(ia, ib);
 				}
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<2 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<2 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
 					visub(V ia, V ib)
 				{
 					return _mm_sub_epi64(ia, ib);
 				}
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					visub(V ia, V ib)
 				{
 					return _mm256_sub_epi32(ia, ib);
 				}
 
 			template<std::size_t elements, bool is_signed = true, typename V>
-				inline typename std::enable_if<4 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					visub(V ia, V ib)
 				{
 					return _mm256_sub_epi64(ia, ib);
@@ -427,7 +427,7 @@
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 		
 			template<std::size_t elements, std::size_t shift_amount, bool is_signed = true, typename V>
-				inline typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					vileft_shift(V ia)
 				{
 					return _mm256_slli_epi32(ia, shift_amount);
@@ -435,7 +435,7 @@
 
 
 			template<std::size_t elements, std::size_t shift_amount, bool is_signed = true, typename V>
-				inline typename std::enable_if<4 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					vileft_shift(V ia)
 				{
 					return _mm256_slli_epi64(ia, shift_amount);
@@ -443,14 +443,14 @@
 
 
 			template<std::size_t elements, std::size_t shift_amount, bool is_signed = true, typename V>
-				inline typename std::enable_if<4 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
 					vileft_shift(V ia)
 				{
 					return _mm_slli_epi32(ia, shift_amount);
 				}
 
 			template<std::size_t elements, std::size_t shift_amount, bool is_signed = true, typename V>
-				inline typename std::enable_if<2 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<2 == elements && is_signed && std::is_same<V, v128i>::value, V>::type
 					vileft_shift(V ia)
 				{
 					return _mm_slli_epi64(ia, shift_amount);
@@ -463,7 +463,7 @@
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 			template<typename V>
-				inline V atan(V x)
+				CPL_SIMD_FUNC V atan(V x)
 				{
 					using c = cpl::simd::consts<V>;
 					V y, z, z1, z2;
@@ -506,7 +506,7 @@
 
 
 			template<typename V>
-				static inline V atan2(V y, V x)
+				static CPL_SIMD_FUNC V atan2(V y, V x)
 				{
 					using c = cpl::simd::consts<V>;
 					V z, w;
@@ -537,12 +537,12 @@
 
 
 
-				inline void sincos(float x, float * s, float * c)
+				CPL_SIMD_FUNC void sincos(float x, float * s, float * c)
 				{
 					*s = std::sin(x);
 					*c = std::cos(x);
 				}
-				inline void sincos(double x, double * s, double * c)
+				CPL_SIMD_FUNC void sincos(double x, double * s, double * c)
 				{
 					*s = std::sin(x);
 					*c = std::cos(x);
@@ -634,7 +634,7 @@
 				}
 
 		template<typename V>
-			inline void sincos(V x, V * s, V * c) 
+			CPL_SIMD_FUNC void sincos(V x, V * s, V * c) 
 			{
 
 				//typedef v4sf V;
@@ -748,7 +748,7 @@
 #else
 
 		template<typename V>
-			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value, V>::type 
+			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value, V>::type 
 				sin(V x)
 			{ // any x
 				V  y;
@@ -841,7 +841,7 @@
 
 
 		template<typename V>
-			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value, V>::type 
+			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value, V>::type 
 				sin(V x)
 			{ // any x
 #pragma message cwarn("Seems to return cosines. Output of 4.71 == ~0")
@@ -942,7 +942,7 @@
 			}
 
 		template<typename V>
-			inline typename std::enable_if<simd::is_simd<V>::value, V>::type
+			CPL_SIMD_FUNC typename std::enable_if<simd::is_simd<V>::value, V>::type
 				cos(V x)
 			{
 				/*V s, c;
@@ -953,7 +953,7 @@
 			}
 			
 		template<typename V>
-			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value>::type
+			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value>::type
 				sincos(V x, V * s, V * c) 
 		{
 
@@ -1069,7 +1069,7 @@
 		// this function is ~20 times slower using v4sd,
 		// due to mixed sse/avx modes.
 		template<typename V>
-			inline typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value>::type
+			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value>::type
 				sincos(V x, V * s, V * c)
 			{
 			

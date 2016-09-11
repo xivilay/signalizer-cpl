@@ -28,11 +28,13 @@
 
 *************************************************************************************/
 
-#ifndef _SIMD_INTERFACE_H
-	#define _SIMD_INTERFACE_H
+#ifndef SIMD_INTERFACE_H
+	#define SIMD_INTERFACE_H
 	
 	#include "simd_traits.h"
 	#include "../SysStats.h"
+
+#define CPL_SIMD_FUNC CPL_VECTOR_TARGET inline
 
 	namespace cpl
 	{
@@ -43,132 +45,132 @@
 			class NotSupported;
 
 			template<typename V>
-				inline V set1(const typename scalar_of<V>::type);
+				CPL_SIMD_FUNC V set1(const typename scalar_of<V>::type);
 
 			template<typename V>
-				inline V set();
+				CPL_SIMD_FUNC V set();
 
 			template<typename V>
-				inline V load(const typename scalar_of<V>::type * );
+				CPL_SIMD_FUNC V load(const typename scalar_of<V>::type * );
 			template<typename V>
-				inline V loadu(const typename scalar_of<V>::type *);
+				CPL_SIMD_FUNC V loadu(const typename scalar_of<V>::type *);
 
 			template<typename V>
-				inline V zero();
+				CPL_SIMD_FUNC V zero();
 
 			template<typename V>
-				inline V broadcast(const typename scalar_of<V>::type * );
+				CPL_SIMD_FUNC V broadcast(const typename scalar_of<V>::type * );
 			
 			template<>
-				inline float zero()
+				CPL_SIMD_FUNC float zero()
 				{
 					return 0;
 				}
 
 			template<>
-				inline double zero()
+				CPL_SIMD_FUNC double zero()
 				{
 					return 0;
 				}
 
 
-				inline float broadcast(const float * V1)
+				CPL_SIMD_FUNC float broadcast(const float * V1)
 				{
 					return *V1;
 				}
 
-				inline double broadcast(const double * V1)
+				CPL_SIMD_FUNC double broadcast(const double * V1)
 				{
 					return *V1;
 				}
 
-				inline float set1(const float V1)
+				CPL_SIMD_FUNC float set1(const float V1)
 				{
 					return V1;
 				}
 
-				inline double set1(const double V1)
+				CPL_SIMD_FUNC double set1(const double V1)
 				{
 					return V1;
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<4 == elements && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && std::is_same<V, v128i>::value, V>::type
 					viequals(V ia, V ib)
 				{
 					return _mm_cmpeq_epi32(ia, ib);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<2 == elements && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<2 == elements && std::is_same<V, v128i>::value, V>::type
 					viequals(V ia, V ib)
 				{
 					return _mm_cmpeq_epi64(ia, ib);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<8 == elements && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<8 == elements && std::is_same<V, v256i>::value, V>::type
 					viequals(V ia, V ib)
 				{
 					return _mm256_cmpeq_epi32(ia, ib);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<4 == elements && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && std::is_same<V, v256i>::value, V>::type
 					viequals(V ia, V ib)
 				{
 					return _mm256_cmpeq_epi64(ia, ib);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<4 == elements && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && std::is_same<V, v128i>::value, V>::type
 					set1(std::int32_t val)
 				{
 					return _mm_set1_epi32(val);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<2 == elements && std::is_same<V, v128i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<2 == elements && std::is_same<V, v128i>::value, V>::type
 					set1(std::int64_t val)
 				{
 					return _mm_set1_epi64x(val);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<8 == elements && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<8 == elements && std::is_same<V, v256i>::value, V>::type
 					set1(std::int32_t val)
 				{
 					return _mm256_set1_epi32(val);
 				}
 
 			template<std::size_t elements, typename V>
-				inline typename std::enable_if<4 == elements && std::is_same<V, v256i>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<4 == elements && std::is_same<V, v256i>::value, V>::type
 					set1(std::int64_t val)
 				{
 					return _mm256_set1_epi64x(val);
 				}
 
 			template<>
-				inline v128i zero()
+				CPL_SIMD_FUNC v128i zero()
 				{
 					return _mm_setzero_si128();
 				}
 
 			template<>
-				inline v256i zero()
+				CPL_SIMD_FUNC v256i zero()
 				{
 					return _mm256_setzero_si256();
 				}
 
 			/*template<typename V>
-				inline typename std::enable_if<!is_simd<V>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<!is_simd<V>::value, V>::type
 					load(const V const * V1)
 				{
 					return (V)*V1;
 				}
 
 			template<typename V>
-				inline typename std::enable_if<!is_simd<V>::value, V>::type
+				CPL_SIMD_FUNC typename std::enable_if<!is_simd<V>::value, V>::type
 					loadu(const V const* V1)
 				{
 					return (V)*V1;
@@ -180,7 +182,7 @@
 
 
 			template<typename V, class VectorPtrs>					
-				inline typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
 					gather(VectorPtrs p)
 				{
 					return _mm_set_ps(*p[0], *p[1], *p[2], *p[3]);
@@ -189,7 +191,7 @@
 
 
 			template<typename V, class VectorPtrs>
-				inline typename std::enable_if<std::is_same<V, typename scalar_of<V>::type>::value, typename scalar_of<V>::type>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<V, typename scalar_of<V>::type>::value, typename scalar_of<V>::type>::type
 					gather(VectorPtrs p)
 				{
 
@@ -197,21 +199,21 @@
 				}
 
 			template<typename V, class VectorPtrs>
-				inline typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type
 					gather(VectorPtrs p)
 				{
 					return _mm256_set_ps(*p[0], *p[1], *p[2], *p[3], *p[4], *p[5], *p[6], *p[7]);
 				}
 
 			template<typename V, class VectorPtrs>
-				inline typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<V, v4sf>::value, v4sf>::type
 					setv(VectorPtrs p)
 				{
 					return _mm_set_ps(*p[0], *p[1], *p[2], *p[3]);
 				}
 
 			template<typename V, class VectorPtrs>
-				inline typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type 
+				CPL_SIMD_FUNC typename std::enable_if<std::is_same<V, v8sf>::value, v8sf>::type 
 					setv(VectorPtrs p)
 				{
 					return _mm256_set_ps(*p[0], *p[1], *p[2], *p[3], *p[4], *p[5], *p[6], *p[7]);
@@ -248,122 +250,122 @@
 				}*/
 
 			template<>
-				inline v8sf zero()
+				CPL_SIMD_FUNC v8sf zero()
 				{
 					return _mm256_setzero_ps();
 				}
 
 			template<>
-				inline v4sf zero()
+				CPL_SIMD_FUNC v4sf zero()
 				{
 					return _mm_setzero_ps();
 				}
 
 			template<>
-				inline v2sd zero()
+				CPL_SIMD_FUNC v2sd zero()
 				{
 					return _mm_setzero_pd();
 				}
 
 			template<>
-				inline v4sd zero()
+				CPL_SIMD_FUNC v4sd zero()
 				{
 					return _mm256_setzero_pd();
 				}
 
 			template<>
-				inline v8sf set1(const float in)
+				CPL_SIMD_FUNC v8sf set1(const float in)
 				{
 					return _mm256_set1_ps(in);
 				}
 
 			template<>
-				inline v4sf set1(const float in)
+				CPL_SIMD_FUNC v4sf set1(const float in)
 				{
 					return _mm_set1_ps(in);
 				}
 
 			template<>
-				inline float set1(const float in)
+				CPL_SIMD_FUNC float set1(const float in)
 				{
 					return in;
 				}
 
 			template<>
-				inline double set1(const double in)
+				CPL_SIMD_FUNC double set1(const double in)
 				{
 					return in;
 				}
 
 			template<>
-				inline v2sd set1(const double in)
+				CPL_SIMD_FUNC v2sd set1(const double in)
 				{
 					return _mm_set1_pd(in);
 				}
 
 			template<>
-				inline v4sd set1(const double in)
+				CPL_SIMD_FUNC v4sd set1(const double in)
 				{
 					return _mm256_set1_pd(in);
 				}
 
 
 			template<>
-				inline v8sf loadu(const float *  in)
+				CPL_SIMD_FUNC v8sf loadu(const float *  in)
 				{
 					return _mm256_loadu_ps(in);
 				}
 
 			template<>
-				inline v8sf load(const float * in)
+				CPL_VECTOR_TARGET CPL_SIMD_FUNC v8sf load(const float * in)
 				{
 					return _mm256_load_ps(in);
 				}
 
 			template<>
-				inline float load(const float * in)
+				CPL_SIMD_FUNC float load(const float * in)
 				{
 					return *in;
 				}
 
 			template<>
-				inline double load(const double * in)
+				CPL_SIMD_FUNC double load(const double * in)
 				{
 					return *in;
 				}
 
 			template<>
-				inline v4sd load(const double * in)
+				CPL_SIMD_FUNC v4sd load(const double * in)
 				{
 					return _mm256_load_pd(in);
 				}
 
 			template<>
-				inline v2sd load(const double * in)
+				CPL_SIMD_FUNC v2sd load(const double * in)
 				{
 					return _mm_load_pd(in);
 				}
 
 			template<>
-				inline double loadu(const double * in)
+				CPL_SIMD_FUNC double loadu(const double * in)
 				{
 					return *in;
 				}
 
 			template<>
-				inline v4sf load(const float *in)
+				CPL_SIMD_FUNC v4sf load(const float *in)
 				{
 					return _mm_load_ps(in);
 				}
 
 			template<>
-				inline v4sf loadu(const float * in)
+				CPL_SIMD_FUNC v4sf loadu(const float * in)
 				{
 					return _mm_loadu_ps(in);
 				}
 
 			template<>
-				inline float loadu(const float * in)
+				CPL_SIMD_FUNC float loadu(const float * in)
 				{
 					return *in;
 				}
@@ -371,111 +373,111 @@
 			// broadcasts has to be declared after set1<>'s because the broadcasts may explicitly initialize the templates
 
 			template<>
-				inline float broadcast(const float * _in)
+				CPL_SIMD_FUNC float broadcast(const float * _in)
 				{
 					return *_in;
 				}
 
 			template<>
-				inline double broadcast(const double * _in)
+				CPL_SIMD_FUNC double broadcast(const double * _in)
 				{
 					return *_in;
 				}
 
 			template<unsigned i>
-				inline __m256 broadcast(__m256 v)
+				CPL_SIMD_FUNC __m256 broadcast(__m256 v)
 				{
 					return _mm256_permute_ps(_mm256_permute2f128_ps(v, v, (i >> 2) | ((i >> 2) << 4)), _MM_SHUFFLE(i & 3, i & 3, i & 3, i & 3));
 				}
 	
 			template<unsigned i>
-				inline __m128 broadcast(__m128 v)
+				CPL_SIMD_FUNC __m128 broadcast(__m128 v)
 				{
 					return _mm_shuffle_ps(v, v, _MM_SHUFFLE(i, i, i, i));
 				}
 			
 			template<>
-				inline v8sf broadcast(const float * _in)
+				CPL_VECTOR_TARGET CPL_SIMD_FUNC v8sf broadcast(const float * _in)
 				{
 					return _mm256_broadcast_ss(_in);
 				}					
 
 			template<>
-				inline v4sd broadcast(const double * _in)
+				CPL_SIMD_FUNC v4sd broadcast(const double * _in)
 				{
 					return _mm256_set1_pd(*_in);
 				}
 
 			template<>
-				inline v4sf broadcast(const float * _in)
+				CPL_SIMD_FUNC v4sf broadcast(const float * _in)
 				{
 					return set1<v4sf>(*_in);
 				}
 
 			template<>
-				inline v2sd broadcast(const double * _in)
+				CPL_SIMD_FUNC v2sd broadcast(const double * _in)
 				{
 					return _mm_set1_pd(*_in);
 				}
 
 			// ps
-			inline void storeu(float * in, const v8sf ymm)
+			CPL_SIMD_FUNC void storeu(float * in, const v8sf ymm)
 			{
 				_mm256_storeu_ps(in, ymm);
 			}
 
-			inline void store(float * in, const v8sf ymm)
+            CPL_VECTOR_TARGET CPL_SIMD_FUNC void store(float * in, const v8sf ymm)
 			{
 				_mm256_store_ps(in, ymm);
 			}
 			
-			inline void storeu(float * in, const v4sf xmm)
+			CPL_SIMD_FUNC void storeu(float * in, const v4sf xmm)
 			{
 				_mm_storeu_ps(in, xmm);
 			}
 
-			inline void store(float * in, const v4sf xmm)
+			CPL_SIMD_FUNC void store(float * in, const v4sf xmm)
 			{
 				_mm_store_ps(in, xmm);
 			}
 
 			// pd
-			inline void storeu(double * in, const v4sd ymm)
+			CPL_SIMD_FUNC void storeu(double * in, const v4sd ymm)
 			{
 				_mm256_storeu_pd(in, ymm);
 			}
 
-			inline void store(double * in, const v4sd ymm)
+			CPL_SIMD_FUNC void store(double * in, const v4sd ymm)
 			{
 				_mm256_store_pd(in, ymm);
 			}
 			
-			inline void storeu(double * in, const v2sd xmm)
+			CPL_SIMD_FUNC void storeu(double * in, const v2sd xmm)
 			{
 				_mm_storeu_pd(in, xmm);
 			}
 
-			inline void store(double * in, const v2sd xmm)
+			CPL_SIMD_FUNC void store(double * in, const v2sd xmm)
 			{
 				_mm_store_pd(in, xmm);
 			}
 
-			inline void storeu(float * in, float out)
+			CPL_SIMD_FUNC void storeu(float * in, float out)
 			{
 				*in = out;
 			}
 
-			inline void storeu(double * in, double out)
+			CPL_SIMD_FUNC void storeu(double * in, double out)
 			{
 				*in = out;
 			}
 
-			inline void store(float * in, float out)
+			CPL_SIMD_FUNC void store(float * in, float out)
 			{
 				*in = out;
 			}
 
-			inline void store(double * in, double out)
+			CPL_SIMD_FUNC void store(double * in, double out)
 			{
 				*in = out;
 			}
@@ -483,17 +485,17 @@
 			#define _mm256_set_m128i(hi, lo) (_mm256_inserti128_si256(_mm256_castsi128_si256(hi), lo, 1))
 			#define _mm256_set_m128(hi, lo) (_mm256_insertf128_ps(_mm256_castps128_ps256(hi), lo, 1))
 #endif
-			inline v128i viget_low_part(v256i ia)
+			CPL_SIMD_FUNC v128i viget_low_part(v256i ia)
 			{
 				return _mm256_extractf128_si256(ia, 0);
 			}
 
-			inline v128i viget_high_part(v256i ia)
+			CPL_SIMD_FUNC v128i viget_high_part(v256i ia)
 			{
 				return _mm256_extractf128_si256(ia, 1);
 			}
 
-			inline v256i vicompose(v128i ia, v128i ib)
+			CPL_SIMD_FUNC v256i vicompose(v128i ia, v128i ib)
 			{
 				return _mm256_set_m128i(ib, ia);
 			}
@@ -564,7 +566,7 @@
 					return o << ")";
 				}
 			template<typename Scalar>
-				inline typename std::enable_if<std::is_floating_point<Scalar>::value, std::size_t>::type 
+				CPL_SIMD_FUNC typename std::enable_if<std::is_floating_point<Scalar>::value, std::size_t>::type 
 					max_vector_capacity()
 				{
 					const auto factor = 8 / sizeof(Scalar);

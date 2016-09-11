@@ -224,9 +224,16 @@
 
         // if the compiler is set to compile for avx, all is fine (currently), although it should in the future support
         // other targets independently of project target
-        #if __clang_major__ > 8 || defined(__AVX__)
+        // note: the __clang_major__ should compare ge to 7, however this brings a performance regression of an order of magnitude
+        #if __clang_major__ >= 8 && __clang_minor__ >= 3 || defined(__AVX__)
+            #if !defined(__AVX__)
+                #define CPL_VECTOR_TARGET __attribute__((target("avx")))
+            #else
+                #define CPL_VECTOR_TARGET
+            #endif
             #define CPL_COMPILER_SUPPORTS_AVX
         #else
+            #define CPL_VECTOR_TARGET
             #warning "Your compiler is out of date. Support for AVX codepaths is partially disabled."
         #endif
 
