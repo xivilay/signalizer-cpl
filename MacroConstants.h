@@ -222,6 +222,14 @@
 
 		#define CPL_RESTRICT __restrict
 
+        // if the compiler is set to compile for avx, all is fine (currently), although it should in the future support
+        // other targets independently of project target
+        #if __clang_major__ > 8 || defined(__AVX__)
+            #define CPL_COMPILER_SUPPORTS_AVX
+        #else
+            #warning "Your compiler is out of date. Support for AVX codepaths is partially disabled."
+        #endif
+
 		// Enable inclusion of all simd headers.
 		#ifndef __SSE__
 			#define __SSE__
@@ -250,25 +258,24 @@
 		
 		#define cwarn(exp) ("warning: " exp)
 
-        #if __clang_major__ > 7
-            #define CPL_COMPILER_SUPPORTS_AVX
+        #if __clang_major__ > 7 && !defined(__apple_build_version__)
             #define CPL_THREAD_LOCAL thread_local
-			#define __C11__
-        #elif __clang_major__ >= 7
-            #define CPL_COMPILER_SUPPORTS_AVX
-    		#define CPL_THREAD_LOCAL __thread
+        #else
+            #define CPL_THREAD_LOCAL __thread
+        #endif
+
+        #if __clang_major__ > 7
 			#define __C11__
         #else
 			#define CPL_CLANG_BUGGY_RECURSIVE_LAMBDAS
-    		#define CPL_THREAD_LOCAL __thread
-            #pragma message cwarn("Your compiler is out of date. Support for AVX codepaths is partially disabled.")
         #endif
 
 	#elif defined(__GNUG__)
-		#if __GNUG__ >= 4
 
+		#if __GNUG__ >= 4
 			#define __CPP11__
 		#endif
+
 		#define APE_API __cdecl
 		#define APE_STD_API __cdecl
 		#define APE_API_VARI __cdecl
