@@ -195,6 +195,7 @@
 
 		#define CPL_COMPILER_SUPPORTS_AVX
 
+		#define CPL_VECTOR_TARGET
 
 	#elif defined(__llvm__) && defined(__clang__)
 
