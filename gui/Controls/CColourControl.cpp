@@ -211,7 +211,7 @@ namespace cpl
 			}
 		}
 
-		virtual void mouseDown(const juce::MouseEvent & me)
+		virtual void mouseDown(const juce::MouseEvent & me) override
 		{
 			// clicked somewhere random
 			if (me.eventComponent == this || me.eventComponent == &selector)
@@ -300,7 +300,7 @@ namespace cpl
 
 		}
 
-		virtual void setMode(bool newMode)
+		virtual void setMode(bool newMode) override
 		{
 			if (!newMode)
 			{

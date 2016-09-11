@@ -226,7 +226,6 @@
 					return false;
 
 				auto currentSpaceFilled = queue.load()->size_approx();
-				bool doRealloc(false);
 
 				std::size_t newSize(currentNumElements);
 

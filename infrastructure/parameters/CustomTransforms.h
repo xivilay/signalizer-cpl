@@ -55,7 +55,7 @@ namespace cpl
 		/// Retrieve the quantization, i.e. the amount of uniquely represented values.
 		/// Negative values means this transformer is not quantized
 		/// </summary>
-		virtual int getQuantization() { return quantization; }
+		virtual int getQuantization() override { return quantization; }
 		/// <summary>
 		/// Sets the quantization steps. Notice that values below 2 are not meaningful.
 		/// </summary>

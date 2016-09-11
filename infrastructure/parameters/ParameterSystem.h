@@ -763,7 +763,7 @@ namespace cpl
 			}
 		}
 
-		void onServerDestruction(DestructionNotifier * notif)
+		void onServerDestruction(DestructionNotifier * notif) override
 		{
 			for (std::size_t i = 0; i < containedParameters.size(); ++i)
 			{

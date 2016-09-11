@@ -37,7 +37,7 @@ namespace cpl
 
 		virtual std::size_t getNumValues() const noexcept override { return ColourChannels; }
 
-		virtual std::string getContextualName() { return{}; }
+		virtual std::string getContextualName() override { return{}; }
 		virtual std::string getBundleName() { return{}; }
 	};
 
