@@ -40,7 +40,7 @@
 	#endif
 
 	#include "PlatformSpecific.h"
-	
+    #include "LexicalConversion.h"
 
 	namespace cpl
 	{
@@ -121,7 +121,7 @@
 			private:
 
 				CProcessorInfo()
-					: narchs(0)
+					: narchs(0), frequency(0)
 				{
 					collectInfo();
 				}
@@ -160,10 +160,27 @@
 							&hKey);
 
 						RegQueryValueEx(hKey, _T("~MHz"), NULL, NULL, (LPBYTE)&dwMHz, &dwSize);
+                        RegCloseKey(hKey);
 						frequency = dwMHz;
-					#else
-						#warning dirty fix here
-						frequency = 2700;
+					#elif defined(CPL_MAC)
+                    
+                        std::string contents = Misc::ExecCommand("sysctl hw.cpufrequency");
+                        if(contents.size() > 0)
+                        {
+                            auto pos = contents.find(": ");
+                            if(pos != std::string::npos)
+                            {
+                                auto number = contents.c_str() + pos + 2;
+                                frequency = std::strtod(number, nullptr);
+                                if(frequency != 0)
+                                    frequency /= 1000000;
+                            }
+                            
+                        }
+
+                    #else
+                        #error "No CPU speed calculation algorithm"
+                        //http://www.cyberciti.biz/faq/linux-display-cpu-information-number-of-cpus-and-their-speed/
 					#endif
 				}
 
