@@ -228,7 +228,7 @@
 						delete this;
 					}
 
-					void onServerDestruction(DestructionNotifier * e)
+					void onServerDestruction(DestructionNotifier * e) override
 					{
 						contextWasDeleted = true;
 					}

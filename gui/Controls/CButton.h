@@ -59,7 +59,7 @@
 
 		private:
 			void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * object) override;
-			void paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown);
+			void paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown) override;
 
 		};
 	};

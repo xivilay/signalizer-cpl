@@ -163,6 +163,21 @@ namespace cpl
 			}
 			return 0;
 		}
+        
+        std::string ExecCommand(const std::string & cmd)
+        {
+            // http://stackoverflow.com/a/478960/1287254
+            char buffer[128];
+            std::string result = "";
+            std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+            if (!pipe) throw std::runtime_error("popen() failed!");
+            while (!feof(pipe.get())) {
+                if (fgets(buffer, 128, pipe.get()) != NULL)
+                    result += buffer;
+            }
+            return result;
+        }
+        
 		/*********************************************************************************************
 
 			Delays the execution for at least msecs. Should have good precision bar context-switches,

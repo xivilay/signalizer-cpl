@@ -418,8 +418,9 @@
 					else
 					{
 
-						auto const Bq = (3 / qDBs) * M_E/12.0;
+						//auto const Bq = (3 / qDBs) * M_E/12.0;
 						auto const freeQ = qIsFree.load(std::memory_order_relaxed);
+                        
 						for (k = 0; k < vSize; ++k)
 						{
 

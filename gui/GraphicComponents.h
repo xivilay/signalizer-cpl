@@ -92,7 +92,7 @@
 			const juce::Image * background;
 		public:
 			CScrollableContainer();
-			void bSetSize(const CRect & in);
+			void bSetSize(const CRect & in) override;
 			int getVirtualHeight();
 			void setVirtualHeight(int height);
 			void bSetValue(iCtrlPrec_t newVal);

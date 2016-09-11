@@ -213,7 +213,7 @@ namespace cpl
 			}
 		}
 
-		void parameterChangedUI(Parameters::Handle, Parameters::Handle, ParameterView * parameterThatChanged)
+		void parameterChangedUI(Parameters::Handle, Parameters::Handle, ParameterView * parameterThatChanged) override
 		{
 			if (parameterView != parameterThatChanged)
 			{

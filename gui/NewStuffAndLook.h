@@ -740,7 +740,7 @@
 
 			}
 
-			CTextTabBar<> & addTab(const std::string & name)
+			CTextTabBar<> & addTab(const std::string & name) override
 			{
 				if (name.size())
 				{
