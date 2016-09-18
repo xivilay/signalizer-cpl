@@ -38,6 +38,7 @@ namespace cpl
 	{
 		setValueReference(valueToReferTo, takeOwnerShip);
 		valueEntityChanged(nullptr, valueObject.get());
+		bSetTitle(valueObject->getContextualName());
 	}
 
 	CValueKnobSlider::~CValueKnobSlider()

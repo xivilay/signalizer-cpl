@@ -2,6 +2,7 @@
 #define CPL_TRANSFORMVALUE_H
 
 #include "Values.h"
+#include "../../rendering/graphics.h"
 
 namespace cpl
 {

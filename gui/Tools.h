@@ -34,6 +34,7 @@
 	#include "../Common.h"
 	#include "../PlatformSpecific.h"
 	#include "../Misc.h"
+	#include "../CMutex.h"
 	#include <future>
 	#include <thread>
 
