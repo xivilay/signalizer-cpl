@@ -56,6 +56,18 @@
 						: Rasterizer(s), image(img)
 					{
 						s.enable(GL_TEXTURE_2D);
+
+						glPushMatrix();
+
+						glTranslatef(-1, -1, 0);
+						glScalef(2.0 / (image.width), 2.0 / (image.height), 1.0);
+
+						glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+						glMatrixMode(GL_TEXTURE);
+						glPushMatrix();
+						glScalef(1.0 / image.textureWidth, 1.0 / image.textureHeight, 1.0);
+
+
 						img.bind();
 						glBegin(GL_QUADS);
 						glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -65,67 +77,48 @@
 					{
 						glColor4f(colour.getFloatRed(), colour.getFloatGreen(), colour.getFloatBlue(), colour.getFloatAlpha());
 					}
+
 					/// <summary>
 					/// Draws the image pixel-perfect at x and y, with x-offset being a value between 0.
 					/// Values over 0 wraps x around, virtually using the image as a circular buffer.
 					/// </summary>
 					inline void drawCircular(float xoffset)
 					{
-						//float width = 1;
-						//float height = 1;
-						float width = float(image.width - 1) / (image.textureWidth);
-						float height = float(image.height - 1) / (image.textureHeight );
-
-						float onePixel = 1.0f / image.width;
-
-						glTexCoord2f(0, 0.0f);					glVertex2f(1.0f - xoffset * 2, -1.0f);
-						glTexCoord2f(0, height);				glVertex2f(1.0f - xoffset * 2, 1.0f);
-						glTexCoord2f(xoffset * width - onePixel, height);	glVertex2f(1.0f, 1.0f);
-						glTexCoord2f(xoffset * width - onePixel, 0.0f);	glVertex2f(1.0f, -1.0f); 
-						
-						glTexCoord2f(xoffset * width + onePixel, 0.0f);	glVertex2f(-1.0f, -1.0f);
-						glTexCoord2f(xoffset * width + onePixel, height);	glVertex2f(-1.0f, 1.0f);
-						glTexCoord2f(width, height);			glVertex2f(1.0f - xoffset * 2, 1.0f);
-						glTexCoord2f(width, 0.0f);				glVertex2f(1.0f - xoffset * 2, -1.0f);
-
-
-						/*glTexCoord2f(0, 0.0f);					glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, -1.0f);
-						glTexCoord2f(0, height);				glVertex2f(1.0f - xoffset * 2 + onePixel * 0.5f, 1.0f);
-						glTexCoord2f(xoffset * width - onePixel, height);	glVertex2f(1.0f, 1.0f);
-						glTexCoord2f(xoffset * width - onePixel, 0.0f);	glVertex2f(1.0f, -1.0f); */
+						return drawCircular(static_cast<std::size_t>(xoffset * image.width));
 					}
 
-					/*
-										inline void drawCircular(float xoffset)
+					/// <summary>
+					/// Draws the image pixel-perfect at x and y, with x-offset being a value between 0.
+					/// Values over 0 wraps x around, virtually using the image as a circular buffer.
+					/// </summary>
+					inline void drawCircular(std::size_t xoffset)
 					{
-						float width = 1;
-						float height = 1;
 
-						//float width = float(image.width) / image.textureWidth;
-						//float height = float(image.height) / image.textureHeight;
+						glTexCoord2i(0, 0);							glVertex2i(image.width - xoffset, 0);
+						glTexCoord2i(0, image.height);				glVertex2i(image.width - xoffset, image.height);
+						glTexCoord2i(xoffset, image.height);		glVertex2i(image.width, image.height);
+						glTexCoord2i(xoffset, 0);					glVertex2i(image.width, 0);
 
-						glTexCoord2f(xoffset * width, 0.0f); glVertex2f(-1.0f, -1.0f);
-						glTexCoord2f(xoffset * width, height); glVertex2f(-1.0f, 1.0f);
-						glTexCoord2f(width, height); glVertex2f(1.0f - xoffset * 2, 1.0f);
-						glTexCoord2f(width, 0.0f); glVertex2f(1.0f - xoffset * 2, -1.0f);
+						glTexCoord2f(xoffset, 0);					glVertex2i(0, 0);
+						glTexCoord2f(xoffset, image.height);		glVertex2i(0, image.height);
+						glTexCoord2f(image.width, image.height);	glVertex2i(image.width - xoffset, image.height);
+						glTexCoord2f(image.width, 0);				glVertex2i(image.width - xoffset, 0);
 
-
-						glTexCoord2f(0, 0.0f); glVertex2f(1.0f - xoffset * 2, -1.0f);
-						glTexCoord2f(0, height); glVertex2f(1.0f - xoffset * 2, 1.0f);
-						glTexCoord2f(xoffset * width, width); glVertex2f(1.0f, 1.0f);
-						glTexCoord2f(xoffset * width, 0.0f); glVertex2f(1.0f, -1.0f);
 
 					}
-					*/
 
 					~OpenGLImageDrawer()
 					{
 						glEnd();
 						image.unbind();
+						glPopMatrix();
+						glMatrixMode(matrixMode);
+
+						glPopMatrix();
 					}
 
 				private:
-
+					int matrixMode;
 					COpenGLImage & image;
 				};
 

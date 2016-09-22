@@ -316,7 +316,7 @@ namespace cpl
 			template<typename Ret = T>
 				Ret getValueNormalized() const { return static_cast<Ret>(parameter->getValue()); }
 			template<typename Ret = T>
-				Ret getValueTransformed() { return static_cast<Ret>(parameter->getTransformer().normalize(parameter->getValue())); }
+				Ret getValueTransformed() { return static_cast<Ret>(parameter->getTransformer().transform(parameter->getValue())); }
 
 
 			std::string getDisplayText()
