@@ -123,17 +123,20 @@ namespace cpl
 	{
 	public:
 
+		using RangedVirtualTransformerBase<T>::min;
+		using RangedVirtualTransformerBase<T>::max;
+
 		LinearRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
 		LinearRange() {}
 
 		T normalize(T val) override
 		{
-			return Math::UnityScale::Inv::linear(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
+			return Math::UnityScale::Inv::linear(val, min, max);
 		}
 
 		T transform(T val) override
 		{
-			return Math::UnityScale::linear(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
+			return Math::UnityScale::linear(val, min, max);
 		}
 	};
 
@@ -142,18 +145,56 @@ namespace cpl
 	{
 	public:
 
+		using RangedVirtualTransformerBase<T>::min;
+		using RangedVirtualTransformerBase<T>::max;
+
 		ExponentialRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
 		ExponentialRange() {}
 
 		T normalize(T val) override
 		{
-			return Math::UnityScale::Inv::exp(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
+			return Math::UnityScale::Inv::exp(val, min, max);
 		}
 
 		T transform(T val) override
 		{
-			return Math::UnityScale::exp(val, RangedVirtualTransformerBase<T>::min, RangedVirtualTransformerBase<T>::max);
+			return Math::UnityScale::exp(val, min, max);
 		}
+	};
+
+
+	template<typename T>
+	class ExponentialTranslationRange : public RangedVirtualTransformerBase<T>
+	{
+	public:
+
+		using RangedVirtualTransformerBase<T>::min;
+		using RangedVirtualTransformerBase<T>::max;
+
+		ExponentialTranslationRange(T minimum, T maximum, T translatedMinimum, T translatedMaximum) : RangedVirtualTransformerBase<T>(minimum, maximum) { setTranslatedRange(translatedMinimum, translatedMaximum); }
+		ExponentialTranslationRange() { setTranslatedRange(0, 1); }
+
+		void setTranslatedMinimum(T minimum) { tmin = minimum; }
+		void setTranslatedMaximum(T maximum) { tmax = maximum; }
+		void setTranslatedRange(T minimum, T maximum) { setTranslatedMinimum(minimum); setTranslatedMaximum(maximum); }
+
+		T normalize(T val) override
+		{
+			T translation = min - tmin;
+			T scale = tmax / (max - translation);
+			return Math::UnityScale::Inv::exp((val + translation) / scale, min, max);
+		}
+
+		T transform(T val) override
+		{
+			T translation = min - tmin;
+			T scale = tmax / (max - translation);
+			return (Math::UnityScale::exp(val, min, max) - translation) * scale;
+		}
+
+	protected:
+
+		T tmin, tmax;
 	};
 };
 
