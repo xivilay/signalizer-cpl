@@ -205,6 +205,8 @@
 				static const std::size_t centerIndex = 5 >> 1;
 				static const IntType size = 5;
 
+				WeightMap() : alphaMap() {}
+
 				inline void addIntensityToMap(std::uint_fast16_t alphaLevel) noexcept
 				{
 					auto const low = static_cast<Pixel>((alphaLevel + 0x800) >> 12); // 1/16
@@ -250,6 +252,8 @@
 				//static const std::uint8_t lut[5];
 				static const std::size_t centerIndex = 5 >> 1;
 				static const IntType size = 5;
+
+				WeightMap() : alphaMap() {}
 
 				inline void addIntensityToMap(std::uint_fast16_t alphaLevel) noexcept
 				{
@@ -309,6 +313,8 @@
 				//static const std::uint8_t lut[5];
 				static const std::size_t centerIndex = 3 >> 1;
 				static const IntType size = 3;
+
+				WeightMap() : alphaMap() {}
 
 				inline void addIntensityToMap(std::uint_fast16_t alphaLevel) noexcept
 				{
