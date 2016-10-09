@@ -41,13 +41,13 @@
 	namespace cpl
 	{
 		template<typename To, typename From>
-		inline typename std::enable_if<std::is_enum<From>::value, To>::type enum_cast(const From & f)
+		constexpr inline typename std::enable_if<std::is_enum<From>::value, To>::type enum_cast(const From & f)
 		{
 			return static_cast<To>(static_cast<typename std::underlying_type<From>::type>(f));
 		}
 
 		template<typename To, typename From>
-		inline typename std::enable_if<std::is_enum<To>::value, To>::type enum_cast(const From & f)
+		constexpr inline typename std::enable_if<std::is_enum<To>::value, To>::type enum_cast(const From & f)
 		{
 			return static_cast<To>(static_cast<typename std::underlying_type<To>::type>(f));
 		}
