@@ -40,6 +40,13 @@
 		class SignalSanitizer
 		{
 		public:
+
+			struct Results
+			{
+				bool hasDenormal = false;
+				bool hasNaN = false;
+			};
+
 			enum Prevention : std::uint32_t
 			{
 				Denormal = 1 << 0,
@@ -61,8 +68,9 @@
 			}
 
 			template<typename T>
-			inline typename std::enable_if<std::is_floating_point<T>::value>::type process(std::size_t samples, std::size_t channels, const T ** const input, T ** const output)
+			inline typename std::enable_if<std::is_floating_point<T>::value, Results>::type process(std::size_t samples, std::size_t channels, const T ** const input, T ** const output, T defaultValue = (T)0)
 			{
+				Results ret;
 				if (flags & NaN)
 				{
 					for (std::size_t c = 0; c < channels; ++c)
@@ -72,10 +80,19 @@
 							const auto sample = input[c][i];
 							const auto fpclass = std::fpclassify(sample);
 							const bool good = (fpclass != FP_INFINITE && fpclass != FP_NAN);
-							output[c][i] = good ? sample : (T)0;
+							if (good)
+							{
+								output[c][i] = sample;
+							}
+							else
+							{
+								output[c][i] = defaultValue;
+								ret.hasNaN = true;
+							}
 						}
 					}
 				}
+				return ret;
 			}
 
 
@@ -90,6 +107,16 @@
 			std::uint32_t flags;
 		};
 
+
+		inline bool operator == (const SignalSanitizer::Results & left, const SignalSanitizer::Results & right)
+		{
+			return left.hasDenormal == right.hasDenormal && left.hasNaN == right.hasNaN;
+		}
+
+		inline bool operator != (const SignalSanitizer::Results & left, const SignalSanitizer::Results & right)
+		{
+			return !(left == right);
+		}
 
 	};
 #endif

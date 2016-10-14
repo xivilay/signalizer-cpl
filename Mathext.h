@@ -211,6 +211,13 @@
 				return(std::exp(x) * (T)chbevl((T)32.0 / x - (T)2.0, Chebyshev_B_Coeffs, 25) / std::sqrt(x));
 			}
 
+			template<typename T, typename Y>
+			inline T partionedSaturatedSubtract(T left, Y right)
+			{
+				auto part = left - (left > right ? left - right : 0);
+				return part > right ? right : part;
+			}
+
 			template<typename Scalar>
 				inline Scalar square(const std::complex<Scalar> & z)
 				{
