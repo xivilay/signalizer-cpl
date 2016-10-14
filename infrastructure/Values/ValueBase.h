@@ -45,7 +45,8 @@ namespace cpl
 
 		typedef ValueEntityListener Listener;
 
-		virtual VirtualTransformer<ValueT> & getTransformer() = 0;
+		virtual const VirtualTransformer<ValueT> & getTransformer() const = 0;
+		VirtualTransformer<ValueT> & getTransformer() { return const_cast<VirtualTransformer<ValueT>&>(const_cast<const ValueEntityBase*>(this)->getTransformer()); }
 		virtual VirtualFormatter<ValueT> & getFormatter() = 0;
 		virtual ValueT getNormalizedValue() const = 0;
 		virtual void setNormalizedValue(ValueT parameter) = 0;
@@ -64,7 +65,7 @@ namespace cpl
 				setNormalizedValue(value);
 		}
 
-		ValueT getTransformedValue()
+		ValueT getTransformedValue() const noexcept
 		{
 			return getTransformer().transform(getNormalizedValue());
 		}
@@ -75,7 +76,7 @@ namespace cpl
 		}
 
 		template<typename EnumT>
-		EnumT getAsTEnum()
+		EnumT getAsTEnum() const noexcept
 		{
 			return enum_cast<EnumT>(getTransformedValue());
 		}
@@ -159,7 +160,7 @@ namespace cpl
 
 		}
 
-		virtual VirtualTransformer<ValueT> & getTransformer() override { return *transformer; }
+		virtual const VirtualTransformer<ValueT> & getTransformer() const override { return *transformer; }
 		virtual VirtualFormatter<ValueT> & getFormatter() override { return *formatter; }
 		virtual ValueT getNormalizedValue() const override { return internalValue; }
 		virtual void setNormalizedValue(ValueT value) override { internalValue = value; notifyListeners(); }
@@ -231,7 +232,7 @@ namespace cpl
 		//	setParameterReference(nullptr);
 		//}
 
-		virtual VirtualTransformer<ValueT> & getTransformer() override { return parameterView->getTransformer(); }
+		virtual const VirtualTransformer<ValueT> & getTransformer() const override { return parameterView->getTransformer(); }
 		virtual VirtualFormatter<ValueT> & getFormatter() override { return parameterView->getFormatter(); }
 		virtual ValueT getNormalizedValue() const override { return parameterView->template getValueNormalized<ValueT>(); }
 		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<typename ParameterView::ValueType>(value)); }

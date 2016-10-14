@@ -23,8 +23,8 @@ namespace cpl
 
 	// Concecpt of Parameters: has T getValue(), setValue(T), std::string getName()
 
-	template<typename T, class TransformerType = VirtualTransformer<T>, class Restricter = ZeroOneClamper<T>>
-	class /* alignas(CPL_CACHEALIGNMENT) */ ThreadedParameter : Utility::CNoncopyable
+	template<typename T, class TransformerType = VirtualTransformer<T>, class Restricter = ZeroOneClamper<T>, std::memory_order LoadOrdering = std::memory_order_acquire, std::memory_order StoreOrdering = std::memory_order_release>
+	class alignas(CPL_CACHEALIGNMENT) ThreadedParameter : Utility::CNoncopyable
 	{
 	public:
 
@@ -37,17 +37,19 @@ namespace cpl
 
 		}
 
-		T getValue() const { return value.load(std::memory_order_acquire); }
-		void setValue(T newValue) { value.store(Restricter()(newValue), std::memory_order_release); }
+		T getValue() const { return value.load(LoadOrdering); }
+		void setValue(T newValue) { value.store(Restricter()(newValue), StoreOrdering); }
 
 		std::string getName() { return name; }
 		Transformer & getTransformer() { return transformer; }
+		const Transformer & getTransformer() const { return transformer; }
 
 	private:
 
+		std::atomic<T> value;
 		Transformer & transformer;
 		std::string name;
-		std::atomic<T> value;
+
 	};
 
 	template<typename T, class BaseParameter, class FormatterType = VirtualFormatter<T>>
@@ -316,7 +318,7 @@ namespace cpl
 			template<typename Ret = T>
 				Ret getValueNormalized() const { return static_cast<Ret>(parameter->getValue()); }
 			template<typename Ret = T>
-				Ret getValueTransformed() { return static_cast<Ret>(parameter->getTransformer().transform(parameter->getValue())); }
+				Ret getValueTransformed() const { return static_cast<Ret>(parameter->getTransformer().transform(parameter->getValue())); }
 
 
 			std::string getDisplayText()

@@ -15,11 +15,11 @@ namespace cpl
 		/// Transforms a normalized value (bounded by a Restrictor, usually 0-1) to 
 		/// a semantic value.
 		/// </summary>
-		virtual T transform(T val) = 0;
+		virtual T transform(T val) const noexcept = 0;
 		/// <summary>
 		/// Normalized a transformed value, ie. the reversed process of transform()
 		/// </summary>
-		virtual T normalize(T val) = 0;
+		virtual T normalize(T val) const noexcept = 0;
 		/// <summary>
 		/// Retrieve the reciprocal quantization, i.e. the amount of uniquely represented values.
 		/// Negative values means this transformer is not quantized
@@ -36,7 +36,7 @@ namespace cpl
 	class ChoiceTransformer : public VirtualTransformer<T>
 	{
 	public:
-		virtual T transform(T val) override
+		virtual T transform(T val) const noexcept override
 		{
 			if (quantization <= 1)
 				return 0;
@@ -44,7 +44,7 @@ namespace cpl
 			return std::round(val * (quantization - 1));
 		}
 
-		virtual T normalize(T val) override
+		virtual T normalize(T val) const noexcept override
 		{
 			if (quantization <= 1)
 				return 0;
@@ -91,12 +91,12 @@ namespace cpl
 	class UnityRange : public VirtualTransformer<T>
 	{
 	public:
-		T normalize(T val) override
+		T normalize(T val) const noexcept override
 		{
 			return val;
 		}
 
-		T transform(T val) override
+		T transform(T val) const noexcept override
 		{
 			return val;
 		}
@@ -106,12 +106,12 @@ namespace cpl
 	class BooleanRange : public VirtualTransformer<T>
 	{
 	public:
-		T normalize(T val) override
+		T normalize(T val) const noexcept override
 		{
 			return val >= 0.5 ? 1 : 0;
 		}
 
-		T transform(T val) override
+		T transform(T val) const noexcept override
 		{
 			return val >= 0.5 ? 1 : 0;
 		}
@@ -129,12 +129,12 @@ namespace cpl
 		LinearRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
 		LinearRange() {}
 
-		T normalize(T val) override
+		T normalize(T val) const noexcept override
 		{
 			return Math::UnityScale::Inv::linear(val, min, max);
 		}
 
-		T transform(T val) override
+		T transform(T val) const noexcept override
 		{
 			return Math::UnityScale::linear(val, min, max);
 		}
@@ -151,12 +151,12 @@ namespace cpl
 		ExponentialRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
 		ExponentialRange() {}
 
-		T normalize(T val) override
+		T normalize(T val) const noexcept override
 		{
 			return Math::UnityScale::Inv::exp(val, min, max);
 		}
 
-		T transform(T val) override
+		T transform(T val) const noexcept override
 		{
 			return Math::UnityScale::exp(val, min, max);
 		}
@@ -178,14 +178,14 @@ namespace cpl
 		void setTranslatedMaximum(T maximum) { tmax = maximum; }
 		void setTranslatedRange(T minimum, T maximum) { setTranslatedMinimum(minimum); setTranslatedMaximum(maximum); }
 
-		T normalize(T val) override
+		T normalize(T val) const noexcept override
 		{
 			T translation = min - tmin;
 			T scale = tmax / (max - translation);
 			return Math::UnityScale::Inv::exp((val + translation) / scale, min, max);
 		}
 
-		T transform(T val) override
+		T transform(T val) const noexcept override
 		{
 			T translation = min - tmin;
 			T scale = tmax / (max - translation);
