@@ -48,6 +48,8 @@ namespace cpl
 				CPL_RUNTIME_EXCEPTION("Error formatting a value index");
 		}
 
+		bSetTitle(valueObject->getContextualName());
+
 		setValues(values);
 
 		initialize();
