@@ -80,11 +80,14 @@ namespace cpl
 	void CToolTipWindow::updatePosition (const String& tip, Point<int> pos, const juce::Rectangle<int>& parentArea)
 	{
 		int w, h;
-		auto bounds = getLookAndFeel().getTooltipBounds (tip, pos, parentArea);
+		#if JUCE_MAJOR_VERSION >= 4
+			auto bounds = getLookAndFeel().getTooltipBounds (tip, pos, parentArea);
 		
-		w = bounds.getWidth();
-		h = bounds.getHeight();
-
+			w = bounds.getWidth();
+			h = bounds.getHeight();
+		#else
+			getLookAndFeel().getTooltipSize(tip, w, h);
+		#endif
 		setBounds (juce::Rectangle<int> (pos.x > parentArea.getCentreX() ? pos.x - (w + 12) : pos.x + 24,
 								   pos.y > parentArea.getCentreY() ? pos.y - (h + 6)  : pos.y + 6,
 								   w, h)
