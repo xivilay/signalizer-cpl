@@ -88,21 +88,25 @@
 					}
 
 					/// <summary>
-					/// Draws the image pixel-perfect at x and y, with x-offset being a value between 0.
-					/// Values over 0 wraps x around, virtually using the image as a circular buffer.
+					/// Draws the image pixel-perfect at x and y, with x-offset being a value between 0 and the image size.
+					/// Values over image size wraps x around, virtually using the image as a circular buffer.
 					/// </summary>
 					inline void drawCircular(std::size_t xoffset)
 					{
+						GLint
+							height = static_cast<GLint>(image.height),
+							width = static_cast<GLint>(image.width),
+							offset = static_cast<GLint>(xoffset);
 
-						glTexCoord2i(0, 0);							glVertex2i(image.width - xoffset, 0);
-						glTexCoord2i(0, image.height);				glVertex2i(image.width - xoffset, image.height);
-						glTexCoord2i(xoffset, image.height);		glVertex2i(image.width, image.height);
-						glTexCoord2i(xoffset, 0);					glVertex2i(image.width, 0);
+						glTexCoord2i(0, 0);				glVertex2i(width - offset, 0);
+						glTexCoord2i(0, height);		glVertex2i(width - offset, height);
+						glTexCoord2i(offset, height);	glVertex2i(width, height);
+						glTexCoord2i(offset, 0);		glVertex2i(width, 0);
 
-						glTexCoord2f(xoffset, 0);					glVertex2i(0, 0);
-						glTexCoord2f(xoffset, image.height);		glVertex2i(0, image.height);
-						glTexCoord2f(image.width, image.height);	glVertex2i(image.width - xoffset, image.height);
-						glTexCoord2f(image.width, 0);				glVertex2i(image.width - xoffset, 0);
+						glTexCoord2i(offset, 0);		glVertex2i(0, 0);
+						glTexCoord2i(offset, height);	glVertex2i(0, height);
+						glTexCoord2i(width, height);	glVertex2i(width - offset, height);
+						glTexCoord2i(width, 0);			glVertex2i(width - offset, 0);
 
 
 					}

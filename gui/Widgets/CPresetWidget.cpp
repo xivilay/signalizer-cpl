@@ -213,10 +213,10 @@ namespace cpl
 		ksaveDefault.bAddChangeListener(this);
 
 
-		kloadPreset.bSetTitle("Load preset...");
-		ksavePreset.bSetTitle("Save current...");
-		kloadDefault.bSetTitle("Load default");
-		ksaveDefault.bSetTitle("Save as default");
+		kloadPreset.setSingleText("Load preset...");
+		ksavePreset.setSingleText("Save current...");
+		kloadDefault.setSingleText("Load default");
+		ksaveDefault.setSingleText("Save as default");
 		kpresetList.bSetTitle("Preset list");
 
 
