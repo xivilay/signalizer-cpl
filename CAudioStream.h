@@ -334,12 +334,12 @@
 				/// <summary>
 				/// Iterate over the samples in the buffers. If biased is set, the samples arrive in chronological order.
 				/// The functor shall accept the following parameters:
-				///		(std::size_t sampleFrame, AudioStream::Data channel0, AudioStream::Data channelN ...)
+				///		(std::size_t sampleFrame, AudioStream::Data & channel0, AudioStream::Data & channelN ...)
 				/// </summary>
 				template<std::size_t Channels, bool biased, typename Functor>
-				inline void iterate(const Functor & f)
+				inline void iterate(const Functor & f, std::size_t offset = 0)
 				{
-					ChannelIterator<Channels, biased>::run(*this, f);
+					ChannelIterator<Channels, biased>::run(*this, f, offset);
 				}
 				
 				/// <summary>
@@ -348,9 +348,9 @@
 				///		(std::size_t sampleFrame, AudioStream::Data channel0, AudioStream::Data channelN ...)
 				/// </summary>
 				template<std::size_t Channels, bool biased, typename Functor>
-				inline void iterate(const Functor & f) const
+				inline void iterate(const Functor & f, std::size_t offset = 0) const
 				{
-					ChannelIterator<Channels, biased>::run(*this, f);
+					ChannelIterator<Channels, biased>::run(*this, f, offset);
 				}
 
 			private:
@@ -1428,12 +1428,15 @@
 		struct ChannelIterator<2, true>
 		{
 			template<typename Functor, class StreamBufferAccess>
-			static void run(StreamBufferAccess & access, const Functor & f)
+			static void run(StreamBufferAccess & access, const Functor & f, std::size_t offset = 0)
 			{
 				typedef typename StreamBufferAccess::InheritStreamType StreamType;
 				typedef typename StreamType::BufferIterator BufferIterator;
 				
-				typename StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
+				typename StreamType::AudioBufferView views[2] = {
+					access.getView(offset + 0),
+					access.getView(offset + 1)
+				};
 
 				for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
 				{
@@ -1451,12 +1454,15 @@
 			}
 
 			template<typename Functor, class StreamBufferAccess>
-			static void run(const StreamBufferAccess & access, const Functor & f)
+			static void run(const StreamBufferAccess & access, const Functor & f, std::size_t offset = 0)
 			{
 				typedef typename StreamBufferAccess::InheritStreamType StreamType;
 				typedef typename StreamType::BufferIterator BufferIterator;
 				
-				typename StreamType::AudioBufferView views[2] = { access.getView(0), access.getView(1) };
+				typename StreamType::AudioBufferView views[2] = { 
+					access.getView(offset + 0), 
+					access.getView(offset + 1) 
+				};
 
 				for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
 				{
@@ -1478,12 +1484,12 @@
 		struct ChannelIterator<1, true>
 		{
 			template<typename Functor, class StreamBufferAccess>
-			static void run(const StreamBufferAccess & access, const Functor & f)
+			static void run(const StreamBufferAccess & access, const Functor & f, std::size_t offset = 0)
 			{
 				typedef typename StreamBufferAccess::InheritStreamType StreamType;
 				typedef typename StreamType::BufferIterator BufferIterator;
 				
-				typename StreamType::AudioBufferView view = access.getView(0);
+				typename StreamType::AudioBufferView view = access.getView(offset);
 
 				for (std::size_t indice = 0, n = 0; indice < StreamType::bufferIndices; ++indice)
 				{
