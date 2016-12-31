@@ -31,7 +31,7 @@
 #ifndef _LEXICAL_CONVERSION
 	#define _LEXICAL_CONVERSION
 
-	#include "common.h"
+	#include "Common.h"
 	#include <sstream>
 
 	namespace cpl

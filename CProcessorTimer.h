@@ -32,7 +32,7 @@
 
 	#include "Utility.h"
 	#include "Misc.h"
-	#include "mathext.h"
+	#include "Mathext.h"
 	#include <cstdint>
 	#include <vector>
 	#include <ostream>
