@@ -38,7 +38,7 @@
 	#include "../Utility.h"
 	#include <atomic>
 
-	#ifdef __C11__
+	#if defined(__C11__) && defined(CPL_CLANG)
 		#include <stdatomic.h>
 	#endif
 

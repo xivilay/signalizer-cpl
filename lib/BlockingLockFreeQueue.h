@@ -36,9 +36,9 @@
 	#include "../Utility.h"
 	#include <atomic>
 
-	#if defined(__C11__) && defined(CPL_MSVC)
+	#if defined(__C11__) && defined(CPL_CLANG)
 		#include <stdatomic.h>
-	 #endif
+	#endif
 
 	#if ATOMIC_LLONG_LOCK_FREE != 2
 		#pragma message cwarn("warning: Atomic integer operations are not lock-free for this platform!") 
