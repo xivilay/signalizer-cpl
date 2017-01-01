@@ -50,7 +50,7 @@
 
 			virtual void clicked() override;
 			void setToggleable(bool isAble);
-
+			void setSingleText(const std::string & input);
 			void setTexts(const std::string & toggled, const std::string & untoggled);
 			void setUntoggledText(const std::string &);
 			void setToggledText(const std::string &);

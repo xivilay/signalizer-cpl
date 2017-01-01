@@ -48,7 +48,7 @@ namespace cpl
 			{
 				setTexts(toggled, untoggled);
 			}
-		} */
+		} */ 
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
 		enableTooltip(true);
 		
@@ -64,12 +64,17 @@ namespace cpl
 
 	std::string CButton::bGetTitle() const
 	{
-		return texts[getToggleState()].toStdString();
+		return texts[0].toStdString();
 	}
 
 	void CButton::bSetTitle(const std::string & input)
 	{
-		texts[getToggleState()] = input;
+		texts[0] = input;
+	}
+
+	void CButton::setSingleText(const std::string & input)
+	{
+		setTexts(input, input);
 	}
 
 	void CButton::setToggleable(bool isAble)
