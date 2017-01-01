@@ -52,7 +52,7 @@
 	#elif defined(CPL_WINDOWS)
 		#include <Windows.h>
 		typedef HANDLE FileHandle;
-	#elif defined(CPL_MAC)
+	#elif defined(CPL_MAC) || defined(CPL_UNIXC)
 		#include <unistd.h>
 		#include <fcntl.h>
 		typedef int FileHandle;
@@ -74,7 +74,7 @@
 					readWriteMode = readMode | writeMode,
 					append = FILE_APPEND_DATA,
 					clear = 0
-				#elif defined(CPL_MAC)
+				#elif defined(CPL_MAC) || defined(CPL_UNIXC)
 					clear = 0,
 					readMode = 2,
 					writeMode = 4,
