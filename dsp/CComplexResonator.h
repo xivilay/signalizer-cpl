@@ -34,7 +34,7 @@
 	#include "../simd.h"
 	#include "../LibraryOptions.h"
 	#include <vector>
-	#include "../mathext.h"
+	#include "../Mathext.h"
 	#include "DSPWindows.h"
 	#include "../Utility.h"
 	#include "../lib/AlignedAllocator.h"

@@ -29,7 +29,7 @@
 
 #ifndef _COPENGLIMAGE_H
 	#define _COPENGLIMAGE_H
-	#include "../common.h"
+	#include "../Common.h"
 	#include "OpenGLRendering.h"
 	#include "../Mathext.h"
 

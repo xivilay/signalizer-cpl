@@ -32,7 +32,7 @@
 	#define CPL_CDBMETERGRAPH_H
 
 	#include <vector>
-	#include "mathext.h"
+	#include "Mathext.h"
 	#include "Utility.h"
 
 	namespace cpl

@@ -35,7 +35,7 @@
 	#include <cmath>
 	#include <vector>
 	#include <algorithm>
-	#include "mathext.h"
+	#include "Mathext.h"
 	#include "Utility.h"
 
 	#define CPL_CFREQUENCYGRAPH_DO_CHECKS
