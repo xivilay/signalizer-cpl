@@ -300,7 +300,7 @@
 			template<typename V>
 				CPL_SIMD_FUNC V max(V a, V b)
 				{
-					auto mask = a > b;
+					auto mask = (V)(a > b);
 					return vor(vand(a, mask), vandnot(mask, b));
 				}
 
@@ -886,7 +886,9 @@
 				//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 				//
 				auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
-				V swap_sign_bit = vfloat_reinterpret_double<V>(vand(has_fourth_bit, consts<VFloat>::sign_bit));
+				V swap_sign_bit = vfloat_reinterpret_double<V>(
+					vand(vfloat_reinterpret_double<V>(has_fourth_bit), consts<VFloat>::sign_bit)
+				);
 
 				/* get the polynom selection mask
 				there is one polynom for 0 <= x <= Pi/4
@@ -1000,7 +1002,7 @@
 			//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 			//
 			auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
-			swap_sign_bit_sin = vand(has_fourth_bit, consts::sign_bit);
+			swap_sign_bit_sin = vand(reinterpret_vector_cast<V>(has_fourth_bit), consts::sign_bit);
 
 			// get the polynom selection mask for the sine
 			//	poly_mask = input & 2 (swap polynom each M_PI / 2)
@@ -1013,7 +1015,7 @@
 			//
 			auto const y_minus_two = static_vector_cast<VInt>(y - consts::two); // use y before it is rounded down??
 			has_fourth_bit = vandnot(reinterpret_vector_cast<V>(y_minus_two), four_as_int) == four_as_int;
-			sign_bit_cos = vand(has_fourth_bit, consts::sign_bit);
+			sign_bit_cos = vand(reinterpret_vector_cast<V>(has_fourth_bit), consts::sign_bit);
 			// save signs
 			sign_bit_sin = vxor(sign_bit_sin, swap_sign_bit_sin);
 
@@ -1117,8 +1119,9 @@
 				//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 				//
 				auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
-				swap_sign_bit_sin = vfloat_reinterpret_double<V>(vand(has_fourth_bit, consts<VFloat>::sign_bit));
-
+				swap_sign_bit_sin = vfloat_reinterpret_double<V>(
+					vand(vfloat_reinterpret_double<V>(has_fourth_bit), consts<VFloat>::sign_bit)
+				);
 				// get the polynom selection mask for the sine
 				//	poly_mask = input & 2 (swap polynom each M_PI / 2)
 				//
@@ -1128,7 +1131,9 @@
 				//
 				auto const y_minus_two = vdouble_cvt_int32(y - VConsts::two); // use y before it is rounded down??
 				has_fourth_bit = vandnot(reinterpret_vector_cast<VFloat>(y_minus_two), four_as_int) == four_as_int;
-				sign_bit_cos = vfloat_reinterpret_double<V>(vand(has_fourth_bit, consts<VFloat>::sign_bit));
+				sign_bit_cos = vfloat_reinterpret_double<V>(
+					vand(vfloat_reinterpret_double<V>(has_fourth_bit), consts<VFloat>::sign_bit)
+				);
 				// save signs
 				sign_bit_sin = vxor(sign_bit_sin, swap_sign_bit_sin);
 

@@ -105,7 +105,7 @@
 			void normalize(T * out, std::size_t N)
 			{
 				T scale = T(1) / *std::max_element(out, out + N);
-				std::for_each(out, out + N, [](T & z) { z *= scale; });
+				std::for_each(out, out + N, [=](T & z) { z *= scale; });
 			}
 
 			template<typename T, typename A>
@@ -130,7 +130,7 @@
 
 				const T scale = T(1) / max;
 
-				std::for_each(out, out + N, [](T & z) { z *= scale; });
+				std::for_each(out, out + N, [=](T & z) { z *= scale; });
 			}
 
 			template<typename T, typename A>
@@ -147,7 +147,7 @@
 
 				const T scale = T(1) / max;
 
-				std::for_each(out.begin(), out.end(), [](T & z) { z *= scale; });
+				std::for_each(out.begin(), out.end(), [=](T & z) { z *= scale; });
 			}
 
 

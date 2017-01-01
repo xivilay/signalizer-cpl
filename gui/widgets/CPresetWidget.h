@@ -34,6 +34,7 @@
 	#include "../../Common.h"
 	#include "../controls/ControlBase.h"
 	#include "../controls/Controls.h"
+	#include "WidgetBase.h"
 	#include "../../SafeSerializableObject.h"
 
 	namespace cpl
