@@ -251,6 +251,39 @@
 				#endif
 			};
 
+			class CPubliclyNoncopyable
+			{
+
+			protected:
+				CPubliclyNoncopyable() {}
+				~CPubliclyNoncopyable() {}
+				#ifdef __CPP11__
+					CPubliclyNoncopyable(const CPubliclyNoncopyable & other) = default;
+					CPubliclyNoncopyable & operator=(const CPubliclyNoncopyable & other) = default;
+
+					CPubliclyNoncopyable & operator=(CPubliclyNoncopyable && other) = default;
+					CPubliclyNoncopyable(CPubliclyNoncopyable && other) = default;
+				#else
+					CPubliclyNoncopyable(const CPubliclyNoncopyable & other);
+					CPubliclyNoncopyable & operator=(const CPubliclyNoncopyable & other);
+				#endif
+			};
+
+			class COnlyPubliclyMovable
+			{
+
+			protected:
+				COnlyPubliclyMovable() {}
+				~COnlyPubliclyMovable() {}
+				#ifdef __CPP11__
+					COnlyPubliclyMovable(const COnlyPubliclyMovable & other) = default;
+					COnlyPubliclyMovable & operator=(const COnlyPubliclyMovable & other) = default;
+				#else
+					COnlyPubliclyMovable(const COnlyPubliclyMovable & other);
+					COnlyPubliclyMovable & operator=(const COnlyPubliclyMovable & other);
+				#endif
+			};
+
 
 			template<class T>
 				struct LazyStackPointer : CNoncopyable

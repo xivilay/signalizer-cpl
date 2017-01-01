@@ -28,7 +28,7 @@ namespace cpl
 	class ValueEntityBase 
 		: public CSerializer::Serializable
 		, public ContextualName
-		, private Utility::CNoncopyable
+		, private Utility::CPubliclyNoncopyable
 	{
 	public:
 
@@ -105,7 +105,7 @@ namespace cpl
 	class ValueGroup 
 		: public ContextualName
 		, public CSerializer::Serializable
-		, private Utility::CNoncopyable
+		, private Utility::CPubliclyNoncopyable
 	{
 	public:
 		virtual ValueEntityBase & getValueIndex(std::size_t i) = 0;

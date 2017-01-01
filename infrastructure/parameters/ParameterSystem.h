@@ -22,9 +22,8 @@ namespace cpl
 
 
 	// Concecpt of Parameters: has T getValue(), setValue(T), std::string getName()
-
 	template<typename T, class TransformerType = VirtualTransformer<T>, class Restricter = ZeroOneClamper<T>, std::memory_order LoadOrdering = std::memory_order_acquire, std::memory_order StoreOrdering = std::memory_order_release>
-	class alignas(CPL_CACHEALIGNMENT) ThreadedParameter : Utility::CNoncopyable
+	class alignas(CPL_CACHEALIGNMENT) ThreadedParameter : Utility::COnlyPubliclyMovable
 	{
 	public:
 
@@ -33,6 +32,12 @@ namespace cpl
 
 		ThreadedParameter(const std::string & name, Transformer & parameterTransformer)
 			: transformer(parameterTransformer), name(name), value(0)
+		{
+
+		}
+
+		ThreadedParameter(ThreadedParameter && other)
+			: value(other.value.load(LoadOrdering)), transformer(other.transformer), name(std::move(other.name))
 		{
 
 		}
@@ -689,7 +694,7 @@ namespace cpl
 		/// <summary>
 		/// Must only be called from the UI thread
 		/// </summary>
-		Parameters::Handle mapName(const std::string & name) const noexcept
+		Parameters::Handle mapName(const std::string & name) noexcept
 		{
 			auto it = nameMap.find(name);
 			if (it == nameMap.end())
