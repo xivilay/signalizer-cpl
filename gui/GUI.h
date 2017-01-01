@@ -33,7 +33,7 @@
 	#include "CViews.h"
 	#include "CEditSpaceSpawner.h"
 	#include "DesignBase.h"
-	#include "Controls/Controls.h"
-	#include "Widgets/Widgets.h"
+	#include "controls/Controls.h"
+	#include "widgets/Widgets.h"
 
 #endif

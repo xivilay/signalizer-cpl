@@ -33,7 +33,7 @@
 	#include "../../Common.h"
 	#include "../DesignBase.h"
 	#include "../../Misc.h"
-	#include "../Controls/Controls.h"
+	#include "../controls/Controls.h"
 	#include "../WidgetContainers.h"
 	#include "../../LexicalConversion.h"
 

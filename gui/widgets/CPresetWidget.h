@@ -31,9 +31,9 @@
 #ifndef CPL_CPRESETWIDGET_H
 	#define CPL_CPRESETWIDGET_H
 
-	#include "../../common.h"
-	#include "../ControlBase.h"
-	#include "../Controls/Controls.h"
+	#include "../../Common.h"
+	#include "../controls/ControlBase.h"
+	#include "../controls/Controls.h"
 	#include "../../SafeSerializableObject.h"
 
 	namespace cpl

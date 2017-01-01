@@ -31,7 +31,7 @@
 	#define CPL_CTRANSFORMWIDGET_H
 
 	#include "WidgetBase.h"
-	#include "../../Rendering/Graphics.h"
+	#include "../../rendering/Graphics.h"
 
 	namespace cpl
 	{

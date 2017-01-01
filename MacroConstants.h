@@ -40,7 +40,7 @@
 		#define CPL_JUCE
 	#endif
 
-	#if defined(_WIN64) || defined(__x86_64__)
+	#if defined(_WIN64) || defined(__x86_64__) || defined(__x86_64)
 		typedef std::uint64_t XWORD;
 		#define CPL_M_64BIT_ 1
 		#define CPL_ARCH_STRING "64-bit"
@@ -59,36 +59,42 @@
 		#define CPL_DIR_SEP '/'
 		#define CPL_MAC
 		#define CPL_UNIXC
-		#ifdef APE_JUCE
+		#ifdef CPL_JUCE
 			#define CPL_PROG_EXTENSION ".component"
 		#else
 			#define CPL_PROG_EXTENSION ".vst"
 		#endif
 	#else
+		#define CPL_DIR_SEP '/'
+		#define CPL_UNIXC
+		#ifdef CPL_JUCE
+			#define CPL_PROG_EXTENSION ".component"
+		#else
+			#define CPL_PROG_EXTENSION ".vst"
+		#endif
 		#define CPL_UNIXC
 	#endif
 	#ifdef _MSC_VER
 
-	#else
+		#else
 
-    #endif
-    //#define cwarn(text) message("[" __FILE__ "] (" CPL__tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
+	#endif
+	// #define cwarn(text) message("[" __FILE__ "] (" CPL__tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
 
 	// an 'operator' that retrieves the unqualified type of the expression x
 	// useful when you want to create a lvalue-type from any expression 
 	#define unq_typeof(x) typename std::remove_cv<typename std::remove_reference<decltype(x)>::type>::type
 	#define val_typeof(x) std::remove_cv<typename std::remove_reference<decltype(x)>::type>::type
-	#if defined(CPL_WINDOWS) || defined(CPL_MAC)
+
+	// gcc or msvc assembly syntax?
+	#ifdef _MSC_VER
 		#define CPL_INTEL_ASSEMBLY
-		// gcc or msvc assembly syntax?
-		#ifdef _MSC_VER
-			#define DBG_BREAK() DebugBreak();
-		#else
-			#define DBG_BREAK() __asm__("int $0x3")
-		#endif
+		#define DBG_BREAK() DebugBreak();
 	#else
-		#error Only Intel-compliant targets supported atm.
+		#define CPL_ATT_ASSEMBLY
+		#define DBG_BREAK() __asm__("int $0x3")
 	#endif
+
 
 	#define CPL_NOOP while(false){}
 
@@ -223,20 +229,20 @@
 
 		#define CPL_RESTRICT __restrict
 
-        // if the compiler is set to compile for avx, all is fine (currently), although it should in the future support
-        // other targets independently of project target
-        // note: the __clang_major__ should compare ge to 7, however this brings a performance regression of an order of magnitude
-        #if __clang_major__ >= 8 && __clang_minor__ >= 3 || defined(__AVX__)
-            #if !defined(__AVX__)
-                #define CPL_VECTOR_TARGET __attribute__((target("avx")))
-            #else
-                #define CPL_VECTOR_TARGET
-            #endif
-            #define CPL_COMPILER_SUPPORTS_AVX
-        #else
-            #define CPL_VECTOR_TARGET
-            #warning "Your compiler is out of date. Support for AVX codepaths is partially disabled."
-        #endif
+		// if the compiler is set to compile for avx, all is fine (currently), although it should in the future support
+		// other targets independently of project target
+		// note: the __clang_major__ should compare ge to 7, however this brings a performance regression of an order of magnitude
+		#if __clang_major__ >= 8 && __clang_minor__ >= 3 || defined(__AVX__)
+			#if !defined(__AVX__)
+				#define CPL_VECTOR_TARGET __attribute__((target("avx")))
+			#else
+				#define CPL_VECTOR_TARGET
+			#endif
+			#define CPL_COMPILER_SUPPORTS_AVX
+		#else
+			#define CPL_VECTOR_TARGET
+			#warning "Your compiler is out of date. Support for AVX codepaths is partially disabled."
+		#endif
 
 		// Enable inclusion of all simd headers.
 		#ifndef __SSE__
@@ -266,32 +272,44 @@
 		
 		#define cwarn(exp) ("warning: " exp)
 
-        #if __clang_major__ > 7 && !defined(__apple_build_version__)
-            #define CPL_THREAD_LOCAL thread_local
-        #else
-            #define CPL_THREAD_LOCAL __thread
-        #endif
+		#if __clang_major__ > 7 && !defined(__apple_build_version__)
+			#define CPL_THREAD_LOCAL thread_local
+		#else
+			#define CPL_THREAD_LOCAL __thread
+		#endif
 
-        #if __clang_major__ > 7
+		#if __clang_major__ > 7
 			#define __C11__
-        #else
+		#else
 			#define CPL_CLANG_BUGGY_RECURSIVE_LAMBDAS
-        #endif
+		#endif
 
 	#elif defined(__GNUG__)
 
-		#if __GNUG__ >= 4
-			#define __CPP11__
+		#if __GNUG__ < 5
+			#error "GCC version must be >= 5"
 		#endif
+		// cross-platform size_t specifier for printf-families
+		#define CPL_FMT_SZT "%zu"
 
+		#define __CPP11__
+		#define __C11__
+		#define __C99__
+		#define cwarn(exp) ("warning: " exp)
+
+		#define CPL_THREAD_LOCAL thread_local
+		#define CPL_ALIGNAS(x) alignas(x)
+		#define __alignof(x) alignof(x)
+
+		#define CPL_RESTRICT __restrict
 		#define APE_API __cdecl
 		#define APE_STD_API __cdecl
 		#define APE_API_VARI __cdecl
 		#define __GCC__
 		#define CPL_llvm_DummyNoExcept
 		#define CPL_GCC
-		#define cwarn(exp) ("warning: " exp)
-
+		#define CPL_VECTOR_TARGET
+		#define CPL_COMPILER_SUPPORTS_AVX
 
 	#else
 		#error "Compiler not supported."

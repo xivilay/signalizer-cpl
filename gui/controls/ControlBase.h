@@ -32,7 +32,7 @@
 
 	#include "../../Common.h"
 	#include "../CBaseControl.h"
-	#include "../../infrastructure/Values/Values.h"
+	#include "../../infrastructure/values/Values.h"
 	#include "../../SerializerModifiers.h"
 
 #endif

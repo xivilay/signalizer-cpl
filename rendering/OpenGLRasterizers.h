@@ -29,7 +29,7 @@
 
 #ifndef CPL_OPENGLRASTERIZERS_H
 	#define CPL_OPENGLRASTERIZERS_H
-	#include "../common.h"
+	#include "../Common.h"
 	#include "OpenGLRendering.h"
 
 	namespace cpl
