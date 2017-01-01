@@ -283,13 +283,6 @@
 					bContinue = IDCONTINUE,
 					bCancel = IDCANCEL, 
 					bError = -1
-				#elif defined(APE_IPLUG)
-					bYes = IDYES,
-					bNo = IDNO,
-					bRetry = IDRETRY,
-					bTryAgain = bRetry,
-					bContinue = bYes,
-					bCancel = IDCANCEL
 				#elif defined(CPL_MAC)
 					bError = -1,
 					bYes = 6,
@@ -298,6 +291,15 @@
 					bTryAgain = 10,
 					bContinue = 11,
 					bCancel = 2,
+					bOk = bYes
+				#else
+					bError = -1,
+					bYes = 1,
+					bNo = 2,
+					bRetry = 3,
+					bTryAgain = 4,
+					bContinue = 5,
+					bCancel = 6,
 					bOk = bYes
 				#endif
 			};
@@ -308,15 +310,16 @@
 					sYesNo = MB_YESNO,
 					sYesNoCancel = MB_YESNOCANCEL,
 					sConTryCancel = MB_CANCELTRYCONTINUE
-				#elif defined(APE_IPLUG)
-					sOk = MB_OK,
-					sYesNoCancel = MB_YESNOCANCEL,
-					sConTryCancel = sYesNoCancel
 				#elif defined(CPL_MAC)
 					sOk = 0,
 					sYesNo = 3,
 					sYesNoCancel = 6,
 					sConTryCancel = 9
+				#else
+					sOk = 0,
+					sYesNo = 1,
+					sYesNoCancel = 2,
+					sConTryCancel = 3
 				#endif
 			};
 			enum MsgIcon : int
@@ -336,6 +339,11 @@
 					iWarning = iStop,
 					iInfo = 0x40,
 					iQuestion = 0x20
+				#else
+					iInfo = 0 << 8,
+					iWarning = 1 << 8,
+					iStop = 2 << 8,
+					iQuestion = 3 << 8
 				#endif
 			};
 

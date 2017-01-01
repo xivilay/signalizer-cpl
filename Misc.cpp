@@ -39,6 +39,7 @@
 #include "CExclusiveFile.h"
 #include <typeinfo>
 #include <future>
+#include <string.h>
 
 #ifdef __GNUG__
 	#include <cstdlib>
@@ -164,23 +165,23 @@ namespace cpl
 			return 0;
 		}
         
-        std::string ExecCommand(const std::string & cmd)
-        {
-            // http://stackoverflow.com/a/478960/1287254
-            char buffer[128];
-            std::string result = "";
+		std::string ExecCommand(const std::string & cmd)
+		{
+			// http://stackoverflow.com/a/478960/1287254
+			char buffer[128];
+			std::string result = "";
 			#ifdef CPL_WINDOWS
 				std::shared_ptr<FILE> pipe(_popen(cmd.c_str(), "r"), _pclose);
 			#else
 				std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
 			#endif
-            if (!pipe) throw std::runtime_error("popen() failed!");
-            while (!feof(pipe.get())) {
-                if (fgets(buffer, 128, pipe.get()) != NULL)
-                    result += buffer;
-            }
-            return result;
-        }
+			if (!pipe) throw std::runtime_error("popen() failed!");
+			while (!feof(pipe.get())) {
+				if (fgets(buffer, 128, pipe.get()) != NULL)
+				result += buffer;
+			}
+			 return result;
+		}
         
 		/*********************************************************************************************
 
@@ -223,46 +224,12 @@ namespace cpl
 			return dirPath;
 		}
 
-		/*********************************************************************************************
-		 
-			Returns the path of our directory.
-			For macs, this is <pathtobundle>/contents/
-			for windows, this is the directory of the DLL.
-		 
-		 *********************************************************************************************/
-
 		Types::OSError GetLastOSErrorCode()
 		{
 			#ifdef CPL_WINDOWS
 				return GetLastError();
 			#else
 				return errno;
-			#endif
-		}
-
-		Types::tstring GetLastOSErrorMessage()
-		{
-			auto lastError = GetLastOSErrorCode();
-			#ifdef CPL_WINDOWS
-				Types::char_t * apiPointer = nullptr;
-
-				Types::OSError numChars = FormatMessage
-				(
-					FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-					0, 
-					lastError, 
-					0,
-					reinterpret_cast<LPTSTR>(&apiPointer), 
-					0, 
-					0
-				);
-			
-				Types::tstring ret(apiPointer, numChars);
-				LocalFree(apiPointer);
-				return ret;
-			#else
-#warning fix this
-				return "";
 			#endif
 		}
 
@@ -287,10 +254,15 @@ namespace cpl
 				LocalFree(apiPointer);
 				return ret;
 			#else
-#warning fix this
-			return "Error: " + std::to_string(lastError);
+				return "Error (" + std::to_string(lastError) + ")" + strerror(lastError);
 			#endif
 		}
+
+		Types::tstring GetLastOSErrorMessage()
+		{
+			return GetLastOSErrorMessage(GetLastOSErrorCode());
+		}
+
 		/*********************************************************************************************
 		 
 			This returns an identifier, that is unqiue system- and cross-process-wide.
@@ -339,37 +311,51 @@ namespace cpl
 			#ifdef CPL_WINDOWS
 				return IsDebuggerPresent() ? true : false;
 			#elif defined(CPL_MAC)
-				#ifdef _DEBUG
-					int                 junk;
-					int                 mib[4];
-					struct kinfo_proc   info;
-					size_t              size;
-					
-					// Initialize the flags so that, if sysctl fails for some bizarre
-					// reason, we get a predictable result.
-					
-					info.kp_proc.p_flag = 0;
-					
-					// Initialize mib, which tells sysctl the info we want, in this case
-					// we're looking for information about a specific process ID.
-					
-					mib[0] = CTL_KERN;
-					mib[1] = KERN_PROC;
-					mib[2] = KERN_PROC_PID;
-					mib[3] = getpid();
-					
-					// Call sysctl.
-					
-					size = sizeof(info);
-					junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
-					
-					
-					// We're being debugged if the P_TRACED flag is set.
-					if(junk == 0)
-						return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
-					else
-						return false;
-				#endif
+				int                 junk;
+				int                 mib[4];
+				struct kinfo_proc   info;
+				size_t              size;
+				
+				// Initialize the flags so that, if sysctl fails for some bizarre
+				// reason, we get a predictable result.
+				
+				info.kp_proc.p_flag = 0;
+				
+				// Initialize mib, which tells sysctl the info we want, in this case
+				// we're looking for information about a specific process ID.
+				
+				mib[0] = CTL_KERN;
+				mib[1] = KERN_PROC;
+				mib[2] = KERN_PROC_PID;
+				mib[3] = getpid();
+				
+				// Call sysctl.
+				
+				size = sizeof(info);
+				junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
+				
+				
+				// We're being debugged if the P_TRACED flag is set.
+				if(junk == 0)
+					return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
+				else
+					return false;
+			#elif defined(CPL_UNIXC)
+
+				auto results = ExecCommand("grep 'TracerPid' /proc/self/status");
+
+				if(results.size() > 0)
+				{
+					auto pos = contents.find(":");
+					if(pos != std::string::npos)
+					{
+						auto number = contents.c_str() + pos + 1;
+						tracerPID = std::strtol(number, nullptr, 10);
+						return tracerPID != 0;
+					}
+				}
+			#else
+				#error No detection of debugging implementation
 			#endif
 			return false;
 		}
@@ -407,7 +393,7 @@ namespace cpl
 				int retval;
 				va_list argcopy;
 				va_copy(argcopy, pargs);
-				retval = vsnprintf(NULL, 0, fmt, argcopy);
+				retval = vsnprintf(nullptr, 0, fmt, argcopy);
 				va_end(argcopy);
 				return retval;
 			#endif
@@ -625,20 +611,28 @@ namespace cpl
 						return path;
 					}
 				}
-			#elif defined(CPL_MAC)
+			#elif defined(CPL_UNIXC) || defined(CPL_MAC)
 				Dl_info exeInfo;
 				dladdr ((void*) GetDirectoryPath, &exeInfo);
-				// need to chop off 2 directories here
+
 				std::string fullPath(exeInfo.dli_fname);
 				for (int i = fullPath.length(), z = 0; i != 0; --i) {
 					// directory slash detected
 					if (CPL_DIRC_COMP(fullPath[i]))
 						z++;
-					if(z == 2)
-					{
-						return std::string(fullPath.begin(), fullPath.begin() + (long)i) +
-						"/resources/";
-					}
+					#ifndef CPL_MAC
+						if(z == 1)
+						{
+							return std::string(fullPath.begin(), fullPath.begin() + (long)i);
+						}
+					#else
+						// need to chop off 2 directories here
+						if(z == 2)
+						{
+							return std::string(fullPath.begin(), fullPath.begin() + (long)i) +
+							"/resources/";
+						}
+					#endif
 
 				}
 			#endif
@@ -669,7 +663,7 @@ namespace cpl
 					std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 			#elif defined (CPL_WINDOWS)
 				::Sleep(ms);
-			#elif defined(CPL_MAC)
+			#elif defined(CPL_MAC) || defined(CPL_UNIXC)
 				usleep(ms * 1000);
 			#endif
 			return 0;
@@ -718,8 +712,55 @@ namespace cpl
 					auto ret = (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
 				#elif defined(CPL_MAC)
 					auto ret = MacBox(systemData, text, title, nStyle);
+				#elif defined(CPL_JUCE)
+					auto ret = MsgButton::bOk;
+
+					auto iconStyle = (nStyle >> 8) & 0xFF;
+					auto buttonStyle = nStyle & 0xFF;
+					juce::AlertWindow::AlertIconType iconType;
+					switch(icon)
+					{
+					case iInfo: 
+						iconType = juce::AlertWindow::AlertIconType::InfoIcon; 
+						break;
+					case iWarning:
+					case iStop:
+						iconType = juce::AlertWindow::AlertIconType::WarningIcon;
+						break;
+					case iQuestion:
+						iconType = juce::AlertWindow::AlertIconType::QuestionIcon;
+						break;
+					default: 
+						iconType = juce::AlertWindow::AlertIconType::NoIcon;
+						break;
+					}
+
+					switch(buttonStyle)
+					{
+						case MsgStyle::sOk:
+							juce::NativeMessageBox::showMessageBox(iconType, title, text, nullptr);
+							ret = MsgButton::bOk;
+							break;
+						case MsgStyle::sYesNo:
+							bool result = juce::NativeMessageBox::showOkCancelBox(iconType, title, text, nullptr, nullptr);
+							ret = result ? MsgButton::bYes : MsgButton::bNo;
+							break;
+					
+						case sYesNoCancel:
+						case sConTryCancel:
+
+							int result = juce::NativeMessageBox::showYesNoCancelBox(iconType, title, text, nullptr, nullptr);
+							if(result == 0)
+								ret = MsgButton::bCancel;
+							else if(result == 1)
+								ret = MsgButton::bYes;
+							else
+								ret = MsgButton::bNo;
+							break;
+
+					}
 				#else
-				#error "Implement a similar messagebox for your target"
+					#error "Implement a similar messagebox for your target"
 				#endif
 				
 				promise.set_value(ret);

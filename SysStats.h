@@ -160,27 +160,36 @@
 							&hKey);
 
 						RegQueryValueEx(hKey, _T("~MHz"), NULL, NULL, (LPBYTE)&dwMHz, &dwSize);
-                        RegCloseKey(hKey);
+						RegCloseKey(hKey);
 						frequency = dwMHz;
 					#elif defined(CPL_MAC)
                     
-                        std::string contents = Misc::ExecCommand("sysctl hw.cpufrequency");
-                        if(contents.size() > 0)
-                        {
-                            auto pos = contents.find(": ");
-                            if(pos != std::string::npos)
-                            {
-                                auto number = contents.c_str() + pos + 2;
-                                frequency = std::strtod(number, nullptr);
-                                if(frequency != 0)
-                                    frequency /= 1000000;
-                            }
+						std::string contents = Misc::ExecCommand("sysctl hw.cpufrequency");
+						if(contents.size() > 0)
+						{
+							auto pos = contents.find(": ");
+							if(pos != std::string::npos)
+							{
+								auto number = contents.c_str() + pos + 2;
+								frequency = std::strtod(number, nullptr);
+								if(frequency != 0)
+									frequency /= 1000000;
+							}
                             
-                        }
+						}
 
-                    #else
-                        #error "No CPU speed calculation algorithm"
-                        //http://www.cyberciti.biz/faq/linux-display-cpu-information-number-of-cpus-and-their-speed/
+					#else
+						std::string contents = Misc::ExecCommand("grep 'cpu MHz' /proc/cpuinfo");
+						if(contents.size() > 0)
+						{
+							auto pos = contents.find(": ");
+							if(pos != std::string::npos)
+							{
+								auto number = contents.c_str() + pos + 2;
+								frequency = std::strtod(number, nullptr);
+							}
+                            
+						}
 					#endif
 				}
 
