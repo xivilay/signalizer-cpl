@@ -40,7 +40,7 @@
 
 namespace cpl
 {
-	
+
 	CProtected::StaticData CProtected::staticData;
 	CPL_THREAD_LOCAL CProtected::ThreadData CProtected::threadData;
     std::atomic<int> checkCounter {0};
@@ -84,7 +84,7 @@ namespace cpl
 		#endif
 	}
 
-	CProtected::~CProtected() 
+	CProtected::~CProtected()
 	{
 		unregisterHandlers();
 		checkCounter.fetch_sub(1);
@@ -122,15 +122,15 @@ namespace cpl
 		Formats a string and returns it. It explains what went wrong.
 
 	 *********************************************************************************************/
-	std::string CProtected::formatExceptionMessage(const CSystemException & e) 
+	std::string CProtected::formatExceptionMessage(const CSystemException & e)
 	{
 		auto imageBase = (const void *)Misc::GetImageBase();
 		Misc::CStringFormatter base;
 
-		base << "Non-software exception at 0x" << std::hex << e.data.faultAddr 
+		base << "Non-software exception at 0x" << std::hex << e.data.faultAddr
 			 << " (at image base " + formatDifferenceAddress(imageBase, e.data.faultAddr) + ")" << newl;
 
-		base << "Exception code: " << e.data.exceptCode 
+		base << "Exception code: " << e.data.exceptCode
 			 << ", actual code: " << e.data.actualCode
 			 << ", extra info: " << e.data.extraInfoCode << newl;
 
@@ -189,15 +189,15 @@ namespace cpl
 									fmt << "(object hardware error) ";
 							}
 							break;
-							
+
 						}
-							
+
 						case SIGILL:
 						{
 							fmt << "Illegal instruction ";
 							switch(e.data.extraInfoCode)
 							{
-									
+
 								case ILL_ILLOPC:
 									fmt << "(Illegal opcode) "; break;
 								case ILL_ILLOPN:
@@ -216,9 +216,9 @@ namespace cpl
 									fmt << "(Internal stack error) "; break;
 							}
 							break;
-							
+
 						}
-							
+
 						default:
 							fmt << "Access violation ";
 							break;
@@ -293,7 +293,7 @@ namespace cpl
 				*/
 			case EXCEPTION_INT_DIVIDE_BY_ZERO:
 			case EXCEPTION_FLT_UNDERFLOW:
-			case EXCEPTION_FLT_OVERFLOW: 
+			case EXCEPTION_FLT_OVERFLOW:
 			case EXCEPTION_FLT_INEXACT_RESULT:
 			case EXCEPTION_FLT_INVALID_OPERATION:
 			case EXCEPTION_FLT_DIVIDE_BY_ZERO:
@@ -312,7 +312,7 @@ namespace cpl
 		#endif
 		return 0;
 	}
-	
+
 #ifdef CPL_WINDOWS
 	void WindowsBackTrace(std::ostream & f, PEXCEPTION_POINTERS pExceptionInfo)
 	{
@@ -370,7 +370,7 @@ namespace cpl
 
 				if (::SymGetModuleInfo64(process, symbol->ModBase, &moduleInfo))
 					f << moduleInfo.ModuleName << ": ";
-				
+
 				f << formatDifferenceAddress(imageBase, (const void*)symbol->Address) << " + 0x" << displacement << " | " << symbol->Name << newl;
 			}
 			else
@@ -401,7 +401,7 @@ namespace cpl
 			outputStream << "- Stack backtrace: " << newl;
 			WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS) systemInformation);
 			ret = EXCEPTION_CONTINUE_SEARCH;
-		
+
 			cpl::Misc::LogException(outputStream.str());
 
 
@@ -422,13 +422,13 @@ namespace cpl
 			auto exceptionString = formatExceptionMessage(exceptionInformation);
 
 			outputStream << "Sigaction exception description: " << exceptionString << newl;
-		
+
 			void *callstack[128];
 			const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
 			char buf[1024];
 			int nFrames = backtrace(callstack, nMaxFrames);
 			char **symbols = backtrace_symbols(callstack, nFrames);
-			
+
 			for (int i = 0; i < nFrames; i++) {
 				Dl_info info;
 				if (dladdr(callstack[i], &info) && info.dli_sname) {
@@ -468,9 +468,9 @@ namespace cpl
 	{
 		#ifndef CPL_WINDOWS
 			// consider locking signalLock here -- not sure if its well-defined, though
-		
+
 			/*
-				Firstly, check if the exception occured at our stack, after runProtectedCode 
+				Firstly, check if the exception occured at our stack, after runProtectedCode
 				which sets activeStateObject to a valid object
 			*/
 			if(threadData.isInStack)
@@ -478,7 +478,7 @@ namespace cpl
 				/*
 					handle the exception here.
 				*/
-			
+
 				const void * fault_address = siginfo ? siginfo->si_addr : nullptr;
 				auto ecode = siginfo->si_code;
 				bool safeToContinue = false;
@@ -487,7 +487,7 @@ namespace cpl
 				//sigemptyset (&newAction.sa_mask);
 				//sigaddset(&newAction.sa_mask, sig);
 				//sigprocmask(SIG_UNBLOCK, &newAction.sa_mask, NULL);
-			
+
 				switch(sig)
 				{
 					case SIGILL:
@@ -553,18 +553,18 @@ namespace cpl
 						safeToContinue = true;
 
 						threadData.currentExceptionData = CSystemException::eStorage::create(
-							code_status, 
-							safeToContinue, 
+							code_status,
+							safeToContinue,
 							fault_address
 						);
-					
+
 						if(threadData.traceIntercept)
 							signalTraceInterceptor(threadData.currentExceptionData);
 
 						// jump back to CState::runProtectedCode. Note, we know that function was called
 						// earlier in the stackframe, because threadData.activeStateObject is non-null
 						// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
-						// IS valid. 
+						// IS valid.
 						if (!threadData.propagate)
 							siglongjmp(threadData.threadJumpBuffer, 1);
 						break;
@@ -573,9 +573,9 @@ namespace cpl
 						goto default_handler;
 				} // switch signal
 			} // if threadData.activeStateObject
-		
+
 			/*
-				Exception happened in some arbitrary place we have no knowledge off, or we are 
+				Exception happened in some arbitrary place we have no knowledge off, or we are
 				propagating the exception.
 				First we try to call the old signal handlers
 			*/
@@ -584,11 +584,11 @@ namespace cpl
 				consider checking here that sa_handler/sa_sigaction is actually valid and not something like
 				SIG_DFLT, in which case re have to reset the handlers and manually raise the signal again
 			*/
-		
+
 			if(staticData.oldHandlers[sig].sa_flags & SA_SIGINFO)
 			{
 				auto addr = staticData.oldHandlers[sig].sa_sigaction;
-				
+
 				// why is this system so ugly
 				if((void*)addr == SIG_DFL)
 				{
@@ -619,7 +619,7 @@ namespace cpl
 			else
 			{
 				auto addr = staticData.oldHandlers[sig].sa_handler;
-				
+
 				if(addr == SIG_DFL)
 				{
 					struct sigaction current;
@@ -643,12 +643,12 @@ namespace cpl
 				{
 					return staticData.oldHandlers[sig].sa_handler(sig);
 				}
-				
+
 			}
 			/*
 				WE SHOULD NEVER REACH THIS POINT. NEVER. Except for nuclear war and/or nearby black hole
 			*/
-		
+
 			// no handler found, throw exception (that will call terminate)
 		die_brutally:
 			CPL_RUNTIME_EXCEPTION(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
@@ -668,7 +668,6 @@ namespace cpl
 			{
 				staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
 				staticData.newHandler.sa_flags = SA_SIGINFO;
-				staticData.newHandler.sa_mask = 0;
 				sigemptyset(&staticData.newHandler.sa_mask);
 				sigaction(SIGILL, &staticData.newHandler, &staticData.oldHandlers[SIGILL]);
 				sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
@@ -680,7 +679,7 @@ namespace cpl
 		#endif
 		return false;
 	}
-	
+
 	bool CProtected::unregisterHandlers()
 	{
 		#ifndef CPL_MSVC

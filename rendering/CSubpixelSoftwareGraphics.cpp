@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:CSubpixelSoftwareGraphics.h
- 
+
 	Implementation of CSubpixelSoftwareGraphics.h
- 
+
 *************************************************************************************/
 
 #include "CSubpixelSoftwareGraphics.h"
@@ -108,14 +108,14 @@ namespace cpl
 
 		CSubpixelSoftwareGraphics::CSubpixelSoftwareGraphics
 		(
-			const juce::Image & imageToRenderOn, 
+			const juce::Image & imageToRenderOn,
 			const juce::Point<int> & origin,
 			const juce::RectangleList<int> & initialClip,
 			bool allowAlphaDrawing
 		)
-		: 
-			buffer(imageToRenderOn), 
-			origin(origin), 
+		:
+			buffer(imageToRenderOn),
+			origin(origin),
 			startingClip(initialClip),
 			displayInfo(CDisplaySetup::instance()),
 			LowLevelGraphicsSoftwareRenderer(imageToRenderOn, origin, initialClip)
@@ -147,7 +147,6 @@ namespace cpl
 			using namespace juce::RenderingHelpers;
 
 			typedef CachedGlyphEdgeTable<SoftwareRendererSavedState> GlyphType;
-			typedef ClipRegions<SoftwareRendererSavedState>::EdgeTableRegion EdgeTableRegionType;
 			typedef GlyphCache<GlyphType, SoftwareRendererSavedState> GlyphCacheType;
 
 			// only colours supported now
@@ -164,7 +163,7 @@ namespace cpl
 			// starting point
 			Point<float> pos(z.getTranslationX(), z.getTranslationY());
 
-			// find what display our glyph resides on. 
+			// find what display our glyph resides on.
 			// Note this is wrong - need to somehow figure out the global position
 			// of our renderer context, so we can associate with a monitor!
 			auto & currentMonitor = displayInfo.displayFromPoint(std::make_pair(0, 0));
@@ -253,7 +252,7 @@ namespace cpl
 			// here we handle the current rotation of this monitor.
 			// if it is RGB but rotated PI radians, we simply invert the pixel
 			// matrix orientation to BGR! If it is rotated inbetween, well,
-			// we wouldn't have reached this point! Then 
+			// we wouldn't have reached this point! Then
 			// currentMonitor.isApplicableForSubpixels will be false.
 			if (currentMonitor.screenRotation == 180)
 			{
@@ -266,7 +265,7 @@ namespace cpl
 			{
 				//auto & gammaScale = currentMonitor.gammaScale;
 			}
-			
+
 			LinearGammaScale<std::uint8_t> gammaScale;
 			gammaScale.setGammaCorrection(colour.getBrightness(), 1.8f /*currentMonitor.fontGamma*/);
 
@@ -275,7 +274,7 @@ namespace cpl
 			{
 				case LCDMatrixOrientation::RGB:
 				{
-					// create renderer, 
+					// create renderer,
 					switch (buffer.getFormat())
 					{
 						case juce::Image::RGB:
@@ -283,7 +282,7 @@ namespace cpl
 
 							Renderer<juce::PixelRGB, LCDMatrixOrientation::RGB>
 								subpixelRenderer(destData, colour, pos, startingClip, gammaScale);
-							
+
 							outlines->iterate(subpixelRenderer);
 							break;
 						}
@@ -305,7 +304,7 @@ namespace cpl
 				}
 				case LCDMatrixOrientation::BGR:
 				{
-					// create renderer, 
+					// create renderer,
 					switch (buffer.getFormat())
 					{
 						case juce::Image::RGB:

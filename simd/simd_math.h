@@ -31,7 +31,7 @@
 
 #ifndef _SIMD_MATH_H
 	#define _SIMD_MATH_H
-	
+
 	#include "simd_traits.h"
 	#include "simd_consts.h"
 	#include "simd_interface.h"
@@ -110,12 +110,12 @@
 			{
 				return std::abs(val);
 			}
-			
+
 			CPL_SIMD_FUNC double abs(double val)
 			{
 				return std::abs(val);
 			}
-			
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector floating point bit or
@@ -139,21 +139,21 @@
 			}
 
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
-			 
+
 			 Floating point bit-ands
-			 
+
 			 /////////////////////////////////////////////////////////////////////////////////////////////////*/
 			CPL_SIMD_FUNC v4sf vand(v4sf a, v4sf b) { return _mm_and_ps(a, b); }
 			CPL_SIMD_FUNC v8sf vand(v8sf a, v8sf b) { return _mm256_and_ps(a, b); }
 			CPL_SIMD_FUNC v4sd vand(v4sd a, v4sd b) { return _mm256_and_pd(a, b); }
 			CPL_SIMD_FUNC v2sd vand(v2sd a, v2sd b) { return _mm_and_pd(a, b); }
-			
+
 			CPL_SIMD_FUNC float vand(float a, float b)
 			{
 				auto result = reinterpret_vector_cast<std::uint32_t>(a) & reinterpret_vector_cast<std::uint32_t>(b);
 				return reinterpret_vector_cast<float>(result);
 			}
-			
+
 			CPL_SIMD_FUNC double vand(double a, double b)
 			{
 				auto result = reinterpret_vector_cast<std::uint64_t>(a) & reinterpret_vector_cast<std::uint64_t>(b);
@@ -169,13 +169,13 @@
 			CPL_SIMD_FUNC v8sf vxor(v8sf a, v8sf b) { return _mm256_xor_ps(a, b); }
 			CPL_SIMD_FUNC v4sd vxor(v4sd a, v4sd b) { return _mm256_xor_pd(a, b); }
 			CPL_SIMD_FUNC v2sd vxor(v2sd a, v2sd b) { return _mm_xor_pd(a, b); }
-			
+
 			CPL_SIMD_FUNC float vxor(float a, float b)
 			{
 				auto result = reinterpret_vector_cast<std::uint32_t>(a) ^ reinterpret_vector_cast<std::uint32_t>(b);
 				return reinterpret_vector_cast<float>(result);
 			}
-			
+
 			CPL_SIMD_FUNC double vxor(double a, double b)
 			{
 				auto result = reinterpret_vector_cast<std::uint64_t>(a) ^ reinterpret_vector_cast<std::uint64_t>(b);
@@ -208,7 +208,7 @@
 							vand(reinterpret_vector_cast<V>(a), reinterpret_vector_cast<V>(b))
 						);
 					}
-			
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Vector integer bit-ands
@@ -276,11 +276,11 @@
 				{
 					return vand(a, vnot(b));
 				}
-			
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				Select elements from two vectors depending on a third.
-					output[n] = mask[n] ? a[n] : b[n] 
+					output[n] = mask[n] ? a[n] : b[n]
 						(return (a & mask) | (b & ~mask))
 
 					note that mask should strictly be either all 0 or 1 bits (like, from comparisons)
@@ -290,13 +290,13 @@
 			{
 				return vor(vand(mask, a), vandnot(mask, b));
 			}
-			
+
 			/*///////////////////////////////////////////////////////////////////////////////////////////////////
-			 
+
 				Vector max
-			 
+
 			 ///////////////////////////////////////////////////////////////////////////////////////////////////*/
-			
+
 			template<typename V>
 				CPL_SIMD_FUNC V max(V a, V b)
 				{
@@ -341,12 +341,12 @@
 			{
 				return _mm256_and_pd(val, consts<v4sd>::sign_bit);
 			}
-			
+
 			CPL_SIMD_FUNC float sign(float val)
 			{
 				return (float)std::copysign(1.0, val);
 			}
-			
+
 			CPL_SIMD_FUNC double sign(double val)
 			{
 				return (double)std::copysign(1.0, val);
@@ -425,7 +425,7 @@
 					Vector integer left shifts
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////*/
-		
+
 			template<std::size_t elements, std::size_t shift_amount, bool is_signed = true, typename V>
 				CPL_SIMD_FUNC typename std::enable_if<8 == elements && is_signed && std::is_same<V, v256i>::value, V>::type
 					vileft_shift(V ia)
@@ -634,7 +634,7 @@
 				}
 
 		template<typename V>
-			CPL_SIMD_FUNC void sincos(V x, V * s, V * c) 
+			CPL_SIMD_FUNC void sincos(V x, V * s, V * c)
 			{
 
 				//typedef v4sf V;
@@ -748,11 +748,11 @@
 #else
 
 		template<typename V>
-			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value, V>::type 
+			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value, V>::type
 				sin(V x)
 			{ // any x
 				V  y;
-				typedef typename scalar_of<V>::type Ty;
+
 				using VConsts = cpl::simd::consts<V>;
 
 				auto const elements = elements_of<V>::value;
@@ -771,9 +771,9 @@
 				const V four_as_int = reinterpret_vector_cast<V>(set1<elements, VInt>(4));
 				const V two_as_int = reinterpret_vector_cast<V>(set1<elements, VInt>(2));
 
-				// store the integer part of y in mm0 
+				// store the integer part of y in mm0
 				VInt j = static_vector_cast<VInt>(y + VConsts::one);
-				// j=(j+1) & (~1) (see the cephes sources) 
+				// j=(j+1) & (~1) (see the cephes sources)
 				//	add one and make it even
 
 				//j = viadd<elements>(j, set1<elements, VInt>(1));
@@ -781,7 +781,7 @@
 				y = static_vector_cast<V>(j);
 				const V j_as_float = reinterpret_vector_cast<V>(j);
 
-				// get the swap sign flag 
+				// get the swap sign flag
 				//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 				//
 				auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
@@ -841,12 +841,11 @@
 
 
 		template<typename V>
-			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value, V>::type 
+			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value, V>::type
 				sin(V x)
 			{ // any x
 #pragma message cwarn("Seems to return cosines. Output of 4.71 == ~0")
 				V y;
-				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;
 				using VConsts = cpl::simd::consts<V>;
 
@@ -868,7 +867,7 @@
 				const VFloat four_as_int = reinterpret_vector_cast<VFloat>(set1<int_elements, VInt>(4));
 				const VFloat two_as_int = reinterpret_vector_cast<VFloat>(set1<int_elements, VInt>(2));
 
-				// store the integer part of y in mm0 
+				// store the integer part of y in mm0
 				VInt j = vdouble_cvt_int32(y + VConsts::one);
 
 
@@ -876,13 +875,13 @@
 				if (std::is_same<V, v4sd>::value)
 					_mm256_zeroupper();
 
-				// j=(j+1) & (~1) (see the cephes sources) 
+				// j=(j+1) & (~1) (see the cephes sources)
 				//	add one and make it even
 				j = vfloat_and<VFloat>(j, set1<int_elements, VInt>(~1));
 				y = vint32_cvt_double<V>(j);
 				const VFloat j_as_float = reinterpret_vector_cast<VFloat>(j);
 
-				// get the swap sign flag 
+				// get the swap sign flag
 				//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 				//
 				auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
@@ -953,10 +952,10 @@
 
 				return sin(x + consts<V>::pi_half);
 			}
-			
+
 		template<typename V>
 			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, float>::value>::type
-				sincos(V x, V * s, V * c) 
+				sincos(V x, V * s, V * c)
 		{
 
 			//typedef v4sf V;
@@ -976,29 +975,29 @@
 			x = vxor(x, sign_bit_sin);
 
 
-			// scale by 4/Pi 
+			// scale by 4/Pi
 			y = x * consts::four_over_pi;
 
 
 			//static_assert(!std::is_same<Ty, double>::value, "Doubles not implemented yet");
-			
+
 
 			// -------- integer part of routine; range reduction and sign/selection masks ---------
 			// this is also the reference solution; code inside will work for any architechture
 			const V four_as_int = reinterpret_vector_cast<V>(set1<elements, VInt>(4));
 			const V two_as_int = reinterpret_vector_cast<V>(set1<elements, VInt>(2));
 
-			// store the integer part of y in mm0 
+			// store the integer part of y in mm0
 			VInt j = static_vector_cast<VInt>(y + consts::one);
-			// j=(j+1) & (~1) (see the cephes sources) 
+			// j=(j+1) & (~1) (see the cephes sources)
 			//	add one and make it even
-		
+
 			//j = viadd<elements>(j, set1<elements, VInt>(1));
 			j = vfloat_and<V>(j, set1<elements, VInt>(~1));
 			y = static_vector_cast<V>(j);
 			const V j_as_float = reinterpret_vector_cast<V>(j);
 
-			// get the swap sign flag 
+			// get the swap sign flag
 			//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 			//
 			auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
@@ -1019,7 +1018,7 @@
 			// save signs
 			sign_bit_sin = vxor(sign_bit_sin, swap_sign_bit_sin);
 
-			
+
 
 
 			// -------- back to floating point ---------------
@@ -1074,7 +1073,7 @@
 			CPL_SIMD_FUNC typename std::enable_if<std::is_same<typename scalar_of<V>::type, double>::value>::type
 				sincos(V x, V * s, V * c)
 			{
-			
+
 				//typedef v4sf V;
 				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;
@@ -1093,7 +1092,7 @@
 				x = vxor(x, sign_bit_sin);
 
 
-				// scale by 4/Pi 
+				// scale by 4/Pi
 				y = x * VConsts::four_over_pi;
 
 
@@ -1101,21 +1100,21 @@
 				const VFloat four_as_int = reinterpret_vector_cast<VFloat>(set1<elements_of<VFloat>::value, VInt>(4));
 				const VFloat two_as_int = reinterpret_vector_cast<VFloat>(set1<elements_of<VFloat>::value, VInt>(2));
 
-				// store the integer part of y in mm0 
+				// store the integer part of y in mm0
 				VInt j = vdouble_cvt_int32(y + VConsts::one);
 
 				// jump out of avx here.
 				if(std::is_same<V, v4sd>::value)
 					_mm256_zeroupper();
 
-				// j=(j+1) & (~1) (see the cephes sources) 
+				// j=(j+1) & (~1) (see the cephes sources)
 				//	add one and make it even
 
 				j = vfloat_and<VFloat>(j, set1<elements_of<VFloat>::value, VInt>(~1));
 				y = vint32_cvt_double<V>(j);
 				const VFloat j_as_float = reinterpret_vector_cast<VFloat>(j);
 
-				// get the swap sign flag 
+				// get the swap sign flag
 				//	swap_sign_sin = input & 4 (swap sign each M_PI multiple)
 				//
 				auto has_fourth_bit = vand(j_as_float, four_as_int) == four_as_int;
@@ -1137,7 +1136,7 @@
 				// save signs
 				sign_bit_sin = vxor(sign_bit_sin, swap_sign_bit_sin);
 
-			
+
 				// -------- back to floating point ---------------
 				/* The magic pass: "Extended precision modular arithmetic"
 				x = ((x - y * DP1) - y * DP2) - y * DP3; */

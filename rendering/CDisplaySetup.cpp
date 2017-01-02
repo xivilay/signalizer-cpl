@@ -1,41 +1,43 @@
 /*************************************************************************************
- 
+
 	 cpl - cross-platform library - v. 0.1.0.
- 
+
 	 Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU General Public License as published by
 	 the Free Software Foundation, either version 3 of the License, or
 	 (at your option) any later version.
- 
+
 	 This program is distributed in the hope that it will be useful,
 	 but WITHOUT ANY WARRANTY; without even the implied warranty of
 	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	 GNU General Public License for more details.
- 
+
 	 You should have received a copy of the GNU General Public License
 	 along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	 See \licenses\ for additional details on licenses associated with this program.
- 
+
  **************************************************************************************
- 
+
 	file:CDisplaySetup.cpp
-		
+
 		Implementation of CDisplaySetup.h
 
  *************************************************************************************/
 
 #include "CDisplaySetup.h"
 #include "../MacroConstants.h"
-#include "../gui/tools.h"
+#include "../gui/Tools.h"
 
 
 #ifdef CPL_WINDOWS
 	#include "DisplayOrientationWindows.cpp"
 #elif defined(CPL_MAC)
 	#include <CoreGraphics/CGDisplayConfiguration.h>
+#elif defined(CPL_UNIXC)
+    #include "DisplayOrientationLinux.cpp"
 #else
 	// add linux, osx, android, ios here.
 	#error "Update displayorientations to your current platform!"
@@ -69,17 +71,18 @@ namespace cpl
 			}
 			return getMainDisplay();
 		}
+
 		const CDisplaySetup::DisplayData & CDisplaySetup::displayFromIndex(std::size_t index) const
 		{
 			return displays.at(index);
 		}
-		
-		
+
+
 		std::vector<const CDisplaySetup::DisplayData *> CDisplaySetup::getDuplicateDisplaysFor(const CDisplaySetup::DisplayData & initialDisplay) const
 		{
-			
+
 			std::vector<const DisplayData *> displayList;
-			
+
 			for(auto & display : displays)
 			{
 				// first line checks if they are at same position as well - ie. duplicated.
@@ -90,7 +93,7 @@ namespace cpl
 			}
 			return displayList;
 		}
-		
+
 		const CDisplaySetup::DisplayData & CDisplaySetup::getMainDisplay() const
 		{
 			for (auto & display : displays)
@@ -135,13 +138,13 @@ namespace cpl
 			{
 				auto & displayInstance = CDisplaySetup::instance();
 
-				
+
 				// code doesn't really matter, we dont want to interfere with anything
 				// just be notified on display actions.
 				// wParam also doesn't matter (whether the event is posted by this thread)
-				
+
 				const CWPRETSTRUCT * msg = reinterpret_cast<const CWPRETSTRUCT*>(lParam);
-				
+
 				switch(msg->message)
 				{
 					case WM_SETTINGCHANGE:
@@ -150,19 +153,19 @@ namespace cpl
 						{
 							// avoid posting it multiple times:
 							CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
-							
+
 							// spawn the event
 							GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
 						}
 					default:
 						break;
-						
+
 				}
-				
+
 				return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook.load(std::memory_order_acquire), code, wParam, lParam);
 			}
 		#elif defined(CPL_MAC)
-		
+
 			void MessageHook( CGDirectDisplayID display, CGDisplayChangeSummaryFlags flags, void *userInfo )
 			{
 				// https://developer.apple.com/library/mac/documentation/GraphicsImaging/Reference/Quartz_Services_Ref/index.html#//apple_ref/c/tdef/CGDisplayReconfigurationCallBack
@@ -173,12 +176,12 @@ namespace cpl
 				{
 					// avoid posting it multiple times:
 					CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
-					
+
 					// spawn the event
 					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
 				}
 			}
-		
+
 		#endif
 
 
@@ -240,7 +243,7 @@ namespace cpl
 			int count = 0;
 			for (auto & display : juce::Desktop::getInstance().getDisplays().displays)
 			{
-				
+
 				bool thisIndexUsesSubpixels = false;
 				auto displayOrigin = display.userArea.getPosition();
 				// default to RGB...
@@ -269,7 +272,7 @@ namespace cpl
 					{
 						currentMonitorInfo.screenOrientation = RadsToOrientation(rotation);
 						currentMonitorInfo.screenRotation = rotation;
-						
+
 					}
 
 				#else
@@ -296,18 +299,18 @@ namespace cpl
 						if(info.averageGamma <= 1.2)
 							info.averageGamma = 1.4;
 						finalGamma = info.averageGamma;
-				
+
 						//if(!info.displayIsDigital)
 						//	thisIndexUsesSubpixels = false;
-						
+
 						currentMonitorInfo.screenOrientation = RadsToOrientation(info.screenRotation);
 						currentMonitorInfo.screenRotation = info.screenRotation;
-						
+
 					}
 				#endif
-				
+
 				currentMonitorInfo.displayMatrixOrder = displayOrientation;
-				
+
 				if (systemUsesSubpixelSmoothing &&
 					(currentMonitorInfo.screenRotation == 0 || currentMonitorInfo.screenRotation == 180) &&
 					thisIndexUsesSubpixels)
@@ -328,9 +331,9 @@ namespace cpl
 				currentMonitorInfo.isMainMonitor = display.isMain;
 				currentMonitorInfo.index = count++;
 				displays.push_back(currentMonitorInfo);
-				
+
 			}
-			
+
 			// set what displays has duplicates and check compability.
 			for(auto & display : displays)
 			{
@@ -350,7 +353,7 @@ namespace cpl
 					}
 				}
 			}
-			
+
 			// clear message post flag:
 			systemHook.eventHasBeenPosted = false;
 		}

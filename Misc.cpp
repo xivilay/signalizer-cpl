@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:Misc.cpp
-		
+
 		Implementation of Misc.h
 
 *************************************************************************************/
@@ -58,7 +58,7 @@ namespace cpl
 		static int GetInstanceCounter();
 		static int __unusedInitialization = addHandlers();
 		static std::atomic<std::terminate_handler> oldTerminate;
-		
+
 		static std::thread::id MainThreadID = std::this_thread::get_id();
 
 		#ifdef __GNUG__
@@ -66,23 +66,23 @@ namespace cpl
 			std::string DemangleRawName(const std::string & name) {
 				//http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
 				int status = -4; // some arbitrary value to eliminate the compiler warning
-				
+
 				// enable c++11 by passing the flag -std=c++11 to g++
 				std::unique_ptr<char, void(*)(void*)> res {
 					abi::__cxa_demangle(name.c_str(), NULL, NULL, &status),
 					std::free
 				};
-				
+
 				return (status==0) ? res.get() : name ;
 			}
-			
+
 		#else
 			std::string DemangleRawName(const std::string & name) {
 				return name;
 			}
-			
+
 		#endif
-		
+
 		void LogException(const std::string & errorMessage)
 		{
 			CExclusiveFile exceptionLog;
@@ -107,7 +107,7 @@ namespace cpl
 		*********************************************************************************************/
 		void CrashIfUserDoesntDebug(const std::string & errorMessage)
 		{
-			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", programInfo.name + ": Fatal error", 
+			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", programInfo.name + ": Fatal error",
 				MsgStyle::sYesNo | MsgIcon::iStop);
 			if (ret == MsgButton::bYes)
 			{
@@ -164,7 +164,7 @@ namespace cpl
 			}
 			return 0;
 		}
-        
+
 		std::string ExecCommand(const std::string & cmd)
 		{
 			// http://stackoverflow.com/a/478960/1287254
@@ -182,7 +182,7 @@ namespace cpl
 			}
 			 return result;
 		}
-        
+
 		/*********************************************************************************************
 
 			Delays the execution for at least msecs. Should have good precision bar context-switches,
@@ -212,11 +212,11 @@ namespace cpl
 		}
 
 		/*********************************************************************************************
-		 
+
 			Returns the path of our directory.
 			For macs, this is <pathtobundle>/contents/resources/
 			for windows, this is the directory of the DLL.
-		 
+
 		 *********************************************************************************************/
 		const std::string & DirectoryPath()
 		{
@@ -242,14 +242,14 @@ namespace cpl
 				Types::OSError numChars = FormatMessage
 				(
 					FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-					0, 
-					lastError, 
 					0,
-					reinterpret_cast<LPTSTR>(&apiPointer), 
-					0, 
+					lastError,
+					0,
+					reinterpret_cast<LPTSTR>(&apiPointer),
+					0,
 					0
 				);
-			
+
 				Types::tstring ret(apiPointer, numChars);
 				LocalFree(apiPointer);
 				return ret;
@@ -264,9 +264,9 @@ namespace cpl
 		}
 
 		/*********************************************************************************************
-		 
+
 			This returns an identifier, that is unqiue system- and cross-process-wide.
-		 
+
 		 *********************************************************************************************/
 		int ObtainUniqueInstanceID()
 		{
@@ -282,18 +282,18 @@ namespace cpl
 			return iD;
 		}
 		/*********************************************************************************************
-		 
+
 			Releases a previous unique id.
-		 
+
 		 *********************************************************************************************/
 		void ReleaseUniqueInstanceID(int id)
 		{
-			
+
 		}
 		/*********************************************************************************************
-		 
+
 			Returns a global, ever increasing counter each call.
-		 
+
 		 *********************************************************************************************/
 		int GetInstanceCounter()
 		{
@@ -302,9 +302,9 @@ namespace cpl
 			return instanceCount++;
 		}
 		/*********************************************************************************************
-		 
+
 			Checks whether we are being debugged.
-		 
+
 		 *********************************************************************************************/
 		bool IsBeingDebugged()
 		{
@@ -315,26 +315,26 @@ namespace cpl
 				int                 mib[4];
 				struct kinfo_proc   info;
 				size_t              size;
-				
+
 				// Initialize the flags so that, if sysctl fails for some bizarre
 				// reason, we get a predictable result.
-				
+
 				info.kp_proc.p_flag = 0;
-				
+
 				// Initialize mib, which tells sysctl the info we want, in this case
 				// we're looking for information about a specific process ID.
-				
+
 				mib[0] = CTL_KERN;
 				mib[1] = KERN_PROC;
 				mib[2] = KERN_PROC_PID;
 				mib[3] = getpid();
-				
+
 				// Call sysctl.
-				
+
 				size = sizeof(info);
 				junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
-				
-				
+
+
 				// We're being debugged if the P_TRACED flag is set.
 				if(junk == 0)
 					return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
@@ -342,15 +342,15 @@ namespace cpl
 					return false;
 			#elif defined(CPL_UNIXC)
 
-				auto results = ExecCommand("grep 'TracerPid' /proc/self/status");
+				auto contents = ExecCommand("grep 'TracerPid' /proc/self/status");
 
-				if(results.size() > 0)
+				if(contents.size() > 0)
 				{
 					auto pos = contents.find(":");
 					if(pos != std::string::npos)
 					{
 						auto number = contents.c_str() + pos + 1;
-						tracerPID = std::strtol(number, nullptr, 10);
+						auto tracerPID = std::strtol(number, nullptr, 10);
 						return tracerPID != 0;
 					}
 				}
@@ -359,7 +359,7 @@ namespace cpl
 			#endif
 			return false;
 		}
-		
+
 
 		const char * GetImageBase()
 		{
@@ -380,10 +380,10 @@ namespace cpl
 		}
 
 		/*********************************************************************************************
-		 
+
 			returns the amount of characters needed to print pargs to the format list,
 			EXCLUDING the null character
-		 
+
 		 *********************************************************************************************/
 		int GetSizeRequiredFormat(const char * fmt, va_list pargs)
 		{
@@ -397,12 +397,12 @@ namespace cpl
 				va_end(argcopy);
 				return retval;
 			#endif
-			
+
 		}
 		/*********************************************************************************************
-		 
+
 			Define a symbol for __rdtsc if it doesn't exist
-		 
+
 		 *********************************************************************************************/
 		#ifndef CPL_MSVC
 			#ifdef CPL_M_64BIT_
@@ -418,12 +418,12 @@ namespace cpl
 					return x;
 				}
 			#endif
-		
+
 		#endif
 		/*********************************************************************************************
-		 
+
 			Returns the CPU clock counter
-		 
+
 		 *********************************************************************************************/
 		std::uint64_t ClockCounter()
 		{
@@ -468,7 +468,7 @@ namespace cpl
 
 				//long long t = TimeCounter();
 				ret = (time) * (1000.0/f);
-			#elif defined(CPL_MAC)	
+			#elif defined(CPL_MAC)
 				auto t1 = *(decltype(mach_absolute_time())*)&time;
 
 				struct mach_timebase_info tinfo;
@@ -477,13 +477,13 @@ namespace cpl
 					double hTime2nsFactor = (double)tinfo.numer / tinfo.denom;
 					ret = (((t1) * hTime2nsFactor) / 1000.0) / 1000.0;
 				}
-			
+
 			#elif defined(__CPP11__)
 				using namespace std::chrono;
-		
+
 				high_resolution_clock::rep t1;
 				t1 = *(high_resolution_clock::rep *)&time;
-				milliseconds elapsed(time);
+				milliseconds elapsed(t1);
 				ret = elapsed.count();
 			#endif
 
@@ -496,7 +496,7 @@ namespace cpl
 			Get a formatted time string in the format "hh:mm:ss"
 
 		*********************************************************************************************/
-		std::string GetTime () 
+		std::string GetTime ()
 		{
 			time_t timeObj;
 			tm * ctime;
@@ -507,12 +507,12 @@ namespace cpl
 				ctime = &pTime;
 			#else
 				// consider using a safer alternative here.
-				ctime = gmtime(&timeObj);			
+				ctime = gmtime(&timeObj);
 			#endif
 			char buffer[100];
 			// not cross platform.
 			#ifdef CPL_MSVC
-			
+
 				sprintf_s(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 			#else
 				sprintf(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
@@ -531,7 +531,7 @@ namespace cpl
 				ctime = &pTime;
 			#else
 				// consider using a safer alternative here.
-				ctime = gmtime(&timeObj);			
+				ctime = gmtime(&timeObj);
 			#endif
 			char buffer[100];
 			// not cross platform.
@@ -701,9 +701,9 @@ namespace cpl
 		{
 			std::promise<int> promise;
 			auto future = promise.get_future();
-			
+
 			// this pattern ensures the message box is called on the main thread, no matter what thread we're in.
-			
+
 			auto boxGenerator = [&]()
 			{
 				#ifdef CPL_WINDOWS
@@ -718,10 +718,10 @@ namespace cpl
 					auto iconStyle = (nStyle >> 8) & 0xFF;
 					auto buttonStyle = nStyle & 0xFF;
 					juce::AlertWindow::AlertIconType iconType;
-					switch(icon)
+					switch(iconStyle)
 					{
-					case iInfo: 
-						iconType = juce::AlertWindow::AlertIconType::InfoIcon; 
+					case iInfo:
+						iconType = juce::AlertWindow::AlertIconType::InfoIcon;
 						break;
 					case iWarning:
 					case iStop:
@@ -730,7 +730,7 @@ namespace cpl
 					case iQuestion:
 						iconType = juce::AlertWindow::AlertIconType::QuestionIcon;
 						break;
-					default: 
+					default:
 						iconType = juce::AlertWindow::AlertIconType::NoIcon;
 						break;
 					}
@@ -738,17 +738,20 @@ namespace cpl
 					switch(buttonStyle)
 					{
 						case MsgStyle::sOk:
-							juce::NativeMessageBox::showMessageBox(iconType, title, text, nullptr);
+                        {
+                            juce::NativeMessageBox::showMessageBox(iconType, title, text, nullptr);
 							ret = MsgButton::bOk;
 							break;
+                        }
 						case MsgStyle::sYesNo:
-							bool result = juce::NativeMessageBox::showOkCancelBox(iconType, title, text, nullptr, nullptr);
+                        {
+                            bool result = juce::NativeMessageBox::showOkCancelBox(iconType, title, text, nullptr, nullptr);
 							ret = result ? MsgButton::bYes : MsgButton::bNo;
 							break;
-					
+                        }
 						case sYesNoCancel:
 						case sConTryCancel:
-
+                        {
 							int result = juce::NativeMessageBox::showYesNoCancelBox(iconType, title, text, nullptr, nullptr);
 							if(result == 0)
 								ret = MsgButton::bCancel;
@@ -757,17 +760,17 @@ namespace cpl
 							else
 								ret = MsgButton::bNo;
 							break;
-
+                        }
 					}
 				#else
 					#error "Implement a similar messagebox for your target"
 				#endif
-				
+
 				promise.set_value(ret);
 			};
-			
+
 #ifdef CPL_JUCE
-			
+
 			if(juce::MessageManager::getInstance()->isThisTheMessageThread())
 			{
 				boxGenerator();
@@ -811,9 +814,9 @@ namespace cpl
 			std::string text;
 			int nStyle;
 			void * systemWindow;
-			MsgBoxData(const char * title, const char * text, int style, void * window = NULL) 
+			MsgBoxData(const char * title, const char * text, int style, void * window = NULL)
 				: title(title), text(text), nStyle(style), systemWindow(window) {} ;
-			MsgBoxData(const std::string & title, const std::string & text, int style, void * window = NULL) 
+			MsgBoxData(const std::string & title, const std::string & text, int style, void * window = NULL)
 				: title(title), text(text), nStyle(style), systemWindow(window) {} ;
 		};
 
@@ -859,7 +862,7 @@ namespace cpl
 					which gets shown when a global, static RenderMsgBoxes() function
 					is called from a gui loop
 				*/
-				 
+
 				CThread msgThread(ThreadedMessageBox);
 				msgThread.run(new MsgBoxData(title, text, nStyle));
 				return 0;

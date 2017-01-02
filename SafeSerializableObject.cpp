@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:SafeSerializableObject.h
- 
+
 		Implementation of SafeSerializableObject.h
 
 *************************************************************************************/
@@ -30,7 +30,7 @@
 #include "SafeSerializableObject.h"
 #include "Protected.h"
 #ifdef CPL_JUCE
-#include "gui/gui.h"
+    #include "gui/GUI.h"
 #endif
 namespace cpl
 {
@@ -47,7 +47,7 @@ namespace cpl
 		{
 			// this should really not throw, but oh well!
 			CProtected::instance().runProtectedCode(
-				[&]() 
+				[&]()
 				{
 					serialize(ar, version);
 				}
@@ -154,7 +154,7 @@ namespace cpl
 		CSerializer::Builder safeState;
 		serializeObject(safeState, version);
 
-		const std::string versionComparison = "This software is version " + std::to_string(programInfo.version) 
+		const std::string versionComparison = "This software is version " + std::to_string(programInfo.version)
 			+ ", while the serialized data is from version " + std::to_string(version) + ".\n";
 
 		const std::string options = versionComparison + "Do you want to propagate the error, "

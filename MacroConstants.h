@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:MacroConstants.h
-	
+
 		Definitions for lots of different macroes, used throughout the program.
 		Detects OS and architechture.
 		Solves incompabilities.
@@ -82,7 +82,7 @@
 	// #define cwarn(text) message("[" __FILE__ "] (" CPL__tostring(__LINE__) ") -> " __FUNCTION__ ": " text)
 
 	// an 'operator' that retrieves the unqualified type of the expression x
-	// useful when you want to create a lvalue-type from any expression 
+	// useful when you want to create a lvalue-type from any expression
 	#define unq_typeof(x) typename std::remove_cv<typename std::remove_reference<decltype(x)>::type>::type
 	#define val_typeof(x) std::remove_cv<typename std::remove_reference<decltype(x)>::type>::type
 
@@ -134,7 +134,7 @@
 
 	#define CPL_DIRC_COMP(x) ((x) == '\\' || (x) == '/')
 
-	#if defined(_MSC_VER) 
+	#if defined(_MSC_VER)
 
 		// cross-platform size_t specifier for printf-families
 		#define CPL_FMT_SZT "%Iu"
@@ -162,7 +162,7 @@
 			#pragma warning(disable:4351) // member array default initialization
 			#pragma warning(disable:4706) // assignment within conditional expression
 			#pragma warning(disable:4324) // structure was deliberately padded
-			#pragma warning(disable:4512) // assignment-operator could not be generated. 
+			#pragma warning(disable:4512) // assignment-operator could not be generated.
 			// declaration hides something else in enclosing scope:
 			#pragma warning(disable:4458)
 			#pragma warning(disable:4457)
@@ -179,7 +179,7 @@
 		#define CPL_llvm_DummyNoExcept
 
 		#if _MSC_VER >= 1900
-			#define CPL_ALIGNAS(x) alignas(x)		
+			#define CPL_ALIGNAS(x) alignas(x)
 			#define CPL_THREAD_LOCAL thread_local
 		#else
 			#define CPL_ALIGNAS(x) __declspec(align(x))
@@ -214,7 +214,7 @@
 		#if 1
 			#define __CPP11__
 		#endif
-		#define __LLVM__	
+		#define __LLVM__
 		#define CPL_CLANG
 		#ifndef CPL_ALL_WARNINGS
 			#pragma clang diagnostic ignored "-Wreorder"
@@ -269,7 +269,7 @@
 		#ifndef __AVX2__
 			#define __AVX2__
 		#endif
-		
+
 		#define cwarn(exp) ("warning: " exp)
 
 		#if __clang_major__ > 7 && !defined(__apple_build_version__)
@@ -286,11 +286,22 @@
 
 	#elif defined(__GNUG__)
 
-		#if __GNUG__ < 5
+        #define __cdecl
+
+        #if __GNUG__ > 6
+            #define CPL_COMPILER_SUPPORTS_AVX
+		#elif __GNUG__ < 5
 			#error "GCC version must be >= 5"
 		#endif
 		// cross-platform size_t specifier for printf-families
 		#define CPL_FMT_SZT "%zu"
+
+		#ifndef CPL_ALL_WARNINGS
+			#pragma GCC diagnostic ignored "-Wreorder"
+			#pragma GCC diagnostic ignored "-Wswitch"
+            #pragma GCC diagnostic ignored "-Wunused-value"
+            #pragma GCC diagnostic ignored "-Wparentheses"
+		#endif
 
 		#define __CPP11__
 		#define __C11__
@@ -308,13 +319,13 @@
 		#define __GCC__
 		#define CPL_llvm_DummyNoExcept
 		#define CPL_GCC
-		#define CPL_VECTOR_TARGET
-		#define CPL_COMPILER_SUPPORTS_AVX
+		#define CPL_VECTOR_TARGET __attribute__((target("avx")))
+
 
 	#else
 		#error "Compiler not supported."
 	#endif
-		
+
 	#if defined(__LLVM__) || defined(__GCC__)
 		// sets a standard for packing structs.
 		// this is enforced on msvc by using #pragma pack()
@@ -329,7 +340,7 @@
 	#ifdef CPL_REMOVE_CWARN
 		#undef cwarn
 
-		#define cwarn(x) 
+		#define cwarn(x)
 	#endif
 
 	#ifndef MAX_PATH

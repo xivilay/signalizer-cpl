@@ -1,28 +1,28 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
-	 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
-	 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
-	 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
 
 	file:Misc.h
-	
+
 		Whatever doesn't fit other places, globals.
 		Helper classes.
 		Global functions.
@@ -60,13 +60,13 @@
 				f(enum_cast<Enum>(i));
 		}
 
-		namespace Misc 
+		namespace Misc
 		{
 			std::string ExecCommand(const std::string & arg);
 			std::string GetTime ();
 			std::string GetDate();
 			std::string DemangleRawName(const std::string & name);
-					
+
 			template<class T>
 				std::string DemangledTypeName(const T & object)
 				{
@@ -108,7 +108,7 @@
 			Types::OSError GetLastOSError();
 			Types::tstring GetLastOSErrorMessage();
 			Types::tstring GetLastOSErrorMessage(Types::OSError errorToPrint);
-			
+
 			/// <summary>
 			/// Consumes any key from the console, without requiring enter to be hit.
 			/// </summary>
@@ -137,19 +137,19 @@
 							if(alignment <= 16)
 								return reinterpret_cast<Type *>(std::malloc(numObjects * sizeof(Type)));
 						#endif
-					
+
 						void *mem = malloc( size + (alignment-1) + sizeof(void*) );
-						
+
 						char *amem = ((char*)mem) + sizeof(void*);
 						amem += (alignment - ((uintptr_t)amem & (alignment - 1)) & (alignment - 1));
-						
+
 						((void**)amem)[-1] = mem;
 						ptr = amem;
 					#endif
-					
+
 					return reinterpret_cast<Type * >(ptr);
 				}
-			
+
 			/// <summary>
 			/// Returns uninitialized memory aligned to alignment boundary.
 			/// Has same behaviour as std::realloc. Alignment between calls
@@ -173,7 +173,7 @@
 							old_offs,
 							offs = alignment - 1 + sizeof(void*),
 							n = sizeof(Type) * numObjects;
-					
+
 						if (ptr != nullptr)
 						{
 							base = *(((void**)ptr)-1);
@@ -193,10 +193,10 @@
 						}
 						*(p2-1) = p1;
 						return reinterpret_cast<Type *>(p2);
-					
+
 					#endif
 				}
-			
+
 			/// <summary>
 			/// Returns uninitialized memory aligned to alignment boundary.
 			/// Has same behaviour as std::malloc
@@ -208,20 +208,20 @@
 					ptr = _aligned_malloc(size, alignment);
 				#else
 					// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
-					
-					
+
+
 					void *mem = malloc( size + (alignment-1) + sizeof(void*) );
-					
+
 					char *amem = ((char*)mem) + sizeof(void*);
-					amem += (alignment - ((uintptr_t)amem & (alignment - 1)) & (alignment - 1));
-					
+					amem += ((alignment - ((uintptr_t)amem & (alignment - 1))) & (alignment - 1));
+
 					((void**)amem)[-1] = mem;
 					ptr = amem;;
 				#endif
-				
+
 				return reinterpret_cast<void *>(ptr);
 			}
-			
+
 			template<class Type>
 				void alignedFree(Type & obj)
 				{
@@ -272,7 +272,7 @@
 					return info.c_str();
 				}
 			};
-						
+
 			enum MsgButton : int
 			{
 				#ifdef CPL_WINDOWS
@@ -281,7 +281,7 @@
 					bRetry = IDRETRY,
 					bTryAgain = IDTRYAGAIN,
 					bContinue = IDCONTINUE,
-					bCancel = IDCANCEL, 
+					bCancel = IDCANCEL,
 					bError = -1
 				#elif defined(CPL_MAC)
 					bError = -1,
@@ -347,12 +347,12 @@
 				#endif
 			};
 
-			int MsgBox(	const std::string & text, 
-						const std::string & title = "", 
-						int nStyle = MsgStyle::sOk, 
-						void * parent = NULL, 
+			int MsgBox(	const std::string & text,
+						const std::string & title = "",
+						int nStyle = MsgStyle::sOk,
+						void * parent = NULL,
 						const bool bBlocking = true);
-			
+
 
 			/// <summary>
 			/// Waits on some boolean flag to become false. Be careful with using this in case of deadlocks.
@@ -360,7 +360,7 @@
 			/// <param name="ms"></param>
 			/// <param name="bVal"></param>
 			/// <returns></returns>
-			template<typename T> 
+			template<typename T>
 				bool SpinLock(unsigned int ms, T & bVal) {
 					unsigned start;
 					int ret;
@@ -378,10 +378,10 @@
 				time_out:
 					// TODO: refactor to separate file.. so we access the name of the program without cyclic dependencies.
 					ret = MsgBox("Deadlock detected in spinlock: Protected resource is not released after max interval. "
-							"Wait again (try again), release resource (continue) - can create async issues - or exit (cancel)?", 
+							"Wait again (try again), release resource (continue) - can create async issues - or exit (cancel)?",
 								 "cpl sync error!",
 							sConTryCancel | iStop);
-					switch(ret) 
+					switch(ret)
 					{
 					case MsgButton::bTryAgain:
 						goto loop;
@@ -398,15 +398,15 @@
 
 			/// <summary>
 			/// Waits on the functor to return true for at least ms miliseconds.
-			/// If condition has not returned true yet, it prompts the user to 
+			/// If condition has not returned true yet, it prompts the user to
 			/// either continue anyway, wait some more, or exit the application.
 			/// </summary>
 			/// <param name="ms">How many miliseconds to wait</param>
 			/// <param name="cond">Functor returning true if condition is met</param>
 			/// <param name="delay">Optional delay between invocations (0, default, will yield the thread)</param>
 			/// <returns>True if functor returned true, false if user chose to continue anyway.</returns>
-			template<typename Condition, bool presentUserOption = true> 
-				bool WaitOnCondition(unsigned int ms, Condition cond, unsigned int delay = 0) 
+			template<typename Condition, bool presentUserOption = true>
+				bool WaitOnCondition(unsigned int ms, Condition cond, unsigned int delay = 0)
 				{
 					unsigned start;
 					int ret;
@@ -427,10 +427,10 @@
 						return false;
 					}
 					ret = MsgBox("Deadlock detected in conditional wait: Protected resource is not released after max interval. "
-							"Wait again (try again, breaks if debugged), continue anyway (continue) - can create async issues - or exit (cancel)?", 
-							"cpl conditional wait error!", 
+							"Wait again (try again, breaks if debugged), continue anyway (continue) - can create async issues - or exit (cancel)?",
+							"cpl conditional wait error!",
 							sConTryCancel | iStop);
-					switch(ret) 
+					switch(ret)
 					{
 					case MsgButton::bTryAgain:
 						CPL_BREAKIFDEBUGGED();
@@ -486,7 +486,7 @@
 						std::abort(); \
 					else \
 						throw exceptionT(message); \
-				} while(0) 
+				} while(0)
 
 
 			#define CPL_RUNTIME_EXCEPTION(msg) \

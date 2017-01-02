@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:Protected.h
-	
+
 		Defines a wrapper call that catches system-level exceptions through a platform
 		independant interface.
 
@@ -95,9 +95,9 @@
 			/// <summary>
 			/// calls lambda inside 'safe wrappers', catches OS errors and filters them.
 			/// Throws CSystemException on errors, crashes on unrecoverable errors.
-			/// 
+			///
 			/// Does NOT catch software exceptions.
-			/// 
+			///
 			/// Note that the stack may NOT be unwound (it wouldn't be anyway if we caught any exception),
 			/// so consider your program to be in an UNDEFINED state; write some info to a file and crash gracefully
 			/// afterwards!
@@ -115,7 +115,7 @@
 						CSystemException::eStorage exceptionData;
 
 						__try {
-							
+
 						//	CPL_BREAKIFDEBUGGED();
 							function();
 						}
@@ -144,15 +144,15 @@
 
 					#endif
 					/*
-					 
+
 						This is the ideal code.
 						Unfortunately, to succesfully throw from a signal handler,
 						there must not be any non-c++ stackframes in between.
 						If, the exception will be uncaught even though we have this handler
-						lower down on the stack. Therefore, we have to implement the 
+						lower down on the stack. Therefore, we have to implement the
 						exception system using longjmps
-					
-					 
+
+
 						try {
 							// <-- breakpoint disables SIGBUS
 							CPL_BREAKIFDEBUGGED();
@@ -167,7 +167,7 @@
 						{
 							Misc::MsgBox("Unknown exception thrown, breakpoint is triggered afterwards");
 							CPL_BREAKIFDEBUGGED();
-						
+
 						}
 					 */
 					threadData.isInStack = false;
@@ -199,7 +199,7 @@
 						scopeRelease
 					);
 
-					// in this frame we catch signals and SEH exceptions. 
+					// in this frame we catch signals and SEH exceptions.
 					#ifdef CPL_MSVC
 						return internalSEHTraceInterceptor(debugOutput, function);
 					#else
@@ -247,7 +247,7 @@
 			{
 			public:
 				// this is kinda ugly, but needed to create a simple interface, abstract to seh and signals
-				
+
 				// the retarted create() pattern is used because clang STILL doesn't support thread_local,
 				// thus we must use __thread, which DOESN'T support non-trivial destruction (implied by use of constructors).
 				// TODO: fix the upper messages.
@@ -289,7 +289,7 @@
 						finexact = EXCEPTION_FLT_INEXACT_RESULT,
 						foverflow = EXCEPTION_FLT_OVERFLOW,
 						funderflow = EXCEPTION_FLT_UNDERFLOW
-					#elif defined(CPL_MAC)
+					#elif defined(CPL_MAC) || defined(CPL_UNIXC)
 						access_violation = SIGSEGV,
 						intdiv_zero,
 						fdiv_zero,
@@ -304,7 +304,7 @@
 				};
 				CSystemException()
 				{
-					
+
 				}
 
 				CSystemException(const eStorage & eData)
@@ -337,7 +337,7 @@
 
 
 		private:
-			
+
 			template <class func>
 				auto internalCxxTraceInterceptor(PreembeddedFormatter & out, func && function)
 					-> decltype(function())
@@ -377,7 +377,7 @@
 					-> decltype(function())
 				{
 
-					#ifdef CPL_MSVC					
+					#ifdef CPL_MSVC
 					CSystemException::eStorage exceptionInformation;
 						__try
 						{
@@ -403,10 +403,10 @@
 					volatile int signalReferenceCount;
 					CMutex::Lockable signalLock;
 				#endif
-			 
+
 			 } staticData;
-			 
-			 
+
+
 			static CPL_THREAD_LOCAL struct ThreadData
 			{
 				/// <summary>

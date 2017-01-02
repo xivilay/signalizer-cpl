@@ -37,7 +37,14 @@ namespace cpl
 {
 	namespace rendering
 	{
-		// please contribute!!!
+
+		// TODO: implement this
+		bool GetScreenOrientation(const std::pair<int, int> & pos, double & degrees)
+		{
+			degrees = 0;
+			return true;
+		}
+
 
 	}; // {} rendering
 }; // {} cpl

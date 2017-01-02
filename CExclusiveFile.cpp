@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
 
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
-	 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
-	 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:CExclusiveFile.cpp
-	 
+
 		Implementation of CExclusiveFile class.
- 
+
 *************************************************************************************/
 
 #include "CExclusiveFile.h"
@@ -103,10 +103,10 @@ namespace cpl
 		#elif defined(CPL_UNIXC)
 			int openMask = m & mode::writeMode ? O_WRONLY | O_CREAT : O_RDONLY;
 			openMask |= m & mode::append ? O_APPEND : m & mode::writeMode ? O_TRUNC : 0;
-		
+
 			auto start = Misc::QuickTime();
 			auto lockGranted = 0;
-		
+
 			// TODO: refactor using open_excl on linux and O_EXLOCK on BSD
 			do
 			{
@@ -131,20 +131,20 @@ namespace cpl
 				int mask = waitForLock ? 0 : LOCK_NB;
 				mask |= LOCK_EX;
 				lockGranted = ::flock(handle, mask);
-				
+
 				if(lockGranted == 0)
 					break;
 				else
 					::close(handle);
-				
+
 				// timed out.
 				if (Misc::QuickTime() > start + 2000)
 					return false;
-				
+
 				Misc::Delay(10); // yield to other threads.
-				
+
 			} while (waitForLock);
-		
+
 			// could not obtain lock on file, file is opened in another instance
 			if (lockGranted == 0)
 			{
@@ -172,7 +172,7 @@ namespace cpl
 				fseek(handle, oldPos, SEEK_SET);
 				return size;
 			}
-		
+
 		#elif defined(CPL_WINDOWS)
 			if (isOpen)
 			{

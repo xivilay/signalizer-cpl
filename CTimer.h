@@ -20,9 +20,9 @@
 	See \licenses\ for additional details on licenses associated with this program.
 
 **************************************************************************************
- 
+
 	file:CTimer.h
-	
+
 		Class that measures time spend between events in clocks and walltime.
 
 *************************************************************************************/
@@ -32,7 +32,7 @@
 
 	#include "Utility.h"
 	#include "Misc.h"
-	#include "mathext.h"
+	#include "Mathext.h"
 	#include <cstdint>
 	#include <vector>
 	#include <ostream>
@@ -198,7 +198,7 @@
 					cpl::Math::round<time_object>((timeFilter.getAverage() + timeCold) / 2)
 				);
 			}
-			
+
 			template<class ClockObj, class TimeObj>
 				class basic_time_event
 				{
@@ -244,7 +244,7 @@
 						return *this;
 					}
 
-					basic_time_event reference() const 
+					basic_time_event reference() const
 					{
 						if (ref)
 						{
@@ -253,7 +253,7 @@
 						else
 							return *this;
 					}
-					basic_time_event reference(const basic_time_event & other) const 
+					basic_time_event reference(const basic_time_event & other) const
 					{
 						return basic_time_event(clocks - other.clocks, time - other.time);
 					}

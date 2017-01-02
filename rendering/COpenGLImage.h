@@ -1,28 +1,28 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
  **************************************************************************************
- 
+
 	file:SubpixelRendering.h
- 
+
 		Utilities and types needed for rendering subpixel graphics.
 
  *************************************************************************************/
@@ -49,7 +49,7 @@
 
 				class OpenGLImageDrawer : public COpenGLStack::Rasterizer
 				{
-					
+
 				public:
 
 					OpenGLImageDrawer(COpenGLImage & img, COpenGLStack & s)
@@ -127,7 +127,7 @@
 				};
 
 				COpenGLImage()
-				: 
+				:
 					preserveAcrossContexts(false), height(), width(), textureHeight(), textureWidth(), textureID(),
 					fillColour(juce::Colours::black)
 				{
@@ -149,7 +149,7 @@
 						return false;
 
 					/*if (!internalResize(oldContents.getWidth(), oldContents.getHeight()))
-						return false;*/
+						return false;
 
 					const bool flip = true;
 					const bool offset = false;
@@ -159,9 +159,9 @@
 						g.setOpacity(1.0f);
 						g.fillAll(Colours::blue);
 						// copy and rescale the subsection onto the new image
-						
-						g.drawImage(oldContents, 
-							0, offset ? textureHeight - height : 0, width, height, 
+
+						g.drawImage(oldContents,
+							0, offset ? textureHeight - height : 0, width, height,
 							0, 0, oldContents.getWidth(), oldContents.getHeight());
 					}*/
 
@@ -242,7 +242,7 @@
 
 
 
-				
+
 				/// <summary>
 				/// 'Zooms' in/out vertically. Needs the active context.
 				/// </summary>
@@ -251,7 +251,7 @@
 					if (!transferToMemory())
 						return false;
 
-					
+
 					float upscale = std::min(1.0f, amount);
 					float downscale = std::max(1.0f, amount);
 					float destHeight = height * upscale;
@@ -263,7 +263,7 @@
 					{
 						juce::Graphics g(upload);
 						g.fillAll(fillColour);
-						g.drawImage(currentContents, 
+						g.drawImage(currentContents,
 							0, static_cast<int>(destY), static_cast<int>(width), static_cast<int>(destHeight),
 							0, static_cast<int>(sourceY), static_cast<int>(width), static_cast<int>(sourceHeight),
 							false);
@@ -303,9 +303,9 @@
 						g.setImageResamplingQuality(juce::Graphics::ResamplingQuality::mediumResamplingQuality);
 						g.setOpacity(1.0f);
 						g.fillAll(fillColour);
-						g.drawImage(currentContents, 
-							0, r(destTop), r(width), r(destHeight), 
-							0, r(sourceTop), r(width), r(sourceHeight), 
+						g.drawImage(currentContents,
+							0, r(destTop), r(width), r(destHeight),
+							0, r(sourceTop), r(width), r(sourceHeight),
 							false);
 					}
 
@@ -359,7 +359,7 @@
 
 				/// <summary>
 				/// Copies the array of RGB pixels as unsigned bytes into the x-specified column of the texture.
-				/// The input vector shall support []-operator with contigous access, and must have a length of 
+				/// The input vector shall support []-operator with contigous access, and must have a length of
 				/// height() * 3 unsigned chars.
 				/// </summary>
 				template<typename PixelVector, bool doBind = true>
@@ -480,7 +480,7 @@
 						juce::Image::BitmapData data(offloaded, juce::Image::BitmapData::readWrite);
 
 						CPL_DEBUGCHECKGL();
-						
+
 						//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 						Texture::Copy2DTextureToMemory(textureID, data.data, textureWidth * textureHeight, oglFormat, GL_UNSIGNED_BYTE);

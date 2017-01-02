@@ -56,11 +56,11 @@
 	{
 		class CThread
 		{
-			typedef void * (__cdecl * func_sig)(void*);
+			typedef void * (*func_sig)(void*);
 			typedef std::uint32_t winret;
 			Thread_t thread;
 			func_sig func;
-			
+
 			struct args
 			{
 				args(func_sig a1, void * a2)
@@ -68,13 +68,13 @@
 				func_sig addr;
 				void * arg;
 			};
-			
+
 		public:
 			CThread(func_sig functionAddress)
 				:	thread(NULL), func(functionAddress)
 			{
-				
-				
+
+
 			}
 			~CThread()
 			{
@@ -137,7 +137,7 @@
 					#endif
 					thread = NULL;
 				}
-				
+
 			}
 			int run(void * argument = NULL)
 			{
@@ -156,7 +156,7 @@
 						result = GetLastError();
 				#else
 					result = pthread_create(&thread, NULL, posix_target, reinterpret_cast<void*>(func_args));
-				
+
 				#endif
 				return result;
 			}
