@@ -134,8 +134,9 @@
 
 						#ifdef CPL_MAC
 							// all allocations on OS X are aligned to 16-byte boundaries
-							if(alignment <= 16)
-								return reinterpret_cast<Type *>(std::malloc(numObjects * sizeof(Type)));
+							// NOTE: removed, as alignedFree doesn't account for this
+							// if(alignment <= 16)
+							//	return reinterpret_cast<Type *>(std::malloc(numObjects * sizeof(Type)));
 						#endif
 
 						void *mem = malloc( size + (alignment-1) + sizeof(void*) );
@@ -164,8 +165,9 @@
 					#else
 						#ifdef CPL_MAC
 							// all allocations on OS X are aligned to 16-byte boundaries
-							if(alignment <= 16)
-								return reinterpret_cast<Type *>(std::realloc(ptr, numObjects * sizeof(Type)));
+							// NOTE: removed, as alignedFree doesn't account for this
+							//if(alignment <= 16)
+							//	return reinterpret_cast<Type *>(std::realloc(ptr, numObjects * sizeof(Type)));
 						#endif
 						// https://github.com/numpy/numpy/issues/5312
 						void *p1, **p2, *base;
@@ -389,7 +391,7 @@
 						bVal = !bVal; // flipping val, and it's a reference so should release resource.
 						return false;
 					case MsgButton::bCancel:
-	#pragma message cwarn("Find a more gentle way to exit...")
+                        //TODO: Maybe find a better way to exit?
 						exit(-1);
 					}
 					// not needed (except for warns)

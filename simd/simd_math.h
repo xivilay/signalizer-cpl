@@ -958,8 +958,6 @@
 				sincos(V x, V * s, V * c)
 		{
 
-			//typedef v4sf V;
-			typedef typename scalar_of<V>::type Ty;
 			using consts = cpl::simd::consts<V>;
 
 			auto const elements = elements_of<V>::value;
@@ -1074,8 +1072,6 @@
 				sincos(V x, V * s, V * c)
 			{
 
-				//typedef v4sf V;
-				typedef typename scalar_of<V>::type Ty;
 				typedef v4sf VFloat;
 				using VConsts = cpl::simd::consts<V>;
 

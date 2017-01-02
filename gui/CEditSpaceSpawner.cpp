@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CEditSpaceSpawner.cpp
- 
+
 		Implementation of CEditSpaceSpawner.h
 
 *************************************************************************************/
@@ -31,7 +31,7 @@
 
 namespace cpl
 {
-	
+
 	CEditSpaceSpawner::CEditSpaceSpawner(juce::Component & parentToControl)
 		: parent(parentToControl), recursionEdit(false)
 	{
@@ -40,7 +40,7 @@ namespace cpl
 		dialog.setOpaque(true);
 		dialog.addToDesktop(juce::ComponentPeer::StyleFlags::windowHasDropShadow);
 		dialog.setVisible(false);
-		
+
 	}
 
 	CEditSpaceSpawner::~CEditSpaceSpawner()
@@ -73,7 +73,7 @@ namespace cpl
 
 			recursionEdit = true;
 
-			dialog.setBounds(topleft.getX(), topleft.getY() + bounds.getHeight(), 
+			dialog.setBounds(topleft.getX(), topleft.getY() + bounds.getHeight(),
 				currentEditSpace->getWidth(), currentEditSpace->getHeight());
 		}
 	}
@@ -113,7 +113,7 @@ namespace cpl
 
 			if (auto parentComponent = e.eventComponent->getParentComponent())
 			{
-				if (auto editspace = dynamic_cast<cpl::CCtrlEditSpace *>(parentComponent))
+				if (dynamic_cast<cpl::CCtrlEditSpace *>(parentComponent))
 				{
 					return;
 				}

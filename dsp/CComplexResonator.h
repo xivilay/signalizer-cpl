@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CComplexResonator.h
-		
+
 		A complex resonator system... More to come.
 
 *************************************************************************************/
@@ -70,11 +70,11 @@
 				{
 					minWindowSize = std::min(minSize, maxSize);
 					maxWindowSize = std::max(minSize, maxSize);
-					
+
 				}
 
 				/// <summary>
-				/// Normally, the Q of the resonators are restricted using setWindowSize(), 
+				/// Normally, the Q of the resonators are restricted using setWindowSize(),
 				/// however this restriction can be toggled off (such that the resolution wont be capped).
 				/// Safe and wait-free from any thread.
 				/// </summary>
@@ -230,7 +230,7 @@
 
 						std::size_t v = 0;
 						std::size_t off = 0;
-						// truncate window, 
+						// truncate window,
 						if (extent > numVectors)
 						{
 							auto diff = extent - numVectors;
@@ -310,7 +310,7 @@
 						std::size_t vC = nR * 2; // space filled by a vector buf
 						std::size_t sC = vC * numVectors; // space filled by all vector bufs
 
-						// truncate window, 
+						// truncate window,
 						if (extent > numVectors)
 						{
 							auto diff = extent - numVectors;
@@ -371,7 +371,7 @@
 				/// A vector of size vSize of T. It is expected to be sorted.
 				/// </param>
 				/// <param name="vectors">
-				/// Increases the amount of adjacent vectors around a single frequency, linearly spaced 
+				/// Increases the amount of adjacent vectors around a single frequency, linearly spaced
 				/// as fc +/- bw * v.
 				/// This directly affects computation speed linearly, however more vectors give support
 				/// for computing more exotic window functions in the time domain.
@@ -391,7 +391,7 @@
 					std::size_t nR = numResonators;
 					std::size_t vC = nR * 2; // space filled by a vector buf
 					std::size_t sC = vC * numVectors; // space filled by all vector bufs
-					
+
 					std::size_t k = 0;
 					if (vSize == 1)
 					{
@@ -405,7 +405,7 @@
 						//	imagCoeff[z][i] = coeffs.c[0].imag();
 							if (newData)
 							{
-								for (int c = 0; c < numChannels; ++c)
+								for (std::size_t c = 0; c < numChannels; ++c)
 								{
 									state[sC * c + v * vC + nR * real] = 0;
 									state[sC * c + v * vC + nR * imag] = 0;
@@ -420,7 +420,7 @@
 
 						//auto const Bq = (3 / qDBs) * M_E/12.0;
 						auto const freeQ = qIsFree.load(std::memory_order_relaxed);
-                        
+
 						for (k = 0; k < vSize; ++k)
 						{
 
@@ -442,7 +442,7 @@
 
 							for (std::size_t v = 0; v < numVectors; ++v)
 							{
-								// so basically, for doing frequency-domain windowing using DFT-coefficients of the windows, we need filters that are linearly 
+								// so basically, for doing frequency-domain windowing using DFT-coefficients of the windows, we need filters that are linearly
 								// spaced around the frequency like the FFT. DFT bins are spaced linearly like 0.5 / N.
 								auto const omega = (2 * M_PI * (mappedHz[k] + Math::mapAroundZero<Scalar>(v, numVectors) * hDiff * 0.5)) / sampleRate;
 
@@ -480,7 +480,7 @@
 
 
 				/// <summary>
-				/// Increases the amount of adjacent vectors around a single frequency, linearly spaced 
+				/// Increases the amount of adjacent vectors around a single frequency, linearly spaced
 				/// as fc +/- bw * v.
 				/// This directly affects computation speed linearly, however more vectors give support
 				/// for computing more exotic window functions in the time domain.
@@ -525,7 +525,7 @@
 
 						std::size_t vC = numResonators * 2;
 						std::size_t sC = vC * numVectors;
-						
+
 						state = buffer.data();
 						coeff = sC * numChannels + buffer.data();
 
@@ -568,8 +568,8 @@
 							{
 								audioInputs[c] = &data[c][0];
 
-								s_r[c][v] = load<V>(state + sC * c + v * vC + k + nR * real); 
-								s_i[c][v] = load<V>(state + sC * c + v * vC + k + nR * imag); 
+								s_r[c][v] = load<V>(state + sC * c + v * vC + k + nR * real);
+								s_i[c][v] = load<V>(state + sC * c + v * vC + k + nR * imag);
 							}
 						}
 						for (Types::fint_t sample = 0; sample < numSamples; ++sample)
@@ -807,7 +807,7 @@
 			};
 			template<typename T, std::size_t Channels>
 				T CComplexResonator<T, Channels>::resonatorScales[(std::size_t)WindowTypes::End];
-			
+
 			template<typename T, std::size_t Channels>
 				const std::size_t CComplexResonator<T, Channels>::numChannels;
 		};

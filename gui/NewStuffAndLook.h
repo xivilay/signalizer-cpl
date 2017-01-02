@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:NewStuffAndLook.h
- 
+
 		Classes and widgets enqueded for implementation
- 
+
 *************************************************************************************/
 
 #ifndef CPL_NEWSTUFFANDLOOK_H
@@ -333,7 +333,7 @@
 						g.fillRect(size * index, 0.f, (float)size - ((std::size_t)index == buttons.size() - 1 ? 0 : 1), (float)getHeight());
 						g.setColour(textColour);
 						g.drawFittedText(buttons[index].c_str(), textRectangle, juce::Justification::centredLeft, 1);
-						
+
 						g.setColour(GetColour(cpl::ColourEntry::Separator));
 						// vertical borders
 						g.drawVerticalLine(Math::round<int>(size * index + size), 0.0f, (float)getHeight());
@@ -344,10 +344,10 @@
 						g.setOpacity(0.8f);
 						else
 					g.setOpacity(0.6f);
-							
+
 					if (!isIndeterminateState)
 						g.fillPath(triangleVertices);
-					
+
 					return;
 
 					// draw horizontal lines.
@@ -380,7 +380,7 @@
 				setRepaintsOnMouseActivity(true);
 				mouseCoords[0] = mouseCoords[1] = 0;
 				colours[0] = Colours::grey;
-				
+
 				colours[1] = Colours::lightgrey;
 			}
 			void setOrientation(Type orientation)
@@ -471,7 +471,6 @@
 				mouseCoords[0] = e.x;
 				mouseCoords[1] = e.y;
 				auto currentHover = getMouseHoverButton();
-				auto const offset = cornerOffset * 1.5f;
 
 				if (currentHover == selectedIndex)
 				{
@@ -625,7 +624,7 @@
 				g.setColour(colours[isButtonDown].withMultipliedBrightness(1.f + isMouseOverButton * hoverBrightness));
 				g.fillPath(triangleVertices);
 			}
-			
+
 
 			void clicked() override
 			{
@@ -684,7 +683,7 @@
 					iconRectangle.setY(height * index + iconOffset);
 					bool isSelectedIndex = selectedIndex == index;
 
-					auto color = isSelectedIndex ? 
+					auto color = isSelectedIndex ?
 						cpl::GetColour(cpl::ColourEntry::Activated) : cpl::GetColour(cpl::ColourEntry::Deactivated);
 					Colour textColour = (isSelectedIndex ? cpl::GetColour(cpl::ColourEntry::SelectedText) : cpl::GetColour(cpl::ColourEntry::AuxillaryText));
 					// enhance brightness
@@ -696,7 +695,7 @@
 					double pos = double(index) / (buttons.size());
 					double nextPos = double(index + 1) / (buttons.size());
 					auto heightThisEntry = int(getHeight() * nextPos) - int(getHeight() * pos);
-					
+
 					g.setColour(color);
 					g.fillRect
 					(
@@ -792,7 +791,7 @@
 
 			void bSetValue(iCtrlPrec_t val, bool sync = false) override
 			{
-				setToggleState(val > 0.5, 
+				setToggleState(val > 0.5,
 					sync ? juce::NotificationType::sendNotificationSync : juce::NotificationType::sendNotification );
 			}
 
@@ -824,8 +823,8 @@
 				rsc.changeFillColour(cpl::GetColour(ColourEntry::SelectedText));
 
 				rsc.getDrawable()->drawWithin(
-					g, 
-					getBounds().withZeroOrigin().reduced(cornerOffset).toFloat(), 
+					g,
+					getBounds().withZeroOrigin().reduced(cornerOffset).toFloat(),
 					juce::RectanglePlacement::centred,
 					getToggleState() ? 1.0f : 0.5f
 				);

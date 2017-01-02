@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:Mathext.h
-	
+
 		Utility, roundings, scalings, extensions of standard math library.
 
 *************************************************************************************/
@@ -138,7 +138,7 @@
 			* Chebyshev polynomials, the routine requires one more
 			* addition per loop than evaluating a nested polynomial of
 			* the same degree.
-			
+
 				Cephes Math Library Release 2.0:  April, 1987
 				Copyright 1985, 1987 by Stephen L. Moshier
 			*/
@@ -154,7 +154,7 @@
 			///<summary>
 			/// Chebyshev coefficients for exp(-x) sqrt(x) I0(x)
 			/// in the inverted interval [8,infinity].
-			/// 
+			///
 			/// lim(x->inf){ exp(-x) sqrt(x) I0(x) } = 1/sqrt(2pi).
 			/// </summary>
 			extern double Chebyshev_B_Coeffs[];
@@ -243,9 +243,11 @@
 				{
 					return z * z * z;
 				}
-			namespace Complex
+
+            // insane GCC
+			/*namespace Complex
 			{
-				/*template<typename T>
+				template<typename T>
 					constexpr std::complex<T> operator"" i(T d)
 					{
 						return std::complex<T>{0.0L, d};
@@ -256,12 +258,11 @@
 				{
 					return{ 0, 1 };
 				}
-				*/
-			};
+			}; */
 
 			/*
 				Returns a coefficient which guarantees that:
-					1/e = 1 * expDecay(N)^N 
+					1/e = 1 * expDecay(N)^N
 
 				That is, your state will have fallen by 1/e after N repeated multiplications.
 				Equivalent to powerDecay(1/e, N)
@@ -285,11 +286,11 @@
 
 			/*
 				Implements the size*2-periodic triangular function, with a DC offset of size/2.
-				This can be used to wrap negatives into positive range again, and over-bounds 
+				This can be used to wrap negatives into positive range again, and over-bounds
 				back into range.
 			*/
 			template<typename Scalar>
-				inline typename std::enable_if<std::is_signed<Scalar>::value, Scalar>::type 
+				inline typename std::enable_if<std::is_signed<Scalar>::value, Scalar>::type
 					circularWrap(Scalar offset, Scalar size)
 				{
 					return std::abs(std::modulus<Scalar>()(offset + size, size * Scalar(2)) - size * Scalar(2));
@@ -310,7 +311,7 @@
 			}
 
 			/*
-				
+
 			*/
 			template<typename Scalar>
 				inline typename std::enable_if<std::is_signed<Scalar>::value, Scalar>::type
@@ -407,7 +408,7 @@
 						rms += error * error;
 					}
 					return sqrt(rms / (double)size);
-	
+
 				}
 
 			inline int fastabs(int x)
@@ -430,7 +431,7 @@
 				#endif
 				return y;
 			}
-			
+
 			inline float fastcosine(float x)
 			{
 				const float B = static_cast<float>(4 / M_PI);
@@ -448,7 +449,7 @@
 				return y;
 			}
 
-			
+
 			template<typename Scalar>
 				typename std::enable_if<std::is_floating_point<Scalar>::value, Scalar>::type
 					roundToNextMultiplier(Scalar x, Scalar mul)
@@ -461,7 +462,7 @@
 				nextPow2(Scalar x)
 				{
 					Scalar power = 2;
-					while (x >>= 1) 
+					while (x >>= 1)
 						power <<= 1;
 					return power;
 				}
@@ -470,11 +471,11 @@
 					lastPow2(Scalar x)
 				{
 					Scalar power = 1;
-					while (x >>= 1) 
+					while (x >>= 1)
 						power <<= 1;
 					return power;
 				}
-			
+
 			template<typename Scalar>
 				typename std::enable_if<std::is_integral<Scalar>::value, Scalar>::type
 					nextPow2Inc(Scalar x)
@@ -487,7 +488,7 @@
 
 
 			template<typename Scalar>
-				typename std::enable_if<std::is_integral<Scalar>::value && std::is_unsigned<Scalar>::value, bool>::type 
+				typename std::enable_if<std::is_integral<Scalar>::value && std::is_unsigned<Scalar>::value, bool>::type
 					isPow2(Scalar x)
 				{
 					return (x & (x - 1)) == 0;
@@ -515,7 +516,7 @@
 			template<typename Scalar, typename T1, typename T2>
 				inline Scalar confineTo(Scalar val, T1 _min, T2 _max)
 				{
-					return std::max<Scalar>(std::min<Scalar>(static_cast<Scalar>(val), 
+					return std::max<Scalar>(std::min<Scalar>(static_cast<Scalar>(val),
 						static_cast<Scalar>(_max)), static_cast<Scalar>(_min));
 				}
 
@@ -560,7 +561,7 @@
 				{
 					return static_cast<T2>(input - std::floor(input));
 				}
-			
+
 			template<typename T>
 				static inline T mod(T a, T b) noexcept
 				{
@@ -630,17 +631,17 @@
 				{
 					return absolute(x - y) < eps;
 				}
-			
+
 			template <typename ScalarTy>
 				class Matrix2DRotater
 				{
 					typedef ScalarTy Scalar;
 					double c, s;
-					
+
 				public:
 					Matrix2DRotater() : c(0), s(0) {};
 					void setRotation(double radians) { c = std::cos(radians); s = std::sin(radians); }
-					
+
 					inline void rotate(Scalar & x, Scalar & y)
 					{
 						auto xn = x * c - y * s;
@@ -648,7 +649,7 @@
 						x = xn;
 						y = yn;
 					}
-					
+
 					inline void rotate(Scalar xbuf[], Scalar ybuf[], std::size_t size)
 					{
 						// simd optimize this.
@@ -662,7 +663,7 @@
 							y = yn;
 						}
 					}
-					
+
 					inline static void rotate(Scalar & x, Scalar & y, double radians)
 					{
 						auto cosrol = std::cos(radians);
@@ -673,7 +674,7 @@
 						y = yn;
 					}
 				}; // Matrix2DRotater
-			
+
 
 
 			class UnityScale
@@ -702,7 +703,7 @@
 				template<typename Ty>
 					inline static Ty polyLog(Ty value, Ty _min, Ty _max)
 					{
-						return (-(value * value) + 2 * value) * (_max - _min) + _min; 
+						return (-(value * value) + 2 * value) * (_max - _min) + _min;
 					}
 				class Inv
 				{

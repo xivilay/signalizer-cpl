@@ -270,10 +270,11 @@ namespace cpl
 		 *********************************************************************************************/
 		int ObtainUniqueInstanceID()
 		{
-			int pID;
 			#if defined(CPL_WINDOWS)
+				int pID;
 				pID = GetProcessId(GetCurrentProcess());
-			#elif defined(CPL_MAC)
+			#elif defined(CPL_MAC) || defined(CPL_UNIXC)
+                pid_t pID;
 				pID = getpid();
 			#endif
 			if(instanceCount > std::numeric_limits<unsigned char>::max())

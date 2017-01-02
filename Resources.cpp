@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:Resources.cpp
- 
+
 		Implementation of Resources.h
 
 *************************************************************************************/
@@ -34,35 +34,35 @@ namespace cpl
 	std::atomic<CResourceManager *> CResourceManager::internalResourceInstance { nullptr };
 
 	/*********************************************************************************************
-	 
+
 	 CImage
-	 
+
 	 *********************************************************************************************/
 	CImage::CImage(const std::string & inPath)
 	: path(inPath)
 	{
-		
+
 	}
-	
+
 	CImage::CImage()
 	{
 	}
-	
+
 	void CImage::setPath(const std::string & inPath)
 	{
 		path = inPath;
-		
+
 	}
-	
+
 	bool CImage::load()
 	{
 		juce::File f(path);
-		
+
 		// handle scalable vector graphics
 		if (f.getFileExtension() == ".svg")
 		{
 			internalImage = juce::Image::null;
-			ScopedPointer<juce::XmlElement> element = juce::XmlDocument::parse(f);
+			juce::ScopedPointer<juce::XmlElement> element = juce::XmlDocument::parse(f);
 			if (element.get())
 			{
 				drawableImage = juce::Drawable::createFromSVG(*element);
@@ -96,27 +96,27 @@ namespace cpl
 		}
 		return false;
 	}
-	
+
 	juce::Image & CImage::getImage()
 	{
 		return internalImage;
-		
+
 	}
-	
+
 	juce::Drawable * CImage::getDrawable()
 	{
 		return drawableImage.get();
 	}
-	
+
 	CImage::~CImage()
 	{
 	}
 	/*********************************************************************************************
-	 
+
 	 CResourceManager
-	 
+
 	 *********************************************************************************************/
-	
+
 	CImage * CResourceManager::loadResource(const std::string & name)
 	{
 		auto it = resources.find(name);
@@ -140,12 +140,12 @@ namespace cpl
 
 		return &image;
 	}
-	
+
 	CResourceManager::CResourceManager()
 	{
 		defaultImage.load();
 	};
-	
+
 	CResourceManager::~CResourceManager()
 	{
 		internalResourceInstance = nullptr;
@@ -180,9 +180,9 @@ namespace cpl
 		}
 
 		return resource->getImage();
-		
+
 	}
-	
+
 	CResourceManager & CResourceManager::instance()
 	{
 		auto instance = internalResourceInstance.load(std::memory_order_acquire);

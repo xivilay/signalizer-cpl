@@ -20,11 +20,11 @@
 	See \licenses\ for additional details on licenses associated with this program.
 
 **************************************************************************************
- 
+
 	 file:Resources.h
-		
+
 		Manager for runtime resources, classes for wrapping them, etc.
-	
+
  *************************************************************************************/
 
 #ifndef CPL_RESOURCES_H
@@ -51,7 +51,7 @@
 		{
 			std::string path;
 			juce::Image internalImage;
-			juce::ScopedPointer<Drawable> drawableImage;
+			juce::ScopedPointer<juce::Drawable> drawableImage;
 
 		public:
 			CImage(const std::string & inPath);
@@ -149,7 +149,7 @@
 				{
 					juce::Image image(juce::Image::ARGB, size.getWidth(), size.getHeight(), true);
 					juce::Graphics g(image);
-					resource->replaceColour(Colours::black, colour);
+					resource->replaceColour(juce::Colours::black, colour);
 					resource->drawWithin(g, size.withPosition(0, 0).toFloat(), juce::RectanglePlacement::centred, opacity);
 					return image;
 				}
