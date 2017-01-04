@@ -95,6 +95,12 @@
 				}
 
 
+			// identity static_cast
+			template<typename Vdest>
+			CPL_SIMD_FUNC Vdest static_vector_cast(Vdest in)
+				{
+					return in;
+				}
 			/*
 				v8sf vector to v256i integer
 			*/
@@ -113,6 +119,13 @@
 					static_vector_cast(v4sf Vin)
 				{
 					return _mm_cvttps_epi32(Vin);
+				}
+
+			// identity reinterpret_cast
+			template<typename Vdest>
+				CPL_SIMD_FUNC Vdest reinterpret_vector_cast(Vdest in)
+				{
+					return in;
 				}
 
 			//////////////////////////////////////
