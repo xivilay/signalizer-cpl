@@ -319,8 +319,12 @@
 		#define __GCC__
 		#define CPL_llvm_DummyNoExcept
 		#define CPL_GCC
-		#define CPL_VECTOR_TARGET __attribute__((target("avx")))
 
+		#ifdef CPL_COMPILER_SUPPORTS_AVX
+            #define CPL_VECTOR_TARGET __attribute__((target("avx")))
+        #else
+            #define CPL_VECTOR_TARGET
+        #endif
 
 	#else
 		#error "Compiler not supported."

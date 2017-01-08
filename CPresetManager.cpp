@@ -34,7 +34,7 @@ namespace cpl
 {
 
 	auto presetDirectory = [] () { return cpl::Misc::DirectoryPath() + "/presets/"; };
-	
+
 
 	CPresetManager & CPresetManager::instance()
 	{
@@ -55,20 +55,26 @@ namespace cpl
 
 		std::string extension = uniqueExt.length() ? uniqueExt + "." + programInfo.programAbbr : programInfo.programAbbr;
 
-		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...", 
-			juce::File(presetDirectory()), "*." + extension);
+		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...",
+			juce::File(presetDirectory()),
+ #ifdef CPL_UNIXC
+             // native dialogs hangs programs on the distros I've tried
+             "*." + extension, false);
+#else
+            "*." + extension);
+#endif
 
 		if (fileChooser.browseForFileToSave(true))
 		{
 			auto result = fileChooser.getResult();
-			
+
 			juce::String dotExt = "." + extension;
-			
+
 			bool hasExt = false;
-			
+
 			juce::String tempString = result.getFullPathName();
 			juce::String finalString = tempString;
-			
+
 			// OS X handles multiple endings by duplicating them.. litterally.
 			// how nice.
 			while(tempString.endsWith(dotExt))
@@ -77,9 +83,9 @@ namespace cpl
 				finalString = tempString;
 				tempString = tempString.dropLastCharacters(dotExt.length());
 			}
-			
-			std::string path = 
-				hasExt ? 
+
+			std::string path =
+				hasExt ?
 					finalString.toStdString() :
 					result.withFileExtension(extension.c_str()).getFullPathName().toStdString();
 
@@ -113,6 +119,9 @@ namespace cpl
 			juce::File(presetDirectory()),
 #ifdef CPL_MAC
 									  "*." + programInfo.programAbbr); // it just doesn't work..
+#elif defined(CPL_UNIXC)
+                                    // native dialogs hangs programs on the distros I've tried
+									  "*." + extension, false);
 #else
 									  "*." + extension);
 #endif
@@ -169,7 +178,7 @@ namespace cpl
 	bool CPresetManager::savePreset(const std::string & path, const ISerializerSystem & archive, juce::File & location)
 	{
 		CExclusiveFile file;
-		
+
 		if (!file.open(path, file.writeMode))
 			return false;
 
@@ -226,7 +235,7 @@ namespace cpl
 		while (iter.next())
 		{
 			currentPresets.push_back(iter.getFile());
-			
+
 		}
 
 		return currentPresets;
@@ -254,7 +263,7 @@ namespace cpl
 			{
 				return false;
 			}
-			
+
 		}
 		return true;
 	}
