@@ -692,6 +692,18 @@
 					s.second.rewindWriter();
 			}
 			
+			template<typename T, typename D>
+				CSerializer & operator << (std::unique_ptr<T, D> & object)
+			{
+					static_assert(false, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+			}
+
+			template<typename T, typename D>
+				CSerializer & operator >> (std::unique_ptr<T, D> & object)
+				{
+					static_assert(false, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+				}
+
 			/// <summary>
 			/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
 			/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
