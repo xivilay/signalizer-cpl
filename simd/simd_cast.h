@@ -40,12 +40,6 @@
 		namespace simd
 		{
 			using namespace cpl::Types;
-
-			template<typename T>
-			struct delayed_error : std::false_type
-			{
-				
-			};
 			
 			template<typename Vto, typename Vfrom>
 				CPL_SIMD_FUNC typename std::enable_if<

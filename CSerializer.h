@@ -694,14 +694,14 @@
 			
 			template<typename T, typename D>
 				CSerializer & operator << (std::unique_ptr<T, D> & object)
-			{
-					static_assert(false, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
-			}
+				{
+					static_assert(delayed_error<T>::value, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+				}
 
 			template<typename T, typename D>
 				CSerializer & operator >> (std::unique_ptr<T, D> & object)
 				{
-					static_assert(false, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+					static_assert(delayed_error<T>::value, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
 				}
 
 			/// <summary>

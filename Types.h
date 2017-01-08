@@ -41,6 +41,13 @@
 
 	namespace cpl
 	{
+
+		template<typename T>
+		struct delayed_error : std::false_type
+		{
+
+		};
+
 		namespace Types
 		{
 			// the fastest possible integer of at least 32 bits
