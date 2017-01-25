@@ -38,6 +38,12 @@
 
 	#include "CDataBuffer.h"
 
+	#ifdef _DEBUG
+		#define NOEXCEPT_RELEASE
+	#else
+		#define NOEXCEPT_RELEASE noexcept
+	#endif
+
 	namespace cpl
 	{
 		template<typename T, std::size_t alignment>
@@ -208,7 +214,7 @@
 					/// <summary>
 					/// Wraps around size. Biased: index 0 = current head of buffer (not the cursor of it)
 					/// </summary>
-					inline const T & operator [] (std::size_t index) const noexcept
+					inline const T & operator [] (std::size_t index) const NOEXCEPT_RELEASE
 					{
 						// TODO: overflow checks.
 						#ifdef _DEBUG
@@ -218,7 +224,7 @@
 						return this->buffer[(cursor + index) % this->bsize];
 					}
 
-					inline T & nonconst(std::size_t index)
+					inline T & nonconst(std::size_t index) NOEXCEPT_RELEASE
 					{
 						#ifdef _DEBUG
 							if (index >= this->bsize)
@@ -242,7 +248,7 @@
 					/// <summary>
 					/// Does NOT wrap around size, unbiased: index 0 = buffer cursor
 					/// </summary>
-					inline const T & unbiasedDirectAccess(std::size_t index) const noexcept
+					inline const T & unbiasedDirectAccess(std::size_t index) const NOEXCEPT_RELEASE
 					{
 						#ifdef _DEBUG
 							if (index >= this->bsize)
