@@ -218,7 +218,7 @@
 					{
 						// TODO: overflow checks.
 						#ifdef _DEBUG
-							if (cursor + index > cursor)
+							if ((cursor + index) % this->bsize > cursor)
 								CPL_RUNTIME_EXCEPTION("Overflow error");
 						#endif
 						return this->buffer[(cursor + index) % this->bsize];
@@ -231,7 +231,7 @@
 								CPL_RUNTIME_EXCEPTION("Index out of bounds");
 						#endif
 						#ifdef _DEBUG
-							if (cursor + index > cursor)
+							if ((cursor + index) % this->bsize > cursor)
 								CPL_RUNTIME_EXCEPTION("Overflow error");
 						#endif
 						return this->buffer[(cursor + index) % this->bsize];
