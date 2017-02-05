@@ -216,9 +216,8 @@
 					/// </summary>
 					inline const T & operator [] (std::size_t index) const NOEXCEPT_RELEASE
 					{
-						// TODO: overflow checks.
 						#ifdef _DEBUG
-							if ((cursor + index) % this->bsize > cursor)
+							if (cursor + index < cursor)
 								CPL_RUNTIME_EXCEPTION("Overflow error");
 						#endif
 						return this->buffer[(cursor + index) % this->bsize];
@@ -231,7 +230,7 @@
 								CPL_RUNTIME_EXCEPTION("Index out of bounds");
 						#endif
 						#ifdef _DEBUG
-							if ((cursor + index) % this->bsize > cursor)
+							if (cursor + index < cursor)
 								CPL_RUNTIME_EXCEPTION("Overflow error");
 						#endif
 						return this->buffer[(cursor + index) % this->bsize];
@@ -484,7 +483,8 @@
 				}
 
 				/// <summary>
-				/// Combined setSize & setCapacity
+				/// Combined setSize and setCapacity.
+				/// No overhead if no change is required.
 				/// </summary>
 				void setStorageRequirements(std::size_t psize, std::size_t pcapacity, bool modifyDataToFit = true, const T & dataFill = T())
 				{
