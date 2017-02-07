@@ -163,18 +163,21 @@
 
 				T * begin() noexcept { return buffer; }
 				T * end() noexcept { return buffer + size; }
+				const T * begin() const noexcept { return buffer; }
+				const T * end() const noexcept { return buffer + size; }
 				T buffer[capacity];
 			};
 
 		struct PACKED ArrangementData : public MessageStreamBase
 		{
+#ifdef CPL_JUCE
 			ArrangementData(const juce::AudioPlayHead::CurrentPositionInfo & cpi) 
 				: MessageStreamBase(MessageType::ArrangementMessage)
 				, beatsPerMinute(cpi.bpm)
 				, signatureDenominator(cpi.timeSigDenominator)
 				, signatureNumerator(cpi.timeSigNumerator) 
 			{}
-
+#endif
 			ArrangementData() : MessageStreamBase(MessageType::ArrangementMessage), beatsPerMinute(), signatureDenominator(), signatureNumerator() {}
 
 			double beatsPerMinute;
@@ -194,6 +197,7 @@
 
 		struct PACKED TransportData : public MessageStreamBase
 		{
+#ifdef CPL_JUCE
 			TransportData(const juce::AudioPlayHead::CurrentPositionInfo & cpi)
 				: MessageStreamBase(MessageType::TransportMessage)
 				, samplePosition(cpi.timeInSamples)
@@ -202,7 +206,7 @@
 				, isRecording(cpi.isRecording)
 			{
 			}
-
+#endif
 			TransportData() : MessageStreamBase(MessageType::TransportMessage), samplePosition(), isPlaying(), isLooping(), isRecording() {}
 			std::int64_t samplePosition;
 			std::uint16_t isPlaying : 1, isLooping : 1, isRecording : 1;
@@ -371,6 +375,33 @@
 			typedef typename AudioBuffer::IteratorBase::iterator BufferIterator;
 			typedef typename AudioBuffer::IteratorBase::const_iterator CBufferIterator;
 			typedef CAudioStream<T, PacketSize> StreamType;
+
+			struct Playhead
+			{
+#ifdef CPL_JUCE
+				Playhead(const juce::AudioPlayHead::CurrentPositionInfo & info, double sampleRate) : sampleRate(sampleRate), arrangement(info), transport(info) {}
+#endif
+				friend class StreamType;
+
+				void advance(cpl::ssize_t samples) { transport.samplePosition += samples; }
+
+				bool isPlaying() const noexcept { return transport.isPlaying; }
+				bool isLooping() const noexcept { return transport.isLooping; }
+				bool isRecording() const noexcept { return transport.isRecording; }
+
+				double getBPM() const noexcept { return arrangement.beatsPerMinute; }
+				std::pair<int, int> getSignature() const noexcept { return std::make_pair(arrangement.signatureNumerator, arrangement.signatureDenominator); }
+				std::int64_t getPositionInSamples() const noexcept { return transport.samplePosition; }
+				double getPositionInSeconds() const noexcept { return getPositionInSamples() / sampleRate; }
+
+				static Playhead empty() { return{}; }
+			private:
+
+				Playhead() {}
+				double sampleRate = 0;
+				ArrangementData arrangement;
+				TransportData transport;
+			};
 
 			/// <summary>
 			/// When you iterate over a audio buffer using ended iterators,
@@ -688,11 +719,44 @@
 			}
 
 			/// <summary>
+			/// Returns the playhead for the async subsystem.
+			/// Only valid to call and read, while the async buffers are locked
+			/// or you're inside a async callback
+			/// </summary>
+			const Playhead & getASyncPlayhead() const noexcept
+			{
+				return asyncPlayhead;
+			}
+
+			/// <summary>
+			/// Returns the playhead for the async subsystem.
+			/// Only valid to call and read, while you're inside a 
+			/// real time callback.
+			/// </summary>
+			const Playhead & getRealTimePlayhead() const noexcept
+			{
+				return realTimePlayhead;
+			}
+
+#ifdef CPL_JUCE
+			/// <summary>
 			/// Should only be called from the audio thread.
 			/// Deterministic ( O(N) ), wait free and lock free, so long as listeners are as well.
 			/// </summary>
 			/// <returns>True if incoming audio was changed</returns>
-			bool processIncomingRTAudio(T ** buffer, std::size_t numChannels, std::size_t numSamples)
+			bool processIncomingRTAudio(T ** buffer, std::size_t numChannels, std::size_t numSamples, juce::AudioPlayHead & ph)
+			{
+				juce::AudioPlayHead::CurrentPositionInfo cpi;
+				ph.getCurrentPosition(cpi);
+				return processIncomingRTAudio(buffer, numChannels, numSamples, { cpi, internalInfo.sampleRate.load(std::memory_order_relaxed) });
+			}
+#endif
+			/// <summary>
+			/// Should only be called from the audio thread.
+			/// Deterministic ( O(N) ), wait free and lock free, so long as listeners are as well.
+			/// </summary>
+			/// <returns>True if incoming audio was changed</returns>
+			bool processIncomingRTAudio(T ** buffer, std::size_t numChannels, std::size_t numSamples, const Playhead & ph)
 			{
 				#ifdef CPL_TRACEGUARD_ENTRYPOINTS
 					return CPL_TRACEGUARD_START
@@ -737,6 +801,8 @@
 				if (internalInfo.isSuspended || internalInfo.isFrozen)
 					return false;
 
+				auto oldPlayhead = realTimePlayhead;
+				realTimePlayhead = ph;
 				// publish all data to listeners
 				unsigned mask(0);
 
@@ -763,13 +829,44 @@
 				}
 
 
-				// publish all data to audio consumer thread
-
 				// remaining samples
 				std::int64_t n = numSamples;
 
 				Frame frame;
 
+				bool anyNewProblemsPushingPlayHeads = false;
+
+				if (framesWereDropped || problemsPushingPlayHead || realTimePlayhead.transport != oldPlayhead.transport)
+				{
+					frame.transport = realTimePlayhead.transport;
+					if (!audioFifo.pushElement(frame))
+					{
+						measures.droppedAudioFrames++;
+						anyNewProblemsPushingPlayHeads = true;
+					}
+				}
+
+				if (framesWereDropped || problemsPushingPlayHead || realTimePlayhead.arrangement != oldPlayhead.arrangement)
+				{
+					frame.arrangement = realTimePlayhead.arrangement;
+					if (!audioFifo.pushElement(frame))
+					{
+						measures.droppedAudioFrames++;
+						anyNewProblemsPushingPlayHeads = true;
+					}
+				}
+				
+
+				if(ph.transport.isPlaying)
+					realTimePlayhead.advance(numSamples);
+
+				oldPlayhead = realTimePlayhead;
+
+				problemsPushingPlayHead = anyNewProblemsPushingPlayHeads;
+
+				std::size_t droppedSamples = 0;
+
+				// publish all data to audio consumer thread
 				switch (numChannels)
 				{
 				case 1:
@@ -785,7 +882,11 @@
 							std::memcpy(frame.audioPacket.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 
 							if (!audioFifo.pushElement(frame))
+							{
 								measures.droppedAudioFrames++;
+								droppedSamples += aSamples;
+							}
+
 						}
 
 						n -= aSamples;
@@ -803,7 +904,11 @@
 							std::memcpy(frame.audioPacket.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 							std::memcpy(frame.audioPacket.buffer + aSamples, (buffer[1] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 							if (!audioFifo.pushElement(frame))
+							{
 								measures.droppedAudioFrames++;
+								droppedSamples += aSamples;
+							}
+
 						}
 
 						n -= aSamples;
@@ -815,6 +920,10 @@
 					CPL_BREAKIFDEBUGGED();
 					break;
 				}
+
+				
+
+				framesWereDropped = droppedSamples != 0;
 
 				// post new measures
 
@@ -1242,21 +1351,28 @@
 					std::size_t numSamples[2] = { 0, 0 };
 
 					// insert the frame we already captured at the top of the loop
-					insertFrameIntoBuffer(audioInput, numSamples, recv.audioPacket);
+					auto handleFrame = [&](const auto & frame) {
+						switch (frame.streamBase.utility)
+						{
+						case MessageStreamBase::MessageType::TransportMessage:
+							asyncPlayhead.transport = frame.transport;
+							break;
+						case MessageStreamBase::MessageType::ArrangementMessage:
+							asyncPlayhead.arrangement = frame.arrangement;
+							break;
+						default:
+							insertFrameIntoBuffer(audioInput, numSamples, frame.audioPacket);
+							break;
+						}
+					};
 
-					auto currentType = recv.streamBase.utility;
+					handleFrame(recv);
 
 					for (size_t i = 0; i < numExtraEntries; i++)
 					{
 						if (!audioFifo.popElementBlocking(recv))
 							return;
-
-						// TODO: fix by posting audio here, and then start a new batch with the new configuration.
-						if (recv.streamBase.utility != currentType)
-							CPL_RUNTIME_EXCEPTION("Runtime switch of channel configuration without notification!");
-
-						insertFrameIntoBuffer(audioInput, numSamples, recv.audioPacket);
-
+						handleFrame(recv);
 					}
 
 					auto channels = AudioFrame::getChannelCount(recv.streamBase.utility);
@@ -1350,6 +1466,8 @@
 								}
 							}
 
+							asyncPlayhead.advance(numSamples[0]);
+
 							if (signalChange)
 							{
 								oldInfo = internalInfo;
@@ -1409,9 +1527,13 @@
 
 					// post measurements.
 					double timeFraction = (double)std::accumulate(std::begin(numSamples), std::end(numSamples), 0.0) / (std::end(numSamples) - std::begin(numSamples));
-					timeFraction /= internalInfo.sampleRate.load(std::memory_order::memory_order_relaxed);
-					lpFilterTimeToMeasurement(measures.asyncOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
-					lpFilterTimeToMeasurement(measures.asyncUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
+					if (std::isnormal(timeFraction))
+					{
+						timeFraction /= internalInfo.sampleRate.load(std::memory_order::memory_order_relaxed);
+						lpFilterTimeToMeasurement(measures.asyncOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
+						lpFilterTimeToMeasurement(measures.asyncUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
+					}
+
 				}
 
 			}
@@ -1450,7 +1572,7 @@
 				}
 			}
 			template<class ChannelVector, class OffsetVector>
-				static inline void insertFrameIntoBuffer(ChannelVector & inputBuffer, OffsetVector & offsets, AudioFrame & frame)
+				static inline void insertFrameIntoBuffer(ChannelVector & inputBuffer, OffsetVector & offsets, const AudioFrame & frame)
 				{
 					auto const totalSize = frame.size;
 					switch (frame.utility)
@@ -1496,6 +1618,8 @@
 				asyncSignalChange;
 
 			//std::atomic<std::size_t> audioHistorySize, audioHistoryCapacity;
+			Playhead realTimePlayhead, oldPlayhead, asyncPlayhead;
+			bool framesWereDropped{ false }, problemsPushingPlayHead { false };
 			std::atomic<std::size_t> numDeferredAsyncSamples;
 			std::vector<AudioBuffer> audioHistoryBuffers;
 			std::thread::id audioRTThreadID;

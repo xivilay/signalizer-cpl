@@ -183,7 +183,7 @@ namespace cpl
 						buffers[0] = audioData[0].data();
 						buffers[1] = audioData[1].data();
 
-						stream.processIncomingRTAudio(buffers, 2, size);
+						stream.processIncomingRTAudio(buffers, 2, size, cpl::CAudioStream<ftype, 128>::Playhead::empty());
 						auto newDrops = stream.getPerfMeasures().droppedAudioFrames - prevDroppedFrames;
 						const auto fsizef = stream.getASyncBufferSize();
 						dout(newDrops > 0 ? warn : verb, lvl,
