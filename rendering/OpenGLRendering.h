@@ -168,9 +168,9 @@
 				{
 					saveMatrix();
 				}
+
 				void translate(GLfloat x, GLfloat y, GLfloat z)
 				{
-
 					glTranslatef(x, y, z);
 				}
 
@@ -252,6 +252,20 @@
 
 					glGetFloatv(GL_POINT_SIZE, &oldPointSize);
 					glGetFloatv(GL_LINE_WIDTH, &oldLineSize);
+				}
+
+				GLfloat getPointSize()
+				{
+					GLfloat ret{ 1 };
+					glGetFloatv(GL_POINT_SIZE, &ret);
+					return ret;
+				}
+
+				GLfloat getLineSize()
+				{
+					GLfloat ret{ 1 };
+					glGetFloatv(GL_LINE_WIDTH, &ret);
+					return ret;
 				}
 
 				void setPointSize(GLfloat newPointSize)
