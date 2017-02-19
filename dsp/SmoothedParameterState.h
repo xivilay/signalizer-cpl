@@ -37,41 +37,44 @@
 
 	namespace cpl
 	{
-		template<typename T, std::size_t Order>
-		class alignas(16) SmoothedParameterState
+		namespace dsp
 		{
-		public:
 
-			typedef T PoleState;
-
-			static_assert(Order > 0, "Order must be greater than one");
-
-			static PoleState design(T ms, T sampleRate)
+			template<typename T, std::size_t Order>
+			class alignas(16) SmoothedParameterState
 			{
-				const auto a = std::sqrt((T)Order);
-				const auto b = std::exp(-1 / ((ms / 5000) * sampleRate));
-				
-				return std::pow(b, a);
-			}
+			public:
 
-			template<typename Y> Y process(PoleState pole, Y input)
-			{
-				state[0] = input + pole * (state[0] - input);
+				typedef T PoleState;
 
-				for (std::size_t i = 1; i < Order; ++i)
+				static_assert(Order > 0, "Order must be greater than one");
+
+				static PoleState design(T ms, T sampleRate)
 				{
-					state[i] = state[i - 1] + pole * (state[i] - state[i - 1]);
+					const auto a = std::sqrt((T)Order);
+					const auto b = std::exp(-1 / ((ms / 5000) * sampleRate));
+
+					return std::pow(b, a);
 				}
 
-				return static_cast<Y>(state[Order - 1]);
-			}
+				template<typename Y> Y process(PoleState pole, Y input)
+				{
+					state[0] = input + pole * (state[0] - input);
 
-			inline T getState() const noexcept { return state[Order - 1]; }
+					for (std::size_t i = 1; i < Order; ++i)
+					{
+						state[i] = state[i - 1] + pole * (state[i] - state[i - 1]);
+					}
 
-		private:
+					return static_cast<Y>(state[Order - 1]);
+				}
 
-			T state[Order]{};
+				inline T getState() const noexcept { return state[Order - 1]; }
+
+			private:
+
+				T state[Order]{};
+			};
 		};
-
 	};
 #endif

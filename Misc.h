@@ -60,6 +60,17 @@
 				f(enum_cast<Enum>(i));
 		}
 
+		/// <summary>
+		/// Instead of passing the enum, passes the underlying type of the enum.
+		/// </summary>
+		template<typename Enum, typename Func>
+		typename std::enable_if<std::is_enum<Enum>::value, void>::type foreach_uenum(Func f)
+		{
+			typedef typename std::underlying_type<Enum>::type T;
+			for (T i = 0; i < enum_cast<T>(Enum::end); ++i)
+				f(i);
+		}
+
 		namespace Misc
 		{
 			std::string ExecCommand(const std::string & arg);
