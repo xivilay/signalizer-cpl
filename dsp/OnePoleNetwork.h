@@ -21,18 +21,18 @@
 
 **************************************************************************************
 
-	file:LinkwitzRileyNetwork.h
+	file:OnePoleNetwork.h
 		
-		A Linkwitz-Riley network splits a signal into N bands with variable slope that,
-		when summed, yields a flat frequency response. It is thus an all-pass filter.
+		A one-pole network splits a signal into N bands with 6 dB/oct falloff that, when summed,
+		yields a flat frequency response. It is thus an all-pass filter.
 
 *************************************************************************************/
 
-#ifndef CPL_LINKWITZRILEYNETWORK_H
-	#define CPL_LINKWITZRILEYNETWORK_H
+#ifndef CPL_ONEPOLENETWORK_H
+	#define CPL_ONEPOLENETWORK_H
 	
 	#include <array>
-	#include "filters/AC_SVF.h"
+	#include "filters/OnePole.h"
 
 	namespace cpl
 	{
@@ -40,7 +40,7 @@
 		{
 
 			template<typename Scalar, std::size_t NumBands, std::size_t FilterOrder = 1>
-				class LinkwitzRileyNetwork
+				class OnePoleNetwork
 				{
 				public:
 					typedef Scalar ScalarTy;
@@ -54,7 +54,7 @@
 
 					typedef std::array<Scalar, Bands> BandArray;
 
-					typedef filters::StateVariableFilter<Scalar> Filter;
+					typedef filters::OnePole<Scalar> Filter;
 
 					void setup(std::array<Scalar, Bands - 1> crossoverFrequenciesNormalized)
 					{
@@ -80,18 +80,12 @@
 
 						for (std::size_t i = 0; i < Filters; ++i)
 						{
-							T ic1eq = filters[i].ic1eq;
-							T ic2eq = filters[i].ic2eq;
+							T z1 = filters[i].z1;
 
-							const T v3 = input - ic2eq;
-							const T v1 = coeffs[i].a1 * ic1eq + coeffs[i].a2 * v3;
-							const T v2 = ic2eq + coeffs[i].a2 * ic1eq + coeffs[i].a3 * v3;
-							ic1eq = 2 * v1 - ic1eq;
-							ic2eq = 2 * v2 - ic2eq;
+							z1 = coeffs[i].a0 * input + coeffs[i].b1 * z1;
 
-
-							const T lp = v2;
-							const T hp = -(input + -coeffs[i].k * v1 - lp);
+							const T lp = z1;
+							const T hp = input - z1;
 							//const T bp = v1;
 
 							ret[pos++] = lp;
@@ -101,8 +95,7 @@
 								ret[pos++] = hp;
 							}
 
-							filters[i].ic1eq = ic1eq;
-							filters[i].ic2eq = ic2eq;
+							filters[i].z1 = z1;
 
 							input = hp;
 						}
