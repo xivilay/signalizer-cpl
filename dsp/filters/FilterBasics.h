@@ -90,15 +90,6 @@
 					"High shelf"
 				};
 
-
-				static const char * Sidechains[] = {
-					"None",
-					"Internal",
-					"External1",
-					"External2",
-					"External3"
-				};
-
 				static const char * Types[] = {
 					"SVF",
 					"Biquad"

@@ -28,8 +28,8 @@
 
 *************************************************************************************/
 
-#ifndef CPL_AC_SVF
-#define CPL_AC_SVF
+#ifndef CPL_AC_SVF_H
+#define CPL_AC_SVF_H
 
 #include <cstdlib>
 #include "FilterBasics.h"

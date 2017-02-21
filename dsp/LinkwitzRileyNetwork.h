@@ -33,6 +33,7 @@
 	
 	#include <array>
 	#include "filters/AC_SVF.h"
+	#include "filters/Allpass.h"
 
 	namespace cpl
 	{
@@ -45,15 +46,40 @@
 				public:
 					typedef Scalar ScalarTy;
 
-					static_assert(NumBands > 1, "Can't have a crossover with less than two bands!");
+					static_assert(NumBands > 2, "Can't have a crossover with less than two bands!");
 					static_assert(FilterOrder == 1, "Only 12 dB (1) filter order supported at the moment.");
 
+				private:
+					template<std::size_t C>
+					struct Sum
+					{
+						static const std::size_t result = C + Sum<C - 1>::value;
+					};
+
+					template<>
+					struct Sum<1>
+					{
+						static const std::size_t value = 1;
+					};
+
+					static std::size_t sum(std::size_t z)
+					{
+						if (z == 1)
+							return 1;
+						return z + sum(z - 1);
+					}
+
+				public:
 					static const std::size_t Order = FilterOrder;
 					static const std::size_t Bands = NumBands;
 					static const std::size_t Filters = Order * (1 + Bands / 2);
+					static const std::size_t CrossOvers = Bands - 1;
+					static const std::size_t AllpassSections = CrossOvers - 1;
+					static const std::size_t AllpassFilters = Sum<AllpassSections>::value;
 
 					typedef std::array<Scalar, Bands> BandArray;
 
+					typedef filters::Allpass<Scalar> Allpass;
 					typedef filters::StateVariableFilter<Scalar> Filter;
 
 					void setup(std::array<Scalar, Bands - 1> crossoverFrequenciesNormalized)
@@ -62,6 +88,12 @@
 						{
 							coeffs[i] = Filter::Coefficients::design<filters::Response::Lowpass>(crossoverFrequenciesNormalized[i], 0.5, 1);
 						}
+
+						for (std::size_t i = 0; i < AllpassSections; ++i)
+						{
+							apCoeffs[i] = Allpass::Coefficients::design(crossoverFrequenciesNormalized[i + AllpassSections], 0.5, 1);
+						}
+
 					}
 
 					void reset()
@@ -107,6 +139,18 @@
 							input = hp;
 						}
 
+						for (std::size_t a = 0, offset = 0; a < AllpassSections; ++a)
+						{
+							auto filters = sum(AllpassSections - a);
+
+							for (std::size_t f = 0; f < filters; ++f)
+							{
+								ret[a] = allpasses[offset + f].filter(ret[a], apCoeffs[a]);
+							}
+
+							offset += filters;
+						}
+
 						return ret;
 					}
 
@@ -115,6 +159,8 @@
 
 					typename Filter::Coefficients coeffs[Filters];
 					Filter filters[Filters];
+					typename Allpass::Coefficients apCoeffs[AllpassSections];
+					Allpass allpasses[AllpassFilters];
 				};
 		};
 	};
