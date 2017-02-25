@@ -92,11 +92,11 @@ namespace cpl
 			/// </summary>
 			None = 1 << 0,
 			/// <summary>
-			/// Any real-time listeners that immediately recieves a notification
+			/// Any real-time listeners that immediately receives a notification
 			/// </summary>
 			RealTimeListeners = 1 << 1,
 			/// <summary>
-			/// Whatever realtime system is there, recieves a notification.
+			/// Whatever realtime system is there, receives a notification.
 			/// For instance, the audio thread (and the host)
 			/// </summary>
 			RealTimeSubSystem = 1 << 2,
@@ -105,7 +105,7 @@ namespace cpl
 			/// </summary>
 			UI = 1 << 3,
 			/// <summary>
-			/// Everything recieves a notification
+			/// Everything receives a notification
 			/// </summary>
 			All = UI | RealTimeSubSystem | RealTimeListeners
 		};

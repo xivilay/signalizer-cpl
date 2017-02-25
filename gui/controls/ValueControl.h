@@ -62,8 +62,6 @@
 
 			ValueBase & getValueReference() { return *valueObject; }
 
-
-
 		protected:
 
 			virtual void onControlSerialization(CSerializer::Archiver & ar, Version v) override

@@ -37,3 +37,4 @@
 #include "CValueControl.cpp"
 #include "CValueKnobSlider.cpp"
 #include "CValueComboBox.cpp"
+#include "CValueInputControl.cpp"

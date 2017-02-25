@@ -245,7 +245,7 @@
 			typename std::enable_if<!precise, double>::type
 				lzresponse(double x, int size)
 			{
-					return x ? (size * cpl::Math::fastsine(M_PI * x) * cpl::Math::fastsine(M_PI * x / size)) / (TAU * x * x) : 1;
+				return x ? (size * cpl::Math::fastsine(M_PI * x) * cpl::Math::fastsine(M_PI * x / size)) / (TAU * x * x) : 1;
 			}
 
 			template<typename R, bool precise = true, typename T>

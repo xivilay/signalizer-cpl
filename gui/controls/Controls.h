@@ -41,5 +41,5 @@
 
 	#include "CValueKnobSlider.h"
 	#include "CValueComboBox.h"
-
+	#include "CValueInputControl.h"
 #endif

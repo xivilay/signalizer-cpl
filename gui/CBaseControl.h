@@ -28,7 +28,6 @@
 		This class provides a common interface for all 'controls' to support
 		normalized value-, string, event system, serialization and position get/set.
 		Also encapsulates listeners into a single one.
-		Provides a cheap RAII mutex lock as well, as well as optional reference counting.
 		Does not derive from the system's base class for graphics to avoid the diamond
 		problem (classes deriving from this should set the base class in their constructor)
 
