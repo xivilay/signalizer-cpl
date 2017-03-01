@@ -109,6 +109,12 @@
 						glColor4f(c.getFloatRed(), c.getFloatGreen(), c.getFloatBlue(), c.getFloatAlpha());
 					}
 
+					template<cpl::GraphicsND::ComponentOrder order>
+					inline void addColour(cpl::GraphicsND::UPixel<order> colour)
+					{
+						glColor4ub(colour.pixel.r, colour.pixel.g, colour.pixel.b, colour.pixel.a);
+					}
+
 					~PrimitiveDrawer()
 					{
 						rasterizeBuffer();

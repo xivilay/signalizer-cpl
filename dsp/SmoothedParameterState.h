@@ -49,12 +49,13 @@
 
 				static_assert(Order > 0, "Order must be greater than one");
 
-				static PoleState design(T ms, T sampleRate)
+				template<typename Ty>
+				static PoleState design(Ty ms, Ty sampleRate)
 				{
-					const auto a = std::sqrt((T)Order);
+					const auto a = std::sqrt((Ty)Order);
 					const auto b = std::exp(-1 / ((ms / 5000) * sampleRate));
 
-					return std::pow(b, a);
+					return static_cast<T>(std::pow(b, a));
 				}
 
 				template<typename Y> Y process(PoleState pole, Y input)

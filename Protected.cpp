@@ -273,7 +273,6 @@ namespace cpl
 			{
 			case EXCEPTION_ACCESS_VIOLATION:
 				{
-					EXCEPTION_POINTERS * exp = reinterpret_cast<EXCEPTION_POINTERS *>(systemInformation);
 					std::ptrdiff_t addr = 0; // nullptr invalid here?
 
 					if (exp)

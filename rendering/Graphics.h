@@ -316,23 +316,25 @@
 			template<>
 			union PixelData<ComponentOrder::Native>
 			{
+				typedef std::uint8_t ComponentType;
 				struct
 				{
-					uint8_t b, g, r, a;
+					ComponentType b, g, r, a;
 				};
 				uint32_t p;
-				uint8_t data[4];
+				ComponentType data[4];
 			};
 
 			template<>
 			union PixelData<ComponentOrder::OpenGL>
 			{
+				typedef std::uint8_t ComponentType;
 				struct
 				{
-					uint8_t r, g, b, a;
+					ComponentType r, g, b, a;
 				};
 				uint32_t p;
-				uint8_t data[4];
+				ComponentType data[4];
 			};
 
 
@@ -343,6 +345,7 @@
 			template<ComponentOrder order>
 			struct UPixel
 			{
+				typedef typename PixelData<order>::ComponentType ComponentType;
 				PixelData<order> pixel;
 
 				UPixel() noexcept

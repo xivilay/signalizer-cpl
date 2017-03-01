@@ -46,7 +46,7 @@
 
 	namespace cpl
 	{
-		template<typename T, std::size_t alignment>
+		template<typename T, std::size_t alignment = alignof(T)>
 			class CLIFOStream
 			{
 
