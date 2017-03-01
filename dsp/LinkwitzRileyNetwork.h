@@ -70,6 +70,7 @@
 					}
 
 				public:
+
 					static const std::size_t Order = FilterOrder;
 					static const std::size_t Bands = NumBands;
 					static const std::size_t Filters = Order * (1 + Bands / 2);
@@ -82,19 +83,29 @@
 					typedef filters::Allpass<Scalar> Allpass;
 					typedef filters::StateVariableFilter<Scalar> Filter;
 
-					void setup(std::array<Scalar, Bands - 1> crossoverFrequenciesNormalized)
+					struct Coefficients
 					{
-						for (std::size_t i = 0; i < crossoverFrequenciesNormalized.size(); ++i)
+						typename Filter::Coefficients coeffs[Filters];
+						typename Allpass::Coefficients apCoeffs[AllpassSections];
+
+						static Coefficients design(std::array<Scalar, Bands - 1> crossoverFrequenciesNormalized)
 						{
-							coeffs[i] = Filter::Coefficients::design<filters::Response::Lowpass>(crossoverFrequenciesNormalized[i], 0.5, 1);
+							Coefficients ret;
+
+							for (std::size_t i = 0; i < crossoverFrequenciesNormalized.size(); ++i)
+							{
+								ret.coeffs[i] = Filter::Coefficients::design<filters::Response::Lowpass>(crossoverFrequenciesNormalized[i], 0.5, 1);
+							}
+
+							for (std::size_t i = 0; i < AllpassSections; ++i)
+							{
+								ret.apCoeffs[i] = Allpass::Coefficients::design(crossoverFrequenciesNormalized[i + AllpassSections], 0.5, 1);
+							}
+
+							return ret;
 						}
 
-						for (std::size_t i = 0; i < AllpassSections; ++i)
-						{
-							apCoeffs[i] = Allpass::Coefficients::design(crossoverFrequenciesNormalized[i + AllpassSections], 0.5, 1);
-						}
-
-					}
+					};
 
 					void reset()
 					{
@@ -102,7 +113,7 @@
 							filters[i].reset();
 					}
 
-					BandArray process(Scalar input) noexcept
+					BandArray process(Scalar input, const Coefficients & c) noexcept
 					{
 						BandArray ret;
 
@@ -116,14 +127,14 @@
 							T ic2eq = filters[i].ic2eq;
 
 							const T v3 = input - ic2eq;
-							const T v1 = coeffs[i].a1 * ic1eq + coeffs[i].a2 * v3;
-							const T v2 = ic2eq + coeffs[i].a2 * ic1eq + coeffs[i].a3 * v3;
+							const T v1 = c.coeffs[i].a1 * ic1eq + c.coeffs[i].a2 * v3;
+							const T v2 = ic2eq + c.coeffs[i].a2 * ic1eq + c.coeffs[i].a3 * v3;
 							ic1eq = 2 * v1 - ic1eq;
 							ic2eq = 2 * v2 - ic2eq;
 
 
 							const T lp = v2;
-							const T hp = -(input + -coeffs[i].k * v1 - lp);
+							const T hp = -(input + -c.coeffs[i].k * v1 - lp);
 							//const T bp = v1;
 
 							ret[pos++] = lp;
@@ -145,7 +156,7 @@
 
 							for (std::size_t f = 0; f < filters; ++f)
 							{
-								ret[a] = allpasses[offset + f].filter(ret[a], apCoeffs[a]);
+								ret[a] = allpasses[offset + f].filter(ret[a], c.apCoeffs[a]);
 							}
 
 							offset += filters;
@@ -157,9 +168,7 @@
 
 				private:
 
-					typename Filter::Coefficients coeffs[Filters];
 					Filter filters[Filters];
-					typename Allpass::Coefficients apCoeffs[AllpassSections];
 					Allpass allpasses[AllpassFilters];
 				};
 		};
