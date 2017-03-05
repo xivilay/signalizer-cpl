@@ -343,6 +343,7 @@ namespace cpl
 	{
 		bToggleEditSpaces(true);
 		setValueReference(valueToReferTo, takeOwnership);
+		valueEntityChanged(nullptr, nullptr);
 	}
 
 	void CColourControl::setValueReference(ColourValue * valueToReferTo, bool takeOwnership)

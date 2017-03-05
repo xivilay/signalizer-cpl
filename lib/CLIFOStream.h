@@ -73,6 +73,7 @@
 
 					friend CBuf;
 
+					typedef T value_type;
 					typedef T * iterator;
 					typedef const T * const_iterator;
 					static const std::size_t iterator_indices = 2;

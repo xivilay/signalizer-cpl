@@ -416,13 +416,27 @@
 
 				UPixel operator * (float scale) const noexcept
 				{
-
 					UPixel ret(*this);
 
 					ret.a = std::uint8_t(scale * ret.a);
 					ret.r = std::uint8_t(scale * ret.r);
 					ret.g = std::uint8_t(scale * ret.g);
 					ret.b = std::uint8_t(scale * ret.b);
+
+					return ret;
+				}
+
+				template<typename T, ComponentOrder otherOrder>
+				typename std::enable_if<std::is_floating_point<T>::value, UPixel>::type lerp(UPixel<otherOrder> other, T value)
+				{
+					UPixel ret(*this);
+
+					ComponentType scale = static_cast<ComponentType>(std::numeric_limits<ComponentType>::max() * value + static_cast<T>(0.5));
+					ComponentType invScale = std::numeric_limits<ComponentType>::max() - scale;
+					ret.pixel.a = (0x80 + pixel.a * invScale + other.pixel.a * scale) >> 8;
+					ret.pixel.r = (0x80 + pixel.r * invScale + other.pixel.r * scale) >> 8;
+					ret.pixel.g = (0x80 + pixel.g * invScale + other.pixel.g * scale) >> 8;
+					ret.pixel.b = (0x80 + pixel.b * invScale + other.pixel.b * scale) >> 8;
 
 					return ret;
 				}
