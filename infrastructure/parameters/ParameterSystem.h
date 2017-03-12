@@ -493,7 +493,7 @@ namespace cpl
 		/// </summary>
 		void removeUIListener(Parameters::Handle globalHandle, UIListener * listener)
 		{
-			containedParameters.at(globalHandle - offset).uiListeners.insert(listener);
+			containedParameters.at(globalHandle - offset).uiListeners.erase(listener);
 		}
 
 		/// <summary>
