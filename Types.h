@@ -30,6 +30,7 @@
 #ifndef CPL_TYPES_H
 	#define CPL_TYPES_H
 
+	#include <string>
 	#include <type_traits>
 	#include <cstdint>
 	#include <errno.h>

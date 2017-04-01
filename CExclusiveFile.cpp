@@ -72,7 +72,7 @@ namespace cpl
 			auto start = Misc::QuickTime();
 			do
 			{
-				handle = ::CreateFile(path.c_str(),
+				handle = ::CreateFileA(path.c_str(),
 					fileMask,
 					0x0, // this is the important part - 0 as dwShareMode will open the file exclusively (default)
 					nullptr,

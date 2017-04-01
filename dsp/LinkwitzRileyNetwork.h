@@ -66,6 +66,10 @@
 					{
 						if (z == 1)
 							return 1;
+
+						if (z < 1)
+							return 0;
+
 						return z + sum(z - 1);
 					}
 

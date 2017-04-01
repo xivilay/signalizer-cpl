@@ -884,7 +884,7 @@
 							if (!audioFifo.pushElement(frame))
 							{
 								measures.droppedAudioFrames++;
-								droppedSamples += aSamples;
+								droppedSamples += static_cast<std::size_t>(aSamples);
 							}
 
 						}
@@ -906,7 +906,7 @@
 							if (!audioFifo.pushElement(frame))
 							{
 								measures.droppedAudioFrames++;
-								droppedSamples += aSamples;
+								droppedSamples += static_cast<std::size_t>(aSamples);
 							}
 
 						}
