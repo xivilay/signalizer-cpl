@@ -95,7 +95,7 @@
 				std::memcpy(buffer, first, (last - first) * sizeof(T));
 			}
 
-			CDataBuffer(const CDataBuffer<T> & other)
+			CDataBuffer(const CDataBuffer<T, requiredAlignment> & other)
 				: buffer(nullptr), bufSize(0)
 			{
 				resize(other.size);
@@ -110,19 +110,21 @@
 				other.buffer = nullptr;
 			}
 
-			CDataBuffer & operator = (const CDataBuffer<T> & other)
+			CDataBuffer & operator = (const CDataBuffer<T, requiredAlignment> & other)
 			{
 				clear();
 				resize(other.size);
 				std::memcpy(buffer, other.buffer, other.size * sizeof(T));
+				return *this;
 			}
 
-			CDataBuffer & operator = (CDataBuffer<T> && other)
+			CDataBuffer & operator = (CDataBuffer<T, requiredAlignment> && other)
 			{
 				bufSize = other.bufSize;
 				buffer = other.buffer;
 				other.bufSize = 0;
 				other.buffer = nullptr;
+				return *this;
 			}
 
 			~CDataBuffer()
