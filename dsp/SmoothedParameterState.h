@@ -72,6 +72,11 @@
 
 				inline T getState() const noexcept { return state[Order - 1]; }
 
+				inline void reset()
+				{
+					std::memset(state, 0, sizeof state);
+				}
+
 			private:
 
 				T state[Order]{};
