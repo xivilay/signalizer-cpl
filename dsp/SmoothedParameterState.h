@@ -41,7 +41,7 @@
 		{
 
 			template<typename T, std::size_t Order>
-			class alignas(16) SmoothedParameterState
+			class SmoothedParameterState
 			{
 			public:
 
