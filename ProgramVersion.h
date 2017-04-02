@@ -97,12 +97,18 @@
 				// yes, endianness fucks us all.
 				if (parts.major < other.parts.major)
 					return true;
+				else if (parts.major == other.parts.major)
+				{
+					if (parts.minor < other.parts.minor)
+						return true;
+					else if (parts.minor == other.parts.minor)
+					{
+						if (parts.build < other.parts.build)
+							return true;
+					}
+				}
 
-				if (parts.minor < other.parts.minor)
-					return true;
 
-				if (parts.build < other.parts.build)
-					return true;
 
 				return false;
 			}
