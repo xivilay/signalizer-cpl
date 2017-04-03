@@ -693,7 +693,7 @@
 			}
 			
 			template<typename T, typename D>
-				CSerializer & operator << (std::unique_ptr<T, D> & object)
+				CSerializer & operator << (const std::unique_ptr<T, D> & object)
 				{
 					static_assert(delayed_error<T>::value, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
 				}
@@ -730,9 +730,23 @@
 					return *this;
 				}
 
-			inline CSerializer & operator >> (Serializable * object)
+			template<typename T>
+			CSerializer& operator >> (std::atomic<T> & object)
 			{
-				
+				T temp;
+				(*this) >> temp;
+				object.store(temp, std::memory_order_release);
+				return *this;
+			}
+
+			template<typename T>
+			CSerializer& operator << (const std::atomic<T> & object)
+			{
+				return (*this) << object.load(std::memory_order_release)
+			}
+
+			inline CSerializer & operator >> (Serializable * object)
+			{				
 				object->deserialize(*this, version);
 				return *this;
 			}
