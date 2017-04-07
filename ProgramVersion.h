@@ -115,7 +115,27 @@
 
 			bool operator > (const Version & other) const
 			{
-				return other.operator<(*this);
+				return other< *this;
+			}
+
+			bool operator <= (const Version & other) const
+			{
+				return !(other < *this);
+			}
+
+			bool operator >= (const Version & other) const
+			{
+				return !(*this < other);
+			}
+
+			bool operator == (const Version & other) const
+			{
+				return compiled == other.compiled;
+			}
+
+			bool operator != (const Version & other) const
+			{
+				return compiled != other.compiled;
 			}
 
 			BinaryStorage compiled;
