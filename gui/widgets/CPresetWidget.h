@@ -35,7 +35,7 @@
 	#include "../controls/ControlBase.h"
 	#include "../controls/Controls.h"
 	#include "WidgetBase.h"
-	#include "../../SafeSerializableObject.h"
+	#include "../../state/Serialization.h"
 
 	namespace cpl
 	{

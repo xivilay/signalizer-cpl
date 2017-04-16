@@ -38,7 +38,7 @@
 	#include <ostream>
 	#include <cstdlib>
 	#include <atomic>
-	#include "SysStats.h"
+	#include "system/SysStats.h"
 
 	namespace cpl
 	{
@@ -108,7 +108,7 @@
 			/// </summary>
 			static double clocksToCoreUsage(cclock_t clocks)
 			{
-				return (0.001 * clocks) / (cpl::SysStats::CProcessorInfo::instance().getMHz() * 1000);
+				return (0.001 * clocks) / (cpl::system::CProcessor::getMHz() * 1000);
 			}
 
 		private:

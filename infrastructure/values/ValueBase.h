@@ -6,7 +6,7 @@
 #include "../parameters/ParameterSystem.h"
 #include "../../gui/Tools.h"
 #include "../../Misc.h"
-#include "../../CSerializer.h"
+#include "../../state/Serialization.h"
 #include <set>
 #include <array>
 #include <string>

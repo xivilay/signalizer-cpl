@@ -9,7 +9,7 @@
 #include "../../gui/Tools.h"
 #include "CustomFormatters.h"
 #include "CustomTransforms.h"
-#include "../../CSerializer.h"
+#include "../../state/Serialization.h"
 
 namespace cpl
 {

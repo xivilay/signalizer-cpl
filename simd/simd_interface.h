@@ -32,9 +32,9 @@
 	#define SIMD_INTERFACE_H
 	
 	#include "simd_traits.h"
-	#include "../SysStats.h"
+	#include "../system/SysStats.h"
 
-#define CPL_SIMD_FUNC CPL_VECTOR_TARGET inline
+	#define CPL_SIMD_FUNC CPL_VECTOR_TARGET inline
 
 	namespace cpl
 	{
@@ -570,12 +570,12 @@
 					max_vector_capacity()
 				{
 					const auto factor = 8 / sizeof(Scalar);
-					auto & cpuinfo = SysStats::CProcessorInfo::instance();
-					if (cpuinfo.test(cpuinfo.AVX))
+					using namespace cpl::system;
+					if (CProcessor::test(CProcessor::AVX))
 					{
 						return factor * 4;
 					}
-					else if (cpuinfo.test(cpuinfo.SSE2))
+					else if (CProcessor::test(CProcessor::SSE2))
 					{
 						return factor * 2;
 					}

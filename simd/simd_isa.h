@@ -79,7 +79,7 @@
 				template<typename Scalar, class ClassDispatcher, typename... Args>
 				auto dynamic_isa_dispatch_impl(typename std::enable_if<std::is_same<Scalar, float>::value, float>::type *, Args&&... args)
 				{
-					if (SysStats::CProcessorInfo::instance().test(SysStats::CProcessorInfo::FMA))
+					if (system::CProcessor::test(system::CProcessor::FMA))
 					{
 						switch (max_vector_capacity<Scalar>())
 						{
@@ -122,7 +122,7 @@
 				template<typename Scalar, class ClassDispatcher, typename... Args>
 				auto dynamic_isa_dispatch_impl(typename std::enable_if<std::is_same<Scalar, double>::value, float>::type *, Args&&... args)
 				{
-					if (SysStats::CProcessorInfo::instance().test(SysStats::CProcessorInfo::FMA))
+					if (system::CProcessor::test(system::CProcessor::FMA))
 					{
 						switch (max_vector_capacity<Scalar>())
 						{

@@ -38,7 +38,7 @@
 	#include <ostream>
 	#include <cstdlib>
 	#include <atomic>
-	#include "SysStats.h"
+	#include "system/SysStats.h"
 
 	namespace cpl
 	{

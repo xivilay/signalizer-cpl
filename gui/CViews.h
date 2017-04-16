@@ -33,14 +33,13 @@
 
 	#include <set>
 	#include "../Common.h"
-	#include "../CSerializer.h"
 	#include "CToolTip.h"
 	#include "GraphicComponents.h"
 	#include "CEditSpaceSpawner.h"
 	#include "../rendering/OpenGLRendering.h"
 	#include "../Protected.h"
 	#include "Tools.h"
-	#include "../SafeSerializableObject.h"
+	#include "../state/Serialization.h"
 		
 
 	namespace cpl

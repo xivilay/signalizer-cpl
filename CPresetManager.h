@@ -30,7 +30,7 @@
 	#define CPL_CPRESETMANAGER_H
 
 	#include "Common.h"
-	#include "CSerializer.h"
+	#include "state/CSerializer.h"
 	#include "CExclusiveFile.h"
 	#include <vector>
 	#include <string>

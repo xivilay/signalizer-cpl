@@ -44,7 +44,7 @@
 	#include "../stdext.h"
 	#include "../Utility.h"
 	#include "DesignBase.h"
-	#include "../CSerializer.h"
+	#include "../state/Serialization.h"
 
 	namespace cpl
 	{

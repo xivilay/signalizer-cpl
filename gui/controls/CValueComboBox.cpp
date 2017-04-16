@@ -29,8 +29,6 @@
 
 #include "CValueComboBox.h"
 #include "../../Mathext.h"
-#include "../../SerializerModifiers.h"
-
 
 namespace cpl
 {

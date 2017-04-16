@@ -62,13 +62,12 @@
 #include "CMutex.cpp"
 #include "CExclusiveFile.cpp"
 #include "ffts/dustfft.cpp"
-#include "InstructionSet.cpp"
+#include "system/System.cpp"
 #include "CTimer.cpp"
 #include "SigMathImp.cpp"
 #include "octave/octave_all.cpp"
 #include "Protected.cpp"
-#include "SafeSerializableObject.cpp"
-#include "CSerializer.cpp"
+#include "state/State.cpp"
 #include "lib/md5/md5.cpp"
 
 #if defined(CPL_HINT_FONT)
