@@ -344,6 +344,30 @@
 						}
 
 					}
+
+					void copyIntoHead(const IteratorBase & other, std::size_t bufSize)
+					{
+						if (other.bsize == 0)
+							return;
+
+						auto start = other.cursor + (other.bsize - bufSize);
+
+						start %= other.bsize;
+
+						while (bufSize != 0)
+						{
+							auto available = static_cast<ssize_t>(other.bsize) - static_cast<ssize_t>(start);
+
+							auto part = std::min(static_cast<ssize_t>(bufSize), available);
+
+							copyIntoHead(other.buffer + start, part);
+
+							start += part;
+							bufSize -= part;
+							start %= other.bsize;
+						}
+					}
+
 					/// <summary>
 					/// Sets the current value at the head, and advances one element.
 					/// </summary>
