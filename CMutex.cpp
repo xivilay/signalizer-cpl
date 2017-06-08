@@ -90,6 +90,7 @@ namespace cpl
 		ret = AlertUserAboutMutex();
 		switch (ret)
 		{
+		default:
 			case MsgButton::bTryAgain:
 				goto loop;
 			case MsgButton::bContinue:
@@ -226,6 +227,7 @@ namespace cpl
 		ret = AlertUserAboutMutex();
 		switch (ret)
 		{
+		default:
 			case MsgButton::bTryAgain:
 				goto loop;
 			case MsgButton::bContinue:

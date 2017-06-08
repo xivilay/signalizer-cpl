@@ -383,8 +383,15 @@
 #endif
 				friend class StreamType;
 
-				void advance(cpl::ssize_t samples) { transport.samplePosition += samples; }
+				void advance(cpl::ssize_t samples) 
+				{
+					steadyClock += samples;
 
+					if(transport.isPlaying)
+						transport.samplePosition += samples; 
+				}
+
+				std::uint64_t getSteadyClock() const noexcept { return steadyClock; }
 				bool isPlaying() const noexcept { return transport.isPlaying; }
 				bool isLooping() const noexcept { return transport.isLooping; }
 				bool isRecording() const noexcept { return transport.isRecording; }
@@ -395,12 +402,23 @@
 				double getPositionInSeconds() const noexcept { return getPositionInSamples() / sampleRate; }
 
 				static Playhead empty() { return{}; }
-			private:
+				
+				Playhead & operator=(const Playhead &) = delete;
 
+				void copyVolatileData(const Playhead & other)
+				{
+					sampleRate = other.sampleRate;
+					arrangement = other.arrangement;
+					transport = other.transport;
+				}
+
+			private:
+				
 				Playhead() {}
 				double sampleRate = 0;
 				ArrangementData arrangement;
 				TransportData transport;
+				std::uint64_t steadyClock = 0;
 			};
 
 			/// <summary>
@@ -802,7 +820,7 @@
 					return false;
 
 				auto oldPlayhead = realTimePlayhead;
-				realTimePlayhead = ph;
+				realTimePlayhead.copyVolatileData(ph);
 				// publish all data to listeners
 				unsigned mask(0);
 
@@ -856,11 +874,7 @@
 					}
 				}
 				
-
-				if(ph.transport.isPlaying)
-					realTimePlayhead.advance(numSamples);
-
-				oldPlayhead = realTimePlayhead;
+				realTimePlayhead.advance(numSamples);
 
 				problemsPushingPlayHead = anyNewProblemsPushingPlayHeads;
 
@@ -1618,7 +1632,7 @@
 				asyncSignalChange;
 
 			//std::atomic<std::size_t> audioHistorySize, audioHistoryCapacity;
-			Playhead realTimePlayhead, oldPlayhead, asyncPlayhead;
+			Playhead realTimePlayhead, asyncPlayhead;
 			bool framesWereDropped{ false }, problemsPushingPlayHead { false };
 			std::atomic<std::size_t> numDeferredAsyncSamples;
 			std::vector<AudioBuffer> audioHistoryBuffers;

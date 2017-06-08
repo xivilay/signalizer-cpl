@@ -369,6 +369,18 @@
 					}
 
 					/// <summary>
+					/// Wraps around size. Biased: index 0 = current head of buffer (not the cursor of it)
+					/// </summary>
+					inline T & operator [] (std::size_t index) NOEXCEPT_RELEASE
+					{
+						#ifdef _DEBUG
+							if (cursor + index < cursor)
+								CPL_RUNTIME_EXCEPTION("Overflow error");
+						#endif
+						return this->buffer[(cursor + index) % this->bsize];
+					}
+
+					/// <summary>
 					/// Sets the current value at the head, and advances one element.
 					/// </summary>
 					void setHeadAndAdvance(const T & newElement) noexcept
