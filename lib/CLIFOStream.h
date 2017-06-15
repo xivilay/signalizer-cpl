@@ -345,12 +345,12 @@
 
 					}
 
-					void copyIntoHead(const IteratorBase & other, std::size_t bufSize)
+					void copyIntoHead(const IteratorBase & other, std::size_t bufSize, ssize_t offset = 0)
 					{
 						if (other.bsize == 0)
 							return;
 
-						auto start = other.cursor + (other.bsize - bufSize);
+						auto start = static_cast<ssize_t>(other.cursor) + (static_cast<ssize_t>(other.bsize) + offset);
 
 						start %= other.bsize;
 
