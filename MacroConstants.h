@@ -211,7 +211,11 @@
 		#define __C99__
 
 		// change this to check against _LIBCPP_VERSION to detect cpp11 support
-		#if 1
+        #if __clang_major__ >= 7
+            #define __CPP14__
+        #endif
+
+		#if __clang_major__ >= 5
 			#define __CPP11__
 		#endif
 		#define __LLVM__
