@@ -64,7 +64,7 @@ namespace cpl
 	{
 		using namespace Misc;
 		unsigned int start;
-		int ret;
+		int ret = MsgButton::bTryAgain;
 	loop:
 		int count = 0;
 		start = QuickTime();

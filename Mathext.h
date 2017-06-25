@@ -218,6 +218,24 @@
 				return part > right ? right : part;
 			}
 
+			namespace
+			{
+				template<typename T>
+				struct identity { using type = T; };
+
+				template<typename T>
+				using common_signed = typename std::conditional<std::is_integral<T>::value, std::make_signed<T>, identity<T>>::type;
+			}
+
+
+			template<typename X, typename Y>
+			inline auto ssub(const X & x, const Y & y)
+			{
+				typedef common_signed<decltype(x - y)>::type res;
+
+				return static_cast<res>(x) - static_cast<res>(y);
+			}
+
 			template<typename Scalar>
 				inline Scalar square(const std::complex<Scalar> & z)
 				{
