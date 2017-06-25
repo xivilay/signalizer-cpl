@@ -171,11 +171,11 @@
 		struct PACKED ArrangementData : public MessageStreamBase
 		{
 #ifdef CPL_JUCE
-			ArrangementData(const juce::AudioPlayHead::CurrentPositionInfo & cpi) 
+			ArrangementData(const juce::AudioPlayHead::CurrentPositionInfo & cpi)
 				: MessageStreamBase(MessageType::ArrangementMessage)
 				, beatsPerMinute(cpi.bpm)
 				, signatureDenominator(cpi.timeSigDenominator)
-				, signatureNumerator(cpi.timeSigNumerator) 
+				, signatureNumerator(cpi.timeSigNumerator)
 			{}
 #endif
 			ArrangementData() : MessageStreamBase(MessageType::ArrangementMessage), beatsPerMinute(), signatureDenominator(), signatureNumerator() {}
@@ -381,14 +381,14 @@
 #ifdef CPL_JUCE
 				Playhead(const juce::AudioPlayHead::CurrentPositionInfo & info, double sampleRate) : sampleRate(sampleRate), arrangement(info), transport(info) {}
 #endif
-				friend class StreamType;
+				friend class CAudioStream<T, PacketSize>;
 
-				void advance(cpl::ssize_t samples) 
+				void advance(cpl::ssize_t samples)
 				{
 					steadyClock += samples;
 
 					if(transport.isPlaying)
-						transport.samplePosition += samples; 
+						transport.samplePosition += samples;
 				}
 
 				std::uint64_t getSteadyClock() const noexcept { return steadyClock; }
@@ -402,7 +402,7 @@
 				double getPositionInSeconds() const noexcept { return getPositionInSamples() / sampleRate; }
 
 				static Playhead empty() { return{}; }
-				
+
 				Playhead & operator=(const Playhead &) = delete;
 
 				void copyVolatileData(const Playhead & other)
@@ -413,7 +413,7 @@
 				}
 
 			private:
-				
+
 				Playhead() {}
 				double sampleRate = 0;
 				ArrangementData arrangement;
@@ -748,7 +748,7 @@
 
 			/// <summary>
 			/// Returns the playhead for the async subsystem.
-			/// Only valid to call and read, while you're inside a 
+			/// Only valid to call and read, while you're inside a
 			/// real time callback.
 			/// </summary>
 			const Playhead & getRealTimePlayhead() const noexcept
@@ -873,7 +873,7 @@
 						anyNewProblemsPushingPlayHeads = true;
 					}
 				}
-				
+
 				realTimePlayhead.advance(numSamples);
 
 				problemsPushingPlayHead = anyNewProblemsPushingPlayHeads;
@@ -935,7 +935,7 @@
 					break;
 				}
 
-				
+
 
 				framesWereDropped = droppedSamples != 0;
 

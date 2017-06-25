@@ -94,6 +94,7 @@
 
 			int join()
 			{
+			    // TODO: This is broken, but yeah. Ditch this and use std::thread anyway.
 				void * retval;
 				if(!thread)
 					return -1;

@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CLIFOStream.h
-		
+
 		A class buffer that supports efficient wrap-around and iterators, acting like a closed
 		ring.
 		This class is NOT thread-safe, it is your job to protect it.
@@ -148,7 +148,7 @@
 					}
 
 				protected:
-					
+
 					void absorb(IteratorBase && other) noexcept
 					{
 						cursor = other.cursor;
@@ -169,27 +169,27 @@
 				/// <summary>
 				/// Provides a constant view of a CLIFOStream.
 				/// There are three idiomatic ways to iterate the buffer biased, with 1 being the slowest;
-				///		1. 
+				///		1.
 				///			for(int i = 0; i < proxy.size(); ++i)
 				///				proxy[i];
-				///		2. 
+				///		2.
 				///			for(auto it = proxy.first(); it != proxy.firstEnd(); ++it)
 				///				*it;
 				///			for(auto it = proxy.second(); it != proxy.secondEnd(); ++it)
 				///				*it;
-				///		3. 
+				///		3.
 				///			for(int idx = 0; idx < proxy.iterator_indices; ++idx)
 				///			{
 				///				auto start = proxy.getItIndex(idx)
 				///				auto end = start + proxy.getItRange(idx);
 				///				for(auto it = start; it != end; ++it)
-				///					*it; 
+				///					*it;
 				///			}
 				/// For unbiased access, one can do:
 				///		1.
 				///			for(auto & el : proxy)
 				///				;
-				///		2. 
+				///		2.
 				///			for(int i = 0; i < proxy.size(); ++i)
 				///				proxy.unbiasedDirectAccess(i);
 				/// </summary>
@@ -305,7 +305,7 @@
 					Writer(CBuf & buf)
 						: IteratorBase(buf), parent(&buf)
 					{
-						
+
 					}
 
 					Writer(Writer && other)
@@ -385,7 +385,7 @@
 					/// </summary>
 					void setHeadAndAdvance(const T & newElement) noexcept
 					{
-						this->buffer[cursor] = newElement;
+						this->buffer[this->cursor] = newElement;
 						advance(1);
 					}
 
@@ -425,7 +425,7 @@
 				}
 
 				CLIFOStream(CBuf && other)
-					: cursor(other.cursor), size(other.size), capacity(other.capacity), 
+					: cursor(other.cursor), size(other.size), capacity(other.capacity),
 					memory(other.memory), isUsingOwnBuffer(other.isUsingOwnBuffer)
 				{
 					if (other.isUsingOwnBuffer)
@@ -448,10 +448,10 @@
 				CLIFOStream & operator = (CBuf && other) = delete;
 				CLIFOStream(const CBuf & other) = delete;
 
-				ProxyView createProxyView() const 
+				ProxyView createProxyView() const
 				{
 					#ifdef _DEBUG
-						proxyCount++; 
+						proxyCount++;
 					#endif
 					if(hasWriter)
 					{
@@ -464,7 +464,7 @@
 				Writer createWriter()
 				{
 					#ifdef _DEBUG
-						proxyCount++; 
+						proxyCount++;
 					#endif
 					if (hasReader)
 					{
@@ -536,7 +536,7 @@
 					if (pcapacity != capacity)
 					{
 						// notice the order of the resize/sizing here:
-						// if we get less memory, we have to resize firstly, 
+						// if we get less memory, we have to resize firstly,
 						// so the reordering inside configureNewSize()
 						// works correctly (it maybe has to copy something that
 						// will be out of bounds after a resize()).
@@ -566,7 +566,7 @@
 				/// <summary>
 				/// Memory buffer is used for all subsequent operations.
 				/// Alignment of memory buffer must match alignment of template parameter.
-				/// Buffer is NOT taken ownership of, and must remain valid until 
+				/// Buffer is NOT taken ownership of, and must remain valid until
 				/// either this function is called again, unuseMemoryBuffer() is called, or this object's
 				/// lifetime is over.
 				/// Alters capacity and size
@@ -616,7 +616,7 @@
 			private:
 				/// <summary>
 				/// Handles 'size', and ensures buffer contents. That is, if newSize < size, the last
-				/// newSize samples are preserved in correct order. If newSize > size, (newSize - size) 
+				/// newSize samples are preserved in correct order. If newSize > size, (newSize - size)
 				/// elements (filler) are inserted at the cursor, without changing it.
 				/// doesn't consider capacity
 				/// </summary>
@@ -692,7 +692,7 @@
 				#ifdef _DEBUG
 					mutable std::atomic<int> proxyCount;
 
-					void releaseProxy(IteratorBase & p) const 
+					void releaseProxy(IteratorBase & p) const
 					{
 						proxyCount--;
 					}

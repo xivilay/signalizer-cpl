@@ -32,15 +32,15 @@
 #ifndef CPL_SYSSTATS_H
 	#define CPL_SYSSTATS_H
 
-	#include "MacroConstants.h"
+	#include "../MacroConstants.h"
 	#include "InstructionSet.h"
 
 	#ifdef __CPP11__
 		#include <thread>
 	#endif
 
-	#include "PlatformSpecific.h"
-    #include "LexicalConversion.h"
+	#include "../PlatformSpecific.h"
+    #include "../LexicalConversion.h"
 
 	namespace cpl
 	{
@@ -167,7 +167,7 @@
 						RegCloseKey(hKey);
 						frequency = dwMHz;
 					#elif defined(CPL_MAC)
-                    
+
 						std::string contents = Misc::ExecCommand("sysctl hw.cpufrequency");
 						if(contents.size() > 0)
 						{
@@ -179,7 +179,7 @@
 								if(frequency != 0)
 									frequency /= 1000000;
 							}
-                            
+
 						}
 
 					#else
@@ -192,7 +192,7 @@
 								auto number = contents.c_str() + pos + 2;
 								frequency = std::strtod(number, nullptr);
 							}
-                            
+
 						}
 					#endif
 				}

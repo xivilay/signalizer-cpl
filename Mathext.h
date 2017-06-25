@@ -98,6 +98,18 @@
 		{
 			using namespace std;
 
+			template<std::size_t C>
+			struct Sum
+			{
+				static const std::size_t result = C + Sum<C - 1>::value;
+			};
+
+			template<>
+			struct Sum<1>
+			{
+				static const std::size_t value = 1;
+			};
+
 			/*
 			* Evaluate Chebyshev series
 			*
@@ -231,7 +243,7 @@
 			template<typename X, typename Y>
 			inline auto ssub(const X & x, const Y & y)
 			{
-				typedef common_signed<decltype(x - y)>::type res;
+				typedef typename common_signed<decltype(x - y)>::type res;
 
 				return static_cast<res>(x) - static_cast<res>(y);
 			}

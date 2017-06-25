@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:LinkwitzRileyNetwork.h
-		
+
 		A Linkwitz-Riley network splits a signal into N bands with variable slope that,
 		when summed, yields a flat frequency response. It is thus an all-pass filter.
 
@@ -30,10 +30,11 @@
 
 #ifndef CPL_LINKWITZRILEYNETWORK_H
 	#define CPL_LINKWITZRILEYNETWORK_H
-	
+
 	#include <array>
 	#include "filters/AC_SVF.h"
 	#include "filters/Allpass.h"
+    #include "../Mathext.h"
 
 	namespace cpl
 	{
@@ -50,17 +51,6 @@
 					static_assert(FilterOrder == 1, "Only 12 dB (1) filter order supported at the moment.");
 
 				private:
-					template<std::size_t C>
-					struct Sum
-					{
-						static const std::size_t result = C + Sum<C - 1>::value;
-					};
-
-					template<>
-					struct Sum<1>
-					{
-						static const std::size_t value = 1;
-					};
 
 					static std::size_t sum(std::size_t z)
 					{
@@ -80,7 +70,7 @@
 					static const std::size_t Filters = Order * (1 + Bands / 2);
 					static const std::size_t CrossOvers = Bands - 1;
 					static const std::size_t AllpassSections = CrossOvers - 1;
-					static const std::size_t AllpassFilters = Sum<AllpassSections>::value;
+					static const std::size_t AllpassFilters = Math::Sum<AllpassSections>::value;
 
 					typedef std::array<Scalar, Bands> BandArray;
 
@@ -98,7 +88,7 @@
 
 							for (std::size_t i = 0; i < crossoverFrequenciesNormalized.size(); ++i)
 							{
-								ret.coeffs[i] = Filter::Coefficients::design<filters::Response::Lowpass>(crossoverFrequenciesNormalized[i], 0.5, 1);
+								ret.coeffs[i] = Filter::Coefficients::template design<filters::Response::Lowpass>(crossoverFrequenciesNormalized[i], 0.5, 1);
 							}
 
 							for (std::size_t i = 0; i < AllpassSections; ++i)

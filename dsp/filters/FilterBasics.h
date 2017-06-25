@@ -42,16 +42,16 @@
 
 				/// Filter concept:
 				/// template<typename T>
-				/// class Filter 
+				/// class Filter
 				/// {
 				///		struct Coefficients
-				///		{ 
+				///		{
 				/// 		static Coefficients design(Response, T normalizedFrequency, T Q, T linearGain);
 				///			static Coefficients design<Response>(T normalizedFrequency, T Q, T linearGain);
 				///			static Coefficients zero();
 				///			static Coefficients identity();
 				///		};
-				/// 
+				///
 				///		void reset();
 				///		T process(T, const Coeffcients &);
 				/// }
@@ -95,7 +95,7 @@
 					"Biquad"
 				};
 
-				inline constexpr const char * StringToType(Type r)
+				inline const char * StringToType(Type r)
 				{
 					return Types[cpl::enum_cast<std::size_t>(r)];
 				}
@@ -129,7 +129,7 @@
 					return Type::SVF;
 				}
 
-				inline constexpr const char * StringToResponse(Response r)
+				inline const char * StringToResponse(Response r)
 				{
 					return Responses[cpl::enum_cast<std::size_t>(r)];
 				}

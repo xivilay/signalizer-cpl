@@ -22,19 +22,19 @@
 **************************************************************************************
 
 	file:CSerializer.h
- 
+
 		A class that works like a stream, where you can write any POD type into,
 		including itself, or any type deriving from CSerializer::Serializable.
 		CSerializers carry version info and has an associated key.
 		Keys are either integers or strings, and are compatible (and comparable).
 		This means that CSerializers has binary data, but also has an associative binary tree
 		map of itself.
- 
+
 		This class is designed to serialize objects to disk / memory, and restore them perfectly
 		again.
- 
+
 	Example usage:
- 
+
 		class MyObject : public CSerializer::Serializable
 		{
 			struct data_t
@@ -44,9 +44,9 @@
 			} data;
 			std::string text;
 			MyObject * child;
- 
+
 			void save(CSerializer::Archiver & archive, Version version) {
- 
+
 				archive << data;
 				archive << text;
 				if(child)
@@ -55,16 +55,16 @@
 					archive.getContent("child") << *child;
 				}
 			}
- 
+
 			void load(CSerializer::Builder & builder, Version version) {
- 
+
 				if(version != supported_version)
 					return;
- 
+
 				builder >> data;
 				builder >> text;
 				auto & entry = builder.getContent("child");
- 
+
 				if(!entry.isEmpty())
 				{
 					// will recursively load any childs.
@@ -74,32 +74,32 @@
 
 			}
 		};
- 
- 
+
+
 		void somethingThatSavesState()
 		{
 			CSerializer se;
 			se.setMasterVersion(this_program_version);
-			
+
 			myobject.save(se, se.getLocalVersion());
 			auto data = se.compile();
- 
+
 			writeToFile(data.getBlock(), data.getSize());
 		}
- 
+
 		void somethingThatReadsState()
 		{
 			CSerializer se;
-			
+
 			auto data = readAFile();
 			auto dataSize = fileSize(data);
 			// this may throw an exception if file is corrupt.
 			se.build(CSerializer::WeakContentWrapper(data, dataSize));
-			
+
 			myobject.load(se, se.getLocalVersion());
- 
+
 		}
-	
+
 		A class semantically equivalent to boost::archive, except this writes data as
 		binary, and can write/load itself as well.
 
@@ -203,7 +203,7 @@
 				std::size_t size = 0;
 				if(!bytesUsed || !getPointer())
 					return "";
-				
+
 				const char * pointer = reinterpret_cast<const char * >(memory.get());
 				pointer += readPtr;
 				for (;;)
@@ -212,23 +212,23 @@
 					if(size > bytesUsed)
 						return "";
 					if(pointer[size] == '\0')
-					   break; 
+					   break;
 					size++;
-					
+
 				}
 				// add one more byte to include the nullterminator
 				readPtr += size + 1;
 				if (size > 1)
 				{
-					// notice it reads size bytes from pointer, not 
-					// [pointer .. pointer + size] which would be 
+					// notice it reads size bytes from pointer, not
+					// [pointer .. pointer + size] which would be
 					// one more byte, thus including the zero terminator.
-					return std::string(pointer, size); 
+					return std::string(pointer, size);
 				}
 				else
 					return "";
 			}
-			
+
 			bool readBytes(void * content, std::size_t bytes)
 			{
 				// bad params
@@ -380,7 +380,7 @@
 			enum class HeaderType : std::uint16_t
 			{
 				Start = 0x10, // some sentinel value makes debugging easier
-				Key, 
+				Key,
 				Data,
 				Child,
 				End,
@@ -561,9 +561,9 @@
 			{
 				switch (m)
 				{
-				case Modifiers::Virtual: return virtualCount > 0; 
+				case Modifiers::Virtual: return virtualCount > 0;
 				case Modifiers::RestoreSettings: return restoreSettings;
-				case Modifiers::RestoreValue: return restoreValue; 
+				case Modifiers::RestoreValue: return restoreValue;
 				default:
 					return false;
 				}
@@ -623,7 +623,7 @@
 			void append(const Key & k);
 
 			template<typename T>
-				typename std::enable_if<std::is_pod<T>::value, void>::type 
+				typename std::enable_if<std::is_pod<T>::value, void>::type
 					append(T * object, std::size_t size = SIZE_MAX)
 			{
 				if (size == SIZE_MAX)
@@ -691,7 +691,7 @@
 				for (auto & s : content)
 					s.second.rewindWriter();
 			}
-			
+
 			template<typename T, typename D>
 				CSerializer & operator << (const std::unique_ptr<T, D> & object)
 				{
@@ -707,7 +707,7 @@
 			/// <summary>
 			/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
 			/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
-			/// stay architechture-independant!
+			/// stay architecture-independent!
 			/// </summary>
 			template<typename T>
 				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
@@ -723,7 +723,7 @@
 					{
 						result = data.readBytes(&object, sizeof(T));
 					}
-					
+
 					if (!result && throwOnExhaustion)
 						CPL_RUNTIME_EXCEPTION_SPECIFIC("CSerializer exhausted; probably incompatible serialized object.", ExhaustedException);
 
@@ -742,11 +742,11 @@
 			template<typename T>
 			CSerializer& operator << (const std::atomic<T> & object)
 			{
-				return (*this) << object.load(std::memory_order_release)
+				return (*this) << object.load(std::memory_order_release);
 			}
 
 			inline CSerializer & operator >> (Serializable * object)
-			{				
+			{
 				object->deserialize(*this, version);
 				return *this;
 			}
@@ -756,7 +756,7 @@
 				object->serialize(*this, version);
 				return *this;
 			}
-				
+
 			inline CSerializer & operator >> (Serializable & object)
 			{
 				object.deserialize(*this, version);
@@ -783,10 +783,10 @@
 					data.getString();
 				else
 					str = data.getString();
-				
+
 				return *this;
 			}
-							
+
 			CSerializer & getContent(const Key & k)
 			{
 				auto it = content.find(k);
@@ -816,7 +816,7 @@
 			}
 
 		private:
-			
+
 			BinaryBuilder data;
 			//std::vector<std::pair<Key, CSerializer>> content;
 			std::map<Key, CSerializer> content;

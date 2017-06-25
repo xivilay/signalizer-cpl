@@ -28,9 +28,9 @@
 *************************************************************************************/
 
 #include "SafeSerializableObject.h"
-#include "Protected.h"
+#include "../Protected.h"
 #ifdef CPL_JUCE
-    #include "gui/GUI.h"
+    #include "../gui/GUI.h"
 #endif
 namespace cpl
 {

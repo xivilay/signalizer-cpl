@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CSerializer.cpp
- 
+
 		Implementation of CSerializer.h
 
 *************************************************************************************/
@@ -35,11 +35,11 @@
 #include <memory>
 #include <exception>
 #include <stdexcept>
-#include "stdext.h"
-#include "PlatformSpecific.h"
-#include "Misc.h"
-#include "ProgramVersion.h"
-#include "lib/md5/md5.h"
+#include "../stdext.h"
+#include "../PlatformSpecific.h"
+#include "../Misc.h"
+#include "../ProgramVersion.h"
+#include "../lib/md5/md5.h"
 
 
 namespace cpl
@@ -51,7 +51,7 @@ namespace cpl
 			return false;
 		const StdHeader * start = (const StdHeader *)cr.getBlock();
 
-		// a child system is a key that identifies the child followed by 
+		// a child system is a key that identifies the child followed by
 		// a child entry. Childs without key are invalid.
 		bool childHasKey = false;
 		// there should only be one data entry.
