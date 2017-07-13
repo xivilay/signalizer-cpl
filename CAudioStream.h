@@ -1053,7 +1053,7 @@
 			/// </summary>
 			virtual std::size_t getAudioHistorySize() const noexcept override
 			{
-				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getSize() : 0;
+				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getSize() : internalInfo.audioHistorySize.load(std::memory_order_relaxed);
 			}
 
 			/// <summary>
@@ -1062,7 +1062,7 @@
 			/// </summary>
 			virtual std::size_t getAudioHistoryCapacity() const noexcept override
 			{
-				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getCapacity() : 0;
+				return audioHistoryBuffers.size() ? audioHistoryBuffers[0].getCapacity() : internalInfo.audioHistoryCapacity.load(std::memory_order_relaxed);
 			}
 
 			virtual double getAudioHistorySamplerate() const noexcept override
@@ -1428,7 +1428,8 @@
 						// before any async callers are notified.
 						if (signalChange && (internalInfo.storeAudioHistory &&
 							(localAudioHistorySize != getAudioHistorySize()) ||
-							(localAudioHistoryCapacity != getAudioHistoryCapacity())))
+							(localAudioHistoryCapacity != getAudioHistoryCapacity()) ||
+							audioHistoryBuffers.size() != channels))
 						{
 							std::lock_guard<std::mutex> bufferLock(aBufferMutex);
 							//OutputDebugString(("1. Changed size to: " + std::to_string(localAudioHistorySize)).c_str());
