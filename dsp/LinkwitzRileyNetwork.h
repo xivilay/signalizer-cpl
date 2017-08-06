@@ -95,7 +95,7 @@
 							{
 								ret.apCoeffs[i] = Allpass::Coefficients::design(crossoverFrequenciesNormalized[i + AllpassSections], 0.5, 1);
 							}
-
+							
 							return ret;
 						}
 

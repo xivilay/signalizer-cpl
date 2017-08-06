@@ -69,6 +69,7 @@
 					Bell = Peak,
 					Lowshelf,
 					Highshelf,
+					Allpass,
 					end
 				};
 
@@ -87,7 +88,8 @@
 					"Peak",
 					/* "Bell", */
 					"Low shelf",
-					"High shelf"
+					"High shelf",
+					"Allpass"
 				};
 
 				static const char * Types[] = {

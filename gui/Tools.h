@@ -37,6 +37,7 @@
 	#include "../CMutex.h"
 	#include <future>
 	#include <thread>
+	#include <set>
 
 	namespace cpl
 	{
@@ -82,6 +83,7 @@
 			cpl::CMutex::Lockable mutex;
 			std::set<EventListener *> eventListeners;
 		};
+
 
 		template<typename T>
 		juce::Rectangle<int> centerRectInsideRegion(const juce::Rectangle<T> boundingRect, double length, double border)
