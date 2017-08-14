@@ -36,8 +36,11 @@
 	#define CPL__xstring(x) #x
 	#define CPL__tostring(x) CPL__xstring(x)
 
-	#ifdef JUCE_APP_VERSION
-		#define CPL_JUCE
+	#ifndef CPL_JUCE
+		// detect JUCE in direct compilation
+		#ifdef JUCE_APP_VERSION
+			#define CPL_JUCE
+		#endif
 	#endif
 
 	#if defined(_WIN64) || defined(__x86_64__) || defined(__x86_64)

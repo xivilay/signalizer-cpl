@@ -78,7 +78,11 @@
 	#include "LibraryOptions.h"
 
 	#ifdef CPL_JUCE
-		#include "../JuceLibraryCode/JuceHeader.h"
+		#ifndef CPL_JUCE_HEADER_PATH
+			#include "../JuceLibraryCode/JuceHeader.h"
+		#else
+			#include CPL_JUCE_HEADER_PATH
+		#endif
 	#endif
 
 #endif

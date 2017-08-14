@@ -43,7 +43,7 @@
 	#define CPL_LIBRARYOPTIONS_H
 	#include "MacroConstants.h"
 	#if defined(CPL_JUCE) && defined(_DEBUG)
-		//#define DONT_SET_USING_JUCE_NAMESPACE 1
+		#define DONT_SET_USING_JUCE_NAMESPACE 1
 		//#define TYPEFACE_BITMAP_RENDERING
 		//#define CPL_HINT_FONT
 		#define JUCE_ENABLE_LIVE_CONSTANT_EDITOR 1
