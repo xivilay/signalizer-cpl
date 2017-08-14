@@ -30,9 +30,10 @@
 #ifndef CPL_SIGNAL_SANITIZER_H
 	#define CPL_SIGNAL_SANITIZER_H
 
-	#include "simd.h"
+	#include "../simd.h"
 	#include <type_traits>
-	#include "Misc.h"
+	#include "../Misc.h"
+	#include "../system/SysStats.h"
 
 	namespace cpl
 	{
@@ -59,7 +60,7 @@
 				SignalSanitizer(std::uint32_t flags = Denormal)
 					: flags(flags)
 				{
-					if (!SysStats::CProcessorInfo::instance().test(SysStats::CProcessorInfo::SSE))
+					if (!system::CProcessor::test(system::CProcessor::SSE))
 					{
 						CPL_RUNTIME_EXCEPTION("CPU doesn't support SSE!");
 					}
@@ -69,8 +70,8 @@
 						_mm_setcsr(hardwareFlags | 0x8040); // flush to zero + denormals are zero
 				}
 
-				template<typename T>
-				inline typename std::enable_if<std::is_floating_point<T>::value, Results>::type process(std::size_t samples, std::size_t channels, const T ** const input, T ** const output, T defaultValue = (T)0)
+				template<typename T, class InVector, class OutVector>
+				inline typename std::enable_if<std::is_floating_point<T>::value, Results>::type process(std::size_t samples, std::size_t channels, const InVector & input, OutVector & output, T defaultValue = (T)0)
 				{
 					Results ret;
 					if (flags & NaN)

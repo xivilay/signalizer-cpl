@@ -115,6 +115,7 @@
 	#include <memory>
 	#include <exception>
 	#include <stdexcept>
+	#include <atomic>
 	#include "../stdext.h"
 	#include "../PlatformSpecific.h"
 	#include "../Misc.h"

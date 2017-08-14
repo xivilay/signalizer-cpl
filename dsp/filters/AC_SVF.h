@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include "FilterBasics.h"
 #include "../../simd.h"
+#include <array>
 
 namespace cpl
 {
@@ -41,6 +42,11 @@ namespace cpl
 	{
 		namespace filters
 		{
+			template<typename T>
+			struct SVFMix
+			{
+				T m0, m1, m2;
+			};
 
             template<typename T>
             struct SVFCoefficients
@@ -51,9 +57,19 @@ namespace cpl
 
             public:
 
-                T A, g, k, a1, a2, a3, m0, m1, m2;
+				typedef SVFMix<T> Mix;
+
+                T A, g, k, a1, a2, a3;
+				T m0, m1, m2;
 
                 using Consts = cpl::simd::consts<T>;
+
+				inline constexpr static SVFCoefficients identity() noexcept
+				{
+					SVFCoefficients ret{ 0 };
+					ret.m0 = 1;
+					return ret;
+				}
 
                 template<Response R>
                 inline static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain) noexcept
@@ -75,6 +91,7 @@ namespace cpl
                     case R::Bell:		return design<R::Bell>(normalizedFrequency, Q, linearGain);
                     case R::Lowshelf:	return design<R::Lowshelf>(normalizedFrequency, Q, linearGain);
                     case R::Highshelf:	return design<R::Highshelf>(normalizedFrequency, Q, linearGain);
+					case R::Allpass:	return design<R::Allpass>(normalizedFrequency, Q, linearGain);
                     default:
                         return SVFCoefficients::zero();
                     }
@@ -84,14 +101,6 @@ namespace cpl
                 {
                     SVFCoefficients ret;
                     std::memset(&ret, 0, sizeof(SVFCoefficients));
-                    return ret;
-                }
-
-                static SVFCoefficients identity()
-                {
-                    SVFCoefficients ret;
-                    std::memset(&ret, 0, sizeof(SVFCoefficients));
-                    ret.m0 = 1;
                     return ret;
                 }
 
@@ -189,6 +198,15 @@ namespace cpl
                     const T m2 = 1 - A * A;
                     return{ A, g, k, a1, a2, a3, m0, m1, m2 };
                 }
+
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Allpass>)
+				{
+					auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
+					coeffs.m0 = 1;
+					coeffs.m1 = -2 * coeffs.k;
+					coeffs.m2 = 0;
+					return coeffs;
+				}
             };
 
 			template<typename T>
@@ -196,7 +214,7 @@ namespace cpl
 			{
                 typedef SVFCoefficients<T> Coefficients;
 
-				T filter(T input, const Coefficients & c)
+				inline T filter(T input, const Coefficients & c) noexcept
 				{
 					const T v3 = input - ic2eq;
 					const T v1 = c.a1 * ic1eq + c.a2 * v3;
@@ -204,6 +222,23 @@ namespace cpl
 					ic1eq = 2 * v1 - ic1eq;
 					ic2eq = 2 * v2 - ic2eq;
 					return c.m0 * input + c.m1 * v1 + c.m2 * v2;
+				}
+
+				template<std::size_t MixSize>
+				inline std::array<T, MixSize> filter(T input, const Coefficients & c, const std::array<typename Coefficients::Mix, MixSize> & mixes) noexcept
+				{
+					std::array<T, MixSize> mix;
+
+					const T v3 = input - ic2eq;
+					const T v1 = c.a1 * ic1eq + c.a2 * v3;
+					const T v2 = ic2eq + c.a2 * ic1eq + c.a3 * v3;
+					ic1eq = 2 * v1 - ic1eq;
+					ic2eq = 2 * v2 - ic2eq;
+					
+					for (std::size_t i = 0; i < MixSize; ++i)
+						mix[i] = mixes[i].m0 * input + mixes[i].m1 * v1 + mixes[i].m2 * v2;
+
+					return mix;
 				}
 
 				void reset()
