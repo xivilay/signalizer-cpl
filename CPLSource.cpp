@@ -57,6 +57,7 @@
 	#include "ffts/kiss_fft/tools/kiss_fftr.c"
 #endif
 
+#include "CModule.cpp"
 #include "Misc.cpp"
 #include "stdext.cpp"
 #include "CMutex.cpp"
