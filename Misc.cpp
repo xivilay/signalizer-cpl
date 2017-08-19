@@ -165,22 +165,43 @@ namespace cpl
 			return 0;
 		}
 
-		std::string ExecCommand(const std::string & cmd)
+		std::pair<int, std::string> ExecCommand(const std::string & cmd)
 		{
 			// http://stackoverflow.com/a/478960/1287254
-			char buffer[128];
-			std::string result = "";
-			#ifdef CPL_WINDOWS
-				std::shared_ptr<FILE> pipe(_popen(cmd.c_str(), "r"), _pclose);
-			#else
-				std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
-			#endif
-			if (!pipe) throw std::runtime_error("popen() failed!");
-			while (!feof(pipe.get())) {
-				if (fgets(buffer, 128, pipe.get()) != NULL)
-				result += buffer;
+			char buffer[1024];
+			std::string result;
+
+			auto PipeOpen = [](const std::string & cmd)
+			{
+#ifdef CPL_WINDOWS
+				return ::_popen(cmd.c_str(), "r");
+#else
+				return ::popen(cmd.c_str(), "r");
+#endif
+			};
+
+			auto PipeClose = [](const auto & file)
+			{
+#ifdef CPL_WINDOWS
+				return ::_pclose(file);
+#else
+				return ::pclose(file);
+#endif
+			};
+
+			auto pipe = PipeOpen(cmd);
+
+			if (!pipe) 
+				CPL_RUNTIME_EXCEPTION("Error executing commandline: \"" + cmd + "\"");
+
+
+			while (!std::feof(pipe))
+			{
+				if (std::fgets(buffer, sizeof(buffer), pipe) != NULL)
+					result += buffer;
 			}
-			 return result;
+
+			return { PipeClose(pipe), result };
 		}
 
 		/*********************************************************************************************

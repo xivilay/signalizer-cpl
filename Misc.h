@@ -73,7 +73,7 @@
 
 		namespace Misc
 		{
-			std::string ExecCommand(const std::string & arg);
+			std::pair<int, std::string> ExecCommand(const std::string & arg);
 			std::string GetTime ();
 			std::string GetDate();
 			std::string DemangleRawName(const std::string & name);
