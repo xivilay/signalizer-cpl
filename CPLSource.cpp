@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CPLSource.cpp
-	
+
 		All the source code needed to compile the cpl lib ('unity' build).
 		Add this file to your project.
 
@@ -44,13 +44,13 @@
 	// rendering
 	#include "rendering/CSubpixelSoftwareGraphics.cpp"
 	#include "rendering/CDisplaySetup.cpp"
-	
+
 	// io and stuff
 
 	#include "CPresetManager.cpp"
 
 
-#endif	
+#endif
 
 #ifdef CPL_INC_KISS
 	#include "ffts/kiss_fft/tools/kiss_fft.c"
@@ -70,6 +70,7 @@
 #include "Protected.cpp"
 #include "state/State.cpp"
 #include "lib/md5/md5.cpp"
+#include "process/Process.cpp"
 
 #if defined(CPL_HINT_FONT)
 	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
