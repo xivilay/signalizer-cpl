@@ -183,13 +183,13 @@
 						}
 
 					#else
-						std::string contents = Misc::ExecCommand("grep 'cpu MHz' /proc/cpuinfo");
-						if(contents.size() > 0)
+						auto contents = Misc::ExecCommand("grep 'cpu MHz' /proc/cpuinfo");
+						if(contents.first == 0 && contents.second.size() > 0)
 						{
-							auto pos = contents.find(": ");
+							auto pos = contents.second.find(": ");
 							if(pos != std::string::npos)
 							{
-								auto number = contents.c_str() + pos + 2;
+								auto number = contents.second.c_str() + pos + 2;
 								frequency = std::strtod(number, nullptr);
 							}
 

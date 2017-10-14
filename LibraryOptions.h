@@ -22,9 +22,9 @@
 **************************************************************************************
 
 	file:LibraryOptions.h
-	
+
 		Compile-time switches for the library.
- 
+
 		#define CPL_HINT_FONT:
 			if application is GUI, includes FreeType and uses
 			it for getting outlines for glyphs.
@@ -36,7 +36,7 @@
 			(before user code in audio threads, async threads, opengl rendering etc.),
 			that will catch soft- and hardware exceptions, display messages and log
 			the exceptions with stacktraces etc.
- 
+
 *************************************************************************************/
 
 #ifndef CPL_LIBRARYOPTIONS_H
@@ -58,4 +58,9 @@
 	#define CPL_CACHEALIGNMENT 64
 
 	#define CPL_REMOVE_CWARN
+
+    #ifdef CPL_MAC
+        #define CPL_CMOD_USECF
+	#endif
+
 #endif

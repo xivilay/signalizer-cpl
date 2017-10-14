@@ -79,7 +79,7 @@
 			#ifdef CPL_WINDOWS
 				typedef DWORD OSError;
 			#else
-				typedef decltype(errno) OSError;
+				typedef int OSError;
 			#endif
 
 			#ifdef __UNICODE__

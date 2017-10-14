@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CModule.cpp
-		
+
 		Implementation of CModule.h
 
 *************************************************************************************/
@@ -34,17 +34,17 @@
 #else
 	#include <dlfcn.h>
 	#include <unistd.h>
-	#if CPL_CMOD_USECF
+	#ifdef CPL_CMOD_USECF
 		#include <mach-o/dyld.h>
 		#include <mach/mach_time.h>
 	#endif
 #endif
 namespace cpl
 {
-	CModule::CModule() 
+	CModule::CModule()
 		: moduleHandle(nullptr)
-	{	
-			
+	{
+
 	}
 
 	CModule::CModule(const std::string & moduleName)
@@ -54,7 +54,7 @@ namespace cpl
 	}
 
 	void * CModule::getFuncAddress(const std::string & functionName)
-	{ 
+	{
 		#ifdef CPL_WINDOWS
 			return GetProcAddress(static_cast<HMODULE>(moduleHandle), functionName.c_str());
 		#elif defined(CPL_MAC) && defined(CPL_CMOD_USECF)
@@ -69,7 +69,7 @@ namespace cpl
 					ret = reinterpret_cast<void*>(CFBundleGetFunctionPointerForName(bundle, funcName));
 				}
 				CFRelease(funcName);
-				
+
 			}
 			return ret;
 		#elif defined(CPL_UNIXC)
@@ -107,7 +107,7 @@ namespace cpl
 				return -2;
 			}
 			bundle = CFBundleCreate( kCFAllocatorDefault, url );
-			CFRelease(url);	
+			CFRelease(url);
 			if(!bundle)
 			{
 				return -3;
@@ -124,7 +124,7 @@ namespace cpl
 				return 0;
 			else
 				return errno ? errno : -1;
-				
+
 		#else
 			#error no implementation for LoadModule
 		#endif
@@ -184,7 +184,7 @@ namespace cpl
 
 	void CModule::increaseReference()
 	{
-		if(moduleHandle && name.length()) 
+		if(moduleHandle && name.length())
 		{
 			#ifdef CPL_WINDOWS
 				// only increases reference count

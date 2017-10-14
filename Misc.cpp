@@ -191,7 +191,7 @@ namespace cpl
 
 			auto pipe = PipeOpen(cmd);
 
-			if (!pipe) 
+			if (!pipe)
 				CPL_RUNTIME_EXCEPTION("Error executing commandline: \"" + cmd + "\"");
 
 
@@ -275,7 +275,7 @@ namespace cpl
 				LocalFree(apiPointer);
 				return ret;
 			#else
-				return "Error (" + std::to_string(lastError) + ")" + strerror(lastError);
+				return "Error (" + std::to_string(lastError) + "): " + strerror(lastError);
 			#endif
 		}
 
@@ -366,12 +366,12 @@ namespace cpl
 
 				auto contents = ExecCommand("grep 'TracerPid' /proc/self/status");
 
-				if(contents.size() > 0)
+				if(contents.first == 0 && contents.second.size() > 0)
 				{
-					auto pos = contents.find(":");
+					auto pos = contents.second.find(":");
 					if(pos != std::string::npos)
 					{
-						auto number = contents.c_str() + pos + 1;
+						auto number = contents.second.c_str() + pos + 1;
 						auto tracerPID = std::strtol(number, nullptr, 10);
 						return tracerPID != 0;
 					}
@@ -784,8 +784,23 @@ namespace cpl
 							break;
                         }
 					}
-				#else
-					#error "Implement a similar messagebox for your target"
+				#elif defined(CPL_UNIXC)
+                    std::string options = "zenity ";
+
+					auto iconStyle = (nStyle >> 8) & 0xFF;
+					switch(iconStyle)
+					{
+                        default:
+                        case iInfo: options += "--info "; break;
+                        case iStop: options += "--error "; break;
+                        case iWarning: options += "--warning "; break;
+                        case iQuestion: options += "--question "; break;
+					}
+
+					options += "--text=\"" + std::string(text) + "\" --title=\"" + title + "\"";
+
+					auto ret = ExecCommand(options).first ? MsgButton::bNo : MsgButton::bYes;
+
 				#endif
 
 				promise.set_value(ret);

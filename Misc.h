@@ -37,6 +37,9 @@
 	#include <sstream>
 	#include "PlatformSpecific.h"
 	#include "Types.h"
+    #include <typeinfo>
+    #include <cstring>
+    #include "Common.h"
 
 	namespace cpl
 	{
@@ -487,10 +490,14 @@
 					}
 				};
 
-			#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert, exceptionT) \
+            #define CPL_EXPANDED_MESSAGE message
+
+
+			#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert, exceptionT, exceptionExpression) \
 				do \
 				{ \
 					std::string message = std::string("Runtime exception (" #exceptionT ") in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version.toString() + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
+					auto e = exceptionExpression;\
 					CPL_DEBUGOUT(message.c_str()); \
 					cpl::Misc::LogException(message); \
 					if(CPL_ISDEBUGGED()) DBG_BREAK(); \
@@ -498,21 +505,43 @@
 					if(doAbort) \
 						std::abort(); \
 					else \
-						throw exceptionT(message); \
+						throw e; \
 				} while(0)
 
-
-			#define CPL_RUNTIME_EXCEPTION(msg) \
-				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false, cpl::Misc::CPLRuntimeException)
+            #define CPL_EVAL(a, b) a b
 
 			#define CPL_RUNTIME_EXCEPTION_SPECIFIC(msg, exceptionT) \
-				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false, exceptionT)
+				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false, exceptionT, exceptionT (CPL_EXPANDED_MESSAGE))
 
+            #define CPL_RUNTIME_EXCEPTION(msg) \
+				CPL_RUNTIME_EXCEPTION_SPECIFIC(msg, cpl::Misc::CPLRuntimeException)
 
+            #define CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, exceptionT, args) \
+				CPL_INTERNAL_EXCEPTION(msg, \
+				__FILE__, \
+				__LINE__, \
+				__func__, \
+				false, \
+				exceptionT, \
+				CPL_EVAL(exceptionT,args) \
+            )\
+
+            /// <summary>
+            /// Throws a suitable system_error from errno with a what() message
+            /// </summary>
+            #define CPL_POSIX_EXCEPTION(msg) CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, std::system_error, (errno, std::generic_category(), CPL_EXPANDED_MESSAGE))
+
+            #ifdef CPL_WINDOWS
+                #define CPL_SYSTEM_EXCEPTION(msg) CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, \
+                std::system_error, (cpl::Misc::GetLastOSError(), std::system_category(), CPL_EXPANDED_MESSAGE))
+            #else
+                #define CPL_SYSTEM_EXCEPTION(msg) CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, \
+                std::system_error, (errno, std::system_category(), CPL_EXPANDED_MESSAGE))
+            #endif
 			#define CPL_RUNTIME_ASSERTION(expression) \
 				if(!(expression)) \
 					CPL_INTERNAL_EXCEPTION("Runtime assertion failed: " #expression, \
-					__FILE__, __LINE__, __func__, true, cpl::Misc::CPLAssertionException)
+					__FILE__, __LINE__, __func__, true, cpl::Misc::CPLAssertionException, cpl::Misc::CPLAssertionException (CPL_EXPANDED_MESSAGE))
 
 			#define CPL_NOTIMPLEMENTED_EXCEPTION() \
 				CPL_RUNTIME_EXCEPTION_SPECIFIC("The requested behaviour is not implemented (yet)", cpl::Misc::CPLNotImplementedException)
