@@ -498,7 +498,7 @@
 				{ \
 					std::string message = std::string("Runtime exception (" #exceptionT ") in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version.toString() + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
 					auto e = exceptionExpression;\
-					CPL_DEBUGOUT(message.c_str()); \
+					CPL_DEBUGOUT((message + "\n").c_str()); \
 					cpl::Misc::LogException(message); \
 					if(CPL_ISDEBUGGED()) DBG_BREAK(); \
 					bool doAbort = isassert; \

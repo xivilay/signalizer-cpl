@@ -27,13 +27,13 @@
 		arguments and general handling of child-parent communications.
 
 		The process generally runs in the same permission context as the parent, however:
-            1) No file handles are inherited, except for optional stdin/out/err
-            2) No signal masks are inherited
-            3) No fork handlers or anything run
-            4) Any std handle not explicitly connected is replaced with a null device (*).
+			1) No file handles are inherited, except for optional stdin/out/err
+			2) No signal masks are inherited
+			3) No fork handlers or anything run
+			4) Any std handle not explicitly connected is replaced with a null device (*).
 
-        *) launching the process in a shell gives default std handles to the process (not
-        inherited). It is additionally safe to concurrently create processes.
+		*) launching the process in a shell gives default std handles to the process (not
+		inherited). It is additionally safe to concurrently create processes.
 
 		Includes ability to create std::ostream/std::istreams for the child's
 		stdin, stdout and stderr streams.
@@ -82,7 +82,7 @@
 
 		int main_child()
 		{
-            using namespace std;
+			using namespace std;
 
 			string s;
 
@@ -120,10 +120,10 @@ namespace cpl
 	{
 	public:
 
-        static std::int64_t npid;
+		const static std::int64_t npid;
 
-        using InputStream = std::istream;
-        using CloseableOutputStream = detail::OutputStream;
+		using InputStream = std::istream;
+		using CloseableOutputStream = detail::OutputStream;
 
 		enum IOFlags
 		{
@@ -142,29 +142,27 @@ namespace cpl
 		/// </summary>
 		enum class ScopeExitOperation
 		{
-            /// <summary> The process will be joined upon destruction (default). </summary>
-		    Join,
-		    /// <summary> std::terminate will be called. </summary>
-            Terminate,
-            /// <summary> The process will be detached upon destruction. </summary>
-            Detach,
-            /// <summary> The process will be killed, and then joined. </summary>
-            KillJoin,
-            /// <summary> The process will be killed, and then detached. </summary>
-            KillDetach
+			/// <summary> The process will be joined upon destruction (default). </summary>
+			Join,
+			/// <summary> std::terminate will be called. </summary>
+			Terminate,
+			/// <summary> The process will be detached upon destruction. </summary>
+			Detach,
+			/// <summary> The process will be killed, and then joined. </summary>
+			KillJoin,
+			/// <summary> The process will be killed, and then detached. </summary>
+			KillDetach
 		};
 
-		typedef std::function<ScopeExitOperation (const Process&, ScopeExitOperation previous, std::exception* e)> ScopeExitHandler;
+		typedef std::function<ScopeExitOperation(const Process&, ScopeExitOperation previous, std::exception* e)> ScopeExitHandler;
 
+		class Builder;
 
-
-        class Builder;
-
-        /// <summary>
+		/// <summary>
 		/// A default-constructed Process has only to valid operations:
 		/// getPid() and actual().
 		/// </summary>
-        Process() noexcept;
+		Process() noexcept;
 		Process(Process&& other) = default;
 		Process(const Process& other) = delete;
 		Process& operator = (Process&& other) = default;
@@ -187,21 +185,25 @@ namespace cpl
 		std::error_code kill();
 		/// <summary>
 		/// Closes all connected streams, and orphans off the process
-		/// such that the process will never turn into a "zombie",
-		/// regardless of when, if ever, the process exits.
-		/// After this operation, this object is as if in a moved
-		/// or default-constructed state.
+		/// such that the process will never turn into a "zombie"
+		/// (for all practical purposes), regardless of when, 
+		/// if ever, the process exits. After this operation, this object
+		/// is as if in a moved or default-constructed state.
+		/// 
+		/// Notice that the child process' lifetime may still be connected
+		/// to the parent group session. Use Builder::launchDetached() to completely
+		/// avoid that situation.
 		/// </summary>
 		/// <remarks> Throws std::logic_error if not actual(). Can also throw on grave library runtime errors (like std::bad_alloc) </remarks>
 		void detach();
-        /// <summary>
-        /// Returns whether this represents a valid process object,
-        /// that can be joined or otherwise operated on.
-        /// Note that only detach() can mutate this state.
-        /// Valid to call on default constructed, moved or
-        /// detached() objects.
-        /// Effectively is getPid() != npid.
-        /// </summary>
+		/// <summary>
+		/// Returns whether this represents a valid process object,
+		/// that can be joined or otherwise operated on.
+		/// Note that only detach() can mutate this state.
+		/// Valid to call on default constructed, moved or
+		/// detached() objects.
+		/// Effectively is getPid() != npid.
+		/// </summary>
 		bool actual() const noexcept;
 		/// <summary>
 		/// A process can be dead ("zombie") but still represent a valid,
@@ -218,83 +220,83 @@ namespace cpl
 		/// </summary>
 		/// <remarks> Throws std::logic_error if not actual(). </remarks>
 		bool join(int timeoutMs = -1);
-        /// <summary>
+		/// <summary>
 		/// Returns a system-wide unique identifier for this process.
 		/// The value is guaranteed to be identical for any native representation,
 		/// unless it has the special value of npid, which represents no process.
 		/// </summary>
 		std::int64_t getPid() const noexcept;
-        /// <summary>
-        /// Determines what to do in the destructor if actual() is true.
-        /// See ScopeExitOperation.
-        /// </summary>
-        void setScopeExitOperation(ScopeExitOperation newOperation) noexcept;
-        /// <summary>
-        /// Installs a handler that will be invoked in the destructor if the
-        /// scope exit operation failed, or optionally threw an exception.
-        /// The handler can optionally do some system-specific behaviour on
-        /// the process, and return a new operation to try out in a loop.
-        /// Any exception from the handler will result in a call to std::terminate().
-        /// </summary>
-        void setScopeHandler(ScopeExitHandler newHandler);
+		/// <summary>
+		/// Determines what to do in the destructor if actual() is true.
+		/// See ScopeExitOperation.
+		/// </summary>
+		void setScopeExitOperation(ScopeExitOperation newOperation) noexcept;
+		/// <summary>
+		/// Installs a handler that will be invoked in the destructor if the
+		/// scope exit operation failed, or optionally threw an exception.
+		/// The handler can optionally do some system-specific behaviour on
+		/// the process, and return a new operation to try out in a loop.
+		/// Any exception from the handler will result in a call to std::terminate().
+		/// </summary>
+		void setScopeHandler(ScopeExitHandler newHandler);
 
-        /// <summary>
-        /// Returns the exit code of the process.
-        /// </summary>
-        /// <remarks> Throws std::logic_error if not actual(), or alive(). </remarks>
-        std::int64_t getExitCode();
+		/// <summary>
+		/// Returns the exit code of the process.
+		/// </summary>
+		/// <remarks> Throws std::logic_error if not actual(), or alive(). </remarks>
+		std::int64_t getExitCode();
 
-        static const EnvStrings& getParentEnvironment();
-        const EnvStrings& getCreationEnvironment();
-        const Args& getCreationArgs();
+		static const EnvStrings& getParentEnvironment();
+		const EnvStrings& getCreationEnvironment();
+		const Args& getCreationArgs();
 
 	private:
 
-        bool doJoin(int timeout);
-// TODO: Detect GCC C++17 instead
+		bool doJoin(int timeout);
+		// TODO: Detect GCC C++17 instead
 #ifdef CPL_UNIXC
-        template<typename T>
-        using optional = std::experimental::optional<T>;
+		template<typename T>
+		using optional = std::experimental::optional<T>;
 #else
-        template<typename T>
-        using optional = std::optional<T>;	
+		template<typename T>
+		using optional = std::optional<T>;
 #endif
-        ScopeExitOperation callHandler(std::exception * e = nullptr) const noexcept;
+		ScopeExitOperation callHandler(std::exception * e = nullptr) const noexcept;
 
-        class PIDHandle
-        {
-        public:
-            std::int64_t get() const noexcept { return value;}
-            void set(std::int64_t newValue) noexcept { value = newValue;}
-            PIDHandle(std::int64_t val) noexcept : value(val) {}
-            PIDHandle& operator = (PIDHandle && other) noexcept { value = other.value; other.value = npid; return *this; }
-            PIDHandle(PIDHandle && other) noexcept : value(other.value) { other.value = npid; }
-            PIDHandle(const PIDHandle& other) = delete;
-            PIDHandle& operator = (const PIDHandle& other) = delete;
-        private:
-            std::int64_t value;
-        };
+		class PIDHandle
+		{
+		public:
+			std::int64_t get() const noexcept { return value; }
+			void set(std::int64_t newValue) noexcept { value = newValue; }
+			PIDHandle(std::int64_t val) noexcept : value(val) {}
+			PIDHandle& operator = (PIDHandle && other) noexcept { value = other.value; other.value = npid; return *this; }
+			PIDHandle(PIDHandle && other) noexcept : value(other.value) { other.value = npid; }
+			PIDHandle(const PIDHandle& other) = delete;
+			PIDHandle& operator = (const PIDHandle& other) = delete;
+		private:
+			std::int64_t value;
+		};
 
-        static EnvStrings GetEnvironment();
-        const static EnvStrings initialEnvironment;
+		static EnvStrings GetEnvironment();
+		const static EnvStrings initialEnvironment;
 
-        typedef std::pair<detail::unique_handle, detail::unique_handle> PipePair;
+		typedef std::pair<detail::unique_handle, detail::unique_handle> PipePair;
 
-        void initialise(PipePair& in, PipePair& out, PipePair& err, EnvStrings * env, const std::string * cwd, bool launchDetached);
-        void releaseSpecific() noexcept;
-	    static PipePair createPipe(int parentEnd = -1);
-        Process(std::string process, Args&& args, int ioFlags, ScopeExitOperation operation, const EnvStrings * env, const std::string * cwd, bool launchDetached = false);
+		void initialise(PipePair& in, PipePair& out, PipePair& err, EnvStrings * env, const std::string * cwd, int customFlags);
+		void releaseSpecific() noexcept;
+		static PipePair createPipe(int parentEnd = -1);
+		Process(std::string process, Args&& args, int ioFlags, ScopeExitOperation operation, const EnvStrings * env, const std::string * cwd, int customFlags = 0);
 
 		PIDHandle pid;
 		IOStreamFlags flags;
 		std::string pname;
-        Args pArgs;
-        EnvStrings pEnv;
-        ScopeExitOperation scopeExitOp;
-        ScopeExitHandler handler;
-        optional<std::int64_t> exitCode;
-        bool explicitlyJoined;
-        bool hasCustomEnvironment;
+		Args pArgs;
+		EnvStrings pEnv;
+		ScopeExitOperation scopeExitOp;
+		ScopeExitHandler handler;
+		optional<std::int64_t> exitCode;
+		bool explicitlyJoined;
+		bool hasCustomEnvironment;
 
 		typedef detail::FileEdge<detail::InputBuffer, std::istream> InPipe;
 		typedef detail::FileEdge<detail::OutputBuffer, detail::OutputStream> OutPipe;
@@ -311,73 +313,75 @@ namespace cpl
 
 
 	class Process::Builder
-    {
-    public:
+	{
+	public:
 
-        Builder(Builder&& other) = default;
-        Builder& operator = (Builder&& other) = default;
+		Builder(Builder&& other) = default;
+		Builder& operator = (Builder&& other) = default;
 
-        Builder(const std::string& processLocation)
-            : process(processLocation)
-        {
+		Builder(const std::string& processLocation)
+			: process(processLocation)
+		{
 
-        }
+		}
 
-        Builder& workingDir(const std::string& newWorkingDir)
-        {
-            hasCWD = true;
-            cwd = newWorkingDir;
-            return *this;
-        }
+		Builder& workingDir(const std::string& newWorkingDir)
+		{
+			hasCWD = true;
+			cwd = newWorkingDir;
+			return *this;
+		}
 
-        Builder& environment(const EnvStrings& newEnv)
-        {
-            hasEnv = true;
-            env = newEnv;
-            return *this;
-        }
+		Builder& environment(const EnvStrings& newEnv)
+		{
+			hasEnv = true;
+			env = newEnv;
+			return *this;
+		}
 
-        /// <summary>
-        /// Note that it is undefined behaviour to launch an executable that might disconnect
-        /// itself from the parent. Use launchDetached for that.
-        /// </summary>
-        Process launch(Args args = Args(), int ioFlags = IOStreamFlags::None, ScopeExitOperation operation = ScopeExitOperation::Join)
-        {
-            return {
-                process,
-                std::move(args),
-                ioFlags,
-                ScopeExitOperation::Join,
-                hasEnv ? &env : nullptr,
-                hasCWD ? &cwd : nullptr
-            };
-        }
+		/// <summary>
+		/// Note that it is undefined behaviour to launch an executable that might disconnect
+		/// itself from the parent. Use launchDetached for that.
+		/// </summary>
+		Process launch(Args args = Args(), int ioFlags = IOStreamFlags::None, ScopeExitOperation operation = ScopeExitOperation::Join)
+		{
+			return {
+				process,
+				std::move(args),
+				ioFlags,
+				ScopeExitOperation::Join,
+				hasEnv ? &env : nullptr,
+				hasCWD ? &cwd : nullptr
+			};
+		}
 
-        /// <summary>
-        /// Launch a process completely detached from the parent.
-        /// </summary>
-        void launchDetached(Args args = Args());
+		/// <summary>
+		/// Launch a process completely detached from the parent.
+		/// </summary>
+		void launchDetached(Args args = Args());
 
-        /// <summary>
-        /// Invokes the system command interpreter, and runs the command line.
-        /// Note the process represents the command interpreter, not the child
-        /// process.
-        /// </summary>
-        Process shell(Args args = Args(), int ioFlags = IOStreamFlags::None, ScopeExitOperation operation = ScopeExitOperation::Join);
+		/// <summary>
+		/// Invokes the system command interpreter, and runs the command line.
+		/// Note the process represents the command interpreter, not the child
+		/// process. It is implementation-defined whether the exit code from the child
+		/// is propagated.
+		/// </summary>
+		Process shell(Args args = Args(), int ioFlags = IOStreamFlags::None, ScopeExitOperation operation = ScopeExitOperation::Join);
 
-        /// <summary>
-        /// Invokes the default terminal UI, and runs the program inside it.
-        /// Note that the returned process represents a wrapper parent process,
-        /// and not the child process.
-        /// </summary>
-        Process terminal(Args args = Args(), ScopeExitOperation operation = ScopeExitOperation::Join);
+		/// <summary>
+		/// Invokes the default terminal UI, and runs the program inside it.
+		/// Note that the returned process represents a wrapper parent process,
+		/// and not the child process. It is implementation-defined whether the exit 
+		/// code from the child is propagated.
+		/// </summary>
+		Process terminal(Args args = Args(), ScopeExitOperation operation = ScopeExitOperation::Join);
 
-    private:
-        std::string process;
-        std::string cwd;
-        EnvStrings env;
-        bool hasCWD = false, hasEnv = false;
-    };
+	private:
+		std::string process;
+		std::string cwd;
+		EnvStrings env;
+		bool hasCWD = false, hasEnv = false;
+	};
 }
 
 #endif

@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:ProcessUtil.h
-        Private detail of Process.h
+		Private detail of Process.h
 
 *************************************************************************************/
 
@@ -43,17 +43,21 @@ namespace cpl
 		template<typename T, std::ptrdiff_t invalid>
 		struct NullableHandle
 		{
-			static constexpr T null = (T)invalid;
-			NullableHandle() : handle(null) {}
+			static constexpr T null()
+			{
+				return T(invalid);
+			}
+
+			NullableHandle() : handle(null()) {}
 			NullableHandle(T h) : handle(h) {}
-			NullableHandle(std::nullptr_t) : handle(null) {}
+			NullableHandle(std::nullptr_t) : handle(null()) {}
 
 			operator T() { return handle; }
 
 			bool operator ==(const NullableHandle &other) const { return handle == other.handle; }
 			bool operator !=(const NullableHandle &other) const { return handle != other.handle; }
-			bool operator ==(std::nullptr_t) const { return handle == null; }
-			bool operator !=(std::nullptr_t) const { return handle != null; }
+			bool operator ==(std::nullptr_t) const { return handle == null(); }
+			bool operator !=(std::nullptr_t) const { return handle != null(); }
 
 			T handle;
 		};
@@ -83,21 +87,21 @@ namespace cpl
 
 
 		template<typename Buf, typename Stream>
-        class FileEdge
-        {
-        public:
+		class FileEdge
+		{
+		public:
 
-            FileEdge(unique_handle pipe)
-                : buf(std::move(pipe)), stream(&buf)
-            {
+			FileEdge(unique_handle pipe)
+				: buf(std::move(pipe)), stream(&buf)
+			{
 
-            }
+			}
 
-            Buf buf;
-            Stream stream;
-        };
+			Buf buf;
+			Stream stream;
+		};
 
-        class OutputBuffer : public std::streambuf
+		class OutputBuffer : public std::streambuf
 		{
 		public:
 
@@ -165,8 +169,8 @@ namespace cpl
 
 		class OutputStream : public std::ostream
 		{
-            template<typename, typename>
-            friend class FileEdge;
+			template<typename, typename>
+			friend class FileEdge;
 
 		public:
 			void close()
@@ -174,13 +178,13 @@ namespace cpl
 				buf.close();
 			}
 
-        private:
+		private:
 			OutputStream(OutputBuffer* buffer) : std::ostream(buffer), buf(*buffer) {}
 
 			OutputBuffer& buf;
 		};
 
-        class InputBuffer : public std::streambuf
+		class InputBuffer : public std::streambuf
 		{
 		public:
 			InputBuffer(unique_handle pipe) : pipe(std::move(pipe)) {}

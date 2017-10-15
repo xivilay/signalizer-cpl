@@ -35,133 +35,133 @@
 
 namespace cpl
 {
-    class Args
-    {
-    public:
+	class Args
+	{
+	public:
 
-        Args() {}
-        Args(const char * arg) : compiledArgs(arg ? arg : "") { vectorArgs.emplace_back(compiledArgs); }
-        Args(const std::string& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); }
-        Args(std::string&& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); }
-        Args(Args&&) = default;
-        Args& operator = (Args&&) = default;
-        Args(const Args&) = default;
-        Args& operator = (const Args&) = default;
+		Args() {}
+		Args(const char * arg) : compiledArgs(arg ? arg : "") { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
+		Args(const std::string& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
+		Args(std::string&& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
+		Args(Args&&) = default;
+		Args& operator = (Args&&) = default;
+		Args(const Args&) = default;
+		Args& operator = (const Args&) = default;
 
-        enum Flags
-        {
-            None = 0,
-            /// <summary>
-            /// Args and vals will be pre- and postfixed with "
-            /// </summary>
-            Escaped,
-            /// <summary>
-            /// Removes default spacing between key-val arg pairs
-            /// </summary>
-            NoSpace
-        };
+		enum Flags
+		{
+			None = 0,
+			/// <summary>
+			/// Args and vals will be pre- and postfixed with "
+			/// </summary>
+			Escaped,
+			/// <summary>
+			/// Removes default spacing between key-val arg pairs
+			/// </summary>
+			NoSpace
+		};
 
-        Args& cwd(const std::string& workingDirectory, int flags = None)
-        {
-            wd = workingDirectory;
-            wdIsEscaped = false;
-            if(wd.size())
-            {
-                auto endC = wd[wd.size() - 1];
-                if(endC != '\\' || endC != '/')
-                    wd += '/';
+		Args& cwd(const std::string& workingDirectory, int flags = None)
+		{
+			wd = workingDirectory;
+			wdIsEscaped = false;
+			if (wd.size())
+			{
+				auto endC = wd[wd.size() - 1];
+				if (endC != '\\' || endC != '/')
+					wd += '/';
 
-               wdIsEscaped = !!(flags & Escaped);
-            }
-            return *this;
-        }
+				wdIsEscaped = !!(flags & Escaped);
+			}
+			return *this;
+		}
 
-        Args& arg(const std::string& arg, int flags = None)
-        {
-            if (wdIsEscaped || (flags & Escaped))
-                compiledArgs += "\"" + wd + arg + "\"";
-            else
-                compiledArgs += wd + arg;
+		Args& arg(const std::string& arg, int flags = None)
+		{
+			if (wdIsEscaped || (flags & Escaped))
+				compiledArgs += "\"" + wd + arg + "\"";
+			else
+				compiledArgs += wd + arg;
 
-            vectorArgs.emplace_back(wd + arg);
+			vectorArgs.emplace_back(wd + arg);
 
-            compiledArgs.push_back(' ');
+			compiledArgs.push_back(' ');
 
-            return *this;
-        }
+			return *this;
+		}
 
-        Args& argPair(const std::string& key, const std::string& val, int flags = None)
-        {
-            compiledArgs += key + ((flags & NoSpace) ? "" : " ");
+		Args& argPair(const std::string& key, const std::string& val, int flags = None)
+		{
+			compiledArgs += key + ((flags & NoSpace) ? "" : " ");
 
-            if(flags & NoSpace)
-            {
-                vectorArgs.emplace_back(key + wd + val);
-            }
-            else
-            {
-                vectorArgs.emplace_back(key);
-                vectorArgs.emplace_back(wd + val);
-            }
+			if (flags & NoSpace)
+			{
+				vectorArgs.emplace_back(key + wd + val);
+			}
+			else
+			{
+				vectorArgs.emplace_back(key);
+				vectorArgs.emplace_back(wd + val);
+			}
 
-            if (wdIsEscaped || (flags & Escaped))
-                compiledArgs += "\"" + wd + val + "\"";
-            else
-                compiledArgs += wd + val;
+			if (wdIsEscaped || (flags & Escaped))
+				compiledArgs += "\"" + wd + val + "\"";
+			else
+				compiledArgs += wd + val;
 
-            compiledArgs.push_back(' ');
+			compiledArgs.push_back(' ');
 
-            return *this;
-        }
+			return *this;
+		}
 
-        friend Args operator + (Args left, const Args& right)
-        {
-            left.compiledArgs += " " + right.compiledArgs;
-            std::move(right.vectorArgs.begin(), right.vectorArgs.end(), std::back_inserter(left.vectorArgs));
-            return std::move(left);
-        }
+		friend Args operator + (Args left, const Args& right)
+		{
+			left.compiledArgs += " " + right.compiledArgs;
+			std::move(right.vectorArgs.begin(), right.vectorArgs.end(), std::back_inserter(left.vectorArgs));
+			return std::move(left);
+		}
 
-        const std::string& commandLine() const
-        {
-            return compiledArgs;
-        }
+		const std::string& commandLine() const
+		{
+			return compiledArgs;
+		}
 
-        std::size_t argc() const
-        {
-            return vectorArgs.size();
-        }
+		std::size_t argc() const
+		{
+			return vectorArgs.size();
+		}
 
-        const std::vector<std::string>& rawArgs() const
-        {
-            return vectorArgs;
-        }
+		const std::vector<std::string>& rawArgs() const
+		{
+			return vectorArgs;
+		}
 
-        /// <summary>
-        /// It is undefined behaviour to modify the contents of the returned array
-        /// </summary>
-        char * const * argv()
-        {
-            argPointers.resize(vectorArgs.size() + 1);
+		/// <summary>
+		/// It is undefined behaviour to modify the contents of the returned array
+		/// </summary>
+		char * const * argv()
+		{
+			argPointers.resize(vectorArgs.size() + 1);
 
-            for(std::size_t i = 0; i < vectorArgs.size(); ++i)
-            {
-                argPointers[i] = const_cast<char *>(vectorArgs[i].c_str());
-            }
+			for (std::size_t i = 0; i < vectorArgs.size(); ++i)
+			{
+				argPointers[i] = const_cast<char *>(vectorArgs[i].c_str());
+			}
 
-            argPointers[vectorArgs.size()] = nullptr;
+			argPointers[vectorArgs.size()] = nullptr;
 
-            return &argPointers[0];
-        }
+			return &argPointers[0];
+		}
 
-    private:
+	private:
 
-        bool dirty = false;
-        bool wdIsEscaped = false;
+		bool dirty = false;
+		bool wdIsEscaped = false;
 
-        std::vector<std::string> vectorArgs;
-        mutable std::vector<char *> argPointers;
-        std::string compiledArgs, wd;
-    };
+		std::vector<std::string> vectorArgs;
+		mutable std::vector<char *> argPointers;
+		std::string compiledArgs, wd;
+	};
 }
 
 #endif

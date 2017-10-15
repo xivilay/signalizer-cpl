@@ -35,86 +35,86 @@
 
 namespace cpl
 {
-    class EnvStrings
-    {
-    public:
+	class EnvStrings
+	{
+	public:
 
-        EnvStrings() {}
-        EnvStrings(const char * arg) : compiledArgs(arg ? arg : "") { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
-        EnvStrings(const std::string& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
-        EnvStrings(std::string&& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
-        EnvStrings(EnvStrings&&) = default;
-        EnvStrings& operator = (EnvStrings&&) = default;
-        EnvStrings(const EnvStrings&) = default;
-        EnvStrings& operator = (const EnvStrings&) = default;
+		EnvStrings() {}
+		EnvStrings(const char * arg) : compiledArgs(arg ? arg : "") { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
+		EnvStrings(const std::string& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
+		EnvStrings(std::string&& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
+		EnvStrings(EnvStrings&&) = default;
+		EnvStrings& operator = (EnvStrings&&) = default;
+		EnvStrings(const EnvStrings&) = default;
+		EnvStrings& operator = (const EnvStrings&) = default;
 
-        EnvStrings& string(std::string envString)
-        {
-            compiledArgs += envString;
-            compiledArgs.push_back('\0');
+		EnvStrings& string(std::string envString)
+		{
+			compiledArgs += envString;
+			compiledArgs.push_back('\0');
 
-            vectorArgs.emplace_back(std::move(envString));
+			vectorArgs.emplace_back(std::move(envString));
 
-            return *this;
-        }
+			return *this;
+		}
 
-        EnvStrings& pair(std::string key, std::string val)
-        {
-            auto envString = std::move(key) + "=" + std::move(val);
-            compiledArgs += envString;
-            compiledArgs.push_back('\0');
+		EnvStrings& pair(std::string key, std::string val)
+		{
+			auto envString = std::move(key) + "=" + std::move(val);
+			compiledArgs += envString;
+			compiledArgs.push_back('\0');
 
-            vectorArgs.emplace_back(std::move(envString));
+			vectorArgs.emplace_back(std::move(envString));
 
-            return *this;
-        }
+			return *this;
+		}
 
-        friend EnvStrings operator + (EnvStrings left, EnvStrings right)
-        {
-            left.compiledArgs += right.compiledArgs;
-            left.compiledArgs.push_back('\0');
-            std::move(right.vectorArgs.begin(), right.vectorArgs.end(), std::back_inserter(left.vectorArgs));
-            return std::move(left);
-        }
+		friend EnvStrings operator + (EnvStrings left, EnvStrings right)
+		{
+			left.compiledArgs += right.compiledArgs;
+			left.compiledArgs.push_back('\0');
+			std::move(right.vectorArgs.begin(), right.vectorArgs.end(), std::back_inserter(left.vectorArgs));
+			return std::move(left);
+		}
 
-        const std::string& doubleNullList() const
-        {
-            return compiledArgs;
-        }
+		std::string doubleNullList() const
+		{
+			return compiledArgs + "\0";
+		}
 
-        std::size_t argc() const
-        {
-            return vectorArgs.size();
-        }
+		std::size_t argc() const
+		{
+			return vectorArgs.size();
+		}
 
-        const std::vector<std::string>& rawStrings() const
-        {
-            return vectorArgs;
-        }
+		const std::vector<std::string>& rawStrings() const
+		{
+			return vectorArgs;
+		}
 
-        /// <summary>
-        /// It is undefined behaviour to modify the contents of the returned array
-        /// </summary>
-        char ** environ()
-        {
-            argPointers.resize(vectorArgs.size() + 1);
+		/// <summary>
+		/// It is undefined behaviour to modify the contents of the returned array
+		/// </summary>
+		char ** makeEnvironPointer()
+		{
+			argPointers.resize(vectorArgs.size() + 1);
 
-            for(std::size_t i = 0; i < vectorArgs.size(); ++i)
-            {
-                argPointers[i] = const_cast<char *>(vectorArgs[i].c_str());
-            }
+			for (std::size_t i = 0; i < vectorArgs.size(); ++i)
+			{
+				argPointers[i] = const_cast<char *>(vectorArgs[i].c_str());
+			}
 
-            argPointers[vectorArgs.size()] = nullptr;
+			argPointers[vectorArgs.size()] = nullptr;
 
-            return &argPointers[0];
-        }
+			return &argPointers[0];
+		}
 
-    private:
+	private:
 
-        std::vector<std::string> vectorArgs;
-        mutable std::vector<char *> argPointers;
-        std::string compiledArgs;
-    };
+		std::vector<std::string> vectorArgs;
+		mutable std::vector<char *> argPointers;
+		std::string compiledArgs;
+	};
 }
 
 #endif

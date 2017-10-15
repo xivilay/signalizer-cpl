@@ -245,7 +245,7 @@ namespace cpl
 			return dirPath;
 		}
 
-		Types::OSError GetLastOSErrorCode()
+		Types::OSError GetLastOSError()
 		{
 			#ifdef CPL_WINDOWS
 				return GetLastError();
@@ -281,7 +281,7 @@ namespace cpl
 
 		Types::tstring GetLastOSErrorMessage()
 		{
-			return GetLastOSErrorMessage(GetLastOSErrorCode());
+			return GetLastOSErrorMessage(GetLastOSError());
 		}
 
 		/*********************************************************************************************

@@ -105,7 +105,7 @@
 		#define CPL_ISDEBUGGED() !!IsDebuggerPresent()
 		#define CPL_DEBUGOUT(x) OutputDebugStringA(x)
 	#else
-		#define CPL_DEBUGOUT(x) fprintf(stderr, "%s\n", x)
+		#define CPL_DEBUGOUT(x) fprintf(stderr, "%s", x)
         // forward declare it
 		#define CPL_ISDEBUGGED() cpl::Misc::IsBeingDebugged()
 		#define debug_out(x) (void*) 0

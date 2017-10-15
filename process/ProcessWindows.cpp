@@ -37,525 +37,286 @@
 #include "../MacroConstants.h"
 #include "../PlatformSpecific.h"
 #include "../Misc.h"
+#include "../Process.h"
 
 namespace cpl
 {
-	namespace detail
+	std::string GetShellLocation();
+
+	const std::int64_t Process::npid = -1;
+	static const UINT TerminateCode = 0xDEAD;
+	static const std::string shellLocation = GetShellLocation();
+
+	std::string GetShellLocation()
 	{
-		template<typename T, std::ptrdiff_t invalid>
-		struct NullableHandle
+		std::string ret;
+		ret.resize(GetSystemDirectoryA(nullptr, 0));
+
+		if (GetSystemDirectoryA(ret.data(), ret.size()) != ret.size() - 1)
 		{
-			static constexpr T null = (T)invalid;
-			NullableHandle() : handle(null) {}
-			NullableHandle(T h) : handle(h) {}
-			NullableHandle(std::nullptr_t) : handle(null) {}
+			CPL_SYSTEM_EXCEPTION("GetWindowsDirectoryA");
+		}
 
-			operator T() { return handle; }
+		// previous call stores null terminator that we don't care about.
+		ret.pop_back();
 
-			bool operator ==(const NullableHandle &other) const { return handle == other.handle; }
-			bool operator !=(const NullableHandle &other) const { return handle != other.handle; }
-			bool operator ==(std::nullptr_t) const { return handle == null; }
-			bool operator !=(std::nullptr_t) const { return handle != null; }
-
-			T handle;
-		};
-
-#ifdef CPL_WINDOWS
-		typedef NullableHandle<HANDLE, -1> Handle;
-#else
-		typedef NullableHandle<int, -1> Handle;
-#endif
-
-		class SysDeleter
-		{
-		public:
-			typedef Handle pointer;
-
-			void operator() (pointer p)
-			{
-#ifdef CPL_WINDOWS
-				::CloseHandle(p);
-#else
-				::close(p);
-#endif
-			}
-		};
-
-		using unique_handle = std::unique_ptr<Handle, SysDeleter>;
-
+		ret += "\\cmd.exe";
+		return ret;
 	}
 
-	class Process
+	struct Options
 	{
-		class OutputBuf : public std::streambuf
+		enum
 		{
-		public:
-
-			OutputBuf(detail::unique_handle pipe) : pipe(std::move(pipe)) { }
-
-			~OutputBuf()
-			{
-				close();
-			}
-
-			void close()
-			{
-				if (pipe.get() == nullptr)
-					return;
-
-				sync();
-				pipe.reset(nullptr);
-			}
-
-		protected:
-
-			virtual int sync() override
-			{
-				if (pipe.get() == nullptr)
-					return -1;
-
-				auto nc = pptr() && pbase() ? pptr() - pbase() : 0;
-
-				setp(std::begin(buffer), std::end(buffer));
-
-				if (nc <= 0)
-					return 0;
-
-#ifdef CPL_WINDOWS
-				DWORD dwWritten;
-				if (::WriteFile(pipe.get(), buffer, nc, &dwWritten, nullptr) && dwWritten == nc)
-				{
-					return 0;
-				}
-#else
-				if (::write(pipe.get(), buffer, nc) == nc)
-					return 0;
-#endif
-				return -1;
-			}
-
-			virtual int overflow(int c) override
-			{
-
-				if (pipe.get() == nullptr)
-					return traits_type::eof();
-
-				sync();
-
-				*pptr() = traits_type::to_char_type(c);
-				this->pbump(1);
-
-				return traits_type::not_eof(c);
-			}
-
-			detail::unique_handle pipe;
-			char buffer[1024];
+			None = 0,
+			Terminal,
+			Detached
 		};
-
-
-		struct postream : public std::ostream
-		{
-			virtual void close() = 0;
-			using std::ostream::ostream;
-		};
-
-		struct OutputStreamImplementation : public postream
-		{
-			virtual void close() override
-			{
-				buf.close();
-			}
-
-			OutputStreamImplementation(OutputBuf* buffer) : postream(buffer), buf(*buffer) {}
-
-			OutputBuf& buf;
-		};
-
-		template<typename Buf, typename Stream>
-		class PipeEdge
-		{
-		public:
-
-			PipeEdge(detail::unique_handle pipe)
-				: buf(std::move(pipe)), stream(&buf)
-			{
-
-			}
-
-			Buf buf;
-			Stream stream;
-		};
-
-		typedef std::pair<detail::unique_handle, detail::unique_handle> PipePair;
-
-    public:
-
-		class Args;
-
-    private:
-
-        Process(const std::string& process, const Args& args, int ioFlags, bool launchSuspended);
-
-	public:
-
-
-		enum io_streams
-		{
-			none = 0,
-			out = 1 << 0,
-			err = 1 << 1,
-			in = 1 << 2
-		};
-
-		using ios = io_streams;
-		class Builder;
-
-		class Builder
-		{
-		public:
-
-			Builder(Builder&& other) = default;
-			Builder& operator = (Builder&& other) = default;
-
-			Builder(const std::string& processLocation)
-				: process(processLocation)
-			{
-
-			}
-
-			Process launch(const Args& args = Args(), int ioFlags = ios::none)
-			{
-				return{ process, args.compiledArgs, ioFlags, false };
-			}
-
-			Process launchSuspended(const Args& args = Args(), int ioFlags = ios::none)
-			{
-				return{ process, args.compiledArgs, ioFlags, true };
-			}
-
-		private:
-			std::string process;
-		};
-
-
-		Process(Process&& other) = default;
-		Process(const Process& other) = delete;
-		Process& operator = (Process&& other) = default;
-		Process& operator = (const Process& other) = delete;
-
-		std::istream & cout()
-		{
-			if (!pout.get())
-				CPL_RUNTIME_EXCEPTION("No stdout pipe allocated for process");
-
-			return pout->stream;
-		}
-
-		std::istream & cerr()
-		{
-			if (!perr.get())
-				CPL_RUNTIME_EXCEPTION("No stderr pipe allocated for process");
-
-			return perr->stream;
-		}
-
-		postream & cin()
-		{
-			if (!pin.get())
-				CPL_RUNTIME_EXCEPTION("No stdin pipe allocated for process");
-
-			return pin->stream;
-		}
-
-		const std::string & name() const noexcept
-		{
-			return pname;
-		}
-
-		void resume() noexcept
-		{
-
-		}
-
-		void suspend() noexcept
-		{
-
-		}
-
-		void detach() noexcept
-		{
-
-		}
-
-		bool isAlive() const noexcept
-		{
-
-		}
-
-		void join(int timeoutMs = -1) const noexcept
-		{
-
-		}
-
-	private:
-
-		static PipePair createPipe(int parentEnd = -1)
-		{
-			detail::Handle
-				in = nullptr,
-				out = nullptr;
-
-#ifdef CPL_WINDOWS
-			SECURITY_ATTRIBUTES saAttr;
-			saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-			saAttr.bInheritHandle = true;
-			saAttr.lpSecurityDescriptor = nullptr;
-
-			if (!CreatePipe(&in.handle, &out.handle, &saAttr, 0))
-				CPL_RUNTIME_EXCEPTION("Error creating pipe pair");
-#else
-            int fd[2];
-
-            if(pipe(fd))
-                CPL_RUNTIME_EXCEPTION("Error creating pipe pair");
-
-            in = fd[0];
-            out = fd[1];
-#endif
-
-			detail::unique_handle fin(in), fout(out);
-
-#ifdef CPL_WINDOWS
-
-			if (parentEnd == 0 && !SetHandleInformation(fin.get(), HANDLE_FLAG_INHERIT, 0))
-				CPL_RUNTIME_EXCEPTION("Error setting inheritance permissions on pipes");
-
-
-			if (parentEnd == 1 && !SetHandleInformation(fout.get(), HANDLE_FLAG_INHERIT, 0))
-				CPL_RUNTIME_EXCEPTION("Error setting inheritance permissions on pipes");
-#else
-
-#endif
-			return{ std::move(fin), std::move(fout) };
-		}
-
-		class InputBuffer : public std::streambuf
-		{
-		public:
-			InputBuffer(detail::unique_handle pipe) : pipe(std::move(pipe)) {}
-
-		protected:
-
-			virtual int underflow() override
-			{
-				if (pipe.get() == nullptr)
-					return traits_type::eof();
-
-#ifdef CPL_WINDOWS
-				DWORD lpRead;
-				if (ReadFile(pipe.get(), buf, sizeof(buf), &lpRead, nullptr))
-				{
-					setg(buf, buf, buf + lpRead);
-					return buf[0];
-				}
-#else
-				auto read = ::read(pipe.get(), buf, sizeof(buf));
-				if (read > 0)
-				{
-					setg(buf, buf, buf + read);
-					return buf[0];
-				}
-#endif
-				return traits_type::eof();
-			}
-
-			detail::unique_handle pipe;
-			char buf[1024];
-		};
-
-		int pid;
-		ios flags;
-		std::string pname;
-
-		typedef PipeEdge<InputBuffer, std::istream> InPipe;
-		typedef PipeEdge<OutputBuf, OutputStreamImplementation> OutPipe;
-
-#ifdef CPL_WINDOWS
-		detail::unique_handle
-			childProcessHandle,
-			childThreadHandle;
-#endif
-
-		std::unique_ptr<OutPipe> pin;
-		std::unique_ptr<InPipe> pout, perr;
 	};
 
-	Process::Process(const std::string& process, const Args& args, int ioFlags, bool launchSuspended)
+	EnvStrings Process::GetEnvironment()
 	{
-		flags = static_cast<ios>(ioFlags);
+		EnvStrings environment;
+		for (int i = 0; environ[i]; ++i)
+			environment.string(environ[i]);
 
-		PipePair in, out, err;
+		return environment;
+	}
 
-		if (ioFlags & ios::in)
-			in = createPipe(1);
-		if (ioFlags & ios::out)
-			out = createPipe(0);
-		if (ioFlags & ios::err)
-			err = createPipe(0);
+	std::error_code Process::kill()
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
 
-#ifdef CPL_WINDOWS
-		PROCESS_INFORMATION piProcInfo{};
-		STARTUPINFO siStartInfo{};
+		if (!alive())
+			return {};
 
-		siStartInfo.cb = sizeof(STARTUPINFO);
+		if (!TerminateProcess(childProcessHandle.get(), TerminateCode))
+			return { static_cast<int>(GetLastError()), std::system_category() };
 
-		if (ioFlags)
+		return {};
+	}
+
+	bool Process::doJoin(int timeoutMs)
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+
+		if (exitCode)
+			return true;
+
+		DWORD timeout = timeoutMs < 0 ? INFINITE : static_cast<DWORD>(timeoutMs);
+
+		switch(WaitForSingleObject(childProcessHandle.get(), timeout))
 		{
-            siStartInfo.hStdOutput = out.second.get();
-			siStartInfo.hStdError = err.second.get();
-			siStartInfo.hStdInput = in.first.get();
-			siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+			default:
+			case WAIT_FAILED: CPL_SYSTEM_EXCEPTION("WaitForSingleObject");
+			case WAIT_TIMEOUT: return false;
+			case WAIT_OBJECT_0:
+			{
+				DWORD dwExitCode;
+				if (!GetExitCodeProcess(childProcessHandle.get(), &dwExitCode))
+				{
+					CPL_SYSTEM_EXCEPTION("GetExitCodeProcess");
+				}
+				else
+				{
+					exitCode.emplace(static_cast<std::int64_t>(dwExitCode));
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	void Process::detach()
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+
+		pin = nullptr;
+		pout = nullptr;
+		perr = nullptr;
+
+		releaseSpecific();
+
+		pid.set(npid);
+	}
+
+	void Process::releaseSpecific() noexcept
+	{
+		childProcessHandle = nullptr;
+		childThreadHandle = nullptr;
+	}
+
+	Process::PipePair Process::createPipe(int parentEnd)
+	{
+		detail::Handle
+			in = nullptr,
+			out = nullptr;
+
+		SECURITY_ATTRIBUTES saAttr;
+		saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+		saAttr.bInheritHandle = true;
+		saAttr.lpSecurityDescriptor = nullptr;
+
+		if (!CreatePipe(&in.handle, &out.handle, &saAttr, 0))
+			CPL_SYSTEM_EXCEPTION("Error creating pipe pair");
+		
+		detail::unique_handle fin(in), fout(out);
+
+		if (parentEnd == 0 && !SetHandleInformation(fin.get(), HANDLE_FLAG_INHERIT, 0))
+			CPL_RUNTIME_EXCEPTION("Error setting inheritance permissions on pipes");
+
+
+		if (parentEnd == 1 && !SetHandleInformation(fout.get(), HANDLE_FLAG_INHERIT, 0))
+			CPL_RUNTIME_EXCEPTION("Error setting inheritance permissions on pipes");
+
+		return{ std::move(fin), std::move(fout) };
+	}
+
+	void Process::initialise(PipePair& in, PipePair& out, PipePair& err, EnvStrings * env, const std::string * cwd, int customFlags)
+	{
+		PROCESS_INFORMATION piProcInfo{};
+		STARTUPINFOEXA siStartInfo{};
+		using ProcThreadAttributeList = std::remove_pointer<LPPROC_THREAD_ATTRIBUTE_LIST>::type;
+
+		siStartInfo.StartupInfo.cb = sizeof(STARTUPINFOEXA);
+
+		std::size_t numHandles = 
+			((flags & IOStreamFlags::In) ? 1 : 0) + 
+			((flags & IOStreamFlags::Out) ? 1 : 0) +
+			((flags & IOStreamFlags::Err) ? 1 : 0);
+
+		detail::Handle hIn, hOut, hErr;
+		detail::unique_handle hNulls[3];
+		std::size_t hNullIndex = 0;
+
+		if ((customFlags & Options::Terminal) == 0)
+		{
+			for (std::size_t i = 0; i < 3 - numHandles; ++i)
+			{
+				hNulls[i].reset(CreateFileA("nul", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr));
+
+				if (hNulls[i].get() == nullptr)
+					CPL_SYSTEM_EXCEPTION("CreateFileA nul");
+
+				if (!SetHandleInformation(hNulls[i].get(), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT))
+					CPL_RUNTIME_EXCEPTION("Error setting inheritance permissions on pipes");
+			}
+		}
+		// GetStdHandle(STD_*_HANDLE) won't reliably work if we ourselves are redirected
+		hIn = (flags & IOStreamFlags::In) ? in.first.get() : hNulls[hNullIndex++].get();
+		hOut = (flags & IOStreamFlags::Out) ? out.second.get() : hNulls[hNullIndex++].get();
+		hErr = (flags & IOStreamFlags::Err) ? err.second.get() : hNulls[hNullIndex++].get();
+
+		struct ProcThreadDeleter { void operator()(ProcThreadAttributeList * p) { DeleteProcThreadAttributeList(p);	} };
+
+		std::unique_ptr<char[]> handleListStorage;
+		std::unique_ptr<ProcThreadAttributeList, ProcThreadDeleter> attributeList;
+
+		if(customFlags == Options::None)
+		{
+			
+			siStartInfo.StartupInfo.hStdOutput = hOut;
+			siStartInfo.StartupInfo.hStdError = hErr;
+			siStartInfo.StartupInfo.hStdInput = hIn;
+			siStartInfo.StartupInfo.dwFlags |= STARTF_USESTDHANDLES; 
+
+			DWORD dwNeededListSize;
+			if (!InitializeProcThreadAttributeList(nullptr, 1, 0, &dwNeededListSize) && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+				CPL_SYSTEM_EXCEPTION("InitializeProcThreadAttributeList");
+
+			handleListStorage.reset(new char[dwNeededListSize]);
+			LPPROC_THREAD_ATTRIBUTE_LIST tempList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(handleListStorage.get());
+
+			if (!InitializeProcThreadAttributeList(tempList, 1, 0, &dwNeededListSize))
+				CPL_SYSTEM_EXCEPTION("InitializeProcThreadAttributeList#2");
+
+			attributeList.reset(tempList);
+			
+			HANDLE hHandles[3] = { hIn, hOut, hErr };
+
+			if (!UpdateProcThreadAttribute(attributeList.get(), 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, hHandles, sizeof(HANDLE) * 3, nullptr, nullptr))
+			{
+				CPL_SYSTEM_EXCEPTION("UpdateProcThreadAttribute");
+			}
+
+
+			siStartInfo.lpAttributeList = attributeList.get();
 		}
 
 
-		auto copy = process;
+		DWORD dwCreationFlags = EXTENDED_STARTUPINFO_PRESENT;
 
-		auto success = ::CreateProcess(
-			nullptr,
-			&(process + " " + commandLine)[0],     // command line
+		if (customFlags & Options::Terminal)
+			dwCreationFlags |= CREATE_NEW_CONSOLE;
+
+		if (customFlags & Options::Detached)
+			dwCreationFlags |= CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS;
+
+		auto cmdCopy = pArgs.commandLine();
+
+		auto success = ::CreateProcessA(
+			pname.c_str(),
+			&(cmdCopy)[0],     // command line
 			nullptr,          // pname security attributes
 			nullptr,          // primary thread security attributes
-			true,          // handles are inherited
-			0,             // creation flags
-			nullptr,          // use parent's environment
-			nullptr,          // use parent's current directory
-			&siStartInfo,  // STARTUPINFO pointer
+			!(customFlags & Options::Terminal),          // handles are inherited
+			dwCreationFlags,
+			static_cast<void *>(env ? env->doubleNullList().data() : nullptr), // use parent's environment
+			cwd ? cwd->c_str() : nullptr,          // use parent's current directory
+			reinterpret_cast<LPSTARTUPINFOA>(&siStartInfo),  // STARTUPINFO pointer
 			&piProcInfo		// receives PROCESS_INFORMATION
 		);
 
 		if (!success)
-			CPL_RUNTIME_EXCEPTION("Error starting process: " + cpl::Misc::GetLastOSErrorMessage());
-#else
+			CPL_SYSTEM_EXCEPTION("CreateProcess");
 
-        /* auto execErrPipe = pipePair();
 
-        if (::fcntl(execErrPipe.second.get(), F_SETFD, ::fcntl(execErrPipe.second.get(), F_GETFD) | FD_CLOEXEC))
-        {
-            CPL_RUNTIME_EXCEPTION("Error setting fcntl on child error exec pipe");
-        } */
-
-        auto proc = process.c_str();
-        std::vector<char *> cargs(args.rawArgs().size() + 2);
-        cargs[0] = const_cast<char *>(proc);
-
-        for(std::size_t i = 0; i < args.rawArgs().size(); ++i)
-            cargs[i + 1] = const_cast<char *>(args.rawArgs()[i].c_str());
-
-        cargs[cargs.size() - 1] = nullptr;
-
-        sig_atomic_t result = 0, childError = 0;
-
-        auto pidf = vfork();
-
-        if(pidf == -1)
-        {
-            CPL_RUNTIME_EXCEPTION("Error fork'ing()");
-        }
-        else if(pidf == 0)
-        {
-            if (ioFlags & ios::out)
-                dup2(out.first.get(), fileno(stdout));
-            if (ioFlags & ios::err)
-                dup2(err.first.get(), fileno(stderr));
-            if (ioFlags & ios::in)
-                dup2(in.second.get(), fileno(stdin));
-
-            const char * selfFds = "/proc/self/fd";
-
-            if(auto fds = opendir(selfFds))
-            {
-                const auto itfd = dirfd(fds);
-
-                while(auto entry = readdir(fds))
-                {
-
-                    auto str = entry->d_name;
-                    int filedes = 0;
-                    bool error = false;
-
-                    // simple atoi, standard is not reentrant
-                    while(str && str[0])
-                    {
-                        auto c = *str;
-
-                        // only accept positive, continuous integers
-                        if(c < '0' || c > '9')
-                        {
-                            error = true;
-                            break;
-                        }
-
-                        filedes = filedes * 10 + c - '0';
-                        str++;
-                    }
-
-                    if(error)
-                        continue;
-
-                    // max stdio fd
-                    if(filedes < 3)
-                        continue;
-
-                    // check if fd is our directory iterator
-                    if(filedes == itfd)
-                        continue;
-
-                    // discard result, can't handle error anyway
-                    close(filedes);
-
-                }
-
-                closedir(fds);
-            }
-
-            // manually reset non-child ends because execv is a hack
-            /*err.second = nullptr;
-            out.second = nullptr;
-            in.first = nullptr; */
-            //execErrPipe.first = nullptr;
-
-            execvp(proc, cargs.data());
-
-            result = -1;
-            childError = errno;
-
-            // if we made it here, exec failed. write errno to the exec err pipe.
-            //::write(execErrPipe.second, &errno, sizeof(int));
-            _exit(childError);
-        }
-        else
-        {
-            pid = static_cast<int>(pidf);
-        }
-#endif
-		// assign handles
-#ifdef CPL_WINDOWS
 		childProcessHandle.reset(piProcInfo.hProcess);
 		childThreadHandle.reset(piProcInfo.hThread);
 		pid = static_cast<int>(piProcInfo.dwProcessId);
-#else
 
+	}
 
-#endif
+	Process Process::Builder::shell(Args args, int ioFlags, ScopeExitOperation operation)
+	{
+		return {
+			shellLocation,
+			std::move(Args().arg("/A").arg("/C").arg((process + args).commandLine(), Args::Escaped)),
+			ioFlags,
+			ScopeExitOperation::Join,
+			hasEnv ? &env : nullptr,
+			hasCWD ? &cwd : nullptr
+		};
+	}
 
+	Process Process::Builder::terminal(Args args, ScopeExitOperation operation)
+	{
+		return {
+			shellLocation,
+			std::move(Args().arg("/A").arg("/C").arg((process + args).commandLine(), Args::Escaped)),
+			IOStreamFlags::None,
+			ScopeExitOperation::Join,
+			hasEnv ? &env : nullptr,
+			hasCWD ? &cwd : nullptr,
+			Options::Terminal
+		};
+	}
 
-		if (ioFlags & ios::in)
-			pin = std::make_unique<OutPipe>(std::move(in.second));
-		if (ioFlags & ios::out)
-			pout = std::make_unique<InPipe>(std::move(out.first));
-		if (ioFlags & ios::err)
-			perr = std::make_unique<InPipe>(std::move(err.first));
-
+	void Process::Builder::launchDetached(Args args)
+	{
+		Process {
+			process,
+			std::move(args),
+			IOStreamFlags::None,
+			ScopeExitOperation::Join,
+			hasEnv ? &env : nullptr,
+			hasCWD ? &cwd : nullptr,
+			Options::Detached
+		}.detach();
 	}
 
 }

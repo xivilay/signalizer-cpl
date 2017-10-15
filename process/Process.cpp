@@ -23,7 +23,7 @@
 
 	file:Process.cpp
 
-        Implementation of Process.h
+		Implementation of Process.h
 
 *************************************************************************************/
 #include "../Process.h"
@@ -37,97 +37,97 @@
 
 namespace cpl
 {
-    const EnvStrings Process::initialEnvironment = Process::GetEnvironment();
+	const EnvStrings Process::initialEnvironment = Process::GetEnvironment();
 
-    const EnvStrings& Process::getParentEnvironment() { return initialEnvironment; }
-    const EnvStrings& Process::getCreationEnvironment() { return hasCustomEnvironment ? pEnv : getParentEnvironment(); }
-    const Args& Process::getCreationArgs() { return pArgs; }
+	const EnvStrings& Process::getParentEnvironment() { return initialEnvironment; }
+	const EnvStrings& Process::getCreationEnvironment() { return hasCustomEnvironment ? pEnv : getParentEnvironment(); }
+	const Args& Process::getCreationArgs() { return pArgs; }
 
-    Process::InputStream & Process::cout()
-    {
-        if(!actual())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+	Process::InputStream & Process::cout()
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
 
-        if (!pout.get())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("No stdout pipe allocated for process", std::logic_error);
+		if (!pout.get())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("No stdout pipe allocated for process", std::logic_error);
 
-        return pout->stream;
-    }
+		return pout->stream;
+	}
 
-    Process::InputStream & Process::cerr()
-    {
-        if(!actual())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+	Process::InputStream & Process::cerr()
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
 
-        if (!perr.get())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("No stderr pipe allocated for process", std::logic_error);
+		if (!perr.get())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("No stderr pipe allocated for process", std::logic_error);
 
-        return perr->stream;
-    }
+		return perr->stream;
+	}
 
-    Process::CloseableOutputStream & Process::cin()
-    {
-        if(!actual())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+	Process::CloseableOutputStream & Process::cin()
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
 
-        if (!pin.get())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("No stdin pipe allocated for process", std::logic_error);
+		if (!pin.get())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("No stdin pipe allocated for process", std::logic_error);
 
-        return pin->stream;
-    }
+		return pin->stream;
+	}
 
-    const std::string & Process::name() const
-    {
-        if(!actual())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+	const std::string & Process::name() const
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
 
-        return pname;
-    }
+		return pname;
+	}
 
-    std::int64_t Process::getExitCode()
-    {
-        if(!explicitlyJoined)
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not succesfully joined", std::logic_error);
+	std::int64_t Process::getExitCode()
+	{
+		if (!explicitlyJoined)
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not succesfully joined", std::logic_error);
 
-        return exitCode.value();
-    }
+		return exitCode.value();
+	}
 
-    std::int64_t Process::getPid() const noexcept
-    {
-        return pid.get();
-    }
+	std::int64_t Process::getPid() const noexcept
+	{
+		return pid.get();
+	}
 
-    bool Process::actual() const noexcept
-    {
-        return pid.get() != npid;
-    }
+	bool Process::actual() const noexcept
+	{
+		return pid.get() != npid;
+	}
 
-    bool Process::alive()
-    {
-        if(!actual())
-            CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
+	bool Process::alive()
+	{
+		if (!actual())
+			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not actual", std::logic_error);
 
-        if(!exitCode)
-        {
-            join(0);
-        }
+		if (!exitCode)
+		{
+			join(0);
+		}
 
-        return !exitCode;
-    }
+		return !exitCode;
+	}
 
-    bool Process::join(int timeout)
-    {
-        return explicitlyJoined = doJoin(timeout);
-    }
+	bool Process::join(int timeout)
+	{
+		return explicitlyJoined = doJoin(timeout);
+	}
 
-    Process::Process() noexcept
-        : flags(IOStreamFlags::None), pid(npid), scopeExitOp(ScopeExitOperation::Join), explicitlyJoined(false)
-    {
+	Process::Process() noexcept
+		: flags(IOStreamFlags::None), pid(npid), scopeExitOp(ScopeExitOperation::Join), explicitlyJoined(false), hasCustomEnvironment(false)
+	{
 
-    }
+	}
 
-	Process::Process(std::string process, Args&& args, int ioFlags, ScopeExitOperation operation, const EnvStrings * strings, const std::string * cwd, bool launchDetached)
-        : pname(std::move(process)), pArgs(pname + args), scopeExitOp(operation), pid(npid), explicitlyJoined(false)
+	Process::Process(std::string process, Args&& args, int ioFlags, ScopeExitOperation operation, const EnvStrings * strings, const std::string * cwd, int customFlags)
+		: pname(std::move(process)), pArgs(pname + args), scopeExitOp(operation), pid(npid), explicitlyJoined(false), hasCustomEnvironment(false)
 	{
 		flags = static_cast<IOStreamFlags>(ioFlags);
 
@@ -140,10 +140,10 @@ namespace cpl
 		if (ioFlags & IOStreamFlags::Err)
 			err = createPipe(0);
 
-        if(strings)
-            pEnv = *strings;
+		if (strings)
+			pEnv = *strings;
 
-        initialise(in, out, err, strings ? &pEnv : nullptr, cwd, launchDetached);
+		initialise(in, out, err, strings ? &pEnv : nullptr, cwd, customFlags);
 
 		if (ioFlags & IOStreamFlags::In)
 			pin = std::make_unique<OutPipe>(std::move(in.second));
@@ -155,89 +155,101 @@ namespace cpl
 
 	Process::ScopeExitOperation Process::callHandler(std::exception * e) const noexcept
 	{
-        if(!handler)
-            return ScopeExitOperation::Terminate;
+		if (!handler)
+			return ScopeExitOperation::Terminate;
 
-        try
-        {
-            return handler(*this, scopeExitOp, e);
-        }
-        catch(...)
-        {
-            return ScopeExitOperation::Terminate;
-        }
+		try
+		{
+			return handler(*this, scopeExitOp, e);
+		}
+		catch (...)
+		{
+			return ScopeExitOperation::Terminate;
+		}
 	}
 
 
-    Process::~Process()
-    {
-        pin = nullptr;
-        pout = nullptr;
-        perr = nullptr;
+	void Process::setScopeExitOperation(ScopeExitOperation newOperation) noexcept
+	{
+		scopeExitOp = newOperation;
+	}
 
-        if(actual())
-        {
-            bool done = false;
+	void Process::setScopeHandler(ScopeExitHandler newHandler)
+	{
+		handler = newHandler;
+	}
 
-            while(!done)
-            {
-                try
-                {
-                    switch(scopeExitOp)
-                    {
-                        case ScopeExitOperation::Join:
-                        {
-                            done = join(handler ? 100 : -1);
-                            break;
-                        }
-                        case ScopeExitOperation::Detach:
-                        {
-                            detach();
-                            done = true;
-                            break;
-                        }
-                        case ScopeExitOperation::Terminate:
-                        {
-                            std::terminate();
-                            break;
-                        }
-                        case ScopeExitOperation::KillJoin:
-                        {
-                            auto err = kill();
-                            if(err)
-                                CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
 
-                            done = join(handler ? 100 : -1);
-                            break;
-                        }
-                        case ScopeExitOperation::KillDetach:
-                        {
-                            auto err = kill();
-                            if(err)
-                                CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
+	Process::~Process()
+	{
+		pin = nullptr;
+		pout = nullptr;
+		perr = nullptr;
 
-                            detach();
-                            done = true;
-                            break;
-                        }
-                    }
-                }
-                catch(std::exception& e)
-                {
-                    scopeExitOp = callHandler(&e);
-                    continue;
-                }
-                catch(...)
-                {
+		if (actual())
+		{
+			bool done = false;
 
-                }
+			while (!done)
+			{
+				try
+				{
+					switch (scopeExitOp)
+					{
+					case ScopeExitOperation::Join:
+					{
+						done = join(handler ? 100 : -1);
+						break;
+					}
+					case ScopeExitOperation::Detach:
+					{
+						detach();
+						done = true;
+						break;
+					}
+					case ScopeExitOperation::Terminate:
+					{
+						std::terminate();
+						break;
+					}
+					case ScopeExitOperation::KillJoin:
+					{
+						auto err = kill();
+						if (err)
+							CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
 
-                scopeExitOp = ScopeExitOperation::Terminate;
+						done = join(handler ? 100 : -1);
+						break;
+					}
+					case ScopeExitOperation::KillDetach:
+					{
+						auto err = kill();
+						if (err)
+							CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
 
-            }
+						detach();
+						done = true;
+						break;
+					}
+					}
+				}
+				catch (std::exception& e)
+				{
+					scopeExitOp = callHandler(&e);
+					continue;
+				}
+				catch (...)
+				{
+					std::terminate();
+				}
 
-            releaseSpecific();
-        }
+				if (!done)
+					scopeExitOp = callHandler();
 
-    }
+			}
+
+			releaseSpecific();
+		}
+
+	}
 }
