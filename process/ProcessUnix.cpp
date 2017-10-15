@@ -95,13 +95,13 @@ namespace cpl
 				{
 					switch (info.si_code)
 					{
-					case CLD_EXITED:
-						exitCode.emplace(info.si_status);
-						return true;
-					case CLD_KILLED:
-					case CLD_DUMPED:
-						exitCode.emplace(-1);
-						return true;
+						case CLD_EXITED:
+							exitCode.emplace(info.si_status);
+							return true;
+						case CLD_KILLED:
+						case CLD_DUMPED:
+							exitCode.emplace(-1);
+							return true;
 					}
 				}
 			}
@@ -124,9 +124,9 @@ namespace cpl
 					{
 						switch (info.si_code)
 						{
-						case CLD_EXITED: case CLD_KILLED: case CLD_DUMPED:
-							exitCode.emplace(info.si_status);
-							return true;
+							case CLD_EXITED: case CLD_KILLED: case CLD_DUMPED:
+								exitCode.emplace(info.si_status);
+								return true;
 						}
 					}
 				}
@@ -148,7 +148,7 @@ namespace cpl
 			return {};
 
 		if (::kill(pid.get(), SIGKILL))
-			return { errno, std::system_category() };
+			return {errno, std::system_category()};
 
 		return {};
 	}
@@ -206,7 +206,7 @@ namespace cpl
 
 		detail::unique_handle fin(in), fout(out);
 
-		return{ std::move(fin), std::move(fout) };
+		return{std::move(fin), std::move(fout)};
 	}
 
 

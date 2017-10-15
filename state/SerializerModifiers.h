@@ -22,85 +22,85 @@
 **************************************************************************************
 
 	file:SerializerModifiers.h
-		
+
 		Provides stream insertion modifiers that alter the behaviour of serialization.
 
 *************************************************************************************/
 
 #ifndef CPL_SERIALIZERMODIFIERS_H
-	#define CPL_SERIALIZERMODIFIERS_H
+#define CPL_SERIALIZERMODIFIERS_H
 
-	#include "CSerializer.h"
+#include "CSerializer.h"
 
-	namespace cpl
+namespace cpl
+{
+	namespace Serialization
 	{
-		namespace Serialization
+		/// <summary>
+		/// Scope of serializer must out-live this modifier.
+		/// Reverses any changes done. Must only be inserted once.
+		/// </summary>
+		class ScopedModifier
 		{
-			/// <summary>
-			/// Scope of serializer must out-live this modifier.
-			/// Reverses any changes done. Must only be inserted once.
-			/// </summary>
-			class ScopedModifier
+		public:
+			explicit ScopedModifier(CSerializer::Modifiers m, bool doSet = true)
+				: mod(m), stream(nullptr), set(doSet) {}
+
+			void modifyStream(CSerializer & s)
 			{
-			public:
-				explicit ScopedModifier(CSerializer::Modifiers m, bool doSet = true) 
-					: mod(m), stream(nullptr), set(doSet) {}
-
-				void modifyStream(CSerializer & s)
-				{ 
-					bool reset = s.getModifier(mod);
-					s.modify(mod, set);
-					set = reset;
-					stream = &s;
-				}
-
-				~ScopedModifier()
-				{
-					if(stream)
-						stream->modify(mod, set);
-				}
-
-			private:
-				CSerializer * stream;
-				CSerializer::Modifiers mod;
-				bool set;
-			};
-
-			class Reserve
-			{
-			public: 
-				explicit Reserve(std::size_t sizeBytes) : bytes(sizeBytes) {}
-				std::size_t getBytes() const noexcept { return bytes; }
-			private:
-				std::size_t bytes;
-			};
-
-			typedef Reserve Consume;
-
-
-			inline CSerializer & operator << (CSerializer & s, Reserve b)
-			{
-				s.fill(b.getBytes());
-				return s;
+				bool reset = s.getModifier(mod);
+				s.modify(mod, set);
+				set = reset;
+				stream = &s;
 			}
 
-			inline CSerializer & operator << (CSerializer & s, ScopedModifier && m)
+			~ScopedModifier()
 			{
-				m.modifyStream(s);
-				return s;
+				if (stream)
+					stream->modify(mod, set);
 			}
 
-			inline CSerializer & operator << (CSerializer & s, ScopedModifier & m)
-			{
-				m.modifyStream(s);
-				return s;
-			}
-
-			inline CSerializer & operator >> (CSerializer & s, Consume b)
-			{
-				s.discard(b.getBytes());
-				return s;
-			}
+		private:
+			CSerializer * stream;
+			CSerializer::Modifiers mod;
+			bool set;
 		};
+
+		class Reserve
+		{
+		public:
+			explicit Reserve(std::size_t sizeBytes) : bytes(sizeBytes) {}
+			std::size_t getBytes() const noexcept { return bytes; }
+		private:
+			std::size_t bytes;
+		};
+
+		typedef Reserve Consume;
+
+
+		inline CSerializer & operator << (CSerializer & s, Reserve b)
+		{
+			s.fill(b.getBytes());
+			return s;
+		}
+
+		inline CSerializer & operator << (CSerializer & s, ScopedModifier && m)
+		{
+			m.modifyStream(s);
+			return s;
+		}
+
+		inline CSerializer & operator << (CSerializer & s, ScopedModifier & m)
+		{
+			m.modifyStream(s);
+			return s;
+		}
+
+		inline CSerializer & operator >> (CSerializer & s, Consume b)
+		{
+			s.discard(b.getBytes());
+			return s;
+		}
 	};
+};
 #endif

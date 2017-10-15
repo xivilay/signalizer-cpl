@@ -29,46 +29,46 @@
 *************************************************************************************/
 
 #ifndef CPL_PLATFORMDEPENDENT_H
-	#define CPL_PLATFORMDEPENDENT_H
+#define CPL_PLATFORMDEPENDENT_H
 
-	#include "MacroConstants.h"
+#include "MacroConstants.h"
 
-	#ifdef CPL_WINDOWS
+#ifdef CPL_WINDOWS
 
-		#include <windows.h>
-		#include <tchar.h>
-		#include <intrin.h>
+#include <windows.h>
+#include <tchar.h>
+#include <intrin.h>
 
-	#elif defined(CPL_UNIXC)
+#elif defined(CPL_UNIXC)
 
-		#include <dlfcn.h>
-		#include <pthread.h>
-		#include <sys/types.h>
-		#include <sys/stat.h>
-		#include <sys/sysctl.h>
-		#include <unistd.h>
-		#include <sys/time.h>
-		#include <fcntl.h>
-        #include <dirent.h>
+#include <dlfcn.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sysctl.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <fcntl.h>
+#include <dirent.h>
 
-		#ifdef CPL_MAC
-			#include <mach-o/dyld.h>
-			#include <mach/mach_time.h>
-			#include "MacSupport.h"
-			#include <IOKit/graphics/IOGraphicsLib.h>
-			#include <OpenGL/gl.h>
-			#include <OpenGL/glext.h>
+#ifdef CPL_MAC
+#include <mach-o/dyld.h>
+#include <mach/mach_time.h>
+#include "MacSupport.h"
+#include <IOKit/graphics/IOGraphicsLib.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
 
-		#endif
+#endif
 
-        #include <setjmp.h>
+#include <setjmp.h>
 
-	#endif
+#endif
 
-	#ifndef CPL_MSVC
-		#include <cfenv>
-		// find similar header (set fpoint mask) for non-mscv on windows
-		#include <xmmintrin.h>
-	#endif
+#ifndef CPL_MSVC
+#include <cfenv>
+// find similar header (set fpoint mask) for non-mscv on windows
+#include <xmmintrin.h>
+#endif
 
 #endif

@@ -46,41 +46,41 @@ namespace cpl
 		std::vector<float> data(100);
 		std::mutex m;
 
-		std::thread one([&]() 
+		std::thread one([&]()
+		{
+			while (!quit.load(std::memory_order_relaxed))
 			{
-				while (!quit.load(std::memory_order_relaxed))
-				{
-					std::unique_lock<std::mutex> lock(m, std::try_to_lock);
-					
-					if (lock.owns_lock())
-					{
-						for (std::size_t i = 0; i < data.size(); ++i)
-						{
-							data[i] = (float)std::rand();
-						}
+				std::unique_lock<std::mutex> lock(m, std::try_to_lock);
 
-						std_memory_fence(std::memory_order::memory_order_release);
+				if (lock.owns_lock())
+				{
+					for (std::size_t i = 0; i < data.size(); ++i)
+					{
+						data[i] = (float)std::rand();
 					}
+
+					std_memory_fence(std::memory_order::memory_order_release);
 				}
 			}
+		}
 		);
 
-		std::thread two([&]() 
+		std::thread two([&]()
+		{
+			while (!quit.load(std::memory_order_relaxed))
 			{
-				while (!quit.load(std::memory_order_relaxed))
+				std::unique_lock<std::mutex> lock(m, std::try_to_lock);
+
+				if (lock.owns_lock())
 				{
-					std::unique_lock<std::mutex> lock(m, std::try_to_lock);
+					// guaranteed that any changes from thread one to 'data' is seen after this fence?
+					std_memory_fence(std::memory_order::memory_order_acquire);
 
-					if (lock.owns_lock())
-					{
-						// guaranteed that any changes from thread one to 'data' is seen after this fence?
-						std_memory_fence(std::memory_order::memory_order_acquire);
-
-						auto res = std::accumulate(data.begin(), data.end(), 0.0f);
-						std::cout << "Accumulated result is: " << res << std::endl;
-					}
+					auto res = std::accumulate(data.begin(), data.end(), 0.0f);
+					std::cout << "Accumulated result is: " << res << std::endl;
 				}
 			}
+		}
 		);
 
 		fgetc(stdin);
@@ -157,80 +157,80 @@ namespace cpl
 			std::thread audioThread
 			(
 				[&]()
+			{
+
+				cpl::CAudioStream<ftype, 128>::AudioStreamInfo sinfo {};
+				sinfo.anticipatedChannels = 2;
+				sinfo.anticipatedSize = emulatedBufferSize;
+				sinfo.callAsyncListeners = true;
+				sinfo.callRTListeners = true;
+				sinfo.sampleRate = sampleRate;
+				sinfo.storeAudioHistory = true;
+				stream.initializeInfo(sinfo);
+
+				cpl::aligned_vector<ftype, 16> audioData[2];
+				ftype * buffers[2];
+				std::uint64_t prevDroppedFrames = 0;
+				while (!quit)
 				{
-
-					cpl::CAudioStream<ftype, 128>::AudioStreamInfo sinfo{};
-					sinfo.anticipatedChannels = 2;
-					sinfo.anticipatedSize = emulatedBufferSize;
-					sinfo.callAsyncListeners = true;
-					sinfo.callRTListeners = true;
-					sinfo.sampleRate = sampleRate;
-					sinfo.storeAudioHistory = true;
-					stream.initializeInfo(sinfo);
-
-					cpl::aligned_vector<ftype, 16> audioData[2];
-					ftype * buffers[2];
-					std::uint64_t prevDroppedFrames = 0;
-					while (!quit)
+					auto size = sinfo.anticipatedSize + (std::rand() % 10) - 5;
+					for (auto & ch : audioData)
 					{
-						auto size = sinfo.anticipatedSize + (std::rand() % 10) - 5;
-						for (auto & ch : audioData)
-						{
-							ch.resize(size);
-							cpl::dsp::fillWithRand(ch, ch.size());
-						}
-
-						buffers[0] = audioData[0].data();
-						buffers[1] = audioData[1].data();
-
-						stream.processIncomingRTAudio(buffers, 2, size, cpl::CAudioStream<ftype, 128>::Playhead::empty());
-						auto newDrops = stream.getPerfMeasures().droppedAudioFrames - prevDroppedFrames;
-						const auto fsizef = stream.getASyncBufferSize();
-						dout(newDrops > 0 ? warn : verb, lvl,
-							"AT: Sent " CPL_FMT_SZT " realtime samples - dropped %llu frames." 
-							"Fifo size: " CPL_FMT_SZT " (" CPL_FMT_SZT "  bytes)\n",
-							size, newDrops, 
-							fsizef, fsizef * stream.packetSize);
-						prevDroppedFrames += newDrops;
-						count += size;
-
-
-						Misc::PreciseDelay(msPerRender);
+						ch.resize(size);
+						cpl::dsp::fillWithRand(ch, ch.size());
 					}
-					drops = static_cast<std::size_t>(stream.getPerfMeasures().droppedAudioFrames);
+
+					buffers[0] = audioData[0].data();
+					buffers[1] = audioData[1].data();
+
+					stream.processIncomingRTAudio(buffers, 2, size, cpl::CAudioStream<ftype, 128>::Playhead::empty());
+					auto newDrops = stream.getPerfMeasures().droppedAudioFrames - prevDroppedFrames;
+					const auto fsizef = stream.getASyncBufferSize();
+					dout(newDrops > 0 ? warn : verb, lvl,
+						"AT: Sent " CPL_FMT_SZT " realtime samples - dropped %llu frames."
+						"Fifo size: " CPL_FMT_SZT " (" CPL_FMT_SZT "  bytes)\n",
+						size, newDrops,
+						fsizef, fsizef * stream.packetSize);
+					prevDroppedFrames += newDrops;
+					count += size;
+
+
+					Misc::PreciseDelay(msPerRender);
 				}
+				drops = static_cast<std::size_t>(stream.getPerfMeasures().droppedAudioFrames);
+			}
 			);
 
 			std::thread listenerAdder
 			(
-				[&]() 
+				[&]()
+			{
+				while (!quit)
 				{
-					while (!quit)
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+					auto entry = std::rand() % listenerTests;
+					auto & listener = listeners[entry];
+
+					if (listener.second)
 					{
-						std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-						auto entry = std::rand() % listenerTests;
-						auto & listener = listeners[entry];
-
-						if (listener.second)
-						{
-							if (!listener.first.detachFromSource())
-								dout(warn, lvl, "Unable to remove listener %d", entry);
-							else
-								listener.second = false;
-						}
+						if (!listener.first.detachFromSource())
+							dout(warn, lvl, "Unable to remove listener %d", entry);
 						else
-						{
-							if (!listener.first.listenToSource(stream))
-								dout(warn, lvl, "Unable to add listener %d in 2 seconds", entry);
-							else
-								listener.second = true;
-						}
-
-						stream.setAudioHistorySizeAndCapacity(std::rand() % 1000 + 100, std::rand() % 1000 + 1200);
+							listener.second = false;
+					}
+					else
+					{
+						if (!listener.first.listenToSource(stream))
+							dout(warn, lvl, "Unable to add listener %d in 2 seconds", entry);
+						else
+							listener.second = true;
 					}
 
+					stream.setAudioHistorySizeAndCapacity(std::rand() % 1000 + 100, std::rand() % 1000 + 1200);
 				}
+
+			}
 			);
 
 			std::getc(stdin);

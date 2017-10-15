@@ -30,7 +30,7 @@
 #include "SafeSerializableObject.h"
 #include "../Protected.h"
 #ifdef CPL_JUCE
-    #include "../gui/GUI.h"
+#include "../gui/GUI.h"
 #endif
 namespace cpl
 {
@@ -48,9 +48,9 @@ namespace cpl
 			// this should really not throw, but oh well!
 			CProtected::instance().runProtectedCode(
 				[&]()
-				{
-					serialize(ar, version);
-				}
+			{
+				serialize(ar, version);
+			}
 			);
 
 			serializedCorrectly = true;
@@ -164,7 +164,8 @@ namespace cpl
 		try
 		{
 			CProtected::instance().runProtectedCode(
-				[&] () {
+				[&]()
+				{
 					deserialize(ar, version);
 				}
 			);
@@ -300,7 +301,7 @@ namespace cpl
 	std::string SafeSerializableObject::tryComposeIdentifiableName()
 	{
 		auto typeName = Misc::DemangledTypeName(*this);
-#ifdef CPL_JUCE
+		#ifdef CPL_JUCE
 		if (auto control = dynamic_cast<CBaseControl *>(this))
 		{
 			return "(" + typeName + "*) UI control \"" + control->bGetTitle() + "\"";
@@ -310,7 +311,7 @@ namespace cpl
 			return "(" + typeName + "*) view \"" + view->getName() + "\"";
 		}
 		else
-#endif
+			#endif
 		{
 			return "(" + typeName + "*) object";
 		}

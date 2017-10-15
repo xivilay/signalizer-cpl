@@ -28,14 +28,14 @@
 *************************************************************************************/
 
 #ifndef CPL_SIMD_H
-	#define CPL_SIMD_H
-	
-	#include "Types.h"
-	#include "simd/simd_traits.h"
-	#include "simd/simd_interface.h"
-	#include "simd/simd_consts.h"
-	#include "simd/simd_math.h"
-	#include "simd/simd_cast.h"
-	#include "simd/simd_isa.h"
+#define CPL_SIMD_H
+
+#include "Types.h"
+#include "simd/simd_traits.h"
+#include "simd/simd_interface.h"
+#include "simd/simd_consts.h"
+#include "simd/simd_math.h"
+#include "simd/simd_cast.h"
+#include "simd/simd_isa.h"
 
 #endif

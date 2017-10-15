@@ -25,7 +25,7 @@ namespace cpl
 		virtual ~ContextualName() {}
 	};
 
-	class ValueEntityBase 
+	class ValueEntityBase
 		: public CSerializer::Serializable
 		, public ContextualName
 		, private Utility::CPubliclyNoncopyable
@@ -55,13 +55,13 @@ namespace cpl
 		virtual void endChangeGesture() {};
 		virtual void addListener(ValueEntityListener * listener) = 0;
 		virtual void removeListener(ValueEntityListener * listener) = 0;
-		
+
 		virtual void serialize(CSerializer::Archiver & ar, Version version) { ar << getNormalizedValue(); }
-		virtual void deserialize(CSerializer::Builder & builder, Version version) 
+		virtual void deserialize(CSerializer::Builder & builder, Version version)
 		{
 			ValueT value;
 			builder >> value;
-			if(builder.getModifier(CSerializer::Modifiers::RestoreValue))
+			if (builder.getModifier(CSerializer::Modifiers::RestoreValue))
 				setNormalizedValue(value);
 		}
 
@@ -102,7 +102,7 @@ namespace cpl
 		virtual ~ValueEntityBase() {}
 	};
 
-	class ValueGroup 
+	class ValueGroup
 		: public ContextualName
 		, public CSerializer::Serializable
 		, private Utility::CPubliclyNoncopyable
@@ -128,7 +128,7 @@ namespace cpl
 		}
 	};
 
-	
+
 	class DefaultValueListenerEntity : public ValueEntityBase
 	{
 	public:
@@ -186,7 +186,7 @@ namespace cpl
 		Transformer hostedTransformer;
 		Formatter hostedFormatter;
 	};
-	
+
 	/// <summary>
 	/// Note: Lifetime is expected to be tied to the parameter reference, for now.
 	/// </summary>
@@ -201,13 +201,13 @@ namespace cpl
 			setParameterReference(parameterToRef);
 		}
 
-		void setParameterReference(ParameterView * parameterReference) 
-		{ 
+		void setParameterReference(ParameterView * parameterReference)
+		{
 			if (parameterView != nullptr)
 			{
 				parameterView->removeListener(this);
 			}
-			parameterView = parameterReference; 
+			parameterView = parameterReference;
 			if (parameterView != nullptr)
 			{
 				parameterView->addListener(this);
@@ -244,7 +244,7 @@ namespace cpl
 		ParameterView * parameterView;
 	};
 
-	
+
 	// TODO: specialize on std::is_base_of<FormattedParameter, UIParamerView::ParameterType>
 	template<typename ParameterView>
 	class ParameterValue

@@ -20,107 +20,107 @@
 	See \licenses\ for additional details on licenses associated with this program.
 
 **************************************************************************************
- 
+
 	file:CProcessorTimer.h
-	
+
 		Class that measures time spend between events in clocks and walltime.
 
 *************************************************************************************/
 
 #ifndef CPL_CPROCESSORTIMER_H
-	#define CPL_CPROCESSORTIMER_H
+#define CPL_CPROCESSORTIMER_H
 
-	#include "Utility.h"
-	#include "Misc.h"
-	#include "Mathext.h"
-	#include <cstdint>
-	#include <vector>
-	#include <ostream>
-	#include <cstdlib>
-	#include <atomic>
-	#include "system/SysStats.h"
+#include "Utility.h"
+#include "Misc.h"
+#include "Mathext.h"
+#include <cstdint>
+#include <vector>
+#include <ostream>
+#include <cstdlib>
+#include <atomic>
+#include "system/SysStats.h"
 
-	namespace cpl
+namespace cpl
+{
+	/// <summary>
+	/// A class that measures current core-clocks over time.
+	/// Notice it may not be precise, if your thread is scheduled on another
+	/// core.
+	/// Useful when you want to measure real-time loop cpu usuage.
+	/// </summary>
+	class CProcessorTimer
 	{
-		/// <summary>
-		/// A class that measures current core-clocks over time.
-		/// Notice it may not be precise, if your thread is scheduled on another
-		/// core.
-		/// Useful when you want to measure real-time loop cpu usuage.
-		/// </summary>
-		class CProcessorTimer
+	private:
+
+
+	public:
+
+		typedef decltype(cpl::Misc::ClockCounter()) cclock_t;
+
+		CProcessorTimer()
 		{
-		private:
+		}
+
+		/// <summary>
+		/// Starts a new timing period. Calls reset() implicitly
+		/// </summary>
+		void start() noexcept
+		{
+			reset();
+			startT = getClocks();
+		}
+
+		/// <summary>
+		/// Ignores any time passed by until resume() is called.
+		/// </summary>
+		void pause() noexcept
+		{
+			deltaT = getClocks();
+		}
+
+		/// <summary>
+		/// Resumes time measurement. See pause().
+		/// </summary>
+		void resume() noexcept
+		{
+			startT += getClocks() - deltaT;
+		}
+
+		/// <summary>
+		/// Returns the number of clocks passed by since start() (excluding whatever happened between any pause/resumes)
+		/// </summary>
+		cclock_t getTime()
+		{
+			return getClocks() - startT;
+		}
+
+		/// <summary>
+		/// Resets any clocks. Use start().
+		/// </summary>
+		void reset()
+		{
+			startT = 0; deltaT = 0;
+		}
+
+		/// <summary>
+		/// Returns a fraction, that represents how much of the core's capability was used 
+		/// (ie. clocks_used / core_clocks_per_sec)
+		/// </summary>
+		static double clocksToCoreUsage(cclock_t clocks)
+		{
+			return (0.001 * clocks) / (cpl::system::CProcessor::getMHz() * 1000);
+		}
+
+	private:
+
+		static cclock_t getClocks()
+		{
+			return cpl::Misc::ClockCounter();
+		}
+
+		cclock_t deltaT, startT;
+	};
 
 
-		public:
-
-			typedef decltype(cpl::Misc::ClockCounter()) cclock_t;
-
-			CProcessorTimer()
-			{
-			}
-
-			/// <summary>
-			/// Starts a new timing period. Calls reset() implicitly
-			/// </summary>
-			void start() noexcept
-			{
-				reset();
-				startT = getClocks();
-			}
-
-			/// <summary>
-			/// Ignores any time passed by until resume() is called.
-			/// </summary>
-			void pause() noexcept
-			{
-				deltaT = getClocks();
-			}
-
-			/// <summary>
-			/// Resumes time measurement. See pause().
-			/// </summary>
-			void resume() noexcept
-			{
-				startT += getClocks() - deltaT;
-			}
-
-			/// <summary>
-			/// Returns the number of clocks passed by since start() (excluding whatever happened between any pause/resumes)
-			/// </summary>
-			cclock_t getTime()
-			{
-				return getClocks() - startT;
-			}
-
-			/// <summary>
-			/// Resets any clocks. Use start().
-			/// </summary>
-			void reset()
-			{
-				startT = 0; deltaT = 0;
-			}
-
-			/// <summary>
-			/// Returns a fraction, that represents how much of the core's capability was used 
-			/// (ie. clocks_used / core_clocks_per_sec)
-			/// </summary>
-			static double clocksToCoreUsage(cclock_t clocks)
-			{
-				return (0.001 * clocks) / (cpl::system::CProcessor::getMHz() * 1000);
-			}
-
-		private:
-
-			static cclock_t getClocks()
-			{
-				return cpl::Misc::ClockCounter();
-			}
-
-			cclock_t deltaT, startT;
-		};
-
-
-	}; // cpl
+}; // cpl
 #endif

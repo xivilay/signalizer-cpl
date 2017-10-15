@@ -25,96 +25,96 @@
 
 		A widget that can browse presets on disk, show a list of them, and serialize/
 		restore its parent view.
- 
+
 *************************************************************************************/
 
 #ifndef CPL_CPRESETWIDGET_H
-	#define CPL_CPRESETWIDGET_H
+#define CPL_CPRESETWIDGET_H
 
-	#include "../../Common.h"
-	#include "../controls/ControlBase.h"
-	#include "../controls/Controls.h"
-	#include "WidgetBase.h"
-	#include "../../state/Serialization.h"
+#include "../../Common.h"
+#include "../controls/ControlBase.h"
+#include "../controls/Controls.h"
+#include "WidgetBase.h"
+#include "../../state/Serialization.h"
 
-	namespace cpl
-	{
+namespace cpl
+{
 
-		class CPresetWidget
+	class CPresetWidget
 		:
-			public juce::Component,
-			public CBaseControl,
-			protected CBaseControl::Listener
+		public juce::Component,
+		public CBaseControl,
+		protected CBaseControl::Listener
+	{
+	public:
+
+		typedef CCheckedSerializer SerializerType;
+
+		enum Setup
 		{
-		public:
-
-			typedef CCheckedSerializer SerializerType;
-
-			enum Setup
-			{
-				/// <summary>
-				/// Only has a load/save preset buttons.
-				/// </summary>
-				Minimal = 0x1,
-				/// <summary>
-				/// In addition to minimal, has load/save default presets.
-				/// </summary>
-				WithDefault = 0x2
-			};
-
 			/// <summary>
-			/// 
+			/// Only has a load/save preset buttons.
 			/// </summary>
-			/// <param name="contentToBeSerialized">
-			/// The object to be changed when the user interacts with the widget
-			/// </param>
-			/// <param name="uniqueName">
-			/// The unique name/ID that identifies the parent. This will be a part of the filename and file,
-			/// ensures only this name can load presets saved with that name.
-			/// </param>
-			CPresetWidget(SafeSerializableObject * contentToBeSerialized, const std::string & uniqueName, Setup s = Minimal);
-
-			// overrides
-			virtual void valueChanged(const cpl::CBaseControl * c) override;
-			virtual void baseControlValueChanged() override;
-			virtual void onObjectDestruction(const ObjectProxy & object) override;
-			// api
-			const std::string & getName() const noexcept;
+			Minimal = 0x1,
 			/// <summary>
-			/// Tries to apply a preset from a file.
+			/// In addition to minimal, has load/save default presets.
 			/// </summary>
-			/// <param name="location"></param>
-			/// <returns></returns>
-			bool setSelectedPreset(juce::File location);
-			const std::vector<std::string> & getPresets();
-			/// <summary>
-			/// Tries to load the default preset, if any. Also fails if WithDefault isn't set.
-			/// </summary>
-			/// <returns></returns>
-			bool loadDefaultPreset();
-			void updatePresetList();
-			void setEmulatedVersion(cpl::Version newVersion);
-
-		protected:
-			std::string presetWithoutExtension(juce::File preset);
-			std::string fullPathToPreset(const std::string &);
-			void setDisplayedPreset(juce::File location);
-
-
-			void initControls();
-
-			// data
-
-			CButton kloadPreset, ksavePreset, kloadDefault, ksaveDefault;
-			CComboBox kpresetList;
-			MatrixSection layout;
-			SafeSerializableObject * parent;
-			std::string name;
-			std::string ext;
-			Setup layoutSetup;
-			Version version;
+			WithDefault = 0x2
 		};
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="contentToBeSerialized">
+		/// The object to be changed when the user interacts with the widget
+		/// </param>
+		/// <param name="uniqueName">
+		/// The unique name/ID that identifies the parent. This will be a part of the filename and file,
+		/// ensures only this name can load presets saved with that name.
+		/// </param>
+		CPresetWidget(SafeSerializableObject * contentToBeSerialized, const std::string & uniqueName, Setup s = Minimal);
+
+		// overrides
+		virtual void valueChanged(const cpl::CBaseControl * c) override;
+		virtual void baseControlValueChanged() override;
+		virtual void onObjectDestruction(const ObjectProxy & object) override;
+		// api
+		const std::string & getName() const noexcept;
+		/// <summary>
+		/// Tries to apply a preset from a file.
+		/// </summary>
+		/// <param name="location"></param>
+		/// <returns></returns>
+		bool setSelectedPreset(juce::File location);
+		const std::vector<std::string> & getPresets();
+		/// <summary>
+		/// Tries to load the default preset, if any. Also fails if WithDefault isn't set.
+		/// </summary>
+		/// <returns></returns>
+		bool loadDefaultPreset();
+		void updatePresetList();
+		void setEmulatedVersion(cpl::Version newVersion);
+
+	protected:
+		std::string presetWithoutExtension(juce::File preset);
+		std::string fullPathToPreset(const std::string &);
+		void setDisplayedPreset(juce::File location);
+
+
+		void initControls();
+
+		// data
+
+		CButton kloadPreset, ksavePreset, kloadDefault, ksaveDefault;
+		CComboBox kpresetList;
+		MatrixSection layout;
+		SafeSerializableObject * parent;
+		std::string name;
+		std::string ext;
+		Setup layoutSetup;
+		Version version;
 	};
+
+};
 
 #endif

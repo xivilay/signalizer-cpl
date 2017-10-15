@@ -33,14 +33,14 @@
 
 
 #ifdef CPL_WINDOWS
-	#include "DisplayOrientationWindows.cpp"
+#include "DisplayOrientationWindows.cpp"
 #elif defined(CPL_MAC)
-	#include <CoreGraphics/CGDisplayConfiguration.h>
+#include <CoreGraphics/CGDisplayConfiguration.h>
 #elif defined(CPL_UNIXC)
-    #include "DisplayOrientationLinux.cpp"
+#include "DisplayOrientationLinux.cpp"
 #else
-	// add linux, osx, android, ios here.
-	#error "Update displayorientations to your current platform!"
+ // add linux, osx, android, ios here.
+#error "Update displayorientations to your current platform!"
 #endif
 #include "../PlatformSpecific.h"
 #include "../MacSupport.h"
@@ -83,10 +83,10 @@ namespace cpl
 
 			std::vector<const DisplayData *> displayList;
 
-			for(auto & display : displays)
+			for (auto & display : displays)
 			{
 				// first line checks if they are at same position as well - ie. duplicated.
-				if(&display != &initialDisplay && display.bounds == initialDisplay.bounds)
+				if (&display != &initialDisplay && display.bounds == initialDisplay.bounds)
 				{
 					displayList.push_back(&display);
 				}
@@ -134,53 +134,53 @@ namespace cpl
 
 		#ifdef CPL_WINDOWS
 
-			LRESULT CALLBACK MessageHook(int code, WPARAM wParam, LPARAM lParam)
+		LRESULT CALLBACK MessageHook(int code, WPARAM wParam, LPARAM lParam)
+		{
+			auto & displayInstance = CDisplaySetup::instance();
+
+
+			// code doesn't really matter, we dont want to interfere with anything
+			// just be notified on display actions.
+			// wParam also doesn't matter (whether the event is posted by this thread)
+
+			const CWPRETSTRUCT * msg = reinterpret_cast<const CWPRETSTRUCT*>(lParam);
+
+			switch (msg->message)
 			{
-				auto & displayInstance = CDisplaySetup::instance();
+				case WM_SETTINGCHANGE:
+				case WM_DISPLAYCHANGE:
+					if (!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.load(std::memory_order_acquire))
+					{
+						// avoid posting it multiple times:
+						CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
 
+						// spawn the event
+						GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
+					}
+				default:
+					break;
 
-				// code doesn't really matter, we dont want to interfere with anything
-				// just be notified on display actions.
-				// wParam also doesn't matter (whether the event is posted by this thread)
-
-				const CWPRETSTRUCT * msg = reinterpret_cast<const CWPRETSTRUCT*>(lParam);
-
-				switch(msg->message)
-				{
-					case WM_SETTINGCHANGE:
-					case WM_DISPLAYCHANGE:
-						if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.load(std::memory_order_acquire))
-						{
-							// avoid posting it multiple times:
-							CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
-
-							// spawn the event
-							GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
-						}
-					default:
-						break;
-
-				}
-
-				return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook.load(std::memory_order_acquire), code, wParam, lParam);
 			}
+
+			return CallNextHookEx((HHOOK)displayInstance.getSystemHook().hook.load(std::memory_order_acquire), code, wParam, lParam);
+		}
 		#elif defined(CPL_MAC)
 
-			void MessageHook( CGDirectDisplayID display, CGDisplayChangeSummaryFlags flags, void *userInfo )
-			{
-				// https://developer.apple.com/library/mac/documentation/GraphicsImaging/Reference/Quartz_Services_Ref/index.html#//apple_ref/c/tdef/CGDisplayReconfigurationCallBack
-				if (flags & kCGDisplayBeginConfigurationFlag) {
-					// first iteration; ignore. -- displays not changed yet.
-				}
-				else if(!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
-				{
-					// avoid posting it multiple times:
-					CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
-
-					// spawn the event
-					GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
-				}
+		void MessageHook(CGDirectDisplayID display, CGDisplayChangeSummaryFlags flags, void *userInfo)
+		{
+			// https://developer.apple.com/library/mac/documentation/GraphicsImaging/Reference/Quartz_Services_Ref/index.html#//apple_ref/c/tdef/CGDisplayReconfigurationCallBack
+			if (flags & kCGDisplayBeginConfigurationFlag) {
+				// first iteration; ignore. -- displays not changed yet.
 			}
+			else if (!CDisplaySetup::instance().getSystemHook().eventHasBeenPosted)
+			{
+				// avoid posting it multiple times:
+				CDisplaySetup::instance().getSystemHook().eventHasBeenPosted.store(true, std::memory_order_release);
+
+				// spawn the event
+				GUIUtils::FutureMainEvent(1000, []() { CDisplaySetup::instance().update(); }, &CDisplaySetup::instance());
+			}
+		}
 
 		#endif
 
@@ -188,23 +188,23 @@ namespace cpl
 		void CDisplaySetup::installMessageHook()
 		{
 			#ifdef CPL_WINDOWS
-				systemHook.hook = SetWindowsHookEx(
-					WH_CALLWNDPROCRET,
-					MessageHook,
-					GetModuleHandle(0),
-					GetCurrentThreadId()
-				);
+			systemHook.hook = SetWindowsHookEx(
+				WH_CALLWNDPROCRET,
+				MessageHook,
+				GetModuleHandle(0),
+				GetCurrentThreadId()
+			);
 			#elif defined(CPL_MAC)
-				CGDisplayRegisterReconfigurationCallback(&MessageHook, nullptr);
+			CGDisplayRegisterReconfigurationCallback(&MessageHook, nullptr);
 			#endif
 		}
 
 		void CDisplaySetup::removeMessageHook()
 		{
 			#ifdef CPL_WINDOWS
-				UnhookWindowsHookEx((HHOOK)systemHook.hook.load(std::memory_order_acquire));
+			UnhookWindowsHookEx((HHOOK)systemHook.hook.load(std::memory_order_acquire));
 			#elif defined(CPL_MAC)
-				CGDisplayRemoveReconfigurationCallback(&MessageHook, nullptr);
+			CGDisplayRemoveReconfigurationCallback(&MessageHook, nullptr);
 			#endif
 		}
 
@@ -216,27 +216,27 @@ namespace cpl
 			double finalGamma = defaultFontGamma;
 			double rotation;
 			#ifdef CPL_WINDOWS
-				BOOL systemSmoothing = FALSE;
-				// antialiased text set?
-				if (SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &systemSmoothing, 0)
-					&& systemSmoothing)
+			BOOL systemSmoothing = FALSE;
+			// antialiased text set?
+			if (SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &systemSmoothing, 0)
+				&& systemSmoothing)
+			{
+				UINT smoothingType = 0;
+				// clear type enabled?
+				if (SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0, &smoothingType, 0)
+					&& smoothingType == FE_FONTSMOOTHINGCLEARTYPE)
 				{
-					UINT smoothingType = 0;
-					// clear type enabled?
-					if (SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0, &smoothingType, 0)
-						&& smoothingType == FE_FONTSMOOTHINGCLEARTYPE)
-					{
-						UINT systemGamma = 0; // 1000 - 2200
+					UINT systemGamma = 0; // 1000 - 2200
 
-						systemUsesSubpixelSmoothing = true;
-						// collect gamma correction
-						if (SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0, &systemGamma, 0))
-						{
-							systemGamma = cpl::Math::confineTo<std::uint16_t>((std::uint16_t)systemGamma, 1000, 2200);
-							finalGamma = systemGamma / 1000.0;
-						}
+					systemUsesSubpixelSmoothing = true;
+					// collect gamma correction
+					if (SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0, &systemGamma, 0))
+					{
+						systemGamma = cpl::Math::confineTo<std::uint16_t>((std::uint16_t)systemGamma, 1000, 2200);
+						finalGamma = systemGamma / 1000.0;
 					}
 				}
+			}
 			#endif
 
 			DisplayData currentMonitorInfo;
@@ -249,64 +249,64 @@ namespace cpl
 				// default to RGB...
 				LCDMatrixOrientation displayOrientation = LCDMatrixOrientation::RGB;
 				#ifdef CPL_WINDOWS
-					UINT systemMatrixOrder = 0;
-					if (SystemParametersInfo(SPI_GETFONTSMOOTHINGORIENTATION, 0, &systemMatrixOrder, 0))
+				UINT systemMatrixOrder = 0;
+				if (SystemParametersInfo(SPI_GETFONTSMOOTHINGORIENTATION, 0, &systemMatrixOrder, 0))
+				{
+					switch (systemMatrixOrder)
 					{
-						switch (systemMatrixOrder)
-						{
-							case FE_FONTSMOOTHINGORIENTATIONBGR:
-								displayOrientation = LCDMatrixOrientation::BGR;
-								thisIndexUsesSubpixels = true;
-								break;
-							case FE_FONTSMOOTHINGORIENTATIONRGB:
-								displayOrientation = LCDMatrixOrientation::RGB;
-								thisIndexUsesSubpixels = true;
-								break;
-							default:
-								thisIndexUsesSubpixels = false;
-						};
-					}
+						case FE_FONTSMOOTHINGORIENTATIONBGR:
+							displayOrientation = LCDMatrixOrientation::BGR;
+							thisIndexUsesSubpixels = true;
+							break;
+						case FE_FONTSMOOTHINGORIENTATIONRGB:
+							displayOrientation = LCDMatrixOrientation::RGB;
+							thisIndexUsesSubpixels = true;
+							break;
+						default:
+							thisIndexUsesSubpixels = false;
+					};
+				}
 				#endif
 				#ifndef CPL_MAC
-					if (GetScreenOrientation({ displayOrigin.getX(), displayOrigin.getY() }, rotation))
-					{
-						currentMonitorInfo.screenOrientation = RadsToOrientation(rotation);
-						currentMonitorInfo.screenRotation = rotation;
+				if (GetScreenOrientation({displayOrigin.getX(), displayOrigin.getY()}, rotation))
+				{
+					currentMonitorInfo.screenOrientation = RadsToOrientation(rotation);
+					currentMonitorInfo.screenRotation = rotation;
 
-					}
+				}
 
 				#else
-					// enter the realms of objective-c
-					OSXExtendedScreenInfo info {0};
-					if(GetExtendedScreenInfo(displayOrigin.getX(), displayOrigin.getY(), &info))
+				// enter the realms of objective-c
+				OSXExtendedScreenInfo info {0};
+				if (GetExtendedScreenInfo(displayOrigin.getX(), displayOrigin.getY(), &info))
+				{
+					switch (info.subpixelOrientation)
 					{
-						switch (info.subpixelOrientation)
-						{
-							case kDisplaySubPixelLayoutUndefined:
-								// fall through - we default to RGB.
-							case kDisplaySubPixelLayoutRGB:
-								systemUsesSubpixelSmoothing = thisIndexUsesSubpixels = true;
-								displayOrientation = LCDMatrixOrientation::RGB;
-								break;
-							case kDisplaySubPixelLayoutBGR:
-								systemUsesSubpixelSmoothing = thisIndexUsesSubpixels = true;
-								displayOrientation = LCDMatrixOrientation::BGR;
-								break;
-							default:
-								thisIndexUsesSubpixels = false;
-								break;
-						};
-						if(info.averageGamma <= 1.2)
-							info.averageGamma = 1.4;
-						finalGamma = info.averageGamma;
+						case kDisplaySubPixelLayoutUndefined:
+							// fall through - we default to RGB.
+						case kDisplaySubPixelLayoutRGB:
+							systemUsesSubpixelSmoothing = thisIndexUsesSubpixels = true;
+							displayOrientation = LCDMatrixOrientation::RGB;
+							break;
+						case kDisplaySubPixelLayoutBGR:
+							systemUsesSubpixelSmoothing = thisIndexUsesSubpixels = true;
+							displayOrientation = LCDMatrixOrientation::BGR;
+							break;
+						default:
+							thisIndexUsesSubpixels = false;
+							break;
+					};
+					if (info.averageGamma <= 1.2)
+						info.averageGamma = 1.4;
+					finalGamma = info.averageGamma;
 
-						//if(!info.displayIsDigital)
-						//	thisIndexUsesSubpixels = false;
+					//if(!info.displayIsDigital)
+					//	thisIndexUsesSubpixels = false;
 
-						currentMonitorInfo.screenOrientation = RadsToOrientation(info.screenRotation);
-						currentMonitorInfo.screenRotation = info.screenRotation;
+					currentMonitorInfo.screenOrientation = RadsToOrientation(info.screenRotation);
+					currentMonitorInfo.screenRotation = info.screenRotation;
 
-					}
+				}
 				#endif
 
 				currentMonitorInfo.displayMatrixOrder = displayOrientation;
@@ -335,17 +335,17 @@ namespace cpl
 			}
 
 			// set what displays has duplicates and check compability.
-			for(auto & display : displays)
+			for (auto & display : displays)
 			{
 				display.isDuplicatesCompatible = true;
 				auto duplicates = getDuplicateDisplaysFor(display);
-				if(duplicates.size())
+				if (duplicates.size())
 				{
 					display.isDisplayDuplicated = true;
 					display.duplicates = duplicates;
-					for(auto & duplicate : duplicates)
+					for (auto & duplicate : duplicates)
 					{
-						if(!display.isRenderingCompatibleTo(*duplicate))
+						if (!display.isRenderingCompatibleTo(*duplicate))
 						{
 							display.isDuplicatesCompatible = false;
 							break;

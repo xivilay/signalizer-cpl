@@ -34,156 +34,156 @@
 
 #ifndef CPL_CTHREAD_H
 
-	#define CPL_CTHREAD_H
+#define CPL_CTHREAD_H
 
-	#include "PlatformSpecific.h"
-	#define __threadh_win_call
-	#ifdef __CPP11__
-		#include <thread>
-		typedef std::thread * Thread_t;
-		typedef std::thread::native_handle_type ThreadHandle;
-	#elif defined(CPL_WINDOWS)
-		typedef HANDLE ThreadHandle;
-		typedef ThreadHandle Thread_t;
-		#undef __threadh_win_call
-		#define __threadh_win_call CALLBACK
-	#else
-		typedef pthread_t ThreadHandle;
-		typedef ThreadHandle Thread_t;
-	#endif
+#include "PlatformSpecific.h"
+#define __threadh_win_call
+#ifdef __CPP11__
+#include <thread>
+typedef std::thread * Thread_t;
+typedef std::thread::native_handle_type ThreadHandle;
+#elif defined(CPL_WINDOWS)
+typedef HANDLE ThreadHandle;
+typedef ThreadHandle Thread_t;
+#undef __threadh_win_call
+#define __threadh_win_call CALLBACK
+#else
+typedef pthread_t ThreadHandle;
+typedef ThreadHandle Thread_t;
+#endif
 
-	namespace cpl
+namespace cpl
+{
+	class CThread
 	{
-		class CThread
+		typedef void * (*func_sig)(void*);
+		typedef std::uint32_t winret;
+		Thread_t thread;
+		func_sig func;
+
+		struct args
 		{
-			typedef void * (*func_sig)(void*);
-			typedef std::uint32_t winret;
-			Thread_t thread;
-			func_sig func;
-
-			struct args
-			{
-				args(func_sig a1, void * a2)
-					: addr(a1), arg(a2) {}
-				func_sig addr;
-				void * arg;
-			};
-
-		public:
-			CThread(func_sig functionAddress)
-				:	thread(NULL), func(functionAddress)
-			{
-
-
-			}
-			~CThread()
-			{
-				detach();
-			}
-			ThreadHandle getHandle()
-			{
-				if (thread) {
-					#ifdef __CPP11__
-						return static_cast<ThreadHandle>(thread->native_handle());
-					#else
-						return static_cast<ThreadHandle>(thread);
-					#endif
-				}
-				return static_cast<ThreadHandle>(NULL);
-			}
-
-			int join()
-			{
-			    // TODO: This is broken, but yeah. Ditch this and use std::thread anyway.
-				void * retval;
-				if(!thread)
-					return -1;
-				int result = 0;
-				#ifdef __CPP11__
-					if (thread->joinable()) {
-						thread->join();
-					}
-					else
-						result = -2;
-					retval = nullptr;
-				#elif defined(CPL_WINDOWS)
-					auto fret = WaitForSingleObject(thread, INFINITE);
-					if (!fret) {
-						result = GetLastError();
-						return result;
-					}
-					DWORD ret;
-					auto sret = GetExitCodeThread(thread, &ret);
-					if (!sret) {
-						result = GetLastError();
-					}
-					retval = static_cast<void*>(ret);
-				#else
-					result = pthread_join(thread, &retval);
-				#endif
-				return result;
-			}
-			void detach()
-			{
-				if(thread)
-				{
-					#ifdef __CPP11__
-					if (thread->joinable())
-						thread->detach();
-						delete thread;
-					#elif defined(CPL_WINDOWS)
-						CloseHandle(thread);
-					#else
-						pthread_detach(thread);
-					#endif
-					thread = NULL;
-				}
-
-			}
-			int run(void * argument = NULL)
-			{
-				if(!func)
-					return -1;
-				args * func_args = new args(func, argument);
-				int result = 0;
-				#ifdef __CPP11__
-					thread = new std::thread(cpp11_target, func_args);
-				#elif defined(CPL_WINDOWS)
-					thread = CreateThread(NULL, NULL, NULL,
-										win_target,
-										reinterpret_cast<void*>(func_args),
-										NULL);
-					if(!thread)
-						result = GetLastError();
-				#else
-					result = pthread_create(&thread, NULL, posix_target, reinterpret_cast<void*>(func_args));
-
-				#endif
-				return result;
-			}
-		private:
-			static void * cpp11_target(args * func)
-			{
-				auto ret = func->addr(func->arg);
-				delete func;
-				return ret;
-			}
-			static XWORD __threadh_win_call win_target(void * imp)
-			{
-				args * func = reinterpret_cast<args *>(imp);
-				auto ret = func->addr(func->arg);
-				delete func;
-				return reinterpret_cast<XWORD>(ret);
-			}
-			static void * posix_target(void * imp)
-			{
-				#ifndef CPL_WINDOWS
-					args * func = reinterpret_cast<args *>(imp);
-					auto ret = func->addr(func->arg);
-					delete func;
-					pthread_exit(ret);
-				#endif
-			}
+			args(func_sig a1, void * a2)
+				: addr(a1), arg(a2) {}
+			func_sig addr;
+			void * arg;
 		};
-	}
+
+	public:
+		CThread(func_sig functionAddress)
+			: thread(NULL), func(functionAddress)
+		{
+
+
+		}
+		~CThread()
+		{
+			detach();
+		}
+		ThreadHandle getHandle()
+		{
+			if (thread) {
+				#ifdef __CPP11__
+				return static_cast<ThreadHandle>(thread->native_handle());
+				#else
+				return static_cast<ThreadHandle>(thread);
+				#endif
+			}
+			return static_cast<ThreadHandle>(NULL);
+		}
+
+		int join()
+		{
+			// TODO: This is broken, but yeah. Ditch this and use std::thread anyway.
+			void * retval;
+			if (!thread)
+				return -1;
+			int result = 0;
+			#ifdef __CPP11__
+			if (thread->joinable()) {
+				thread->join();
+			}
+			else
+				result = -2;
+			retval = nullptr;
+			#elif defined(CPL_WINDOWS)
+			auto fret = WaitForSingleObject(thread, INFINITE);
+			if (!fret) {
+				result = GetLastError();
+				return result;
+			}
+			DWORD ret;
+			auto sret = GetExitCodeThread(thread, &ret);
+			if (!sret) {
+				result = GetLastError();
+			}
+			retval = static_cast<void*>(ret);
+			#else
+			result = pthread_join(thread, &retval);
+			#endif
+			return result;
+		}
+		void detach()
+		{
+			if (thread)
+			{
+				#ifdef __CPP11__
+				if (thread->joinable())
+					thread->detach();
+				delete thread;
+				#elif defined(CPL_WINDOWS)
+				CloseHandle(thread);
+				#else
+				pthread_detach(thread);
+				#endif
+				thread = NULL;
+			}
+
+		}
+		int run(void * argument = NULL)
+		{
+			if (!func)
+				return -1;
+			args * func_args = new args(func, argument);
+			int result = 0;
+			#ifdef __CPP11__
+			thread = new std::thread(cpp11_target, func_args);
+			#elif defined(CPL_WINDOWS)
+			thread = CreateThread(NULL, NULL, NULL,
+				win_target,
+				reinterpret_cast<void*>(func_args),
+				NULL);
+			if (!thread)
+				result = GetLastError();
+			#else
+			result = pthread_create(&thread, NULL, posix_target, reinterpret_cast<void*>(func_args));
+
+			#endif
+			return result;
+		}
+	private:
+		static void * cpp11_target(args * func)
+		{
+			auto ret = func->addr(func->arg);
+			delete func;
+			return ret;
+		}
+		static XWORD __threadh_win_call win_target(void * imp)
+		{
+			args * func = reinterpret_cast<args *>(imp);
+			auto ret = func->addr(func->arg);
+			delete func;
+			return reinterpret_cast<XWORD>(ret);
+		}
+		static void * posix_target(void * imp)
+		{
+			#ifndef CPL_WINDOWS
+			args * func = reinterpret_cast<args *>(imp);
+			auto ret = func->addr(func->arg);
+			delete func;
+			pthread_exit(ret);
+			#endif
+		}
+	};
+}
 #endif

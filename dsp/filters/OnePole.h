@@ -22,53 +22,53 @@
 **************************************************************************************
 
 	file:OnePole.h
-		
+
 		Class for designing one-pole HP/LP filters.
 
 *************************************************************************************/
 
 #ifndef CPL_ONEPOLE_H
-	#define CPL_ONEPOLE_H
-	
-	#include "../../Mathext.h"
-	#include "../../Utility.h"
-	#include "FilterBasics.h"
+#define CPL_ONEPOLE_H
 
-	namespace cpl
+#include "../../Mathext.h"
+#include "../../Utility.h"
+#include "FilterBasics.h"
+
+namespace cpl
+{
+	namespace dsp
 	{
-		namespace dsp
+		namespace filters
 		{
-			namespace filters
+
+			template<typename T>
+			class OnePole
 			{
+			public:
 
-				template<typename T>
-				class OnePole
+				struct Coefficients
 				{
-				public:
+					T a0, b1;
+					static constexpr Coefficients zero() { return {0, 0}; }
+					static constexpr Coefficients identity() { return {1, 0}; }
 
-					struct Coefficients
+					template<Response r>
+					static Coefficients design(T normalizedFrequency, T Q, T linearGain)
 					{
+						return design(r, normalizedFrequency, Q, linearGain);
+					}
+
+					static Coefficients design(Response type, T normalizedFrequency, T Q, T linearGain)
+					{
+						T fc = normalizedFrequency;
 						T a0, b1;
-						static constexpr Coefficients zero() { return { 0, 0 }; }
-						static constexpr Coefficients identity() { return { 1, 0 }; }
 
-						template<Response r>
-						static Coefficients design(T normalizedFrequency, T Q, T linearGain)
+						#ifdef DEBUG
+						CPL_RUNTIME_ASSERTION(type == Response::Highpass || type == Response::Lowpass);
+						#endif
+
+						switch (type)
 						{
-							return design(r, normalizedFrequency, Q, linearGain);
-						}
-
-						static Coefficients design(Response type, T normalizedFrequency, T Q, T linearGain)
-						{
-							T fc = normalizedFrequency;
-							T a0, b1;
-
-#ifdef DEBUG
-							CPL_RUNTIME_ASSERTION(type == Response::Highpass || type == Response::Lowpass);
-#endif
-
-							switch (type)
-							{
 							case Response::Highpass:
 								// this HP has no zero at DC
 								b1 = static_cast<T>(-std::exp(-2.0 * M_PI * (0.5 - fc)));
@@ -82,23 +82,23 @@
 								b1 = static_cast<T>(std::exp(-2 * M_PI * fc));
 								a0 = 1 - b1;
 								break;
-							}
-							return{ a0 * linearGain, b1 };
 						}
-
-					};
-
-					void reset() { z1 = 0; }
-
-					T process(T input) noexcept
-					{
-						return z1 = a1 * input + b0 * z1;
+						return{a0 * linearGain, b1};
 					}
 
-					T z1{};
 				};
+
+				void reset() { z1 = 0; }
+
+				T process(T input) noexcept
+				{
+					return z1 = a1 * input + b0 * z1;
+				}
+
+				T z1 {};
 			};
 		};
 	};
+};
 
 #endif

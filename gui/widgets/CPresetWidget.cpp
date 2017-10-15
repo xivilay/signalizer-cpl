@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:CPresetWidget.cpp
- 
+
 		Source code for CPresetWidget.h
- 
+
 *************************************************************************************/
 
 #include "CPresetWidget.h"
@@ -33,9 +33,9 @@
 namespace cpl
 {
 	CPresetWidget::CPresetWidget(SafeSerializableObject * content, const std::string & uName, Setup s)
-	: 
-		CBaseControl(this), 
-		name(uName), 
+		:
+		CBaseControl(this),
+		name(uName),
 		parent(content),
 		ext(uName + "." + programInfo.programAbbr),
 		layoutSetup(s),
@@ -57,7 +57,7 @@ namespace cpl
 			auto end = fname.lastIndexOfIgnoreCase(ext.c_str());
 
 			auto str = fname.toStdString();
-			return{ str.begin(), str.begin() + (end == -1 ? fname.length() : (end - 1)) };
+			return{str.begin(), str.begin() + (end == -1 ? fname.length() : (end - 1))};
 		}
 		return "";
 	}
@@ -148,7 +148,7 @@ namespace cpl
 		{
 			return setSelectedPreset((juce::File)fullPathToPreset("default"));
 		}
-		
+
 		return false;
 	}
 
@@ -190,7 +190,7 @@ namespace cpl
 		for (auto & preset : presetList)
 		{
 			auto name = presetWithoutExtension(preset);
-			if(name.length())
+			if (name.length())
 				shortList.push_back(name);
 		}
 
@@ -226,7 +226,7 @@ namespace cpl
 		kloadDefault.bSetDescription("Load the default preset.");
 		ksaveDefault.bSetDescription("Save the current state as the default.");
 
-		if(layoutSetup & WithDefault)
+		if (layoutSetup & WithDefault)
 		{
 			layout.setSpacesAfterLargestElement(false);
 			layout.setXSpacing(layout.getXSpacing() * 3);

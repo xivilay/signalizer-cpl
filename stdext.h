@@ -25,157 +25,157 @@
 
 		Extensions to existing types/algorithms of the std namespace.
 		Also functions as creating newer C++ version support.
- 
+
 *************************************************************************************/
 
 #ifndef CPL_STDEXT_H
-	#define CPL_STDEXT_H
+#define CPL_STDEXT_H
 
-	#include <cmath>
-	#include <functional>
-	#include <algorithm>
-	#include <type_traits>
+#include <cmath>
+#include <functional>
+#include <algorithm>
+#include <type_traits>
 
-	namespace cpl
+namespace cpl
+{
+	extern const char * newl;
+	const char tab = '\t';
+
+	typedef std::make_signed<std::size_t>::type ssize_t;
+
+	template<class C, typename T>
+	std::pair<std::size_t, bool> index_of(const C & c, const T & t)
 	{
-		extern const char * newl;
-		const char tab = '\t';
+		auto it = begin(c);
+		std::size_t count = 0;
+		for (; it != end(c); it++)
+		{
+			count++;
+		}
+		return it == end(c) ? std::make_pair(0ul, false) : std::make_pair(count, true);
+	}
 
-		typedef std::make_signed<std::size_t>::type ssize_t;
+	template<class C, class T>
+	inline auto _contains_impl(const C& c, const T& x, int)
+		-> decltype(c.find(x), true)
+	{
+		return end(c) != c.find(x);
+	}
 
-		template<class C, typename T>
-			std::pair<std::size_t, bool> index_of(const C & c, const T & t)
-			{
-				auto it = begin(c);
-				std::size_t count = 0;
-				for (; it != end(c); it++)
-				{
-					count++;
-				}
-				return it == end(c) ? std::make_pair(0ul, false) : std::make_pair(count, true);
-			}
+	template<class C, class T>
+	inline bool _contains_impl(const C& v, const T& x, long)
+	{
+		return end(v) != std::find(begin(v), end(v), x);
+	}
 
-		template<class C, class T>
-			inline auto _contains_impl(const C& c, const T& x, int)
-				-> decltype(c.find(x), true)
-			{
-				return end(c) != c.find(x);
-			}
+	template<class C, class T>
+	inline auto contains(const C& c, const T& x)
+		-> decltype(end(c), true)
+	{
+		return _contains_impl(c, x, 0);
+	}
 
-		template<class C, class T>
-			inline bool _contains_impl(const C& v, const T& x, long)
-			{
-				return end(v) != std::find(begin(v), end(v), x);
-			}
+	template <class C>
+	constexpr auto data(C& c) -> decltype(c.data())
+	{
+		return c.data();
+	}
+	template <class C>
+	constexpr auto data(const C& c) -> decltype(c.data())
+	{
+		return c.data();
+	}
 
-		template<class C, class T>
-			inline auto contains(const C& c, const T& x)
-				-> decltype(end(c), true)
-			{
-				return _contains_impl(c, x, 0);
-			}
+	template <class T, std::size_t N>
+	constexpr T* data(T(&arr)[N]) noexcept
+	{
+		return arr;
+	}
 
-			template <class C>
-				constexpr auto data(C& c) -> decltype(c.data())
-				{
-					return c.data();
-				}
-			template <class C>
-				constexpr auto data(const C& c) -> decltype(c.data())
-				{
-					return c.data();
-				}
+	template <class T>
+	constexpr T * data(T * arr) noexcept
+	{
+		return arr;
+	}
+};
 
-			template <class T, std::size_t N>
-				constexpr T* data(T(&arr)[N]) noexcept
-				{
-					return arr;
-				}
 
-			template <class T>
-				constexpr T * data(T * arr) noexcept
-				{
-					return arr;
-				}
+
+namespace std
+{
+
+
+
+	template <>
+	struct modulus < float >
+	{
+		typedef float T;
+		T operator() (const T& x, const T& y) const { return std::fmod(x, y); }
+		typedef T first_argument_type;
+		typedef T second_argument_type;
+		typedef T result_type;
+	};
+
+	template <>
+	struct modulus < double >
+	{
+		typedef double T;
+		T operator() (const T& x, const T& y) const { return std::fmod(x, y); }
+		typedef T first_argument_type;
+		typedef T second_argument_type;
+		typedef T result_type;
 	};
 
 
+	/*
+		fine piece of code, originally posted here:
+			http://codereview.stackexchange.com/a/59999/37465
+	*/
 
-	namespace std
+
+
+	#if defined(__LLVM__) && !defined(__CPP14__)
+	// http://isocpp.org/files/papers/N3656.txt
+
+	template<class T> struct _Unique_if {
+		typedef unique_ptr<T> _Single_object;
+	};
+
+	template<class T> struct _Unique_if<T[]> {
+		typedef unique_ptr<T[]> _Unknown_bound;
+	};
+
+	template<class T, size_t N> struct _Unique_if<T[N]> {
+		typedef void _Known_bound;
+	};
+
+	template<class T, class... Args>
+	typename _Unique_if<T>::_Single_object
+		make_unique(Args&&... args) {
+		return unique_ptr<T>(new T(std::forward<Args>(args)...));
+	}
+
+	template<class T>
+	typename _Unique_if<T>::_Unknown_bound
+		make_unique(size_t n) {
+		typedef typename remove_extent<T>::type U;
+		return unique_ptr<T>(new U[n]());
+	}
+
+	template<class T, class... Args>
+	typename _Unique_if<T>::_Known_bound
+		make_unique(Args&&...) = delete;
+	#endif
+
+	template<typename T>
+	std::string to_string(T * ptr_type)
 	{
+		char buf[100];
+		sprintf_s(buf, "0x%p", ptr_type);
+		return buf;
+	}
 
 
 
-		template <> 
-			struct modulus < float >
-			{
-				typedef float T;
-				T operator() (const T& x, const T& y) const { return std::fmod(x, y); }
-				typedef T first_argument_type;
-				typedef T second_argument_type;
-				typedef T result_type;
-			};
-
-		template <>
-			struct modulus < double >
-			{
-				typedef double T;
-				T operator() (const T& x, const T& y) const { return std::fmod(x, y); }
-				typedef T first_argument_type;
-				typedef T second_argument_type;
-				typedef T result_type;
-			};
-
-
-		/*
-			fine piece of code, originally posted here:
-				http://codereview.stackexchange.com/a/59999/37465
-		*/
-
-
-
-		#if defined(__LLVM__) && !defined(__CPP14__)
-			// http://isocpp.org/files/papers/N3656.txt
-			
-			template<class T> struct _Unique_if {
-				typedef unique_ptr<T> _Single_object;
-			};
-			
-			template<class T> struct _Unique_if<T[]> {
-				typedef unique_ptr<T[]> _Unknown_bound;
-			};
-			
-			template<class T, size_t N> struct _Unique_if<T[N]> {
-				typedef void _Known_bound;
-			};
-			
-			template<class T, class... Args>
-			typename _Unique_if<T>::_Single_object
-			make_unique(Args&&... args) {
-				return unique_ptr<T>(new T(std::forward<Args>(args)...));
-			}
-			
-			template<class T>
-			typename _Unique_if<T>::_Unknown_bound
-			make_unique(size_t n) {
-				typedef typename remove_extent<T>::type U;
-				return unique_ptr<T>(new U[n]());
-			}
-			
-			template<class T, class... Args>
-			typename _Unique_if<T>::_Known_bound
-			make_unique(Args&&...) = delete;
-		#endif
-		
-		template<typename T>
-			std::string to_string(T * ptr_type)
-			{
-				char buf[100];
-				sprintf_s(buf, "0x%p", ptr_type);
-				return buf;
-			}
-		
-
-
-	}; // std
+}; // std
 #endif

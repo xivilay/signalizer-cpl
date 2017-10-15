@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:CButton.cpp
-		
+
 		Source code of CButton.h
- 
+
 *************************************************************************************/
 
 #include "CButton.h"
@@ -48,10 +48,10 @@ namespace cpl
 			{
 				setTexts(toggled, untoggled);
 			}
-		} */ 
+		} */
 		setSize(ControlSize::Rectangle.width, ControlSize::Rectangle.height / 2);
 		enableTooltip(true);
-		
+
 		setToggleState(getValueReference().getNormalizedValue() > 0.5 ? true : false, juce::NotificationType::dontSendNotification);
 	}
 
@@ -127,7 +127,7 @@ namespace cpl
 		juce::Colour lightShadow(c.withMultipliedBrightness(1.1f + 0.65f * bias));
 		juce::Colour darkShadow(c.withMultipliedBrightness(0.25f * (1.f + bias)));
 
-		juce::ColourGradient gradient(!isPressed ? fill.brighter(0.15f) : fill.darker(0.15f), 0.f, 
+		juce::ColourGradient gradient(!isPressed ? fill.brighter(0.15f) : fill.darker(0.15f), 0.f,
 			0.f, !isPressed ? fill.darker(0.15f) : fill.brighter(0.2f), (float)getWidth(), (float)getHeight(), false);
 
 		if (isPressed)
@@ -182,7 +182,7 @@ namespace cpl
 		//g.setFont(lol);
 
 
-		auto & text = texts[1].length() ? ( toggle ? texts[getToggleState()] : texts[0]) : texts[0];
+		auto & text = texts[1].length() ? (toggle ? texts[getToggleState()] : texts[0]) : texts[0];
 		if (isButtonDown)
 			g.drawText(text, 6, 2, getWidth() - 5, getHeight() - 2, juce::Justification::centred);
 		else

@@ -22,37 +22,37 @@
 **************************************************************************************
 
 	file:StackBuffer.h
-	
+
 		A helper type for dealing with bogus C structs
 
 *************************************************************************************/
 
 #ifndef CPL_STACKBUFFER_H
-	#define CPL_STACKBUFFER_H
+#define CPL_STACKBUFFER_H
 
-	#include <cstdlib>
-	#include <vector>
-	#include "../Misc.h"
+#include <cstdlib>
+#include <vector>
+#include "../Misc.h"
 
-	namespace cpl
+namespace cpl
+{
+	template<typename T, std::size_t extraSizeInBytes>
+	struct StackBuffer
 	{
-		template<typename T, std::size_t extraSizeInBytes>
-		struct StackBuffer
-		{
-			typedef StackBuffer<T, extraSizeInBytes> this_t;
-			static const std::size_t size = sizeof(T) + extraSizeInBytes;
+		typedef StackBuffer<T, extraSizeInBytes> this_t;
+		static const std::size_t size = sizeof(T) + extraSizeInBytes;
 
-			static_assert(std::is_pod<T>::value, "cpl::StackBuffer's type must be POD!");
+		static_assert(std::is_pod<T>::value, "cpl::StackBuffer's type must be POD!");
 
-			const T * operator ->() const noexcept { return &get(); }
-			T * operator ->() noexcept{ return &get(); }
-			T & get() noexcept { return const_cast<T&>(const_cast<const this_t *>(this)->get()); }
+		const T * operator ->() const noexcept { return &get(); }
+		T * operator ->() noexcept { return &get(); }
+		T & get() noexcept { return const_cast<T&>(const_cast<const this_t *>(this)->get()); }
 
-			const T & get() const noexcept { return *reinterpret_cast<const T*>(std::addressof(storage)); }
-			void zero() { std::memset(std::addressof(storage), 0, size); }
+		const T & get() const noexcept { return *reinterpret_cast<const T*>(std::addressof(storage)); }
+		void zero() { std::memset(std::addressof(storage), 0, size); }
 
-			typename std::aligned_storage<size, alignof(T)>::type storage;
-		};
-
+		typename std::aligned_storage<size, alignof(T)>::type storage;
 	};
+
+};
 #endif

@@ -196,41 +196,41 @@ namespace cpl
 				{
 					switch (scopeExitOp)
 					{
-					case ScopeExitOperation::Join:
-					{
-						done = join(handler ? 100 : -1);
-						break;
-					}
-					case ScopeExitOperation::Detach:
-					{
-						detach();
-						done = true;
-						break;
-					}
-					case ScopeExitOperation::Terminate:
-					{
-						std::terminate();
-						break;
-					}
-					case ScopeExitOperation::KillJoin:
-					{
-						auto err = kill();
-						if (err)
-							CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
+						case ScopeExitOperation::Join:
+						{
+							done = join(handler ? 100 : -1);
+							break;
+						}
+						case ScopeExitOperation::Detach:
+						{
+							detach();
+							done = true;
+							break;
+						}
+						case ScopeExitOperation::Terminate:
+						{
+							std::terminate();
+							break;
+						}
+						case ScopeExitOperation::KillJoin:
+						{
+							auto err = kill();
+							if (err)
+								CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
 
-						done = join(handler ? 100 : -1);
-						break;
-					}
-					case ScopeExitOperation::KillDetach:
-					{
-						auto err = kill();
-						if (err)
-							CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
+							done = join(handler ? 100 : -1);
+							break;
+						}
+						case ScopeExitOperation::KillDetach:
+						{
+							auto err = kill();
+							if (err)
+								CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS("kill", std::system_error, (err, "kill"));
 
-						detach();
-						done = true;
-						break;
-					}
+							detach();
+							done = true;
+							break;
+						}
 					}
 				}
 				catch (std::exception& e)

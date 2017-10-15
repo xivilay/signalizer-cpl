@@ -62,11 +62,11 @@ namespace cpl
 			T handle;
 		};
 
-#ifdef CPL_WINDOWS
+		#ifdef CPL_WINDOWS
 		typedef NullableHandle<HANDLE, -1> Handle;
-#else
+		#else
 		typedef NullableHandle<int, -1> Handle;
-#endif
+		#endif
 
 		class SysDeleter
 		{
@@ -75,11 +75,11 @@ namespace cpl
 
 			void operator() (pointer p)
 			{
-#ifdef CPL_WINDOWS
+				#ifdef CPL_WINDOWS
 				::CloseHandle(p);
-#else
+				#else
 				::close(p);
-#endif
+				#endif
 			}
 		};
 
@@ -135,16 +135,16 @@ namespace cpl
 				if (nc <= 0)
 					return 0;
 
-#ifdef CPL_WINDOWS
+				#ifdef CPL_WINDOWS
 				DWORD dwWritten;
 				if (::WriteFile(pipe.get(), buffer, nc, &dwWritten, nullptr) && dwWritten == nc)
 				{
 					return 0;
 				}
-#else
+				#else
 				if (::write(pipe.get(), buffer, nc) == nc)
 					return 0;
-#endif
+				#endif
 				return -1;
 			}
 
@@ -196,21 +196,21 @@ namespace cpl
 				if (pipe.get() == nullptr)
 					return traits_type::eof();
 
-#ifdef CPL_WINDOWS
+				#ifdef CPL_WINDOWS
 				DWORD lpRead;
 				if (ReadFile(pipe.get(), buf, sizeof(buf), &lpRead, nullptr))
 				{
 					setg(buf, buf, buf + lpRead);
 					return buf[0];
 				}
-#else
+				#else
 				auto read = ::read(pipe.get(), buf, sizeof(buf));
 				if (read > 0)
 				{
 					setg(buf, buf, buf + read);
 					return buf[0];
 				}
-#endif
+				#endif
 				return traits_type::eof();
 			}
 

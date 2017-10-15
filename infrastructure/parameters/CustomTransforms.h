@@ -40,7 +40,7 @@ namespace cpl
 		{
 			if (quantization <= 1)
 				return 0;
-			
+
 			return std::round(val * (quantization - 1));
 		}
 
@@ -48,7 +48,7 @@ namespace cpl
 		{
 			if (quantization <= 1)
 				return 0;
-			
+
 			return val / (quantization - 1);
 		}
 		/// <summary>
@@ -65,9 +65,9 @@ namespace cpl
 			{
 				CPL_BREAKIFDEBUGGED();
 			}
-			quantization = rquantization; 
+			quantization = rquantization;
 		}
-	
+
 	private:
 		int quantization = 0;
 	};

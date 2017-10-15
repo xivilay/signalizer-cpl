@@ -26,65 +26,65 @@
 		A widget that can display a colour and allow the user to choose a new.
 		Note the explicit use of juce::PixelARGB - avoid representing colours
 		through integers (platforms has binary inconsistensies).
- 
+
 *************************************************************************************/
 
 #ifndef CPL_CCOLOURCONTROL_H
-	#define CPL_CCOLOURCONTROL_H
+#define CPL_CCOLOURCONTROL_H
 
-	#include "ControlBase.h"
-	#include "CKnobSlider.h"
+#include "ControlBase.h"
+#include "CKnobSlider.h"
 
-	namespace cpl
-	{
-		// TODO: Inherit from ValueControl instead
-		class CColourControl 
+namespace cpl
+{
+	// TODO: Inherit from ValueControl instead
+	class CColourControl
 		:
-			public CKnobSlider,
-			private ValueEntityBase::ValueEntityListener
-		{
+		public CKnobSlider,
+		private ValueEntityBase::ValueEntityListener
+	{
 
 
-		public:
+	public:
 
-			CColourControl(ColourValue * valueToReferTo = nullptr, bool takeOwnerShip = false);
-			~CColourControl();
+		CColourControl(ColourValue * valueToReferTo = nullptr, bool takeOwnerShip = false);
+		~CColourControl();
 
-			virtual void valueChanged() override;
-			virtual void startedDragging() override;
-			virtual void stoppedDragging() override;
+		virtual void valueChanged() override;
+		virtual void startedDragging() override;
+		virtual void stoppedDragging() override;
 
-			// overrides
-			virtual void baseControlValueChanged() override;
-			virtual void paint(juce::Graphics & g) override;
-			virtual iCtrlPrec_t bGetValue() const override;
-			virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
-			virtual bool bStringToValue(const std::string &, iCtrlPrec_t &) const override;
-			virtual bool bValueToString(std::string &, iCtrlPrec_t ) const override;
+		// overrides
+		virtual void baseControlValueChanged() override;
+		virtual void paint(juce::Graphics & g) override;
+		virtual iCtrlPrec_t bGetValue() const override;
+		virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
+		virtual bool bStringToValue(const std::string &, iCtrlPrec_t &) const override;
+		virtual bool bValueToString(std::string &, iCtrlPrec_t) const override;
 
-			// used to be different -- stored for legacy
-			juce::Colour getControlColour();
-			juce::Colour getControlColourAsColour();
+		// used to be different -- stored for legacy
+		juce::Colour getControlColour();
+		juce::Colour getControlColourAsColour();
 
-			void setControlColour(juce::Colour newColour);
+		void setControlColour(juce::Colour newColour);
 
-			virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
-			ColourValue & getValueReference() { return *valueObject; }
+		virtual std::unique_ptr<CCtrlEditSpace> bCreateEditSpace() override;
+		ColourValue & getValueReference() { return *valueObject; }
 
-		protected:
-			virtual std::string bGetExportedName() override { return valueObject->getContextualName(); }
-			virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;
+	protected:
+		virtual std::string bGetExportedName() override { return valueObject->getContextualName(); }
+		virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;
 
-			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
-			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
+		virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
+		virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
-			std::unique_ptr<ColourValue, Utility::MaybeDelete<ColourValue>> valueObject;
+		std::unique_ptr<ColourValue, Utility::MaybeDelete<ColourValue>> valueObject;
 
-		private:
-			void setValueReference(ColourValue * valueToReferTo, bool takeOwnerShip = false);
-
-		};
+	private:
+		void setValueReference(ColourValue * valueToReferTo, bool takeOwnerShip = false);
 
 	};
+
+};
 
 #endif

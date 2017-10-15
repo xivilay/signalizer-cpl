@@ -28,157 +28,157 @@
 *************************************************************************************/
 
 #ifndef CPL_UTILITY_H
-	#define CPL_UTILITY_H
+#define CPL_UTILITY_H
 
-	#include "MacroConstants.h"
-	#include "Common.h"
-	#include "Mathext.h"
-	#include <functional>
-	#include <set>
-	#include "stdext.h"
-	#include "Misc.h"
+#include "MacroConstants.h"
+#include "Common.h"
+#include "Mathext.h"
+#include <functional>
+#include <set>
+#include "stdext.h"
+#include "Misc.h"
 
-	namespace cpl
+namespace cpl
+{
+
+	/*
+		Maps the input floating-point value evenly to the range of the enum, that must have the element
+		'end'. The enumerated values in Enum must be linearly distributed, and 'end' must be the number of
+		elements.
+	*/
+	template<typename Enum, typename VType>
+	typename std::enable_if<std::is_enum<Enum>::value, Enum>::type distribute(VType val)
 	{
+		return static_cast<Enum>(cpl::Math::round<signed>(val * (int(Enum::end) - 1)));
+	}
+
+	template<typename EnumStruct, typename VType>
+	inline typename std::enable_if<!std::is_enum<EnumStruct>::value, typename EnumStruct::Enum>::type distribute(VType val)
+	{
+		return static_cast<typename EnumStruct::Enum>(cpl::Math::round<signed>(val * (EnumStruct::end - 1)));
+	}
+
+
+	namespace Utility
+	{
+		template<typename Ty>
+		struct MaybeDelete
+		{
+			void operator()(Ty * content) { if (doDelete) delete content; }
+			bool doDelete = true;
+		};
 
 		/*
-			Maps the input floating-point value evenly to the range of the enum, that must have the element
-			'end'. The enumerated values in Enum must be linearly distributed, and 'end' must be the number of
-			elements.
+			Use this code inside frequently run code, where you dont want to pollute the code with conditional
+			check swapping.
+			usage:
+
+			void runOften()
+			{
+				// some code will automatically run if the condition swaps.
+				// virtually free otherwise.
+				condition.setCondition(getSomething());
+			}
 		*/
-		template<typename Enum, typename VType>
-			typename std::enable_if<std::is_enum<Enum>::value, Enum>::type distribute(VType val)
-			{
-				return static_cast<Enum>(cpl::Math::round<signed>(val * (int(Enum::end) - 1)));
-			}
-
-		template<typename EnumStruct, typename VType>
-			inline typename std::enable_if<!std::is_enum<EnumStruct>::value, typename EnumStruct::Enum>::type distribute(VType val)
-			{
-				return static_cast<typename EnumStruct::Enum>(cpl::Math::round<signed>(val * (EnumStruct::end - 1)));
-			}
-
-
-		namespace Utility
+		class ConditionalSwap
 		{
-			template<typename Ty>
-			struct MaybeDelete
+		public:
+
+			ConditionalSwap(std::function<void()> falseCode, std::function<void()> trueCode, bool initialValue = false, bool runConditionNow = false)
+				: falseFunctor(falseCode), trueFunctor(trueCode), oldCondition(initialValue)
 			{
-				void operator()(Ty * content) { if (doDelete) delete content; }
-				bool doDelete = true;
-			};
+				if (runConditionNow)
+					runCondition(initialValue);
+			}
 
-			/*
-				Use this code inside frequently run code, where you dont want to pollute the code with conditional
-				check swapping.
-				usage:
-
-				void runOften()
-				{
-					// some code will automatically run if the condition swaps.
-					// virtually free otherwise.
-					condition.setCondition(getSomething());
-				}
-			*/
-			class ConditionalSwap
+			inline void setCondition(bool newCondition)
 			{
-			public:
-
-				ConditionalSwap(std::function<void()> falseCode, std::function<void()> trueCode, bool initialValue = false, bool runConditionNow = false)
-					: falseFunctor(falseCode), trueFunctor(trueCode), oldCondition(initialValue)
+				if (newCondition != oldCondition)
 				{
-					if (runConditionNow)
-						runCondition(initialValue);
+					runCondition(newCondition);
+					oldCondition = newCondition;
 				}
+			}
 
-				inline void setCondition(bool newCondition)
-				{
-					if (newCondition != oldCondition)
-					{
-						runCondition(newCondition);
-						oldCondition = newCondition;
-					}
-				}
+			void runCondition(bool condition)
+			{
+				condition ? trueFunctor() : falseFunctor();
+			}
 
-				void runCondition(bool condition)
-				{
-					condition ? trueFunctor() : falseFunctor();
-				}
+		private:
+			bool oldCondition;
+			std::function<void()> falseFunctor;
+			std::function<void()> trueFunctor;
+		};
 
-			private:
-				bool oldCondition;
-				std::function<void()> falseFunctor;
-				std::function<void()> trueFunctor;
-			};
+		/*
+			Lazy pointers hold unique default constructed data objects,
+			constructing/allocating them on the first use.
+			They incur a overhead on dereferencing, however
+			they are usefull for data objects you don't want
+			to load immediately - only on use.
+			Follows semantics of std::unique_ptr (RAII as well).
+			Not thread-safe.
+		*/
+		template<class T>
+		class LazyPointer
+		{
+		public:
+			// big five.
 
-			/*
-				Lazy pointers hold unique default constructed data objects,
-				constructing/allocating them on the first use.
-				They incur a overhead on dereferencing, however
-				they are usefull for data objects you don't want
-				to load immediately - only on use.
-				Follows semantics of std::unique_ptr (RAII as well).
-				Not thread-safe.
-			*/
-			template<class T>
-				class LazyPointer
-				{
-				public:
-					// big five.
+			LazyPointer() : object(nullptr) {}
 
-					LazyPointer() : object(nullptr) {}
+			LazyPointer(LazyPointer && other)
+			{
+				object = other.object;
+				other.object = nullptr;
+			}
 
-					LazyPointer(LazyPointer && other)
-					{
-						object = other.object;
-						other.object = nullptr;
-					}
+			LazyPointer & operator == (LazyPointer && other)
+			{
+				object = other.object;
+				other.object = nullptr;
+			}
 
-					LazyPointer & operator == (LazyPointer && other)
-					{
-						object = other.object;
-						other.object = nullptr;
-					}
+			// this class is not copy constructible!
+			LazyPointer & operator == (const LazyPointer & other) = delete;
+			LazyPointer(const LazyPointer & other) = delete;
 
-					// this class is not copy constructible!
-					LazyPointer & operator == (const LazyPointer & other) = delete;
-					LazyPointer(const LazyPointer & other) = delete;
+			// operators.
 
-					// operators.
+			T * operator -> ()
+			{
+				return get();
+			}
 
-					T * operator -> ()
-					{
-						return get();
-					}
+			T * release()
+			{
+				T * o = get();
+				object = nullptr;
+				return o;
+			}
 
-					T * release()
-					{
-						T * o = get();
-						object = nullptr;
-						return o;
-					}
+			void reset(T * another)
+			{
+				if (object)
+					delete object;
+				object = another;
+			}
 
-					void reset(T * another)
-					{
-						if (object)
-							delete object;
-						object = another;
-					}
-
-					T * get()
-					{
-						if (!object)
-							object = new T();
-						return object;
-					}
-					~LazyPointer()
-					{
-						if (object)
-							delete object;
-					}
-				protected:
-					T * object;
-				};
+			T * get()
+			{
+				if (!object)
+					object = new T();
+				return object;
+			}
+			~LazyPointer()
+			{
+				if (object)
+					delete object;
+			}
+		protected:
+			T * object;
+		};
 
 		/*	template<typename T, typename Enable = void>
 			struct elements_of;
@@ -189,258 +189,258 @@
 					static const std::size_t value = sizeof(Ty) / sizeof((Ty())[0]);
 				};*/
 
-			/*
-				Represents a set of bounding coordinates
-			*/
-			template<typename Scalar>
-				struct Bounds
-				{
-					union
-					{
-						Scalar left;
-						Scalar top;
-					};
-					union
-					{
-						Scalar right;
-						Scalar bottom;
-					};
-
-					Scalar dist() const { return std::abs(left - right); }
-
-					bool operator == (const Bounds<Scalar> & right) const noexcept
-					{
-						return left == right.left && this->right == right.right;
-					}
-
-					bool operator != (const Bounds<Scalar> & right) const noexcept
-					{
-						return !(this->operator ==(right));
-					}
-				};
-
-			template <class T> struct maybe_delete
-			{
-				void operator()(T* p) const noexcept{ if (!shared) delete p; }
-				bool shared = false;
-			};
-			class COnlyHeapAllocated
-			{
-
-			};
-
-			class CNoncopyable
-			{
-
-			protected:
-				CNoncopyable() {}
-				~CNoncopyable() {}
 				/*
-					move constructor - c++11 delete ?
+					Represents a set of bounding coordinates
 				*/
+		template<typename Scalar>
+		struct Bounds
+		{
+			union
+			{
+				Scalar left;
+				Scalar top;
+			};
+			union
+			{
+				Scalar right;
+				Scalar bottom;
+			};
+
+			Scalar dist() const { return std::abs(left - right); }
+
+			bool operator == (const Bounds<Scalar> & right) const noexcept
+			{
+				return left == right.left && this->right == right.right;
+			}
+
+			bool operator != (const Bounds<Scalar> & right) const noexcept
+			{
+				return !(this->operator ==(right));
+			}
+		};
+
+		template <class T> struct maybe_delete
+		{
+			void operator()(T* p) const noexcept { if (!shared) delete p; }
+			bool shared = false;
+		};
+		class COnlyHeapAllocated
+		{
+
+		};
+
+		class CNoncopyable
+		{
+
+		protected:
+			CNoncopyable() {}
+			~CNoncopyable() {}
+			/*
+				move constructor - c++11 delete ?
+			*/
+		private:
+			#ifdef __CPP11__
+			CNoncopyable(const CNoncopyable & other) = delete;
+			CNoncopyable & operator=(const CNoncopyable & other) = delete;
+
+			CNoncopyable & operator=(CNoncopyable && other) = delete;
+			CNoncopyable(CNoncopyable && other) = delete;
+			#else
+			CNoncopyable(const CNoncopyable & other);
+			CNoncopyable & operator=(const CNoncopyable & other);
+			#endif
+		};
+
+		class CPubliclyNoncopyable
+		{
+
+		protected:
+			CPubliclyNoncopyable() {}
+			~CPubliclyNoncopyable() {}
+			#ifdef __CPP11__
+			CPubliclyNoncopyable(const CPubliclyNoncopyable & other) = default;
+			CPubliclyNoncopyable & operator=(const CPubliclyNoncopyable & other) = default;
+
+			CPubliclyNoncopyable & operator=(CPubliclyNoncopyable && other) = default;
+			CPubliclyNoncopyable(CPubliclyNoncopyable && other) = default;
+			#else
+			CPubliclyNoncopyable(const CPubliclyNoncopyable & other);
+			CPubliclyNoncopyable & operator=(const CPubliclyNoncopyable & other);
+			#endif
+		};
+
+		class COnlyPubliclyMovable
+		{
+
+		protected:
+			COnlyPubliclyMovable() {}
+			~COnlyPubliclyMovable() {}
+			#ifdef __CPP11__
+			COnlyPubliclyMovable(const COnlyPubliclyMovable & other) = default;
+			COnlyPubliclyMovable & operator=(const COnlyPubliclyMovable & other) = default;
+			#else
+			COnlyPubliclyMovable(const COnlyPubliclyMovable & other);
+			COnlyPubliclyMovable & operator=(const COnlyPubliclyMovable & other);
+			#endif
+		};
+
+
+		template<class T>
+		struct LazyStackPointer : CNoncopyable
+		{
+			typedef LazyStackPointer<T> this_t;
+
+			LazyStackPointer()
+				: pointer(nullptr)
+			{
+
+			}
+
+			static_assert(std::is_default_constructible<T>::value, "LazyStackPointer<T> must be default constructible!");
+
+			T * operator -> ()
+			{
+				if (!pointer)
+					construct();
+
+				return pointer;
+			}
+
+			T & reference()
+			{
+				if (!pointer)
+					construct();
+
+				return *pointer;
+			}
+
+			~LazyStackPointer()
+			{
+				if (pointer)
+				{
+					pointer->~T();
+				}
+				pointer = nullptr;
+			}
+
+		private:
+
+			void construct()
+			{
+				::new ((void*)std::addressof(storage)) T();
+				pointer = reinterpret_cast<T *>(std::addressof(storage));
+			}
+
+			T * pointer;
+			typename std::aligned_storage<sizeof(T), alignof(T)>::type storage;
+		};
+
+
+		template<class func>
+		struct OnScopeExit
+		{
+			OnScopeExit(func codeToRun)
+				: function(codeToRun)
+			{
+
+			}
+
+			~OnScopeExit()
+			{
+				function();
+			}
+
+		private:
+			func function;
+		};
+
+		/*********************************************************************************************
+
+			Provides a callback when a class that is listened to may die.
+			The purpose of making it abstract is to force any listeners to handle cases, where the
+			control (or whatever) is deleted (for some reason).
+
+		*********************************************************************************************/
+
+		template<typename Derived>
+		class DestructionServer
+		{
+		public:
+			typedef Derived type;
+
+			struct ObjectProxy
+			{
+				ObjectProxy(const Derived * serverToPresent) : server(serverToPresent) {}
+				bool operator == (const Derived * other) const { return server == other; }
+				bool operator != (const Derived * other) const { return server != other; }
 			private:
-				#ifdef __CPP11__
-					CNoncopyable(const CNoncopyable & other) = delete;
-					CNoncopyable & operator=(const CNoncopyable & other) = delete;
-
-					CNoncopyable & operator=(CNoncopyable && other) = delete;
-					CNoncopyable(CNoncopyable && other) = delete;
-				#else
-					CNoncopyable(const CNoncopyable & other);
-					CNoncopyable & operator=(const CNoncopyable & other);
-				#endif
+				const Derived * server;
 			};
 
-			class CPubliclyNoncopyable
+			class Client
 			{
+				friend class DestructionServer<Derived>;
+			public:
+				typedef DestructionServer Server;
 
-			protected:
-				CPubliclyNoncopyable() {}
-				~CPubliclyNoncopyable() {}
-				#ifdef __CPP11__
-					CPubliclyNoncopyable(const CPubliclyNoncopyable & other) = default;
-					CPubliclyNoncopyable & operator=(const CPubliclyNoncopyable & other) = default;
+				virtual ~Client()
+				{
+					for (auto server : servers)
+						server->removeClientDestructor(this);
+				}
 
-					CPubliclyNoncopyable & operator=(CPubliclyNoncopyable && other) = default;
-					CPubliclyNoncopyable(CPubliclyNoncopyable && other) = default;
-				#else
-					CPubliclyNoncopyable(const CPubliclyNoncopyable & other);
-					CPubliclyNoncopyable & operator=(const CPubliclyNoncopyable & other);
-				#endif
+				virtual void onObjectDestruction(const ObjectProxy & destroyedObject) = 0;
+
+			private:
+				void onDestruction(Derived * derivedServer)
+				{
+					if (!contains(servers, derivedServer))
+						CPL_RUNTIME_EXCEPTION("Fatal error: DestructionServer::Client is not connected to server!");
+					// forget reference to server
+					servers.erase(derivedServer);
+					// return an unmodifiable reference to the server
+					onObjectDestruction(derivedServer);
+				}
+				std::set<Server*> servers;
 			};
 
-			class COnlyPubliclyMovable
+			void removeClientDestructor(Client * client) { clients.erase(client); }
+
+			void addClientDestructor(Client * client)
 			{
+				clients.insert(client);
+				client->servers.insert(this);
+			}
 
-			protected:
-				COnlyPubliclyMovable() {}
-				~COnlyPubliclyMovable() {}
-				#ifdef __CPP11__
-					COnlyPubliclyMovable(const COnlyPubliclyMovable & other) = default;
-					COnlyPubliclyMovable & operator=(const COnlyPubliclyMovable & other) = default;
-				#else
-					COnlyPubliclyMovable(const COnlyPubliclyMovable & other);
-					COnlyPubliclyMovable & operator=(const COnlyPubliclyMovable & other);
-				#endif
-			};
-
-
-			template<class T>
-				struct LazyStackPointer : CNoncopyable
+			virtual ~DestructionServer()
+			{
+				// ((Derived*)this) is actually deconstructed at this point...
+				// UB happens if the pointer is dereferenced
+				// this cast can only fail at compile-time
+				if (Derived * derivedServer = static_cast<Derived *>(this))
 				{
-					typedef LazyStackPointer<T> this_t;
-
-					LazyStackPointer()
-						: pointer(nullptr)
+					for (Client * client : clients)
 					{
-
+						client->onDestruction(derivedServer);
 					}
-
-					static_assert(std::is_default_constructible<T>::value, "LazyStackPointer<T> must be default constructible!");
-
-					T * operator -> ()
-					{
-						if (!pointer)
-							construct();
-
-						return pointer;
-					}
-
-					T & reference()
-					{
-						if (!pointer)
-							construct();
-
-						return *pointer;
-					}
-
-					~LazyStackPointer()
-					{
-						if (pointer)
-						{
-							pointer->~T();
-						}
-						pointer = nullptr;
-					}
-
-				private:
-
-					void construct()
-					{
-						::new ((void*)std::addressof(storage)) T();
-						pointer = reinterpret_cast<T *>(std::addressof(storage));
-					}
-
-					T * pointer;
-					typename std::aligned_storage<sizeof(T), alignof(T)>::type storage;
-				};
-
-
-			template<class func>
-				struct OnScopeExit
+				}
+				/*else --- null pointer handling?
 				{
-					OnScopeExit(func codeToRun)
-						: function(codeToRun)
-					{
+					// in fact, this shouldn't work, as well?
+					throw std::runtime_error(
+						std::string("Fatal error: ") + typeid(this).name() +
+						" doesn't derive from " + typeid(DestructionServer<Derived> *).name()
+					);
+				}*/
+			}
+		protected:
+			// make it impossible to construct this without deriving from this class.
+			DestructionServer() {};
 
-					}
+		private:
+			std::set<Client *> clients;
+		};
 
-					~OnScopeExit()
-					{
-						function();
-					}
-
-				private:
-					func function;
-				};
-
-			/*********************************************************************************************
-
-				Provides a callback when a class that is listened to may die.
-				The purpose of making it abstract is to force any listeners to handle cases, where the
-				control (or whatever) is deleted (for some reason).
-
-			*********************************************************************************************/
-
-			template<typename Derived>
-				class DestructionServer
-				{
-				public:
-					typedef Derived type;
-
-					struct ObjectProxy
-					{
-						ObjectProxy(const Derived * serverToPresent) : server(serverToPresent) {}
-						bool operator == (const Derived * other) const { return server == other; }
-						bool operator != (const Derived * other) const { return server != other; }
-					private:
-						const Derived * server;
-					};
-
-					class Client
-					{
-						friend class DestructionServer<Derived>;
-					public:
-						typedef DestructionServer Server;
-
-						virtual ~Client()
-						{
-							for (auto server : servers)
-								server->removeClientDestructor(this);
-						}
-
-						virtual void onObjectDestruction(const ObjectProxy & destroyedObject) = 0;
-
-					private:
-						void onDestruction(Derived * derivedServer)
-						{
-							if (!contains(servers, derivedServer))
-								CPL_RUNTIME_EXCEPTION("Fatal error: DestructionServer::Client is not connected to server!");
-							// forget reference to server
-							servers.erase(derivedServer);
-							// return an unmodifiable reference to the server
-							onObjectDestruction(derivedServer);
-						}
-						std::set<Server*> servers;
-					};
-
-					void removeClientDestructor(Client * client) { clients.erase(client); }
-
-					void addClientDestructor(Client * client)
-					{
-						clients.insert(client);
-						client->servers.insert(this);
-					}
-
-					virtual ~DestructionServer()
-					{
-						// ((Derived*)this) is actually deconstructed at this point...
-						// UB happens if the pointer is dereferenced
-						// this cast can only fail at compile-time
-						if (Derived * derivedServer = static_cast<Derived *>(this))
-						{
-							for (Client * client : clients)
-							{
-								client->onDestruction(derivedServer);
-							}
-						}
-						/*else --- null pointer handling?
-						{
-							// in fact, this shouldn't work, as well?
-							throw std::runtime_error(
-								std::string("Fatal error: ") + typeid(this).name() +
-								" doesn't derive from " + typeid(DestructionServer<Derived> *).name()
-							);
-						}*/
-					}
-				protected:
-					// make it impossible to construct this without deriving from this class.
-					DestructionServer() {};
-
-				private:
-					std::set<Client *> clients;
-				};
-
-		}; // Utility
-	}; // cpl
+	}; // Utility
+}; // cpl
 #endif

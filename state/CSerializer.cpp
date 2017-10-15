@@ -89,101 +89,101 @@ namespace cpl
 				// interpret data
 				switch (current->type)
 				{
-				case HeaderType::Child:
-				{
-					auto child = (const StdHeader*)current;
-					auto childDataSize = child->dataSize;
-					if (!childHasKey)
-						throw std::runtime_error("No identifying key for child at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string((const char*)current - cr.getBlock())
-							+ " bytes."
-						);
-					auto & cs = getContent(currentKey);
-					// build child hierachy.
-					cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
-
-					// remember to reset key:
-					childHasKey = false;
-					break;
-				}
-				case HeaderType::Data:
-				{
-					if (hasDataBeenFound)
-						throw std::runtime_error("Multiple data entries found at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string((char*)current - cr.getBlock())
-							+ " bytes."
-						);
-
-					// copy data into our buffer
-					data.appendBytes(current->getData<char>(), current->dataSize);
-
-					hasDataBeenFound = true;
-					break;
-				}
-				case HeaderType::End:
-				{
-					if (childHasKey)
-						throw std::runtime_error("No child for previous key at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string((char*)current - cr.getBlock())
-							+ " bytes."
-						);
-					if ((const char*)current + current->headerSize != (cr.getBlock() + cr.getSize()))
-						throw std::runtime_error("Corrupt header; End entry found at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string((char*)current - cr.getBlock())
-							+ " bytes, but should be at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string(cr.getSize() - sizeof(StdHeader))
-						);
-					else
-						// memory block parsed successfully!
-						return true;
-				}
-				case HeaderType::Key:
-				{
-					if (childHasKey)
-						throw std::runtime_error("Multiple key-pairs found at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string((char*)current - cr.getBlock())
-							+ " bytes."
+					case HeaderType::Child:
+					{
+						auto child = (const StdHeader*)current;
+						auto childDataSize = child->dataSize;
+						if (!childHasKey)
+							throw std::runtime_error("No identifying key for child at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((const char*)current - cr.getBlock())
+								+ " bytes."
 							);
-					const KeyHeader * kh = (const KeyHeader *)current;
+						auto & cs = getContent(currentKey);
+						// build child hierachy.
+						cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
 
-					// see if we can build the key
-					if (!currentKey.build(kh))
-						return false;
+						// remember to reset key:
+						childHasKey = false;
+						break;
+					}
+					case HeaderType::Data:
+					{
+						if (hasDataBeenFound)
+							throw std::runtime_error("Multiple data entries found at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((char*)current - cr.getBlock())
+								+ " bytes."
+							);
 
-					childHasKey = true;
-					break;
-				}
-				case HeaderType::LocalVersion:
-				{
-					throw std::runtime_error("Local version entry found in a master block (already contains versioning info) "
-						+ std::to_string(cr.getBlock()) + " + "
-						+ std::to_string((char*)current - cr.getBlock())
-						+ " bytes."
-					);
-					break;
-				}
-				case HeaderType::Start:
-				{
-					throw std::runtime_error("Multiple start entries found at "
-						+ std::to_string(cr.getBlock()) + " + "
-						+ std::to_string((char*)current - cr.getBlock())
-						+ " bytes."
-					);
-					break;
-				}
-				default:
-					throw std::runtime_error("Unrecognized HeaderType ("
-						+ std::to_string(static_cast<int>(current->type)) + ") at "
-						+ std::to_string(cr.getBlock()) + " + "
-						+ std::to_string((char*)current - cr.getBlock())
-						+ " bytes."
-					);
+						// copy data into our buffer
+						data.appendBytes(current->getData<char>(), current->dataSize);
+
+						hasDataBeenFound = true;
+						break;
+					}
+					case HeaderType::End:
+					{
+						if (childHasKey)
+							throw std::runtime_error("No child for previous key at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((char*)current - cr.getBlock())
+								+ " bytes."
+							);
+						if ((const char*)current + current->headerSize != (cr.getBlock() + cr.getSize()))
+							throw std::runtime_error("Corrupt header; End entry found at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((char*)current - cr.getBlock())
+								+ " bytes, but should be at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string(cr.getSize() - sizeof(StdHeader))
+							);
+						else
+							// memory block parsed successfully!
+							return true;
+					}
+					case HeaderType::Key:
+					{
+						if (childHasKey)
+							throw std::runtime_error("Multiple key-pairs found at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((char*)current - cr.getBlock())
+								+ " bytes."
+							);
+						const KeyHeader * kh = (const KeyHeader *)current;
+
+						// see if we can build the key
+						if (!currentKey.build(kh))
+							return false;
+
+						childHasKey = true;
+						break;
+					}
+					case HeaderType::LocalVersion:
+					{
+						throw std::runtime_error("Local version entry found in a master block (already contains versioning info) "
+							+ std::to_string(cr.getBlock()) + " + "
+							+ std::to_string((char*)current - cr.getBlock())
+							+ " bytes."
+						);
+						break;
+					}
+					case HeaderType::Start:
+					{
+						throw std::runtime_error("Multiple start entries found at "
+							+ std::to_string(cr.getBlock()) + " + "
+							+ std::to_string((char*)current - cr.getBlock())
+							+ " bytes."
+						);
+						break;
+					}
+					default:
+						throw std::runtime_error("Unrecognized HeaderType ("
+							+ std::to_string(static_cast<int>(current->type)) + ") at "
+							+ std::to_string(cr.getBlock()) + " + "
+							+ std::to_string((char*)current - cr.getBlock())
+							+ " bytes."
+						);
 				}
 
 				// iterate to next entry
@@ -202,87 +202,87 @@ namespace cpl
 				// interpret data
 				switch (current->type)
 				{
-				case HeaderType::Child:
-				{
-					auto child = (const StdHeader*)current;
-					auto childDataSize = child->dataSize;
-					if (!childHasKey)
-						throw std::runtime_error("No identifying key for child at "
-							+ std::to_string(cr.getBlock()) + " + "
-							+ std::to_string((const char*)current - cr.getBlock())
-							+ " bytes."
-						);
-					auto & cs = getContent(currentKey);
-					// build child hierachy.
-					cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
+					case HeaderType::Child:
+					{
+						auto child = (const StdHeader*)current;
+						auto childDataSize = child->dataSize;
+						if (!childHasKey)
+							throw std::runtime_error("No identifying key for child at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((const char*)current - cr.getBlock())
+								+ " bytes."
+							);
+						auto & cs = getContent(currentKey);
+						// build child hierachy.
+						cs.build(WeakContentWrapper(child->getData<char>(), childDataSize));
 
-					// remember to reset key:
-					childHasKey = false;
-					break;
-				}
-				case HeaderType::Data:
-				{
-					if (hasDataBeenFound)
-						throw std::runtime_error("Multiple data entries found at "
+						// remember to reset key:
+						childHasKey = false;
+						break;
+					}
+					case HeaderType::Data:
+					{
+						if (hasDataBeenFound)
+							throw std::runtime_error("Multiple data entries found at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((char*)current - cr.getBlock())
+								+ " bytes."
+							);
+
+						// copy data into our buffer
+						data.appendBytes(current->getData<char>(), current->dataSize);
+
+						hasDataBeenFound = true;
+						break;
+					}
+					case HeaderType::End:
+					{
+						throw std::runtime_error("Corrupt arguments; End entry found as child at "
+							+ std::to_string(cr.getBlock()) + " + "
+							+ std::to_string((char*)current - cr.getBlock())
+							+ " bytes"
+						);
+						break;
+					}
+					case HeaderType::Key:
+					{
+						if (childHasKey)
+							throw std::runtime_error("Multiple key-pairs found at "
+								+ std::to_string(cr.getBlock()) + " + "
+								+ std::to_string((char*)current - cr.getBlock())
+								+ " bytes."
+							);
+						const KeyHeader * kh = (const KeyHeader *)current;
+
+						// see if we can build the key
+						if (!currentKey.build(kh))
+							return false;
+
+						childHasKey = true;
+						break;
+					}
+					case HeaderType::LocalVersion:
+					{
+						const LocalVersionHeader * lh = (const LocalVersionHeader*)current;
+						version = cpl::Version(lh->info.version);
+						break;
+					}
+					case HeaderType::Start:
+					{
+						throw std::runtime_error("Multiple start entries (as child) found at "
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((char*)current - cr.getBlock())
 							+ " bytes."
 						);
-
-					// copy data into our buffer
-					data.appendBytes(current->getData<char>(), current->dataSize);
-
-					hasDataBeenFound = true;
-					break;
-				}
-				case HeaderType::End:
-				{
-					throw std::runtime_error("Corrupt arguments; End entry found as child at "
-						+ std::to_string(cr.getBlock()) + " + "
-						+ std::to_string((char*)current - cr.getBlock())
-						+ " bytes"
-					);
-					break;
-				}
-				case HeaderType::Key:
-				{
-					if (childHasKey)
-						throw std::runtime_error("Multiple key-pairs found at "
+						break;
+					}
+					default:
+						throw std::runtime_error("Unrecognized HeaderType ("
+							+ std::to_string(static_cast<int>(current->type)) + ") at "
 							+ std::to_string(cr.getBlock()) + " + "
 							+ std::to_string((char*)current - cr.getBlock())
 							+ " bytes."
 						);
-					const KeyHeader * kh = (const KeyHeader *)current;
-
-					// see if we can build the key
-					if (!currentKey.build(kh))
-						return false;
-
-					childHasKey = true;
-					break;
-				}
-				case HeaderType::LocalVersion:
-				{
-					const LocalVersionHeader * lh = (const LocalVersionHeader*)current;
-					version = cpl::Version(lh->info.version);
-					break;
-				}
-				case HeaderType::Start:
-				{
-					throw std::runtime_error("Multiple start entries (as child) found at "
-						+ std::to_string(cr.getBlock()) + " + "
-						+ std::to_string((char*)current - cr.getBlock())
-						+ " bytes."
-					);
-					break;
-				}
-				default:
-					throw std::runtime_error("Unrecognized HeaderType ("
-						+ std::to_string(static_cast<int>(current->type)) + ") at "
-						+ std::to_string(cr.getBlock()) + " + "
-						+ std::to_string((char*)current - cr.getBlock())
-						+ " bytes."
-					);
 				}
 
 
@@ -382,7 +382,7 @@ namespace cpl
 
 			auto totalSize = b.getSize();
 
-			return{ b.acquirePointer(), totalSize };
+			return{b.acquirePointer(), totalSize};
 
 		}
 
@@ -409,7 +409,7 @@ namespace cpl
 		if (std::memcmp(startHeader->getData<char>(), nameReference.c_str(), static_cast<std::size_t>(nameSize)) != 0)
 			CPL_RUNTIME_EXCEPTION(
 				std::string("Checked header's name \'") + startHeader->getData<char>() + "\' is different from expected \'" + nameReference + "\'."
-				);
+			);
 
 		const void * dataBlock = startHeader->next();
 		std::size_t dataSize = static_cast<std::size_t>(cr.getSize() - ((const char *)startHeader->next() - (const char *)startHeader));
@@ -420,7 +420,7 @@ namespace cpl
 			CPL_RUNTIME_EXCEPTION("Checked header for " + nameReference + "'s MD5 checksum is wrong!");
 
 		// build self
-		auto ret = internalSerializer.getContent("Content").build({ dataBlock, dataSize });
+		auto ret = internalSerializer.getContent("Content").build({dataBlock, dataSize});
 
 		// must contain 'content'
 		return ret && internalSerializer.findForKey("Content");

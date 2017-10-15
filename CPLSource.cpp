@@ -36,25 +36,25 @@
 
 #ifdef CPL_JUCE
 
-	#include "Resources.cpp"
-	//#include "fonts/tahoma.cpp"
+#include "Resources.cpp"
+//#include "fonts/tahoma.cpp"
 
-	// gui elements
-	#include "gui/GUI.cpp"
-	// rendering
-	#include "rendering/CSubpixelSoftwareGraphics.cpp"
-	#include "rendering/CDisplaySetup.cpp"
+// gui elements
+#include "gui/GUI.cpp"
+// rendering
+#include "rendering/CSubpixelSoftwareGraphics.cpp"
+#include "rendering/CDisplaySetup.cpp"
 
-	// io and stuff
+// io and stuff
 
-	#include "CPresetManager.cpp"
+#include "CPresetManager.cpp"
 
 
 #endif
 
 #ifdef CPL_INC_KISS
-	#include "ffts/kiss_fft/tools/kiss_fft.c"
-	#include "ffts/kiss_fft/tools/kiss_fftr.c"
+#include "ffts/kiss_fft/tools/kiss_fft.c"
+#include "ffts/kiss_fft/tools/kiss_fftr.c"
 #endif
 
 #include "CModule.cpp"
@@ -73,11 +73,11 @@
 #include "process/Process.cpp"
 
 #if defined(CPL_HINT_FONT)
-	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
-	#include "FreeType/FreeTypeAmalgam.h"
-	#include "FreeType/FreeTypeAmalgam.cpp"
+#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
+#include "FreeType/FreeTypeAmalgam.h"
+#include "FreeType/FreeTypeAmalgam.cpp"
 #endif
 
 #if !defined(CPL_LEAN)
-	#include "CPLTests.cpp"
+#include "CPLTests.cpp"
 #endif

@@ -72,8 +72,8 @@ namespace cpl
 
 		virtual ValueEntityBase & getValueIndex(Aspect a, Index i) = 0;
 		virtual ValueEntityBase & getValueIndex(std::size_t i) override
-		{ 
-			std::div_t res = std::div(static_cast<int>(i), 3); 
+		{
+			std::div_t res = std::div(static_cast<int>(i), 3);
 			return getValueIndex((Aspect)res.quot, (Index)res.rem);
 		}
 
@@ -84,11 +84,11 @@ namespace cpl
 	{
 	public:
 		CompleteTransformValue()
-			: vectors{
+			: vectors {
 				{ behaviour.getMagTransformer(), behaviour.getDefaultFormatter() },
 				{ behaviour.getDegreeTransformer(), behaviour.getDegreeFormatter() },
 				{  behaviour.getMagTransformer(), behaviour.getDefaultFormatter() }
-			}
+		}
 		{
 
 		}
@@ -96,7 +96,7 @@ namespace cpl
 		struct Vector
 		{
 			Vector(VirtualTransformer<ValueT> & tsf, VirtualFormatter<ValueT> & fmt)
-				: axis{ { &tsf, &fmt }, { &tsf, &fmt }, { &tsf, &fmt } }
+				: axis {{ &tsf, &fmt }, { &tsf, &fmt }, { &tsf, &fmt }}
 			{}
 			SelfcontainedValue<> axis[3];
 		};
@@ -118,11 +118,11 @@ namespace cpl
 		typedef typename Parameters::BundleUpdate<ParameterView>::Record Entry;
 
 		ParameterTransformValue(SharedBehaviour<ValueType> & b)
-			: vectors { 
+			: vectors {
 				{ "Pos.", b.getMagTransformer(), b.getDefaultFormatter() },
 				{ "Rot.", b.getDegreeTransformer(), b.getDegreeFormatter() },
 				{ "Scl.", b.getMagTransformer(), b.getDefaultFormatter() }
-			}
+		}
 			, behaviour(b)
 		{
 
@@ -155,7 +155,7 @@ namespace cpl
 		virtual void parametersInstalled() override
 		{
 			for (std::size_t i = 0; i < values.size(); ++i)
-					values[i].setParameterReference(parameters->at(i).uiParameterView);
+				values[i].setParameterReference(parameters->at(i).uiParameterView);
 
 			parameters = nullptr;
 		}
@@ -163,7 +163,7 @@ namespace cpl
 		virtual void generateInfo() override
 		{
 			parameters = std::make_unique<std::vector<Entry>>();
-			auto add = [&](ParameterType & p) { parameters->push_back(Entry{ &p, true, false }); };
+			auto add = [&](ParameterType & p) { parameters->push_back(Entry {&p, true, false}); };
 			auto addV = [&](Vector & v) { add(v.axis[0]); add(v.axis[1]); add(v.axis[2]); };
 			addV(vectors[0]); addV(vectors[1]); addV(vectors[2]);
 		}
@@ -176,7 +176,7 @@ namespace cpl
 		struct Vector
 		{
 			Vector(const std::string & context, VirtualTransformer<ValueType> & tsf, VirtualFormatter<ValueType> & fmt)
-				: axis{ {context + "X", tsf, &fmt}, { context + "Y", tsf, &fmt }, { context + "Z", tsf, &fmt } }
+				: axis {{context + "X", tsf, &fmt}, { context + "Y", tsf, &fmt }, { context + "Z", tsf, &fmt }}
 			{}
 			ParameterType axis[3];
 		};

@@ -27,40 +27,40 @@
 *************************************************************************************/
 
 #ifndef CPL_CPRESETMANAGER_H
-	#define CPL_CPRESETMANAGER_H
+#define CPL_CPRESETMANAGER_H
 
-	#include "Common.h"
-	#include "state/CSerializer.h"
-	#include "CExclusiveFile.h"
-	#include <vector>
-	#include <string>
+#include "Common.h"
+#include "state/CSerializer.h"
+#include "CExclusiveFile.h"
+#include <vector>
+#include <string>
 
-	namespace cpl
+namespace cpl
+{
+	class CPresetManager
 	{
-		class CPresetManager
-		{
-		public:
+	public:
 
-			static CPresetManager & instance();
+		static CPresetManager & instance();
 
-			// these functions pops up file selectors
-			bool savePresetAs(const ISerializerSystem & serializer, juce::File & location, const std::string & uniqueExt = "");
-			bool loadPresetAs(ISerializerSystem & serializer, juce::File & location, const std::string & uniqueExt = "");
+		// these functions pops up file selectors
+		bool savePresetAs(const ISerializerSystem & serializer, juce::File & location, const std::string & uniqueExt = "");
+		bool loadPresetAs(ISerializerSystem & serializer, juce::File & location, const std::string & uniqueExt = "");
 
-			// these functions saves/loads directly
-			bool savePreset(const std::string & name, const ISerializerSystem & serializer, juce::File & location);
-			bool loadPreset(const std::string & name, ISerializerSystem & serializer, juce::File & location);
-			const std::vector<juce::File> & getPresets();
-			bool saveDefaultPreset(const ISerializerSystem & serializer, juce::File & location);
-			bool loadDefaultPreset(ISerializerSystem & serializer, juce::File & location);
-			std::string getPresetDirectory() const noexcept;
-			juce::File getCurrentPreset();
+		// these functions saves/loads directly
+		bool savePreset(const std::string & name, const ISerializerSystem & serializer, juce::File & location);
+		bool loadPreset(const std::string & name, ISerializerSystem & serializer, juce::File & location);
+		const std::vector<juce::File> & getPresets();
+		bool saveDefaultPreset(const ISerializerSystem & serializer, juce::File & location);
+		bool loadDefaultPreset(ISerializerSystem & serializer, juce::File & location);
+		std::string getPresetDirectory() const noexcept;
+		juce::File getCurrentPreset();
 
-		private:
-			std::vector<juce::File> currentPresets;
-			CPresetManager();
-			~CPresetManager();
-		};
+	private:
+		std::vector<juce::File> currentPresets;
+		CPresetManager();
+		~CPresetManager();
 	};
+};
 
 #endif

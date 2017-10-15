@@ -92,7 +92,7 @@ namespace cpl
 			return {};
 
 		if (!TerminateProcess(childProcessHandle.get(), TerminateCode))
-			return { static_cast<int>(GetLastError()), std::system_category() };
+			return {static_cast<int>(GetLastError()), std::system_category()};
 
 		return {};
 	}
@@ -107,7 +107,7 @@ namespace cpl
 
 		DWORD timeout = timeoutMs < 0 ? INFINITE : static_cast<DWORD>(timeoutMs);
 
-		switch(WaitForSingleObject(childProcessHandle.get(), timeout))
+		switch (WaitForSingleObject(childProcessHandle.get(), timeout))
 		{
 			default:
 			case WAIT_FAILED: CPL_SYSTEM_EXCEPTION("WaitForSingleObject");
@@ -163,7 +163,7 @@ namespace cpl
 
 		if (!CreatePipe(&in.handle, &out.handle, &saAttr, 0))
 			CPL_SYSTEM_EXCEPTION("Error creating pipe pair");
-		
+
 		detail::unique_handle fin(in), fout(out);
 
 		if (parentEnd == 0 && !SetHandleInformation(fin.get(), HANDLE_FLAG_INHERIT, 0))
@@ -173,19 +173,19 @@ namespace cpl
 		if (parentEnd == 1 && !SetHandleInformation(fout.get(), HANDLE_FLAG_INHERIT, 0))
 			CPL_RUNTIME_EXCEPTION("Error setting inheritance permissions on pipes");
 
-		return{ std::move(fin), std::move(fout) };
+		return{std::move(fin), std::move(fout)};
 	}
 
 	void Process::initialise(PipePair& in, PipePair& out, PipePair& err, EnvStrings * env, const std::string * cwd, int customFlags)
 	{
-		PROCESS_INFORMATION piProcInfo{};
-		STARTUPINFOEXA siStartInfo{};
+		PROCESS_INFORMATION piProcInfo {};
+		STARTUPINFOEXA siStartInfo {};
 		using ProcThreadAttributeList = std::remove_pointer<LPPROC_THREAD_ATTRIBUTE_LIST>::type;
 
 		siStartInfo.StartupInfo.cb = sizeof(STARTUPINFOEXA);
 
-		std::size_t numHandles = 
-			((flags & IOStreamFlags::In) ? 1 : 0) + 
+		std::size_t numHandles =
+			((flags & IOStreamFlags::In) ? 1 : 0) +
 			((flags & IOStreamFlags::Out) ? 1 : 0) +
 			((flags & IOStreamFlags::Err) ? 1 : 0);
 
@@ -211,18 +211,18 @@ namespace cpl
 		hOut = (flags & IOStreamFlags::Out) ? out.second.get() : hNulls[hNullIndex++].get();
 		hErr = (flags & IOStreamFlags::Err) ? err.second.get() : hNulls[hNullIndex++].get();
 
-		struct ProcThreadDeleter { void operator()(ProcThreadAttributeList * p) { DeleteProcThreadAttributeList(p);	} };
+		struct ProcThreadDeleter { void operator()(ProcThreadAttributeList * p) { DeleteProcThreadAttributeList(p); } };
 
 		std::unique_ptr<char[]> handleListStorage;
 		std::unique_ptr<ProcThreadAttributeList, ProcThreadDeleter> attributeList;
 
-		if(customFlags == Options::None)
+		if (customFlags == Options::None)
 		{
-			
+
 			siStartInfo.StartupInfo.hStdOutput = hOut;
 			siStartInfo.StartupInfo.hStdError = hErr;
 			siStartInfo.StartupInfo.hStdInput = hIn;
-			siStartInfo.StartupInfo.dwFlags |= STARTF_USESTDHANDLES; 
+			siStartInfo.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
 
 			DWORD dwNeededListSize;
 			if (!InitializeProcThreadAttributeList(nullptr, 1, 0, &dwNeededListSize) && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
@@ -235,8 +235,8 @@ namespace cpl
 				CPL_SYSTEM_EXCEPTION("InitializeProcThreadAttributeList#2");
 
 			attributeList.reset(tempList);
-			
-			HANDLE hHandles[3] = { hIn, hOut, hErr };
+
+			HANDLE hHandles[3] = {hIn, hOut, hErr};
 
 			if (!UpdateProcThreadAttribute(attributeList.get(), 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, hHandles, sizeof(HANDLE) * 3, nullptr, nullptr))
 			{

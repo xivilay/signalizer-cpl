@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:stdexp.cpp
-	
+
 		External linkage of stuff found in stdext.h
 
 *************************************************************************************/
@@ -30,8 +30,8 @@
 namespace cpl
 {
 	#ifdef CPL_WINDOWS
-		const char * newl = "\r\n";
+	const char * newl = "\r\n";
 	#else
-		const char * newl = "\n";
+	const char * newl = "\n";
 	#endif
 };

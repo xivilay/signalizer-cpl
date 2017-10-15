@@ -38,80 +38,80 @@
 *************************************************************************************/
 
 #ifndef CPL_CEXCLUSIVEFILE_H
-	#define CPL_CEXCLUSIVEFILE_H
+#define CPL_CEXCLUSIVEFILE_H
 
-	#include "MacroConstants.h"
-	#include "Utility.h"
-	#include <cstring>
-	#include <string>
-	#include <cstdint>
+#include "MacroConstants.h"
+#include "Utility.h"
+#include <cstring>
+#include <string>
+#include <cstdint>
 
-	#if defined(CPL_CEF_USE_CSTDLIB)
-		#include <cstdio>
-		typedef FILE * FileHandle;
-	#elif defined(CPL_WINDOWS)
-		#include <Windows.h>
-		typedef HANDLE FileHandle;
-	#elif defined(CPL_MAC)
-		#include <unistd.h>
-		#include <fcntl.h>
-		typedef int FileHandle;
-    #elif defined(CPL_UNIXC)
-        #include <sys/file.h>
-        #include <unistd.h>
-		#include <fcntl.h>
-		typedef int FileHandle;
-	#endif
+#if defined(CPL_CEF_USE_CSTDLIB)
+#include <cstdio>
+typedef FILE * FileHandle;
+#elif defined(CPL_WINDOWS)
+#include <Windows.h>
+typedef HANDLE FileHandle;
+#elif defined(CPL_MAC)
+#include <unistd.h>
+#include <fcntl.h>
+typedef int FileHandle;
+#elif defined(CPL_UNIXC)
+#include <sys/file.h>
+#include <unistd.h>
+#include <fcntl.h>
+typedef int FileHandle;
+#endif
 
 
-	namespace cpl
-	{
-		class CExclusiveFile
+namespace cpl
+{
+	class CExclusiveFile
 		:
-			public Utility::CNoncopyable
+		public Utility::CNoncopyable
+	{
+	public:
+		enum mode : std::uint32_t
 		{
-		public:
-			enum mode : std::uint32_t
-			{
-				#ifdef CPL_WINDOWS
-					readMode = GENERIC_READ,
-					writeMode = GENERIC_WRITE,
-					readWriteMode = readMode | writeMode,
-					append = FILE_APPEND_DATA,
-					clear = 0
-				#elif defined(CPL_MAC) || defined(CPL_UNIXC)
-					clear = 0,
-					readMode = 2,
-					writeMode = 4,
-					append = 8
-				#endif
-			};
-
-		private:
-
-			bool isOpen;
-			FileHandle handle;
-			std::string fileName;
-			mode fileMode;
-
-		public:
-
-			CExclusiveFile();
-			~CExclusiveFile();
-
-			bool open(const std::string & path, std::uint32_t m = writeMode, bool waitForLock = false);
-			bool read(void * src, std::int64_t bufsiz);
-			std::int64_t getFileSize();
-			bool newline();
-			bool write(const void * src, std::int64_t bufsiz);
-			static bool isFileExclusive(const std::string & path);
-			bool reset();
-			bool remove();
-			bool write(const char * src);
-			bool isOpened();
-			const std::string & getName();
-			bool flush();
-			bool close();
+			#ifdef CPL_WINDOWS
+			readMode = GENERIC_READ,
+			writeMode = GENERIC_WRITE,
+			readWriteMode = readMode | writeMode,
+			append = FILE_APPEND_DATA,
+			clear = 0
+			#elif defined(CPL_MAC) || defined(CPL_UNIXC)
+			clear = 0,
+			readMode = 2,
+			writeMode = 4,
+			append = 8
+			#endif
 		};
-	}
+
+	private:
+
+		bool isOpen;
+		FileHandle handle;
+		std::string fileName;
+		mode fileMode;
+
+	public:
+
+		CExclusiveFile();
+		~CExclusiveFile();
+
+		bool open(const std::string & path, std::uint32_t m = writeMode, bool waitForLock = false);
+		bool read(void * src, std::int64_t bufsiz);
+		std::int64_t getFileSize();
+		bool newline();
+		bool write(const void * src, std::int64_t bufsiz);
+		static bool isFileExclusive(const std::string & path);
+		bool reset();
+		bool remove();
+		bool write(const char * src);
+		bool isOpened();
+		const std::string & getName();
+		bool flush();
+		bool close();
+	};
+}
 #endif

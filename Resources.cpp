@@ -31,7 +31,7 @@
 namespace cpl
 {
 	std::mutex CResourceManager::loadMutex;
-	std::atomic<CResourceManager *> CResourceManager::internalResourceInstance { nullptr };
+	std::atomic<CResourceManager *> CResourceManager::internalResourceInstance {nullptr};
 
 	/*********************************************************************************************
 
@@ -39,7 +39,7 @@ namespace cpl
 
 	 *********************************************************************************************/
 	CImage::CImage(const std::string & inPath)
-	: path(inPath)
+		: path(inPath)
 	{
 
 	}
@@ -159,7 +159,7 @@ namespace cpl
 		if (!resource)
 		{
 			#ifdef CPL_THROW_ON_NO_RESOURCE
-				CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
+			CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
 			#endif
 			resource = &defaultImage;
 		}
@@ -174,7 +174,7 @@ namespace cpl
 		if (!resource)
 		{
 			#ifdef CPL_THROW_ON_NO_RESOURCE
-				CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
+			CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
 			#endif
 			resource = &defaultImage;
 		}
@@ -198,7 +198,7 @@ namespace cpl
 			}
 		}
 
-		return * (instance ? instance : internalResourceInstance.load(std::memory_order_acquire));
+		return *(instance ? instance : internalResourceInstance.load(std::memory_order_acquire));
 	}
 
 };

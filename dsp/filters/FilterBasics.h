@@ -27,135 +27,135 @@
 *************************************************************************************/
 
 #ifndef CPL_FILTERBASICS_H
-	#define CPL_FILTERBASICS_H
+#define CPL_FILTERBASICS_H
 
-	#include <cstdlib>
-	#include "../../simd.h"
-	#include "../../Misc.h"
+#include <cstdlib>
+#include "../../simd.h"
+#include "../../Misc.h"
 
-	namespace cpl
+namespace cpl
+{
+	namespace dsp
 	{
-		namespace dsp
+		namespace filters
 		{
-			namespace filters
+
+			/// Filter concept:
+			/// template<typename T>
+			/// class Filter
+			/// {
+			///		struct Coefficients
+			///		{
+			/// 		static Coefficients design(Response, T normalizedFrequency, T Q, T linearGain);
+			///			static Coefficients design<Response>(T normalizedFrequency, T Q, T linearGain);
+			///			static Coefficients zero();
+			///			static Coefficients identity();
+			///		};
+			///
+			///		void reset();
+			///		T process(T, const Coeffcients &);
+			/// }
+
+			/// <summary>
+			/// Common biquadratic responses as implemented by RBJ's cookbook
+			/// </summary>
+			enum class Response
 			{
-
-				/// Filter concept:
-				/// template<typename T>
-				/// class Filter
-				/// {
-				///		struct Coefficients
-				///		{
-				/// 		static Coefficients design(Response, T normalizedFrequency, T Q, T linearGain);
-				///			static Coefficients design<Response>(T normalizedFrequency, T Q, T linearGain);
-				///			static Coefficients zero();
-				///			static Coefficients identity();
-				///		};
-				///
-				///		void reset();
-				///		T process(T, const Coeffcients &);
-				/// }
-
-				/// <summary>
-				/// Common biquadratic responses as implemented by RBJ's cookbook
-				/// </summary>
-				enum class Response
-				{
-					Lowpass,
-					Bandpass,
-					Highpass,
-					Notch,
-					Peak,
-					Bell = Peak,
-					Lowshelf,
-					Highshelf,
-					Allpass,
-					end
-				};
-
-				enum class Type
-				{
-					SVF,
-					Biquad,
-					end
-				};
-
-				static const char * Responses[] = {
-					"Lowpass",
-					"Bandpass",
-					"Highpass",
-					"Notch",
-					"Peak",
-					/* "Bell", */
-					"Low shelf",
-					"High shelf",
-					"Allpass"
-				};
-
-				static const char * Types[] = {
-					"SVF",
-					"Biquad"
-				};
-
-				inline const char * StringToType(Type r)
-				{
-					return Types[cpl::enum_cast<std::size_t>(r)];
-				}
-
-				inline std::vector<std::string> VectorTypes()
-				{
-					std::vector<std::string> ret(std::extent<decltype(Types)>::value);
-					cpl::foreach_uenum<Type>([&](auto t) {
-						ret[t] = Types[t];
-					});
-
-					return ret;
-				}
-
-				inline std::vector<std::string> VectorResponses()
-				{
-					std::vector<std::string> ret(std::extent<decltype(Responses)>::value);
-					cpl::foreach_uenum<Response>([&](auto r) {
-						ret[r] = Responses[r];
-					});
-					return ret;
-				}
-
-				inline Type TypeToString(const char * s)
-				{
-					for (std::size_t i = 0; i < std::extent<decltype(Types)>::value; ++i)
-					{
-						if (s == Types[i])
-							return cpl::enum_cast<Type>(i);
-					}
-					return Type::SVF;
-				}
-
-				inline const char * StringToResponse(Response r)
-				{
-					return Responses[cpl::enum_cast<std::size_t>(r)];
-				}
-
-				inline Response ResponseToString(const char * s)
-				{
-					for (std::size_t i = 0; i < std::extent<decltype(Responses)>::value; ++i)
-					{
-						if (s == Responses[i])
-							return cpl::enum_cast<Response>(i);
-					}
-					return Response::Lowpass;
-				}
-
-				template<typename T>
-				struct SecondOrderPrototype
-				{
-					Response response;
-					T normalizedFrequency, Q, linearGain;
-				};
-
+				Lowpass,
+				Bandpass,
+				Highpass,
+				Notch,
+				Peak,
+				Bell = Peak,
+				Lowshelf,
+				Highshelf,
+				Allpass,
+				end
 			};
+
+			enum class Type
+			{
+				SVF,
+				Biquad,
+				end
+			};
+
+			static const char * Responses[] = {
+				"Lowpass",
+				"Bandpass",
+				"Highpass",
+				"Notch",
+				"Peak",
+				/* "Bell", */
+				"Low shelf",
+				"High shelf",
+				"Allpass"
+			};
+
+			static const char * Types[] = {
+				"SVF",
+				"Biquad"
+			};
+
+			inline const char * StringToType(Type r)
+			{
+				return Types[cpl::enum_cast<std::size_t>(r)];
+			}
+
+			inline std::vector<std::string> VectorTypes()
+			{
+				std::vector<std::string> ret(std::extent<decltype(Types)>::value);
+				cpl::foreach_uenum<Type>([&](auto t) {
+					ret[t] = Types[t];
+				});
+
+				return ret;
+			}
+
+			inline std::vector<std::string> VectorResponses()
+			{
+				std::vector<std::string> ret(std::extent<decltype(Responses)>::value);
+				cpl::foreach_uenum<Response>([&](auto r) {
+					ret[r] = Responses[r];
+				});
+				return ret;
+			}
+
+			inline Type TypeToString(const char * s)
+			{
+				for (std::size_t i = 0; i < std::extent<decltype(Types)>::value; ++i)
+				{
+					if (s == Types[i])
+						return cpl::enum_cast<Type>(i);
+				}
+				return Type::SVF;
+			}
+
+			inline const char * StringToResponse(Response r)
+			{
+				return Responses[cpl::enum_cast<std::size_t>(r)];
+			}
+
+			inline Response ResponseToString(const char * s)
+			{
+				for (std::size_t i = 0; i < std::extent<decltype(Responses)>::value; ++i)
+				{
+					if (s == Responses[i])
+						return cpl::enum_cast<Response>(i);
+				}
+				return Response::Lowpass;
+			}
+
+			template<typename T>
+			struct SecondOrderPrototype
+			{
+				Response response;
+				T normalizedFrequency, Q, linearGain;
+			};
+
 		};
 	};
+};
 
 
 #endif

@@ -40,7 +40,7 @@ namespace cpl
 	{
 		// here you can specialse the renderer to different weigths, gamma scales, etc.
 		template<typename PixelType, LCDMatrixOrientation orientation>
-			using Renderer = CSubpixelScanlineRenderer < PixelType, orientation, WeightMap<5, 16>, LinearGammaScale<std::uint8_t> >;
+		using Renderer = CSubpixelScanlineRenderer < PixelType, orientation, WeightMap<5, 16>, LinearGammaScale<std::uint8_t> >;
 
 		// default place to stop.
 		float CSubpixelSoftwareGraphics::maxHeight = 100.f;
@@ -113,7 +113,7 @@ namespace cpl
 			const juce::RectangleList<int> & initialClip,
 			bool allowAlphaDrawing
 		)
-		:
+			:
 			buffer(imageToRenderOn),
 			origin(origin),
 			startingClip(initialClip),

@@ -22,31 +22,31 @@
 **************************************************************************************
 
 	file:AtomicCompability.h
-	
+
 		While we're all waiting on standard compliant headers, this will have to do.
 
 *************************************************************************************/
 
 #ifndef CPL_ATOMICCOMPABILITY_H
-	#define CPL_ATOMICCOMPABILITY_H
+#define CPL_ATOMICCOMPABILITY_H
 
-	#include "MacroConstants.h"
+#include "MacroConstants.h"
 
-	#if defined(_MSC_VER) && !defined(CPL_CLANG) && defined(__C11__)
-		#include <stdatomic.h>
-	#endif
-	#include <atomic>
+#if defined(_MSC_VER) && !defined(CPL_CLANG) && defined(__C11__)
+#include <stdatomic.h>
+#endif
+#include <atomic>
 
-	namespace cpl
+namespace cpl
+{
+	inline void std_memory_fence(std::memory_order order)
 	{
-		inline void std_memory_fence(std::memory_order order)
-		{
-			#ifdef CPL_CLANG
-				return atomic_thread_fence(order);
-			#else
-				return std::atomic_thread_fence(order);
-			#endif
-		}
-	};
+		#ifdef CPL_CLANG
+		return atomic_thread_fence(order);
+		#else
+		return std::atomic_thread_fence(order);
+		#endif
+	}
+};
 
 #endif

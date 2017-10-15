@@ -35,51 +35,51 @@
 
 
 #ifndef CPL_CMODULE_H
-	#define CPL_CMODULE_H
+#define CPL_CMODULE_H
 
-	#include <string>
-	// if set, uses corefoundation instead of the dyld loader on mac
+#include <string>
+// if set, uses corefoundation instead of the dyld loader on mac
 
-	typedef void * ModuleHandle;
+typedef void * ModuleHandle;
 
-	namespace cpl
+namespace cpl
+{
+	class CModule
 	{
-		class CModule
-		{
-			ModuleHandle moduleHandle;
-			std::string name;
-		public:
-			CModule();
-			CModule(const std::string & moduleName);
-			/// <summary>
-			/// Returns a pointer to a symbol inside the loaded module of this instance
-			/// </summary>
-			void * getFuncAddress(const std::string & functionName);
-			/// <summary>
-			/// If no module is loaded, loads moduleName
-			/// </summary>
-			int load(const std::string & moduleName);
-			/// <summary>
-			/// Increases the reference of the loaded module
-			/// </summary>
-			void increaseReference();
-			/// <summary>
-			/// Decreases the reference count of the loaded module.
-			/// </summary>
-			void decreaseReference();
-			/// <summary>
-			/// Releases the module, decreasing it's reference count and losing the reference.
-			/// </summary>
-			bool release();
-			/// <summary>
-			/// Returns the native handle to the module
-			/// </summary>
-			ModuleHandle getHandle();
-			CModule(const CModule &);
-			/// <summary>
-			/// Destructor. Releases the module
-			/// </summary>
-			~CModule();
-		};
-	}
+		ModuleHandle moduleHandle;
+		std::string name;
+	public:
+		CModule();
+		CModule(const std::string & moduleName);
+		/// <summary>
+		/// Returns a pointer to a symbol inside the loaded module of this instance
+		/// </summary>
+		void * getFuncAddress(const std::string & functionName);
+		/// <summary>
+		/// If no module is loaded, loads moduleName
+		/// </summary>
+		int load(const std::string & moduleName);
+		/// <summary>
+		/// Increases the reference of the loaded module
+		/// </summary>
+		void increaseReference();
+		/// <summary>
+		/// Decreases the reference count of the loaded module.
+		/// </summary>
+		void decreaseReference();
+		/// <summary>
+		/// Releases the module, decreasing it's reference count and losing the reference.
+		/// </summary>
+		bool release();
+		/// <summary>
+		/// Returns the native handle to the module
+		/// </summary>
+		ModuleHandle getHandle();
+		CModule(const CModule &);
+		/// <summary>
+		/// Destructor. Releases the module
+		/// </summary>
+		~CModule();
+	};
+}
 #endif

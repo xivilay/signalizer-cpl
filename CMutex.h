@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CMutex.h
-		
+
 		Provides an interface for easily locking objects through RAII so long as
 		they derive from CMutex::Lockable.
 		Uses an special spinlock that yields the thread instead of busy-waiting.
@@ -32,203 +32,203 @@
 *************************************************************************************/
 
 #ifndef CPL_CMUTEX_H
-	#define CPL_CMUTEX_H
+#define CPL_CMUTEX_H
 
-	#include "MacroConstants.h"
-	#ifndef __CPP11__
-		#error "No mutex support!"
-	#else
-		#include <thread>
-		#include <atomic>
-	#endif
-	namespace cpl
+#include "MacroConstants.h"
+#ifndef __CPP11__
+#error "No mutex support!"
+#else
+#include <thread>
+#include <atomic>
+#endif
+namespace cpl
+{
+	int AlertUserAboutMutex();
+
+	class CMutex
 	{
-		int AlertUserAboutMutex();
-
-		class CMutex
+	public:
+		class Lockable
 		{
+			friend class CMutex;
+			friend class CFastMutex;
+			std::atomic_flag flag;
+			std::thread::id ownerThread;
+			std::uint32_t refCount;
 		public:
-			class Lockable
+			Lockable()
 			{
-				friend class CMutex;
-				friend class CFastMutex;
-				std::atomic_flag flag;
-				std::thread::id ownerThread;
-				std::uint32_t refCount;
-			public:
-				Lockable()
-				{
-					ownerThread = std::thread::id();
-					refCount = 0;
-					flag.clear();
-				}
-
-				int refCountForThisThread()
-				{
-					return std::this_thread::get_id() == ownerThread ? refCount : 0;
-				}
-			};
-
-		public:
-
-			/// <summary>
-			/// Acquires the resource, with the default timeout
-			/// </summary>
-			CMutex(Lockable * l)
-				: resource(nullptr)
-			{
-				acquire(l);
-
+				ownerThread = std::thread::id();
+				refCount = 0;
+				flag.clear();
 			}
 
-			/// <summary>
-			/// Acquires the resource, with the default timeout
-			/// </summary>
-			CMutex(Lockable & l)
-				: resource(nullptr)
+			int refCountForThisThread()
 			{
-				acquire(l);
+				return std::this_thread::get_id() == ownerThread ? refCount : 0;
 			}
-			/// <summary>
-			/// Does nothing, until something is acquired
-			/// </summary>
-			CMutex() noexcept
-				: resource(nullptr)
-			{
-
-			}
-
-			CMutex(const CMutex &) = delete;
-			CMutex(CMutex && other) noexcept
-			{
-				resource = other.resource;
-				other.resource = nullptr;
-			}
-
-			CMutex & operator = (CMutex && other) noexcept
-			{
-				resource = other.resource;
-				other.resource = nullptr;
-				return *this;
-			}
-
-			/// <summary>
-			/// Releases any acquired resources
-			/// </summary>
-			~CMutex()
-			{
-				if (resource)
-					release(resource);
-
-			}
-
-			/// <summary>
-			/// Attemps to acquire the resource.
-			/// If it is already hold by this lock, nothing is done (recursive guarantee).
-			/// If another resource is locked by this lock, the previous lock is released, and then
-			/// attempts to acquire the other resource.
-			/// </summary>
-			/// <param name="l"></param>
-			void acquire(Lockable * l);
-
-			/// <summary>
-			/// Attemps to acquire the resource.
-			/// If it is already hold by this lock, nothing is done (recursive guarantee). If 
-			/// this thread holds the lock, nothing is done (beyond some stuff behind the scenes).
-			/// If another resource is locked by this lock, the previous lock is released, and then
-			/// attempts to acquire the other resource.
-			/// </summary>
-			/// <param name="l"></param>
-			void acquire(Lockable & l)
-			{
-				acquire(&l);
-			}
-
-			/// <summary>
-			/// Releases the resource. Called automatically on destruction.
-			/// </summary>
-			void release()
-			{
-				
-				if (resource)
-					release(resource);
-			}
-		private:
-			void release(Lockable * l);
-			static bool spinLock(unsigned ms, Lockable *  bVal);
-			Lockable * resource;
 		};
-		
-		
-		class CFastMutex
+
+	public:
+
+		/// <summary>
+		/// Acquires the resource, with the default timeout
+		/// </summary>
+		CMutex(Lockable * l)
+			: resource(nullptr)
 		{
-		private:
-			typedef CMutex::Lockable Lockable;
-			Lockable * resource;
-		public:
-			/// <summary>
-			/// Acquires the resource, with the default timeout
-			/// </summary>
-			CFastMutex(Lockable * l)
-				: resource(nullptr)
-			{
-				acquire(l);
+			acquire(l);
 
-			}
+		}
 
-			/// <summary>
-			/// Acquires the resource, with the default timeout
-			/// </summary>
-			CFastMutex(Lockable & l)
-				: resource(nullptr)
-			{
-				acquire(l);
-			}
-			/// <summary>
-			/// Does nothing, until something is acquired
-			/// </summary>
-			CFastMutex() noexcept
-				: resource(nullptr)
-			{
+		/// <summary>
+		/// Acquires the resource, with the default timeout
+		/// </summary>
+		CMutex(Lockable & l)
+			: resource(nullptr)
+		{
+			acquire(l);
+		}
+		/// <summary>
+		/// Does nothing, until something is acquired
+		/// </summary>
+		CMutex() noexcept
+			: resource(nullptr)
+		{
 
-			}
+		}
 
-			CFastMutex(const CFastMutex &) = delete;
-			CFastMutex(CFastMutex && other) noexcept
-			{
-				resource = other.resource;
-				other.resource = nullptr;
-			}
+		CMutex(const CMutex &) = delete;
+		CMutex(CMutex && other) noexcept
+		{
+			resource = other.resource;
+			other.resource = nullptr;
+		}
 
-			CFastMutex & operator = (CFastMutex && other) noexcept
-			{
-				resource = other.resource;
-				other.resource = nullptr;
-				return *this;
-			}
+		CMutex & operator = (CMutex && other) noexcept
+		{
+			resource = other.resource;
+			other.resource = nullptr;
+			return *this;
+		}
 
-			/// <summary>
-			/// Releases any acquired resources
-			/// </summary>
-			~CFastMutex()
-			{
-				if (resource)
-					release(resource);
+		/// <summary>
+		/// Releases any acquired resources
+		/// </summary>
+		~CMutex()
+		{
+			if (resource)
+				release(resource);
 
-			}
-			void acquire(Lockable * l);
-			void acquire(Lockable & l)
-			{
-				acquire(&l);
-			}
-			void release()
-			{
-				if (resource)
-					release(resource);
-			}
-		private:
-			void release(Lockable * l);
-			static bool spinLock(Lockable *  bVal);
-		};
+		}
+
+		/// <summary>
+		/// Attemps to acquire the resource.
+		/// If it is already hold by this lock, nothing is done (recursive guarantee).
+		/// If another resource is locked by this lock, the previous lock is released, and then
+		/// attempts to acquire the other resource.
+		/// </summary>
+		/// <param name="l"></param>
+		void acquire(Lockable * l);
+
+		/// <summary>
+		/// Attemps to acquire the resource.
+		/// If it is already hold by this lock, nothing is done (recursive guarantee). If 
+		/// this thread holds the lock, nothing is done (beyond some stuff behind the scenes).
+		/// If another resource is locked by this lock, the previous lock is released, and then
+		/// attempts to acquire the other resource.
+		/// </summary>
+		/// <param name="l"></param>
+		void acquire(Lockable & l)
+		{
+			acquire(&l);
+		}
+
+		/// <summary>
+		/// Releases the resource. Called automatically on destruction.
+		/// </summary>
+		void release()
+		{
+
+			if (resource)
+				release(resource);
+		}
+	private:
+		void release(Lockable * l);
+		static bool spinLock(unsigned ms, Lockable *  bVal);
+		Lockable * resource;
 	};
+
+
+	class CFastMutex
+	{
+	private:
+		typedef CMutex::Lockable Lockable;
+		Lockable * resource;
+	public:
+		/// <summary>
+		/// Acquires the resource, with the default timeout
+		/// </summary>
+		CFastMutex(Lockable * l)
+			: resource(nullptr)
+		{
+			acquire(l);
+
+		}
+
+		/// <summary>
+		/// Acquires the resource, with the default timeout
+		/// </summary>
+		CFastMutex(Lockable & l)
+			: resource(nullptr)
+		{
+			acquire(l);
+		}
+		/// <summary>
+		/// Does nothing, until something is acquired
+		/// </summary>
+		CFastMutex() noexcept
+			: resource(nullptr)
+		{
+
+		}
+
+		CFastMutex(const CFastMutex &) = delete;
+		CFastMutex(CFastMutex && other) noexcept
+		{
+			resource = other.resource;
+			other.resource = nullptr;
+		}
+
+		CFastMutex & operator = (CFastMutex && other) noexcept
+		{
+			resource = other.resource;
+			other.resource = nullptr;
+			return *this;
+		}
+
+		/// <summary>
+		/// Releases any acquired resources
+		/// </summary>
+		~CFastMutex()
+		{
+			if (resource)
+				release(resource);
+
+		}
+		void acquire(Lockable * l);
+		void acquire(Lockable & l)
+		{
+			acquire(&l);
+		}
+		void release()
+		{
+			if (resource)
+				release(resource);
+		}
+	private:
+		void release(Lockable * l);
+		static bool spinLock(Lockable *  bVal);
+	};
+};
 #endif

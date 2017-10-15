@@ -29,60 +29,60 @@
 *************************************************************************************/
 
 #ifndef CPL_CVALUEINPUTCONTROL_H
-	#define CPL_CVALUEINPUTCONTROL_H
+#define CPL_CVALUEINPUTCONTROL_H
 
-	#include "ControlBase.h"
-	#include "ValueControl.h"
-	#include <string>
-	#include <vector>
-	#include "../BuildingBlocks.h"
+#include "ControlBase.h"
+#include "ValueControl.h"
+#include <string>
+#include <vector>
+#include "../BuildingBlocks.h"
 
-	namespace cpl
-	{
-		/*********************************************************************************************
+namespace cpl
+{
+	/*********************************************************************************************
 
-			CValueControl - an extended knob that shows a list of values instead.
+		CValueControl - an extended knob that shows a list of values instead.
 
-		*********************************************************************************************/
-		class CValueInputControl
+	*********************************************************************************************/
+	class CValueInputControl
 		:
-			public juce::Component,
-			protected juce::Label::Listener,
-			protected juce::ChangeListener,
-			public ValueControl<ValueEntityBase, CompleteValue<LinearRange<ValueT>, BasicFormatter<ValueT>>>,
-			protected DestructionNotifier
-		{
+		public juce::Component,
+		protected juce::Label::Listener,
+		protected juce::ChangeListener,
+		public ValueControl<ValueEntityBase, CompleteValue<LinearRange<ValueT>, BasicFormatter<ValueT>>>,
+		protected DestructionNotifier
+	{
 
-		public:
+	public:
 
-			CValueInputControl(ValueEntityBase * valueToReferTo = nullptr, bool takeOwnerShip = false);
+		CValueInputControl(ValueEntityBase * valueToReferTo = nullptr, bool takeOwnerShip = false);
 
-			// overrides
-			virtual void bSetTitle(const std::string & newTitle) override;
-			virtual std::string bGetTitle() const override;
+		// overrides
+		virtual void bSetTitle(const std::string & newTitle) override;
+		virtual std::string bGetTitle() const override;
 
-			virtual void paint(juce::Graphics & g) override;
+		virtual void paint(juce::Graphics & g) override;
 
-			virtual void indicateSuccess();
-			virtual void indicateError();
-			~CValueInputControl();
-		protected:
-			juce::ComponentAnimator & getAnimator() { return juce::Desktop::getInstance().getAnimator(); }
-			virtual void changeListenerCallback(ChangeBroadcaster *source) override;
-			virtual void labelTextChanged(Label *labelThatHasChanged) override;
-			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
-			virtual void baseControlValueChanged() override;
-			// overrides
-			virtual void resized() override;
+		virtual void indicateSuccess();
+		virtual void indicateError();
+		~CValueInputControl();
+	protected:
+		juce::ComponentAnimator & getAnimator() { return juce::Desktop::getInstance().getAnimator(); }
+		virtual void changeListenerCallback(ChangeBroadcaster *source) override;
+		virtual void labelTextChanged(Label *labelThatHasChanged) override;
+		virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
+		virtual void baseControlValueChanged() override;
+		// overrides
+		virtual void resized() override;
 
-		private:
-			void initialize();
-			// data
-			SemanticBorder errorVisualizer;
-			juce::Label box;
-			juce::String title;
-			juce::Rectangle<int> stringBounds;
+	private:
+		void initialize();
+		// data
+		SemanticBorder errorVisualizer;
+		juce::Label box;
+		juce::String title;
+		juce::Rectangle<int> stringBounds;
 
-		};
 	};
+};
 #endif

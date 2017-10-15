@@ -176,12 +176,16 @@ namespace cpl
 		/// <summary>
 		/// May return immediately.
 		/// </summary>
-		/// <remarks> Throws std::logic_error if not actual().</remarks>
+		/// <remarks> 
+		/// Throws std::logic_error if not actual().
+		/// </remarks>
 		const std::string & name() const;
 		/// <summary>
 		/// May return immediately. join() on the process to synchronize.
 		/// </summary>
-		/// <remarks> Throws std::logic_error if not actual().</remarks>
+		/// <remarks>
+		///  Throws std::logic_error if not actual().
+		/// </remarks>
 		std::error_code kill();
 		/// <summary>
 		/// Closes all connected streams, and orphans off the process
@@ -194,7 +198,9 @@ namespace cpl
 		/// to the parent group session. Use Builder::launchDetached() to completely
 		/// avoid that situation.
 		/// </summary>
-		/// <remarks> Throws std::logic_error if not actual(). Can also throw on grave library runtime errors (like std::bad_alloc) </remarks>
+		/// <remarks> 
+		/// Throws std::logic_error if not actual(). Can also throw on grave library runtime errors (like std::bad_alloc) 
+		/// </remarks>
 		void detach();
 		/// <summary>
 		/// Returns whether this represents a valid process object,
@@ -210,7 +216,9 @@ namespace cpl
 		/// pid. No other process system-wide can use this pid while
 		/// this object exists.
 		/// </summary>
-		/// <remarks> Throws std::logic_error if not actual(). </remarks>
+		/// <remarks> 
+		/// Throws std::logic_error if not actual().
+		/// </remarks>
 		bool alive();
 		/// <summary>
 		/// A negative timeout means waiting forever, a timeout
@@ -218,7 +226,9 @@ namespace cpl
 		/// a longer timeout will try joining until the timeout.
 		/// If join() returns true, alive() will be mutated to false.
 		/// </summary>
-		/// <remarks> Throws std::logic_error if not actual(). </remarks>
+		/// <remarks> 
+		/// Throws std::logic_error if not actual(). 
+		/// </remarks>
 		bool join(int timeoutMs = -1);
 		/// <summary>
 		/// Returns a system-wide unique identifier for this process.
@@ -243,7 +253,9 @@ namespace cpl
 		/// <summary>
 		/// Returns the exit code of the process.
 		/// </summary>
-		/// <remarks> Throws std::logic_error if not actual(), or alive(). </remarks>
+		/// <remarks> 
+		/// Throws std::logic_error if not actual(), or alive(). 
+		/// </remarks>
 		std::int64_t getExitCode();
 
 		static const EnvStrings& getParentEnvironment();
@@ -254,13 +266,13 @@ namespace cpl
 
 		bool doJoin(int timeout);
 		// TODO: Detect GCC C++17 instead
-#ifdef CPL_UNIXC
+		#ifdef CPL_UNIXC
 		template<typename T>
 		using optional = std::experimental::optional<T>;
-#else
+		#else
 		template<typename T>
 		using optional = std::optional<T>;
-#endif
+		#endif
 		ScopeExitOperation callHandler(std::exception * e = nullptr) const noexcept;
 
 		class PIDHandle
@@ -301,11 +313,11 @@ namespace cpl
 		typedef detail::FileEdge<detail::InputBuffer, std::istream> InPipe;
 		typedef detail::FileEdge<detail::OutputBuffer, detail::OutputStream> OutPipe;
 
-#ifdef CPL_WINDOWS
+		#ifdef CPL_WINDOWS
 		detail::unique_handle
 			childProcessHandle,
 			childThreadHandle;
-#endif
+		#endif
 
 		std::unique_ptr<OutPipe> pin;
 		std::unique_ptr<InPipe> pout, perr;
