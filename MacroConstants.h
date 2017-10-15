@@ -45,10 +45,16 @@
 
 	#if defined(_WIN64) || defined(__x86_64__) || defined(__x86_64)
 		typedef std::uint64_t XWORD;
-		#define CPL_M_64BIT_ 1
+		#define CPL_M_64BIT 1
+		#define CPL_M_64BIT_ CPL_M_64BIT
+
 		#define CPL_ARCH_STRING "64-bit"
 	#else
 		#define __M_32BIT_
+		#define CPL_M_32BIT 1
+
+		#define CPL_M_32BIT_ CPL_M_32BIT
+
 		typedef std::uint32_t XWORD;
 		#define CPL_ARCH_STRING "32-bit"
 	#endif

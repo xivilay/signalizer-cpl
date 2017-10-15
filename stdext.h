@@ -97,6 +97,14 @@
 				{
 					return arr;
 				}
+
+			template<typename T, typename U>
+			T reinterpret_noub_cast(const U & origin)
+			{
+				T ret;
+				std::memcpy(&ret, &origin, sizeof(T));
+				return ret;
+			}
 	};
 
 

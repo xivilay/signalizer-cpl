@@ -74,6 +74,8 @@
 		namespace Misc
 		{
 			std::pair<int, std::string> ExecCommand(const std::string & arg);
+			std::pair<bool, std::string> ReadFile(const std::string & path) noexcept;
+			bool WriteFile(const std::string & path, const std::string & contents) noexcept;
 			std::string GetTime ();
 			std::string GetDate();
 			std::string DemangleRawName(const std::string & name);
@@ -116,7 +118,7 @@
 
 			void CrashIfUserDoesntDebug(const std::string & errorMessage);
 
-			Types::OSError GetLastOSError();
+			Types::OSError GetLastOSErrorCode();
 			Types::tstring GetLastOSErrorMessage();
 			Types::tstring GetLastOSErrorMessage(Types::OSError errorToPrint);
 

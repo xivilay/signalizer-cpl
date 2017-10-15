@@ -204,6 +204,41 @@ namespace cpl
 			return { PipeClose(pipe), result };
 		}
 
+		std::pair<bool, std::string> ReadFile(const std::string & path) noexcept
+		{
+			char buffer[1024];
+			std::string result;
+			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.c_str(), "r"), &std::fclose);
+
+			if (!file)
+				return { false, result };
+
+			if(!std::fseek(file.get(), 0, SEEK_END))
+				return { false, result };
+
+			result.reserve(std::ftell(file.get()));
+
+			std::rewind(file.get());
+
+			while (!std::feof(file.get()))
+			{
+				if (std::fgets(buffer, sizeof(buffer), file.get()) != NULL)
+					result += buffer;
+			}
+
+			return { true, result };
+		}
+
+		bool WriteFile(const std::string & path, const std::string& contents) noexcept
+		{
+			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.c_str(), "w"), &std::fclose);
+
+			if (!file)
+				return false;
+
+			return std::fwrite(contents.c_str(), contents.size() + 1, 1, file.get()) == 1;
+		}
+
 		/*********************************************************************************************
 
 			Delays the execution for at least msecs. Should have good precision bar context-switches,
