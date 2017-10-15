@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CPeakFilter.h
-		
+
 		A first-order lowpass filter, which resets its value to the input, if abs(it) is
 		higher, otherwise slowly decays. This is the type of filter used for dB-meters
 		and stuff, that has to reach max instantaneously and precisely, without phase error,
@@ -31,95 +31,95 @@
 
 *************************************************************************************/
 
-#ifndef _CPUSHFILTER_H
-	#define _CPUSHFILTER_H
-	
-	#include "../Mathext.h"
-	#include "../Utility.h"
-	#include <xmmintrin.h>
+#ifndef CPL_CPUSHFILTER_H
+#define CPL_CPUSHFILTER_H
 
-	namespace cpl
+#include "../Mathext.h"
+#include "../Utility.h"
+#include <xmmintrin.h>
+
+namespace cpl
+{
+	template<typename Scalar>
+	class CPeakFilter
 	{
-		template<typename Scalar>
-			class CPeakFilter
+	public:
+		typedef Scalar ScalarTy;
+
+		CPeakFilter() : sampleRate(0), decay(0), history(0), pole(0), fractionateMul(1) {};
+
+		void setSampleRate(ScalarTy sampleRate)
+		{
+			this->sampleRate = sampleRate;
+			calculatePole();
+		}
+		template<typename Ty>
+		void setDecayAsFraction(Ty decay, Ty fractionOfSampleRate = (Ty) 1.0)
+		{
+			this->decay = decay;
+			fractionateMul = fractionOfSampleRate;
+			calculatePole();
+		}
+		void setDecayAsDbs(ScalarTy decay)
+		{
+			this->decay = Math::dbToFraction(decay);
+			calculatePole();
+		}
+
+		void calculatePole()
+		{
+			pole = static_cast<ScalarTy>(std::pow(decay, (ScalarTy)(1.0) / (sampleRate * fractionateMul)));
+
+		}
+
+		ScalarTy process(ScalarTy newSample)
+		{
+			if (newSample > history)
+				history = newSample;
+			else
 			{
-			public:
-				typedef Scalar ScalarTy;
+				history *= pole;
+			}
+			return history;
+		}
 
-				CPeakFilter() : sampleRate(0), decay(0), history(0), pole(0), fractionateMul(1) {};
+		template<class Vector>
+		void processRange(Vector & oldFilters, Vector newFilters, std::size_t size)
+		{
+			#if 0
+			auto remainder = size % 4;
+			Types::v4sf pole = _mm_set1_ps(pole);
+			Types::v4sf input, output, mask, theta;
 
-				void setSampleRate(ScalarTy sampleRate)
-				{
-					this->sampleRate = sampleRate;
-					calculatePole();
-				}
-				template<typename Ty>
-				void setDecayAsFraction(Ty decay, Ty fractionOfSampleRate = (Ty) 1.0)
-				{
-					this->decay = decay;
-					fractionateMul = fractionOfSampleRate;
-					calculatePole();
-				}
-				void setDecayAsDbs(ScalarTy decay)
-				{
-					this->decay = Math::dbToFraction(decay);
-					calculatePole();
-				}
+			auto const * nf = &newFilters[0];
+			auto const * of = &oldFilters[0];
 
-				void calculatePole()
-				{
-					pole = static_cast<ScalarTy>(std::pow(decay, (ScalarTy) (1.0) / (sampleRate * fractionateMul)));
+			for (Types::fint_t i = 0; i < size; i += 4)
+			{
+				input = _mm_load_ps(nf + t);
+				output = _mm_load_ps(of + t);
 
-				}
+				mask = _mm_cmpge_ps(input, output); // ~0 if input > output
+				output = _mm_mul_ps(output, pole); // decay old output
+				input = _mm_and_ps(input, mask); // input = zero if input =< output
+				output = _mm_and_ps(output, mask); // output = zero if input > output
+				theta = _mm_add_ps(input, output); // output = input + output
+				_mm_store_ps(of + t, theta);
 
-				ScalarTy process(ScalarTy newSample)
-				{
-					if (newSample > history)
-						history = newSample;
-					else
-					{
-						history *= pole;
-					}
-					return history;
-				}
-
-				template<class Vector>
-				void processRange(Vector & oldFilters, Vector newFilters, std::size_t size)
-				{
-#if 0
-					auto remainder = size % 4;
-					Types::v4sf pole = _mm_set1_ps(pole);
-					Types::v4sf input, output, mask, theta;
-
-					auto const * nf = &newFilters[0];
-					auto const * of = &oldFilters[0];
-
-					for (Types::fint_t i = 0; i < size; i += 4)
-					{
-						input = _mm_load_ps(nf + t);
-						output = _mm_load_ps(of + t);
-						
-						mask = _mm_cmpge_ps(input, output); // ~0 if input > output
-						output = _mm_mul_ps(output, pole); // decay old output
-						input = _mm_and_ps(input, mask); // input = zero if input =< output
-						output = _mm_and_ps(output, mask); // output = zero if input > output
-						theta = _mm_add_ps(input, output); // output = input + output
-						_mm_store_ps(of + t, theta);
-
-					}
-#endif
-				}
-
-				
-				ScalarTy pole;
-				double sampleRate;
-				double fractionateMul;
-				double decay;
-				ScalarTy history;
-			};
+			}
+			#endif
+		}
 
 
+		ScalarTy pole;
+		double sampleRate;
+		double fractionateMul;
+		double decay;
+		ScalarTy history;
 	};
+
+
+};
 
 
 #endif

@@ -20,73 +20,73 @@
 	See \licenses\ for additional details on licenses associated with this program.
 
 **************************************************************************************
- 
+
 	 file:CEditSpaceSpawner.h
-		
-		A class that automatically handles opening of edit spaces for any controls 
+
+		A class that automatically handles opening of edit spaces for any controls
 		contained in a view.
-	
+
  *************************************************************************************/
 
 #ifndef CPL_CEDITSPACESPAWNER_H
-	#define CPL_CEDITSPACESPAWNER_H
+#define CPL_CEDITSPACESPAWNER_H
 
-	#include "../Common.h"
-	#include "../Utility.h"
-	#include "CBaseControl.h"
-	#include <string>
-	#include "Tools.h"
-	#include "CCtrlEditSpace.h"
-	#include "../CMutex.h"
-	#include "DesignBase.h"
+#include "../Common.h"
+#include "../Utility.h"
+#include "CBaseControl.h"
+#include <string>
+#include "Tools.h"
+#include "CCtrlEditSpace.h"
+#include "../CMutex.h"
+#include "DesignBase.h"
 
-	namespace cpl
+namespace cpl
+{
+
+	class CEditSpaceSpawner
+		:
+		public juce::MouseListener,
+		public Utility::CNoncopyable,
+		public Utility::DestructionServer<CCtrlEditSpace>::Client,
+		public juce::ComponentListener
 	{
+	public:
+		// http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
+		CEditSpaceSpawner(juce::Component & parentToControl);
+		~CEditSpaceSpawner();
 
-		class CEditSpaceSpawner 
-		: 
-			public juce::MouseListener,
-			public Utility::CNoncopyable,
-			public Utility::DestructionServer<CCtrlEditSpace>::Client,
-			public juce::ComponentListener
+	protected:
+
+		void appearWith(juce::Component & component);
+		void disappear();
+		virtual void onObjectDestruction(const CCtrlEditSpace::ObjectProxy & dyingSpace) override;
+		virtual void componentMovedOrResized(Component &component, bool wasMoved, bool wasResized) override;
+		virtual void mouseDoubleClick(const juce::MouseEvent & e) override;
+
+		virtual void mouseDown(const juce::MouseEvent & e) override;
+
+		bool isEditSpacesOn;
+		bool recursionEdit;
+		juce::Component & parent;
+		std::unique_ptr<cpl::CCtrlEditSpace> currentEditSpace;
+
+	private:
+		CEditSpaceSpawner(const CEditSpaceSpawner &) = delete;
+
+		class OpaqueComponent
+			: public juce::Component
 		{
-		public:
-			// http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
-			CEditSpaceSpawner(juce::Component & parentToControl);
-			~CEditSpaceSpawner();
-
-		protected:
-
-			void appearWith(juce::Component & component);
-			void disappear();
-			virtual void onObjectDestruction(const CCtrlEditSpace::ObjectProxy & dyingSpace) override;
-			virtual void componentMovedOrResized(Component &component, bool wasMoved, bool wasResized) override;
-			virtual void mouseDoubleClick(const juce::MouseEvent & e) override;
-			
-			virtual void mouseDown(const juce::MouseEvent & e) override;
-
-			bool isEditSpacesOn;
-			bool recursionEdit;
-			juce::Component & parent;
-			std::unique_ptr<cpl::CCtrlEditSpace> currentEditSpace;
-
-		private:
-			CEditSpaceSpawner(const CEditSpaceSpawner &) = delete;
-			
-			class OpaqueComponent
-				: public juce::Component
+			void paint(juce::Graphics & g) override
 			{
-				void paint(juce::Graphics & g) override
-				{
-					g.fillAll(GetColour(ColourEntry::Deactivated));
-					
-				}
-				
-				
-			};
-			
-			OpaqueComponent dialog;
+				g.fillAll(GetColour(ColourEntry::Deactivated));
+
+			}
+
+
 		};
 
+		OpaqueComponent dialog;
 	};
+
+};
 #endif

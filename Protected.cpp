@@ -31,11 +31,11 @@
 #include "lib/StackBuffer.h"
 #include <memory>
 #ifdef CPL_MSVC
-	#include <dbghelp.h>
-	#pragma comment(lib, "Dbghelp.lib")
+#include <dbghelp.h>
+#pragma comment(lib, "Dbghelp.lib")
 #elif defined(CPL_UNIXC)
-	#include <execinfo.h>
-	#include <cxxabi.h>
+#include <execinfo.h>
+#include <cxxabi.h>
 #endif
 
 namespace cpl
@@ -43,7 +43,7 @@ namespace cpl
 
 	CProtected::StaticData CProtected::staticData;
 	CPL_THREAD_LOCAL CProtected::ThreadData CProtected::threadData;
-    std::atomic<int> checkCounter {0};
+	std::atomic<int> checkCounter {0};
 	// TODO: make atomic. It is safe on all x86 systems, though.
 	std::unique_ptr<CProtected> internalInstance;
 	CMutex::Lockable creationLock;
@@ -80,7 +80,7 @@ namespace cpl
 		if (checkCounter.load() > 1)
 			CPL_RUNTIME_EXCEPTION("More than one Protected instance created at a time.");
 		#ifndef CPL_WINDOWS
-			registerHandlers();
+		registerHandlers();
 		#endif
 	}
 
@@ -128,127 +128,127 @@ namespace cpl
 		Misc::CStringFormatter base;
 
 		base << "Non-software exception at 0x" << std::hex << e.data.faultAddr
-			 << " (at image base " + formatDifferenceAddress(imageBase, e.data.faultAddr) + ")" << newl;
+			<< " (at image base " + formatDifferenceAddress(imageBase, e.data.faultAddr) + ")" << newl;
 
 		base << "Exception code: " << e.data.exceptCode
-			 << ", actual code: " << e.data.actualCode
-			 << ", extra info: " << e.data.extraInfoCode << newl;
+			<< ", actual code: " << e.data.actualCode
+			<< ", extra info: " << e.data.extraInfoCode << newl;
 
 		base << "Formatted message: ";
 
-		switch(e.data.exceptCode)
+		switch (e.data.exceptCode)
 		{
-		case CSystemException::status::intdiv_zero:
+			case CSystemException::status::intdiv_zero:
 				return base.str() + "An integral division-by-zero was performed";
-		case CSystemException::status::funderflow:
+			case CSystemException::status::funderflow:
 				return base.str() + "A floating point operation resulted in underflow";
-		case CSystemException::status::foverflow :
+			case CSystemException::status::foverflow:
 				return base.str() + "A floating point operation resulted in overflow";
-		case CSystemException::status::finexact:
+			case CSystemException::status::finexact:
 				return base.str() + "A floating point operation's result cannot be accurately expressed";
-		case CSystemException::status::finvalid:
+			case CSystemException::status::finvalid:
 				return base.str() + "One of the operands for a floating point operation was invalid (typically negative numbers for sqrt, exp, log)";
-		case CSystemException::status::fdiv_zero:
+			case CSystemException::status::fdiv_zero:
 				return base.str() + "A floating point division-by-zero was performed";
-		case CSystemException::status::fdenormal:
+			case CSystemException::status::fdenormal:
 				return base.str() + "One of the operands for a floating point operation was denormal (too small to be represented)";
-		case CSystemException::status::nullptr_from_plugin:
+			case CSystemException::status::nullptr_from_plugin:
 				return base.str() + "An API function was called with 'this' as an null pointer.";
-		case CSystemException::status::access_violation:
+			case CSystemException::status::access_violation:
 			{
 				Misc::CStringFormatter fmt;
 				#ifndef CPL_MSVC
-					switch(e.data.actualCode)
+				switch (e.data.actualCode)
+				{
+					case SIGSEGV:
 					{
-						case SIGSEGV:
+						fmt << "Segmentation fault ";
+						switch (e.data.extraInfoCode)
 						{
-							fmt << "Segmentation fault ";
-							switch(e.data.extraInfoCode)
-							{
-								case SEGV_ACCERR:
-									fmt << "(invalid permission for object) ";
-									break;
-								case SEGV_MAPERR:
-									fmt << "(address not mapped for object) ";
-									break;
-							}
-							break;
+							case SEGV_ACCERR:
+								fmt << "(invalid permission for object) ";
+								break;
+							case SEGV_MAPERR:
+								fmt << "(address not mapped for object) ";
+								break;
 						}
-						case SIGBUS:
-						{
-							fmt << "Bus error ";
-							switch(e.data.extraInfoCode)
-							{
-								case BUS_ADRALN:
-									fmt << "(invalid address alignment) ";
-									break;
-								case BUS_ADRERR:
-									fmt << "(non-existant address) ";
-									break;
-								case BUS_OBJERR:
-									fmt << "(object hardware error) ";
-							}
-							break;
-
-						}
-
-						case SIGILL:
-						{
-							fmt << "Illegal instruction ";
-							switch(e.data.extraInfoCode)
-							{
-
-								case ILL_ILLOPC:
-									fmt << "(Illegal opcode) "; break;
-								case ILL_ILLOPN:
-									fmt << "(Illegal operand) "; break;
-								case ILL_ILLADR:
-									fmt << "(Illegal addressing mode) "; break;
-								case ILL_ILLTRP:
-									fmt << "(Illegal trap) "; break;
-								case ILL_PRVOPC:
-									fmt << "(Privileged opcode) "; break;
-								case ILL_PRVREG:
-									fmt << "(Privileged register) "; break;
-								case ILL_COPROC:
-									fmt << "(Coprocessor error) "; break;
-								case ILL_BADSTK:
-									fmt << "(Internal stack error) "; break;
-							}
-							break;
-
-						}
-
-						default:
-							fmt << "Access violation ";
-							break;
+						break;
 					}
-				#else
-					fmt << "Access violation ";
-
-					switch (e.data.actualCode)
+					case SIGBUS:
 					{
-						case 0:
-							fmt << "reading ";
-							break;
-						case 1:
-							fmt << "writing ";
-							break;
-						case 8:
-							fmt << "executing ";
-							break;
-						default:
-							fmt << "(unknown error?) at ";
-							break;
-					};
+						fmt << "Bus error ";
+						switch (e.data.extraInfoCode)
+						{
+							case BUS_ADRALN:
+								fmt << "(invalid address alignment) ";
+								break;
+							case BUS_ADRERR:
+								fmt << "(non-existant address) ";
+								break;
+							case BUS_OBJERR:
+								fmt << "(object hardware error) ";
+						}
+						break;
+
+					}
+
+					case SIGILL:
+					{
+						fmt << "Illegal instruction ";
+						switch (e.data.extraInfoCode)
+						{
+
+							case ILL_ILLOPC:
+								fmt << "(Illegal opcode) "; break;
+							case ILL_ILLOPN:
+								fmt << "(Illegal operand) "; break;
+							case ILL_ILLADR:
+								fmt << "(Illegal addressing mode) "; break;
+							case ILL_ILLTRP:
+								fmt << "(Illegal trap) "; break;
+							case ILL_PRVOPC:
+								fmt << "(Privileged opcode) "; break;
+							case ILL_PRVREG:
+								fmt << "(Privileged register) "; break;
+							case ILL_COPROC:
+								fmt << "(Coprocessor error) "; break;
+							case ILL_BADSTK:
+								fmt << "(Internal stack error) "; break;
+						}
+						break;
+
+					}
+
+					default:
+						fmt << "Access violation ";
+						break;
+				}
+				#else
+				fmt << "Access violation ";
+
+				switch (e.data.actualCode)
+				{
+					case 0:
+						fmt << "reading ";
+						break;
+					case 1:
+						fmt << "writing ";
+						break;
+					case 8:
+						fmt << "executing ";
+						break;
+					default:
+						fmt << "(unknown error?) at ";
+						break;
+				};
 
 
 				#endif
 				fmt << "address " << std::hex << e.data.attemptedAddr << ".";
 				return base.str() + fmt.str();
 			}
-		default:
-			return base.str() + " Unknown exception (BAD!).";
+			default:
+				return base.str() + " Unknown exception (BAD!).";
 		};
 	}
 
@@ -262,34 +262,34 @@ namespace cpl
 		CPL_BREAKIFDEBUGGED();
 
 		#ifdef CPL_WINDOWS
-			auto exceptCode = _code;
-			bool safeToContinue(false);
-			void * exceptionAddress = nullptr;
-			int additionalCode = 0;
-			EXCEPTION_POINTERS * exp = reinterpret_cast<EXCEPTION_POINTERS *>(systemInformation);
-			if (exp)
-				exceptionAddress = exp->ExceptionRecord->ExceptionAddress;
-			switch(_code)
-			{
+		auto exceptCode = _code;
+		bool safeToContinue(false);
+		void * exceptionAddress = nullptr;
+		int additionalCode = 0;
+		EXCEPTION_POINTERS * exp = reinterpret_cast<EXCEPTION_POINTERS *>(systemInformation);
+		if (exp)
+			exceptionAddress = exp->ExceptionRecord->ExceptionAddress;
+		switch (_code)
+		{
 			case EXCEPTION_ACCESS_VIOLATION:
+			{
+				std::ptrdiff_t addr = 0; // nullptr invalid here?
+
+				if (exp)
 				{
-					std::ptrdiff_t addr = 0; // nullptr invalid here?
-
-					if (exp)
-					{
-						// the address that was attempted
-						addr = exp->ExceptionRecord->ExceptionInformation[1];
-						// 0 = read violation, 1 = write violation, 8 = dep violation
-						additionalCode = static_cast<int>(exp->ExceptionRecord->ExceptionInformation[0]);
-					}
-
-					e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress, (const void *) addr, additionalCode);
-
-					return EXCEPTION_EXECUTE_HANDLER;
+					// the address that was attempted
+					addr = exp->ExceptionRecord->ExceptionInformation[1];
+					// 0 = read violation, 1 = write violation, 8 = dep violation
+					additionalCode = static_cast<int>(exp->ExceptionRecord->ExceptionInformation[0]);
 				}
-				/*
-					trap all math errors:
-				*/
+
+				e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress, (const void *)addr, additionalCode);
+
+				return EXCEPTION_EXECUTE_HANDLER;
+			}
+			/*
+				trap all math errors:
+			*/
 			case EXCEPTION_INT_DIVIDE_BY_ZERO:
 			case EXCEPTION_FLT_UNDERFLOW:
 			case EXCEPTION_FLT_OVERFLOW:
@@ -305,14 +305,14 @@ namespace cpl
 
 			default:
 				return EXCEPTION_CONTINUE_SEARCH;
-			};
-			return EXCEPTION_CONTINUE_SEARCH;
+		};
+		return EXCEPTION_CONTINUE_SEARCH;
 
 		#endif
 		return 0;
 	}
 
-#ifdef CPL_WINDOWS
+	#ifdef CPL_WINDOWS
 	void WindowsBackTrace(std::ostream & f, PEXCEPTION_POINTERS pExceptionInfo)
 	{
 		// http://stackoverflow.com/questions/28099965/windows-c-how-can-i-get-a-useful-stack-trace-from-a-signal-handler
@@ -326,15 +326,15 @@ namespace cpl
 		STACKFRAME64 stack_frame;
 		memset(&stack_frame, 0, sizeof(stack_frame));
 		#if defined(_WIN64)
-			int machine_type = IMAGE_FILE_MACHINE_AMD64;
-			stack_frame.AddrPC.Offset = context_record.Rip;
-			stack_frame.AddrFrame.Offset = context_record.Rbp;
-			stack_frame.AddrStack.Offset = context_record.Rsp;
+		int machine_type = IMAGE_FILE_MACHINE_AMD64;
+		stack_frame.AddrPC.Offset = context_record.Rip;
+		stack_frame.AddrFrame.Offset = context_record.Rbp;
+		stack_frame.AddrStack.Offset = context_record.Rsp;
 		#else
-			int machine_type = IMAGE_FILE_MACHINE_I386;
-			stack_frame.AddrPC.Offset = context_record.Eip;
-			stack_frame.AddrFrame.Offset = context_record.Ebp;
-			stack_frame.AddrStack.Offset = context_record.Esp;
+		int machine_type = IMAGE_FILE_MACHINE_I386;
+		stack_frame.AddrPC.Offset = context_record.Eip;
+		stack_frame.AddrFrame.Offset = context_record.Ebp;
+		stack_frame.AddrStack.Offset = context_record.Esp;
 		#endif
 		stack_frame.AddrPC.Mode = AddrModeFlat;
 		stack_frame.AddrFrame.Mode = AddrModeFlat;
@@ -375,33 +375,33 @@ namespace cpl
 			else
 			{
 				// no symbols loaded.
-				f << formatDifferenceAddress(imageBase, (const void *) stack_frame.AddrPC.Offset) << newl;
+				f << formatDifferenceAddress(imageBase, (const void *)stack_frame.AddrPC.Offset) << newl;
 			}
 		}
 
 		SymCleanup(GetCurrentProcess());
 
 	}
-#endif
+	#endif
 	XWORD CProtected::structuredExceptionHandlerTraceInterceptor(CProtected::PreembeddedFormatter & output, XWORD code, CSystemException::eStorage & e, void * systemInformation)
 	{
 
 		XWORD ret = 0;
 		#ifdef CPL_WINDOWS
-			auto & outputStream = output.get();
-			CPL_BREAKIFDEBUGGED();
-			CSystemException::eStorage exceptionInformation;
-			// ignore return and basically use it to fill in the exception information
-			structuredExceptionHandler(code, exceptionInformation, systemInformation);
+		auto & outputStream = output.get();
+		CPL_BREAKIFDEBUGGED();
+		CSystemException::eStorage exceptionInformation;
+		// ignore return and basically use it to fill in the exception information
+		structuredExceptionHandler(code, exceptionInformation, systemInformation);
 
-			auto exceptionString = formatExceptionMessage(exceptionInformation);
-			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
-			outputStream << "- SEH exception description: " << newl << exceptionString << newl;
-			outputStream << "- Stack backtrace: " << newl;
-			WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS) systemInformation);
-			ret = EXCEPTION_CONTINUE_SEARCH;
+		auto exceptionString = formatExceptionMessage(exceptionInformation);
+		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+		outputStream << "- SEH exception description: " << newl << exceptionString << newl;
+		outputStream << "- Stack backtrace: " << newl;
+		WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS)systemInformation);
+		ret = EXCEPTION_CONTINUE_SEARCH;
 
-			cpl::Misc::LogException(outputStream.str());
+		cpl::Misc::LogException(outputStream.str());
 
 
 		#endif
@@ -413,44 +413,45 @@ namespace cpl
 	{
 		CPL_BREAKIFDEBUGGED();
 		#ifdef CPL_UNIXC
-			if (threadData.debugTraceBuffer == nullptr)
-				return;
+		if (threadData.debugTraceBuffer == nullptr)
+			return;
 
-			std::stringstream & outputStream = threadData.debugTraceBuffer->get();
+		std::stringstream & outputStream = threadData.debugTraceBuffer->get();
 
-			auto exceptionString = formatExceptionMessage(exceptionInformation);
+		auto exceptionString = formatExceptionMessage(exceptionInformation);
 
-			outputStream << "Sigaction exception description: " << exceptionString << newl;
+		outputStream << "Sigaction exception description: " << exceptionString << newl;
 
-			void *callstack[128];
-			const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
-			char buf[1024];
-			int nFrames = backtrace(callstack, nMaxFrames);
-			char **symbols = backtrace_symbols(callstack, nFrames);
+		void *callstack[128];
+		const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
+		char buf[1024];
+		int nFrames = backtrace(callstack, nMaxFrames);
+		char **symbols = backtrace_symbols(callstack, nFrames);
 
-			for (int i = 0; i < nFrames; i++) {
-				Dl_info info;
-				if (dladdr(callstack[i], &info) && info.dli_sname) {
-					char *demangled = NULL;
-					int status = -1;
-					if (info.dli_sname[0] == '_')
-						demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
-					snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n",
-							 i, int(2 + sizeof(void*) * 2), callstack[i],
-							 status == 0 ? demangled :
-							 info.dli_sname == 0 ? symbols[i] : info.dli_sname,
-							 (char *)callstack[i] - (char *)info.dli_saddr);
-					free(demangled);
-				} else {
-					snprintf(buf, sizeof(buf), "%-3d %*p %s\n",
-							 i, int(2 + sizeof(void*) * 2), callstack[i], symbols[i]);
-				}
-				outputStream << buf;
+		for (int i = 0; i < nFrames; i++) {
+			Dl_info info;
+			if (dladdr(callstack[i], &info) && info.dli_sname) {
+				char *demangled = NULL;
+				int status = -1;
+				if (info.dli_sname[0] == '_')
+					demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
+				snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n",
+					i, int(2 + sizeof(void*) * 2), callstack[i],
+					status == 0 ? demangled :
+					info.dli_sname == 0 ? symbols[i] : info.dli_sname,
+					(char *)callstack[i] - (char *)info.dli_saddr);
+				free(demangled);
 			}
-			free(symbols);
+			else {
+				snprintf(buf, sizeof(buf), "%-3d %*p %s\n",
+					i, int(2 + sizeof(void*) * 2), callstack[i], symbols[i]);
+			}
+			outputStream << buf;
+		}
+		free(symbols);
 
-			cpl::Misc::LogException(outputStream.str());
-			cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+		cpl::Misc::LogException(outputStream.str());
+		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
 		#endif
 	}
 	/*********************************************************************************************
@@ -460,197 +461,197 @@ namespace cpl
 	 *********************************************************************************************/
 	void CProtected::signalHandler(int some_number)
 	{
-		throw (XWORD) some_number;
+		throw (XWORD)some_number;
 	}
 
 	void CProtected::signalActionHandler(int sig, siginfo_t * siginfo, void * extra)
 	{
 		#ifndef CPL_WINDOWS
-			// consider locking signalLock here -- not sure if its well-defined, though
+		// consider locking signalLock here -- not sure if its well-defined, though
 
+		/*
+			Firstly, check if the exception occured at our stack, after runProtectedCode
+			which sets activeStateObject to a valid object
+		*/
+		if (threadData.isInStack)
+		{
 			/*
-				Firstly, check if the exception occured at our stack, after runProtectedCode
-				which sets activeStateObject to a valid object
+				handle the exception here.
 			*/
-			if(threadData.isInStack)
+
+			const void * fault_address = siginfo ? siginfo->si_addr : nullptr;
+			auto ecode = siginfo->si_code;
+			bool safeToContinue = false;
+
+			// -- this should be handled by siglongjmp
+			//sigemptyset (&newAction.sa_mask);
+			//sigaddset(&newAction.sa_mask, sig);
+			//sigprocmask(SIG_UNBLOCK, &newAction.sa_mask, NULL);
+
+			switch (sig)
 			{
-				/*
-					handle the exception here.
-				*/
-
-				const void * fault_address = siginfo ? siginfo->si_addr : nullptr;
-				auto ecode = siginfo->si_code;
-				bool safeToContinue = false;
-
-				// -- this should be handled by siglongjmp
-				//sigemptyset (&newAction.sa_mask);
-				//sigaddset(&newAction.sa_mask, sig);
-				//sigprocmask(SIG_UNBLOCK, &newAction.sa_mask, NULL);
-
-				switch(sig)
+				case SIGILL:
+				case SIGBUS:
+				case SIGSEGV:
 				{
-					case SIGILL:
-					case SIGBUS:
-					case SIGSEGV:
-					{
 
-						threadData.currentExceptionData = CSystemException::eStorage::create(
-							CSystemException::access_violation,
-							safeToContinue,
-							nullptr,
-							fault_address,
-							ecode,
-							sig
-						);
+					threadData.currentExceptionData = CSystemException::eStorage::create(
+						CSystemException::access_violation,
+						safeToContinue,
+						nullptr,
+						fault_address,
+						ecode,
+						sig
+					);
 
-						if (threadData.traceIntercept)
-							signalTraceInterceptor(threadData.currentExceptionData);
+					if (threadData.traceIntercept)
+						signalTraceInterceptor(threadData.currentExceptionData);
 
-						// jump back to CState::runProtectedCode. Note, we know that function was called
-						// earlier in the stackframe, because threadData.activeStateObject is non-null
-						// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
-						// IS valid.
+					// jump back to CState::runProtectedCode. Note, we know that function was called
+					// earlier in the stackframe, because threadData.activeStateObject is non-null
+					// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
+					// IS valid.
 
-						if(!threadData.propagate)
-							siglongjmp(threadData.threadJumpBuffer, 1);
-						break;
-					}
-					case SIGFPE:
-					{
-						// exceptions that happened are still set in the status flags - always clear these,
-						// or the exception might throw again
-						std::feclearexcept(FE_ALL_EXCEPT);
-						CSystemException::status code_status;
-						switch(ecode)
-						{
-							case FPE_FLTDIV:
-								code_status = CSystemException::status::fdiv_zero;
-								break;
-							case FPE_FLTOVF:
-								code_status = CSystemException::status::foverflow;
-								break;
-							case FPE_FLTUND:
-								code_status = CSystemException::status::funderflow;
-								break;
-							case FPE_FLTRES:
-								code_status = CSystemException::status::finexact;
-								break;
-							case FPE_FLTINV:
-								code_status = CSystemException::status::finvalid;
-								break;
-							case FPE_FLTSUB:
-								code_status = CSystemException::status::intsubscript;
-								break;
-							case FPE_INTDIV:
-								code_status = CSystemException::status::intdiv_zero;
-								break;
-							case FPE_INTOVF:
-								code_status = CSystemException::status::intoverflow;
-								break;
-						}
-
-						safeToContinue = true;
-
-						threadData.currentExceptionData = CSystemException::eStorage::create(
-							code_status,
-							safeToContinue,
-							fault_address
-						);
-
-						if(threadData.traceIntercept)
-							signalTraceInterceptor(threadData.currentExceptionData);
-
-						// jump back to CState::runProtectedCode. Note, we know that function was called
-						// earlier in the stackframe, because threadData.activeStateObject is non-null
-						// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
-						// IS valid.
-						if (!threadData.propagate)
-							siglongjmp(threadData.threadJumpBuffer, 1);
-						break;
-					}
-					default:
-						goto default_handler;
-				} // switch signal
-			} // if threadData.activeStateObject
-
-			/*
-				Exception happened in some arbitrary place we have no knowledge off, or we are
-				propagating the exception.
-				First we try to call the old signal handlers
-			*/
-		default_handler:
-			/*
-				consider checking here that sa_handler/sa_sigaction is actually valid and not something like
-				SIG_DFLT, in which case re have to reset the handlers and manually raise the signal again
-			*/
-
-			if(staticData.oldHandlers[sig].sa_flags & SA_SIGINFO)
-			{
-				auto addr = staticData.oldHandlers[sig].sa_sigaction;
-
-				// why is this system so ugly
-				if((void*)addr == SIG_DFL)
-				{
-					struct sigaction current;
-					if(sigaction(sig, &staticData.oldHandlers[sig], &current))
-					{
-						goto die_brutally;
-					}
-					else
-					{
-						if(raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
-							goto die_brutally;
-						else
-							return;
-					}
+					if (!threadData.propagate)
+						siglongjmp(threadData.threadJumpBuffer, 1);
+					break;
 				}
-				else if((void*)addr == SIG_IGN)
+				case SIGFPE:
 				{
-					return;
+					// exceptions that happened are still set in the status flags - always clear these,
+					// or the exception might throw again
+					std::feclearexcept(FE_ALL_EXCEPT);
+					CSystemException::status code_status;
+					switch (ecode)
+					{
+						case FPE_FLTDIV:
+							code_status = CSystemException::status::fdiv_zero;
+							break;
+						case FPE_FLTOVF:
+							code_status = CSystemException::status::foverflow;
+							break;
+						case FPE_FLTUND:
+							code_status = CSystemException::status::funderflow;
+							break;
+						case FPE_FLTRES:
+							code_status = CSystemException::status::finexact;
+							break;
+						case FPE_FLTINV:
+							code_status = CSystemException::status::finvalid;
+							break;
+						case FPE_FLTSUB:
+							code_status = CSystemException::status::intsubscript;
+							break;
+						case FPE_INTDIV:
+							code_status = CSystemException::status::intdiv_zero;
+							break;
+						case FPE_INTOVF:
+							code_status = CSystemException::status::intoverflow;
+							break;
+					}
+
+					safeToContinue = true;
+
+					threadData.currentExceptionData = CSystemException::eStorage::create(
+						code_status,
+						safeToContinue,
+						fault_address
+					);
+
+					if (threadData.traceIntercept)
+						signalTraceInterceptor(threadData.currentExceptionData);
+
+					// jump back to CState::runProtectedCode. Note, we know that function was called
+					// earlier in the stackframe, because threadData.activeStateObject is non-null
+					// : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
+					// IS valid.
+					if (!threadData.propagate)
+						siglongjmp(threadData.threadJumpBuffer, 1);
+					break;
+				}
+				default:
+					goto default_handler;
+			} // switch signal
+		} // if threadData.activeStateObject
+
+		/*
+			Exception happened in some arbitrary place we have no knowledge off, or we are
+			propagating the exception.
+			First we try to call the old signal handlers
+		*/
+	default_handler:
+		/*
+			consider checking here that sa_handler/sa_sigaction is actually valid and not something like
+			SIG_DFLT, in which case re have to reset the handlers and manually raise the signal again
+		*/
+
+		if (staticData.oldHandlers[sig].sa_flags & SA_SIGINFO)
+		{
+			auto addr = staticData.oldHandlers[sig].sa_sigaction;
+
+			// why is this system so ugly
+			if ((void*)addr == SIG_DFL)
+			{
+				struct sigaction current;
+				if (sigaction(sig, &staticData.oldHandlers[sig], &current))
+				{
+					goto die_brutally;
 				}
 				else
 				{
-					return staticData.oldHandlers[sig].sa_sigaction(sig, siginfo, extra);
+					if (raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
+						goto die_brutally;
+					else
+						return;
 				}
-
-
+			}
+			else if ((void*)addr == SIG_IGN)
+			{
+				return;
 			}
 			else
 			{
-				auto addr = staticData.oldHandlers[sig].sa_handler;
+				return staticData.oldHandlers[sig].sa_sigaction(sig, siginfo, extra);
+			}
 
-				if(addr == SIG_DFL)
+
+		}
+		else
+		{
+			auto addr = staticData.oldHandlers[sig].sa_handler;
+
+			if (addr == SIG_DFL)
+			{
+				struct sigaction current;
+				if (sigaction(sig, &staticData.oldHandlers[sig], &current))
 				{
-					struct sigaction current;
-					if(sigaction(sig, &staticData.oldHandlers[sig], &current))
-					{
-						goto die_brutally;
-					}
-					else
-					{
-						if(raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
-							goto die_brutally;
-						else
-							return;
-					}
-				}
-				else if(addr == SIG_IGN)
-				{
-					return;
+					goto die_brutally;
 				}
 				else
 				{
-					return staticData.oldHandlers[sig].sa_handler(sig);
+					if (raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
+						goto die_brutally;
+					else
+						return;
 				}
-
 			}
-			/*
-				WE SHOULD NEVER REACH THIS POINT. NEVER. Except for nuclear war and/or nearby black hole
-			*/
+			else if (addr == SIG_IGN)
+			{
+				return;
+			}
+			else
+			{
+				return staticData.oldHandlers[sig].sa_handler(sig);
+			}
 
-			// no handler found, throw exception (that will call terminate)
-		die_brutally:
-			CPL_RUNTIME_EXCEPTION(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
+		}
+		/*
+			WE SHOULD NEVER REACH THIS POINT. NEVER. Except for nuclear war and/or nearby black hole
+		*/
+
+		// no handler found, throw exception (that will call terminate)
+	die_brutally:
+		CPL_RUNTIME_EXCEPTION(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");
 		#endif
 	}
 
@@ -662,19 +663,19 @@ namespace cpl
 	bool CProtected::registerHandlers()
 	{
 		#ifndef CPL_MSVC
-			CMutex lock(staticData.signalLock);
-			if(!staticData.signalReferenceCount)
-			{
-				staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
-				staticData.newHandler.sa_flags = SA_SIGINFO;
-				sigemptyset(&staticData.newHandler.sa_mask);
-				sigaction(SIGILL, &staticData.newHandler, &staticData.oldHandlers[SIGILL]);
-				sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
-				sigaction(SIGFPE, &staticData.newHandler, &staticData.oldHandlers[SIGFPE]);
-				sigaction(SIGBUS, &staticData.newHandler, &staticData.oldHandlers[SIGBUS]);
-			}
-			staticData.signalReferenceCount++;
-			return true;
+		CMutex lock(staticData.signalLock);
+		if (!staticData.signalReferenceCount)
+		{
+			staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
+			staticData.newHandler.sa_flags = SA_SIGINFO;
+			sigemptyset(&staticData.newHandler.sa_mask);
+			sigaction(SIGILL, &staticData.newHandler, &staticData.oldHandlers[SIGILL]);
+			sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
+			sigaction(SIGFPE, &staticData.newHandler, &staticData.oldHandlers[SIGFPE]);
+			sigaction(SIGBUS, &staticData.newHandler, &staticData.oldHandlers[SIGBUS]);
+		}
+		staticData.signalReferenceCount++;
+		return true;
 		#endif
 		return false;
 	}
@@ -682,19 +683,19 @@ namespace cpl
 	bool CProtected::unregisterHandlers()
 	{
 		#ifndef CPL_MSVC
-			CMutex lock(staticData.signalLock);
-			staticData.signalReferenceCount--;
-			if(staticData.signalReferenceCount == 0)
+		CMutex lock(staticData.signalLock);
+		staticData.signalReferenceCount--;
+		if (staticData.signalReferenceCount == 0)
+		{
+			for (auto & signalData : staticData.oldHandlers)
 			{
-				for(auto & signalData : staticData.oldHandlers)
-				{
-					// restore all registrered old signal handlers
-					sigaction(signalData.first, &signalData.second, nullptr);
-				}
-				staticData.oldHandlers.clear();
-				return true;
+				// restore all registrered old signal handlers
+				sigaction(signalData.first, &signalData.second, nullptr);
 			}
-			return false;
+			staticData.oldHandlers.clear();
+			return true;
+		}
+		return false;
 		#endif
 		return false;
 	}

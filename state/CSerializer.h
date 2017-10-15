@@ -106,781 +106,781 @@
 *************************************************************************************/
 
 #ifndef CPL_CSERIALIZER_H
-	#define CPL_CSERIALIZER_H
+#define CPL_CSERIALIZER_H
 
-	#include <cstdint>
-	#include <string>
-	#include <map>
-	#include <vector>
-	#include <memory>
-	#include <exception>
-	#include <stdexcept>
-	#include <atomic>
-	#include "../stdext.h"
-	#include "../PlatformSpecific.h"
-	#include "../Misc.h"
-	#include "../ProgramVersion.h"
+#include <cstdint>
+#include <string>
+#include <map>
+#include <vector>
+#include <memory>
+#include <exception>
+#include <stdexcept>
+#include <atomic>
+#include "../stdext.h"
+#include "../PlatformSpecific.h"
+#include "../Misc.h"
+#include "../ProgramVersion.h"
 
-	namespace cpl
+namespace cpl
+{
+
+	class BinaryBuilder
 	{
+	public:
+		typedef char basic_element;
+		typedef basic_element byte;
 
-		class BinaryBuilder
+		template<typename org_type>
+		struct custom_deleter
+		{
+			template<typename new_type>
+			void operator()(new_type * obj)
+			{
+				auto casted_ptr = reinterpret_cast<org_type*>(obj);
+				delete[] casted_ptr;
+			}
+		};
+
+		using deleter = custom_deleter < basic_element >;
+
+		template<typename T>
+		using owned_ptr = std::unique_ptr <T, deleter >;
+
+		BinaryBuilder()
+			: memory(nullptr), bytesUsed(0), bytesAllocated(0), readPtr(0)
+		{
+
+		}
+		// the 'big' five
+		BinaryBuilder(const BinaryBuilder & other)
+			: memory(nullptr), bytesUsed(0), bytesAllocated(0), readPtr(0)
+		{
+			appendBytes(other.getPointer(), other.getSize());
+			readPtr = other.readPtr;
+		}
+
+		BinaryBuilder(BinaryBuilder && other) noexcept
+			: memory(nullptr), bytesUsed(0), bytesAllocated(0), readPtr(0)
+		{
+			bytesAllocated = other.bytesAllocated;
+			bytesUsed = other.bytesUsed;
+			readPtr = other.readPtr;
+			memory = std::move(other.memory);
+		}
+
+		BinaryBuilder & operator = (const BinaryBuilder & other)
+		{
+			reset();
+			appendBytes(other.getPointer(), other.getSize());
+			readPtr = other.readPtr;
+			return *this;
+		}
+
+		BinaryBuilder & operator = (BinaryBuilder && other) noexcept
+		{
+			reset();
+			bytesAllocated = other.bytesAllocated;
+			bytesUsed = other.bytesUsed;
+			readPtr = other.readPtr;
+			memory = std::move(other.memory);
+			return *this;
+		}
+
+		void appendBytes(const void * content, std::uint64_t bytesl)
+		{
+			if (!bytesl)
+				return;
+
+			std::size_t bytes = static_cast<std::size_t>(bytesl);
+			ensureExtraBytes(bytes);
+			std::memcpy(getCurrentPointer(), content, bytes);
+			bytesUsed += bytes;
+			// apply this for FIFO
+			//readPtr = bytesUsed;
+		}
+
+		std::string getString()
+		{
+			std::size_t size = 0;
+			if (!bytesUsed || !getPointer())
+				return "";
+
+			const char * pointer = reinterpret_cast<const char *>(memory.get());
+			pointer += readPtr;
+			for (;;)
+			{
+				// no nulltermination, assume something is corrupt and bail out
+				if (size > bytesUsed)
+					return "";
+				if (pointer[size] == '\0')
+					break;
+				size++;
+
+			}
+			// add one more byte to include the nullterminator
+			readPtr += size + 1;
+			if (size > 1)
+			{
+				// notice it reads size bytes from pointer, not
+				// [pointer .. pointer + size] which would be
+				// one more byte, thus including the zero terminator.
+				return std::string(pointer, size);
+			}
+			else
+				return "";
+		}
+
+		bool readBytes(void * content, std::size_t bytes)
+		{
+			// bad params
+			if (!bytes || !content)
+				return false;
+			// reading more than what's available
+			if (bytes + readPtr > bytesUsed)
+				return false;
+			// nothing to read - or reading more than what's available
+			if (!getPointer())
+				return false;
+
+			std::memcpy(content, getPointer() + readPtr, bytes);
+			readPtr += bytes;
+			return true;
+		}
+
+		void ensureExtraBytes(std::size_t ebytes)
+		{
+			return ensureBytes(ebytes + bytesUsed);
+		}
+
+		void ensureBytes(std::size_t bytes)
+		{
+			if (bytes > bytesAllocated)
+			{
+				std::size_t newSize = static_cast<std::size_t>(bytes * 1.5);
+				auto newPtr = std::make_unique<char[]>(newSize);
+				std::memcpy(newPtr.get(), memory.get(), bytesUsed);
+				bytesAllocated = newSize;
+				memory.reset(newPtr.release());
+			}
+		}
+		char * getCurrentPointer() const { return memory.get() + bytesUsed; }
+		char * getPointer() const { return memory.get(); }
+		std::size_t getSize() const { return bytesUsed; }
+		void reset() { acquirePointer(); }
+		void rewindRead() { readPtr = 0; }
+		void rewindWrite() { bytesUsed = 0; }
+		owned_ptr<byte[]> acquirePointer() { readPtr = bytesAllocated = bytesUsed = 0; return owned_ptr<byte[]>(memory.release()); }
+	private:
+
+		std::size_t bytesAllocated, bytesUsed;
+		std::size_t readPtr;
+		owned_ptr<byte[]> memory;
+	};
+
+	class ContentWrapper
+	{
+	public:
+		//ContentWrapper(std::string filePath);
+
+		ContentWrapper(BinaryBuilder & b)
+		{
+			contentSize = b.getSize();
+			contents.reset(b.acquirePointer().release());
+		}
+
+		ContentWrapper(BinaryBuilder::owned_ptr<BinaryBuilder::byte[]> memory, std::size_t size)
+			: contents(memory.release()), contentSize(size)
+		{
+
+		}
+
+		const char * getBlock() const { return static_cast<const char*>(contents.get()); }
+		std::size_t getSize() const { return contentSize; }
+		ContentWrapper(ContentWrapper && cw)
+			: contents(cw.contents.release()), contentSize(cw.contentSize)
+		{
+
+		}
+
+	private:
+		std::unique_ptr<char[]> contents;
+		std::size_t contentSize;
+	};
+
+	class WeakContentWrapper
+	{
+	public:
+		WeakContentWrapper(const BinaryBuilder::byte * c, std::uint64_t size) : contents(c), contentSize(size) {}
+		WeakContentWrapper(const void * c, std::uint64_t size)
+			: contents(static_cast<const BinaryBuilder::byte *>(c)), contentSize(size) {}
+		WeakContentWrapper(const ContentWrapper & cw) : contents(cw.getBlock()), contentSize(cw.getSize()) {}
+
+		const char * getBlock() const { return contents; }
+		std::uint64_t getSize() const { return contentSize; }
+
+	private:
+		const BinaryBuilder::byte * contents;
+		std::uint64_t contentSize;
+	};
+
+	class ISerializerSystem
+	{
+	public:
+		virtual bool build(const WeakContentWrapper & cr) = 0;
+		virtual ContentWrapper compile(bool addMasterHeader = false) const = 0;
+		virtual void clear() = 0;
+		virtual bool isEmpty() const noexcept = 0;
+		virtual ~ISerializerSystem() {};
+	};
+
+	class CSerializer : public ISerializerSystem
+	{
+	public:
+
+		enum class Modifiers
+		{
+			/// <summary>
+			/// Stack-modified. If set (internally), all writes & reads modify read ptrs, but do not
+			/// store or read data; any references passed in are unmodified.
+			/// </summary>
+			Virtual,
+			RestoreValue,
+			RestoreSettings
+		};
+
+		typedef CSerializer Archiver;
+		typedef CSerializer Builder;
+
+		class ExhaustedException : public Misc::CPLRuntimeException
 		{
 		public:
-			typedef char basic_element;
-			typedef basic_element byte;
+			ExhaustedException(const std::string & error)
+				: CPLRuntimeException(error)
+			{
 
-			template<typename org_type>
-				struct custom_deleter
-				{
-					template<typename new_type>
-						void operator()(new_type * obj)
-						{
-							auto casted_ptr = reinterpret_cast<org_type*>(obj);
-							delete[] casted_ptr;
-						}
-				};
+			}
+		};
 
-			using deleter = custom_deleter < basic_element > ;
+		class Serializable
+		{
+		public:
+			virtual ~Serializable() {};
 
+			/// <summary>
+			/// Serialize the object state to the archiver, in a version
+			/// compatible with the argument version
+			/// </summary>
+			virtual void serialize(Archiver & ar, Version version) {};
+			/// <summary>
+			/// Deserialize the content to your object. The content comes from
+			/// version argument version.
+			/// </summary>
+			virtual void deserialize(Builder & ar, Version version) {};
+		};
+
+		enum class HeaderType : std::uint16_t
+		{
+			Start = 0x10, // some sentinel value makes debugging easier
+			Key,
+			Data,
+			Child,
+			End,
+			CheckedHeader,
+			LocalVersion,
+			Invalid // always add new types before invalid, such that old programs identify new serializable data as invalid
+		};
+		template<typename ExtraHeader>
+		struct CPL_ALIGNAS(8) BinaryHeader
+		{
+			std::uint64_t headerSize;
+			std::uint64_t dataSize;
+			HeaderType type;
+			ExtraHeader info;
+
+			BinaryHeader()
+				: headerSize(sizeof(*this)), dataSize(0), type(HeaderType::Invalid), info()
+			{}
+			const BinaryHeader<int> * next() const
+			{
+				if (type == HeaderType::End)
+					return nullptr;
+				else
+					return (BinaryHeader<int>*)(((char*)this) + headerSize + dataSize);
+			}
 			template<typename T>
-				using owned_ptr = std::unique_ptr <T , deleter > ;
-
-			BinaryBuilder()
-				: memory(nullptr), bytesUsed(0), bytesAllocated(0), readPtr(0)
+			const T * getData() const
 			{
-
+				return reinterpret_cast<const T *>(((const char *)this) + sizeof(*this));
 			}
-			// the 'big' five
-			BinaryBuilder(const BinaryBuilder & other)
-				: memory(nullptr), bytesUsed(0), bytesAllocated(0), readPtr(0)
+		};
+
+		struct MasterHeaderInfo
+		{
+			std::uint64_t totalSize;
+			Version::BinaryStorage versionID;
+		};
+
+		struct KeyHeaderInfo
+		{
+			bool isString;
+			std::int64_t ID;
+		};
+
+		struct DataHeaderInfo
+		{
+
+		};
+
+		struct LocalVersionInfo
+		{
+			Version::BinaryStorage version;
+		};
+
+		using MasterHeader = BinaryHeader < MasterHeaderInfo >;
+		using KeyHeader = BinaryHeader < KeyHeaderInfo >;
+		using StdHeader = BinaryHeader < int >;
+		using MD5CheckedHeader = BinaryHeader <uint8_t[16]>;
+		using LocalVersionHeader = BinaryHeader <LocalVersionInfo>;
+
+		class Key
+		{
+		public:
+			explicit Key(const KeyHeader * kh);
+			Key(const std::string & s) : isString(true), intKey(0), stringKey(s) {};
+			Key(const char * s) : isString(true), intKey(0), stringKey(s) {};
+			Key(long long ID) : isString(false), intKey(ID) {};
+
+			bool operator < (const Key & other) const
 			{
-				appendBytes(other.getPointer(), other.getSize());
-				readPtr = other.readPtr;
-			}
+				// true return == other > this
 
-			BinaryBuilder(BinaryBuilder && other) noexcept
-				: memory(nullptr), bytesUsed(0), bytesAllocated(0), readPtr(0)
-			{
-				bytesAllocated = other.bytesAllocated;
-				bytesUsed = other.bytesUsed;
-				readPtr = other.readPtr;
-				memory = std::move(other.memory);
-			}
-
-			BinaryBuilder & operator = (const BinaryBuilder & other)
-			{
-				reset();
-				appendBytes(other.getPointer(), other.getSize());
-				readPtr = other.readPtr;
-				return *this;
-			}
-
-			BinaryBuilder & operator = (BinaryBuilder && other) noexcept
-			{
-				reset();
-				bytesAllocated = other.bytesAllocated;
-				bytesUsed = other.bytesUsed;
-				readPtr = other.readPtr;
-				memory = std::move(other.memory);
-				return *this;
-			}
-
-			void appendBytes(const void * content, std::uint64_t bytesl)
-			{
-				if (!bytesl)
-					return;
-
-				std::size_t bytes = static_cast<std::size_t>(bytesl);
-				ensureExtraBytes(bytes);
-				std::memcpy(getCurrentPointer(), content, bytes);
-				bytesUsed += bytes;
-				// apply this for FIFO
-				//readPtr = bytesUsed;
-			}
-
-			std::string getString()
-			{
-				std::size_t size = 0;
-				if(!bytesUsed || !getPointer())
-					return "";
-
-				const char * pointer = reinterpret_cast<const char * >(memory.get());
-				pointer += readPtr;
-				for (;;)
+				// strings compare greater than IDs
+				if (other.isString)
 				{
-					// no nulltermination, assume something is corrupt and bail out
-					if(size > bytesUsed)
-						return "";
-					if(pointer[size] == '\0')
-					   break;
-					size++;
-
-				}
-				// add one more byte to include the nullterminator
-				readPtr += size + 1;
-				if (size > 1)
-				{
-					// notice it reads size bytes from pointer, not
-					// [pointer .. pointer + size] which would be
-					// one more byte, thus including the zero terminator.
-					return std::string(pointer, size);
+					if (!isString)
+						return true;
+					else
+						return stringKey < other.stringKey;
 				}
 				else
-					return "";
-			}
-
-			bool readBytes(void * content, std::size_t bytes)
-			{
-				// bad params
-				if (!bytes || !content)
-					return false;
-				// reading more than what's available
-				if (bytes + readPtr > bytesUsed)
-					return false;
-				// nothing to read - or reading more than what's available
-				if (!getPointer())
-					return false;
-
-				std::memcpy(content, getPointer() + readPtr, bytes);
-				readPtr += bytes;
-				return true;
-			}
-
-			void ensureExtraBytes(std::size_t ebytes)
-			{
-				return ensureBytes(ebytes + bytesUsed);
-			}
-
-			void ensureBytes(std::size_t bytes)
-			{
-				if (bytes > bytesAllocated)
 				{
-					std::size_t newSize = static_cast<std::size_t>(bytes * 1.5);
-					auto newPtr = std::make_unique<char[]>(newSize);
-					std::memcpy(newPtr.get(), memory.get(), bytesUsed);
-					bytesAllocated = newSize;
-					memory.reset(newPtr.release());
-				}
-			}
-			char * getCurrentPointer() const { return memory.get() + bytesUsed; }
-			char * getPointer() const { return memory.get(); }
-			std::size_t getSize() const { return bytesUsed; }
-			void reset() { acquirePointer(); }
-			void rewindRead() { readPtr = 0; }
-			void rewindWrite() { bytesUsed = 0; }
-			owned_ptr<byte[]> acquirePointer() { readPtr = bytesAllocated = bytesUsed = 0; return owned_ptr<byte[]>(memory.release()); }
-		private:
-
-			std::size_t bytesAllocated, bytesUsed;
-			std::size_t readPtr;
-			owned_ptr<byte[]> memory;
-		};
-
-		class ContentWrapper
-		{
-		public:
-			//ContentWrapper(std::string filePath);
-
-			ContentWrapper(BinaryBuilder & b)
-			{
-				contentSize = b.getSize();
-				contents.reset(b.acquirePointer().release());
-			}
-
-			ContentWrapper(BinaryBuilder::owned_ptr<BinaryBuilder::byte[]> memory, std::size_t size)
-				: contents(memory.release()), contentSize(size)
-			{
-
-			}
-
-			const char * getBlock() const { return static_cast<const char*>(contents.get()); }
-			std::size_t getSize() const { return contentSize; }
-			ContentWrapper(ContentWrapper && cw)
-				: contents(cw.contents.release()), contentSize(cw.contentSize)
-			{
-
-			}
-
-		private:
-			std::unique_ptr<char[]> contents;
-			std::size_t contentSize;
-		};
-
-		class WeakContentWrapper
-		{
-		public:
-			WeakContentWrapper(const BinaryBuilder::byte * c, std::uint64_t size) : contents(c), contentSize(size) {}
-			WeakContentWrapper(const void * c, std::uint64_t size)
-				: contents(static_cast<const BinaryBuilder::byte *>(c)), contentSize(size) {}
-			WeakContentWrapper(const ContentWrapper & cw) : contents(cw.getBlock()), contentSize(cw.getSize()) {}
-
-			const char * getBlock() const { return contents; }
-			std::uint64_t getSize() const { return contentSize; }
-
-		private:
-			const BinaryBuilder::byte * contents;
-			std::uint64_t contentSize;
-		};
-
-		class ISerializerSystem
-		{
-		public:
-			virtual bool build(const WeakContentWrapper & cr) = 0;
-			virtual ContentWrapper compile(bool addMasterHeader = false) const = 0;
-			virtual void clear() = 0;
-			virtual bool isEmpty() const noexcept = 0;
-			virtual ~ISerializerSystem() {};
-		};
-
-		class CSerializer : public ISerializerSystem
-		{
-		public:
-
-			enum class Modifiers
-			{
-				/// <summary>
-				/// Stack-modified. If set (internally), all writes & reads modify read ptrs, but do not
-				/// store or read data; any references passed in are unmodified.
-				/// </summary>
-				Virtual,
-				RestoreValue,
-				RestoreSettings
-			};
-
-			typedef CSerializer Archiver;
-			typedef CSerializer Builder;
-
-			class ExhaustedException : public Misc::CPLRuntimeException
-			{
-			public:
-				ExhaustedException(const std::string & error)
-					: CPLRuntimeException(error)
-				{
-
-				}
-			};
-
-			class Serializable
-			{
-			public:
-				virtual ~Serializable() {};
-
-				/// <summary>
-				/// Serialize the object state to the archiver, in a version
-				/// compatible with the argument version
-				/// </summary>
-				virtual void serialize(Archiver & ar, Version version) {};
-				/// <summary>
-				/// Deserialize the content to your object. The content comes from
-				/// version argument version.
-				/// </summary>
-				virtual void deserialize(Builder & ar, Version version) {};
-			};
-
-			enum class HeaderType : std::uint16_t
-			{
-				Start = 0x10, // some sentinel value makes debugging easier
-				Key,
-				Data,
-				Child,
-				End,
-				CheckedHeader,
-				LocalVersion,
-				Invalid // always add new types before invalid, such that old programs identify new serializable data as invalid
-			};
-			template<typename ExtraHeader>
-				struct CPL_ALIGNAS(8) BinaryHeader
-				{
-					std::uint64_t headerSize;
-					std::uint64_t dataSize;
-					HeaderType type;
-					ExtraHeader info;
-
-					BinaryHeader()
-						: headerSize(sizeof(*this)), dataSize(0), type(HeaderType::Invalid), info()
-					{}
-					const BinaryHeader<int> * next() const
-					{
-						if (type == HeaderType::End)
-							return nullptr;
-						else
-							return (BinaryHeader<int>*)(((char*)this) + headerSize + dataSize);
-					}
-					template<typename T>
-						const T * getData() const
-						{
-							return reinterpret_cast<const T *>(((const char *)this) + sizeof(*this));
-						}
-				};
-
-			struct MasterHeaderInfo
-			{
-				std::uint64_t totalSize;
-				Version::BinaryStorage versionID;
-			};
-
-			struct KeyHeaderInfo
-			{
-				bool isString;
-				std::int64_t ID;
-			};
-
-			struct DataHeaderInfo
-			{
-
-			};
-
-			struct LocalVersionInfo
-			{
-				Version::BinaryStorage version;
-			};
-
-			using MasterHeader = BinaryHeader < MasterHeaderInfo > ;
-			using KeyHeader = BinaryHeader < KeyHeaderInfo > ;
-			using StdHeader = BinaryHeader < int > ;
-			using MD5CheckedHeader = BinaryHeader <uint8_t[16]>;
-			using LocalVersionHeader = BinaryHeader <LocalVersionInfo>;
-
-			class Key
-			{
-			public:
-				explicit Key(const KeyHeader * kh);
-				Key(const std::string & s) : isString(true), intKey(0), stringKey(s) {};
-				Key(const char * s) : isString(true), intKey(0), stringKey(s) {};
-				Key(long long ID) : isString(false), intKey(ID) {};
-
-				bool operator < (const Key & other) const
-				{
-					// true return == other > this
-
-					// strings compare greater than IDs
-					if (other.isString)
-					{
-						if (!isString)
-							return true;
-						else
-							return stringKey < other.stringKey;
-					}
-					else
-					{
-						if (isString)
-							return false;
-						else
-							return intKey < other.intKey;
-					}
-					return false;
-				}
-
-				bool operator == (const Key & other) const
-				{
-					if (other.isString != isString)
+					if (isString)
 						return false;
-
-					if (other.isString)
-					{
-						if (other.stringKey == stringKey)
-							return true;
-					}
 					else
-					{
-						if (other.intKey == intKey)
-							return true;
-					}
+						return intKey < other.intKey;
+				}
+				return false;
+			}
+
+			bool operator == (const Key & other) const
+			{
+				if (other.isString != isString)
 					return false;
-				}
 
-				// compiles this state down to a block of bytes.
-				// build does the reverse action.
-				// the data inside can be cast to a const KeyHeader *
-				ContentWrapper compile() const
+				if (other.isString)
 				{
-					BinaryBuilder compiledData;
-					KeyHeader header;
-					// we dont carry the additional zero-terminating null, since the size is already given.
-					header.dataSize = isString ? stringKey.length() : 0;
-					header.type = HeaderType::Key;
-					header.info.isString = isString;
-					header.info.ID = intKey;
-
-					compiledData.appendBytes(&header, sizeof(header));
-					if(isString)
-						compiledData.appendBytes(stringKey.c_str(), stringKey.size());
-
-					return ContentWrapper(compiledData);
-				}
-
-				// restores this object to the state found in kh.
-				bool build(const KeyHeader * kh)
-				{
-					if (kh->headerSize >= sizeof(KeyHeader))
-					{
-						isString = kh->info.isString;
-						intKey = kh->info.ID;
-						if (isString && kh->dataSize > 0)
-						{
-							stringKey = std::string(kh->getData<char>(), kh->getData<char>() + kh->dataSize);
-						}
+					if (other.stringKey == stringKey)
 						return true;
-					}
-					else
-						return false;
 				}
-
-			private:
-				bool isString;
-				std::string stringKey;
-				long long intKey;
-			};
-
-
-			CSerializer(Key k = Key(1), Version v = Version())
-				: key(k)
-				, version(v)
-				, throwOnExhaustion(true)
-				, virtualCount(0)
-				, restoreSettings(true)
-				, restoreValue(true)
-			{
-
+				else
+				{
+					if (other.intKey == intKey)
+						return true;
+				}
+				return false;
 			}
 
-			void modify(Modifiers m, bool toggle = true)
+			// compiles this state down to a block of bytes.
+			// build does the reverse action.
+			// the data inside can be cast to a const KeyHeader *
+			ContentWrapper compile() const
 			{
-				switch (m)
+				BinaryBuilder compiledData;
+				KeyHeader header;
+				// we dont carry the additional zero-terminating null, since the size is already given.
+				header.dataSize = isString ? stringKey.length() : 0;
+				header.type = HeaderType::Key;
+				header.info.isString = isString;
+				header.info.ID = intKey;
+
+				compiledData.appendBytes(&header, sizeof(header));
+				if (isString)
+					compiledData.appendBytes(stringKey.c_str(), stringKey.size());
+
+				return ContentWrapper(compiledData);
+			}
+
+			// restores this object to the state found in kh.
+			bool build(const KeyHeader * kh)
+			{
+				if (kh->headerSize >= sizeof(KeyHeader))
 				{
+					isString = kh->info.isString;
+					intKey = kh->info.ID;
+					if (isString && kh->dataSize > 0)
+					{
+						stringKey = std::string(kh->getData<char>(), kh->getData<char>() + kh->dataSize);
+					}
+					return true;
+				}
+				else
+					return false;
+			}
+
+		private:
+			bool isString;
+			std::string stringKey;
+			long long intKey;
+		};
+
+
+		CSerializer(Key k = Key(1), Version v = Version())
+			: key(k)
+			, version(v)
+			, throwOnExhaustion(true)
+			, virtualCount(0)
+			, restoreSettings(true)
+			, restoreValue(true)
+		{
+
+		}
+
+		void modify(Modifiers m, bool toggle = true)
+		{
+			switch (m)
+			{
 				case Modifiers::Virtual: virtualCount += toggle ? 1 : -1; break;
 				case Modifiers::RestoreSettings: restoreSettings = !!toggle; break;
 				case Modifiers::RestoreValue: restoreValue = !!toggle; break;
-				}
-
-				if (virtualCount < 0)
-					CPL_RUNTIME_EXCEPTION("Virtual count modified to below zero; mismatch");
 			}
 
-			bool getModifier(Modifiers m)
+			if (virtualCount < 0)
+				CPL_RUNTIME_EXCEPTION("Virtual count modified to below zero; mismatch");
+		}
+
+		bool getModifier(Modifiers m)
+		{
+			switch (m)
 			{
-				switch (m)
-				{
 				case Modifiers::Virtual: return virtualCount > 0;
 				case Modifiers::RestoreSettings: return restoreSettings;
 				case Modifiers::RestoreValue: return restoreValue;
 				default:
 					return false;
-				}
-
 			}
 
-			~CSerializer()
-			{
-				clear();
-			}
+		}
 
-			/// <summary>
-			/// Clears all content and children in this object, resetting it's state.
-			/// Note: Does currently NOT reset the local version.
-			/// </summary>
-			void clear() override
-			{
-				content.clear();
-				data.reset();
-			}
-
-			void setThrowsOnExhaustion(bool toggle) noexcept
-			{
-				throwOnExhaustion = toggle;
-			}
-
-			bool getThrowsOnExhaustion() const noexcept
-			{
-				return throwOnExhaustion;
-			}
-
-			bool isEmpty() const noexcept override
-			{
-				return !content.size() && !data.getSize();
-			}
-			void clearDataOnly()
-			{
-				for (auto & child : content)
-				{
-					child.second.clearDataOnly();
-				}
-				data.reset();
-			}
-
-			/// <summary>
-			/// Sets the master version for all subsequent operations. Notice this has an recursive
-			/// effect, unlike any load/save calls with explicit parameters, that are local instead.
-			/// </summary>
-			/// <param name="v"></param>
-			/// <returns></returns>
-			void setMasterVersion(Version v) noexcept { version = v; }
-			Version getLocalVersion() const noexcept { return version; }
-			virtual bool build(const WeakContentWrapper & cr) override;
-			virtual ContentWrapper compile(bool addMasterHeader = false) const override;
-
-			void append(const CSerializer & se);
-			void append(const Key & k);
-
-			template<typename T>
-				typename std::enable_if<std::is_pod<T>::value, void>::type
-					append(T * object, std::size_t size = SIZE_MAX)
-			{
-				if (size == SIZE_MAX)
-				{
-					size = sizeof(T);
-				}
-
-				if (virtualCount > 0)
-					fill(size);
-				else
-					data.appendBytes(object, size);
-			}
-
-			/// <summary>
-			/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
-			/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
-			/// stay architechture-independant!
-			/// </summary>
-			template<typename T>
-				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
-					operator << (const T & object)
-				{
-					if (virtualCount > 0)
-						fill(sizeof(T));
-					else
-						data.appendBytes(&object, sizeof(T));
-
-					return *this;
-				}
-
-			/// <summary>
-			/// Advances the read pointer by N.
-			/// </summary>
-			bool discard(std::size_t bytes)
-			{
-				unsigned char c = 0;
-				bool res = true;
-				for (std::size_t i = 0; res && i < bytes; ++i)
-					res = res && data.readBytes(&c, 1);
-
-				return res;
-			}
-
-			/// <summary>
-			/// Fills in N bytes, intended to be discarded()
-			/// </summary>
-			void fill(std::size_t bytes)
-			{
-				unsigned char c = 0;
-
-				for (std::size_t i = 0; i < bytes; ++i)
-					data.appendBytes(&c, 1);
-			}
-
-			void rewindReader()
-			{
-				data.rewindRead();
-				for (auto & s : content)
-					s.second.rewindReader();
-
-			}
-			void rewindWriter()
-			{
-				data.rewindWrite();
-				for (auto & s : content)
-					s.second.rewindWriter();
-			}
-
-			template<typename T, typename D>
-				CSerializer & operator << (const std::unique_ptr<T, D> & object)
-				{
-					static_assert(delayed_error<T>::value, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
-				}
-
-			template<typename T, typename D>
-				CSerializer & operator >> (std::unique_ptr<T, D> & object)
-				{
-					static_assert(delayed_error<T>::value, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
-				}
-
-			/// <summary>
-			/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
-			/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
-			/// stay architecture-independent!
-			/// </summary>
-			template<typename T>
-				typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
-					operator >> ( T & object)
-				{
-					bool result = false;
-
-					if (virtualCount > 0)
-					{
-						result = discard(sizeof(T));
-					}
-					else
-					{
-						result = data.readBytes(&object, sizeof(T));
-					}
-
-					if (!result && throwOnExhaustion)
-						CPL_RUNTIME_EXCEPTION_SPECIFIC("CSerializer exhausted; probably incompatible serialized object.", ExhaustedException);
-
-					return *this;
-				}
-
-			template<typename T>
-			CSerializer& operator >> (std::atomic<T> & object)
-			{
-				T temp;
-				(*this) >> temp;
-				object.store(temp, std::memory_order_release);
-				return *this;
-			}
-
-			template<typename T>
-			CSerializer& operator << (const std::atomic<T> & object)
-			{
-				return (*this) << object.load(std::memory_order_release);
-			}
-
-			inline CSerializer & operator >> (Serializable * object)
-			{
-				object->deserialize(*this, version);
-				return *this;
-			}
-
-			inline CSerializer & operator << (Serializable * object)
-			{
-				object->serialize(*this, version);
-				return *this;
-			}
-
-			inline CSerializer & operator >> (Serializable & object)
-			{
-				object.deserialize(*this, version);
-				return *this;
-			}
-
-			inline CSerializer & operator << (Serializable & object)
-			{
-				object.serialize(*this, version);
-				return *this;
-			}
-
-			CSerializer & operator << (const std::string & str)
-			{
-				if (virtualCount > 0)
-					fill(str.size() + 1);
-				else
-					data.appendBytes(str.c_str(), str.size() + 1);
-				return *this;
-			}
-			CSerializer & operator >> ( std::string & str)
-			{
-				if (virtualCount > 0)
-					data.getString();
-				else
-					str = data.getString();
-
-				return *this;
-			}
-
-			CSerializer & getContent(const Key & k)
-			{
-				auto it = content.find(k);
-
-				if (it == content.end())
-				{
-					auto && child = content.emplace(k, k);
-					child.first->second.setMasterVersion(version);
-					return child.first->second;
-				}
-				return it->second;
-			}
-
-			CSerializer & operator[] (const Key & k)
-			{
-				return getContent(k);
-			}
-
-			const CSerializer * findForKey(const Key & k) const noexcept
-			{
-				const CSerializer * ret = nullptr;
-				auto it = content.find(k);
-				if (it != content.end())
-					ret = &it->second;
-
-				return ret;
-			}
-
-		private:
-
-			BinaryBuilder data;
-			//std::vector<std::pair<Key, CSerializer>> content;
-			std::map<Key, CSerializer> content;
-			Key key;
-			bool throwOnExhaustion;
-			Version version;
-			int virtualCount;
-			bool restoreSettings, restoreValue;
-			// iterator interface. must be placed after declaration in MSVC
-		public:
-			auto begin() const noexcept -> decltype(content.begin())
-			{
-				return content.begin();
-			}
-
-			auto end() const noexcept -> decltype(content.end())
-			{
-				return content.end();
-			}
-		};
-
-		class CCheckedSerializer : public ISerializerSystem
+		~CSerializer()
 		{
-		public:
-			CCheckedSerializer(const std::string & uniqueNameReference)
-				: nameReference(uniqueNameReference)
+			clear();
+		}
+
+		/// <summary>
+		/// Clears all content and children in this object, resetting it's state.
+		/// Note: Does currently NOT reset the local version.
+		/// </summary>
+		void clear() override
+		{
+			content.clear();
+			data.reset();
+		}
+
+		void setThrowsOnExhaustion(bool toggle) noexcept
+		{
+			throwOnExhaustion = toggle;
+		}
+
+		bool getThrowsOnExhaustion() const noexcept
+		{
+			return throwOnExhaustion;
+		}
+
+		bool isEmpty() const noexcept override
+		{
+			return !content.size() && !data.getSize();
+		}
+		void clearDataOnly()
+		{
+			for (auto & child : content)
 			{
-				if (!nameReference.size())
-					CPL_RUNTIME_EXCEPTION("CheckedSerializer needs to have a non-null name!");
+				child.second.clearDataOnly();
+			}
+			data.reset();
+		}
+
+		/// <summary>
+		/// Sets the master version for all subsequent operations. Notice this has an recursive
+		/// effect, unlike any load/save calls with explicit parameters, that are local instead.
+		/// </summary>
+		/// <param name="v"></param>
+		/// <returns></returns>
+		void setMasterVersion(Version v) noexcept { version = v; }
+		Version getLocalVersion() const noexcept { return version; }
+		virtual bool build(const WeakContentWrapper & cr) override;
+		virtual ContentWrapper compile(bool addMasterHeader = false) const override;
+
+		void append(const CSerializer & se);
+		void append(const Key & k);
+
+		template<typename T>
+		typename std::enable_if<std::is_pod<T>::value, void>::type
+			append(T * object, std::size_t size = SIZE_MAX)
+		{
+			if (size == SIZE_MAX)
+			{
+				size = sizeof(T);
 			}
 
+			if (virtualCount > 0)
+				fill(size);
+			else
+				data.appendBytes(object, size);
+		}
 
-			virtual ContentWrapper compile(bool addMasterHeader = false) const override;
+		/// <summary>
+		/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
+		/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
+		/// stay architechture-independant!
+		/// </summary>
+		template<typename T>
+		typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
+			operator << (const T & object)
+		{
+			if (virtualCount > 0)
+				fill(sizeof(T));
+			else
+				data.appendBytes(&object, sizeof(T));
 
-			virtual bool build(const WeakContentWrapper & cr) override;
+			return *this;
+		}
 
-			void clear() override
+		/// <summary>
+		/// Advances the read pointer by N.
+		/// </summary>
+		bool discard(std::size_t bytes)
+		{
+			unsigned char c = 0;
+			bool res = true;
+			for (std::size_t i = 0; res && i < bytes; ++i)
+				res = res && data.readBytes(&c, 1);
+
+			return res;
+		}
+
+		/// <summary>
+		/// Fills in N bytes, intended to be discarded()
+		/// </summary>
+		void fill(std::size_t bytes)
+		{
+			unsigned char c = 0;
+
+			for (std::size_t i = 0; i < bytes; ++i)
+				data.appendBytes(&c, 1);
+		}
+
+		void rewindReader()
+		{
+			data.rewindRead();
+			for (auto & s : content)
+				s.second.rewindReader();
+
+		}
+		void rewindWriter()
+		{
+			data.rewindWrite();
+			for (auto & s : content)
+				s.second.rewindWriter();
+		}
+
+		template<typename T, typename D>
+		CSerializer & operator << (const std::unique_ptr<T, D> & object)
+		{
+			static_assert(delayed_error<T>::value, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+		}
+
+		template<typename T, typename D>
+		CSerializer & operator >> (std::unique_ptr<T, D> & object)
+		{
+			static_assert(delayed_error<T>::value, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+		}
+
+		/// <summary>
+		/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
+		/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
+		/// stay architecture-independent!
+		/// </summary>
+		template<typename T>
+		typename std::enable_if<std::is_standard_layout<T>::value && !std::is_pointer<T>::value && !std::is_array<T>::value, CSerializer &>::type
+			operator >> (T & object)
+		{
+			bool result = false;
+
+			if (virtualCount > 0)
 			{
-				internalSerializer.clear();
+				result = discard(sizeof(T));
+			}
+			else
+			{
+				result = data.readBytes(&object, sizeof(T));
 			}
 
-			bool isEmpty() const noexcept override
+			if (!result && throwOnExhaustion)
+				CPL_RUNTIME_EXCEPTION_SPECIFIC("CSerializer exhausted; probably incompatible serialized object.", ExhaustedException);
+
+			return *this;
+		}
+
+		template<typename T>
+		CSerializer& operator >> (std::atomic<T> & object)
+		{
+			T temp;
+			(*this) >> temp;
+			object.store(temp, std::memory_order_release);
+			return *this;
+		}
+
+		template<typename T>
+		CSerializer& operator << (const std::atomic<T> & object)
+		{
+			return (*this) << object.load(std::memory_order_release);
+		}
+
+		inline CSerializer & operator >> (Serializable * object)
+		{
+			object->deserialize(*this, version);
+			return *this;
+		}
+
+		inline CSerializer & operator << (Serializable * object)
+		{
+			object->serialize(*this, version);
+			return *this;
+		}
+
+		inline CSerializer & operator >> (Serializable & object)
+		{
+			object.deserialize(*this, version);
+			return *this;
+		}
+
+		inline CSerializer & operator << (Serializable & object)
+		{
+			object.serialize(*this, version);
+			return *this;
+		}
+
+		CSerializer & operator << (const std::string & str)
+		{
+			if (virtualCount > 0)
+				fill(str.size() + 1);
+			else
+				data.appendBytes(str.c_str(), str.size() + 1);
+			return *this;
+		}
+		CSerializer & operator >> (std::string & str)
+		{
+			if (virtualCount > 0)
+				data.getString();
+			else
+				str = data.getString();
+
+			return *this;
+		}
+
+		CSerializer & getContent(const Key & k)
+		{
+			auto it = content.find(k);
+
+			if (it == content.end())
 			{
-				if (auto content = internalSerializer.findForKey("Content"))
-					return content->isEmpty();
-				return true;
+				auto && child = content.emplace(k, k);
+				child.first->second.setMasterVersion(version);
+				return child.first->second;
 			}
+			return it->second;
+		}
 
-			CSerializer::Archiver & getArchiver()
-			{
-				return internalSerializer.getContent("Content");
-			}
+		CSerializer & operator[] (const Key & k)
+		{
+			return getContent(k);
+		}
 
-			CSerializer::Builder & getBuilder()
-			{
-				return internalSerializer.getContent("Content");
-			}
+		const CSerializer * findForKey(const Key & k) const noexcept
+		{
+			const CSerializer * ret = nullptr;
+			auto it = content.find(k);
+			if (it != content.end())
+				ret = &it->second;
 
-		private:
+			return ret;
+		}
 
-			CSerializer internalSerializer;
-			std::string nameReference;
-		};
+	private:
 
+		BinaryBuilder data;
+		//std::vector<std::pair<Key, CSerializer>> content;
+		std::map<Key, CSerializer> content;
+		Key key;
+		bool throwOnExhaustion;
+		Version version;
+		int virtualCount;
+		bool restoreSettings, restoreValue;
+		// iterator interface. must be placed after declaration in MSVC
+	public:
+		auto begin() const noexcept -> decltype(content.begin())
+		{
+			return content.begin();
+		}
+
+		auto end() const noexcept -> decltype(content.end())
+		{
+			return content.end();
+		}
 	};
+
+	class CCheckedSerializer : public ISerializerSystem
+	{
+	public:
+		CCheckedSerializer(const std::string & uniqueNameReference)
+			: nameReference(uniqueNameReference)
+		{
+			if (!nameReference.size())
+				CPL_RUNTIME_EXCEPTION("CheckedSerializer needs to have a non-null name!");
+		}
+
+
+		virtual ContentWrapper compile(bool addMasterHeader = false) const override;
+
+		virtual bool build(const WeakContentWrapper & cr) override;
+
+		void clear() override
+		{
+			internalSerializer.clear();
+		}
+
+		bool isEmpty() const noexcept override
+		{
+			if (auto content = internalSerializer.findForKey("Content"))
+				return content->isEmpty();
+			return true;
+		}
+
+		CSerializer::Archiver & getArchiver()
+		{
+			return internalSerializer.getContent("Content");
+		}
+
+		CSerializer::Builder & getBuilder()
+		{
+			return internalSerializer.getContent("Content");
+		}
+
+	private:
+
+		CSerializer internalSerializer;
+		std::string nameReference;
+	};
+
+};
 #endif

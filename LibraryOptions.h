@@ -22,9 +22,9 @@
 **************************************************************************************
 
 	file:LibraryOptions.h
-	
+
 		Compile-time switches for the library.
- 
+
 		#define CPL_HINT_FONT:
 			if application is GUI, includes FreeType and uses
 			it for getting outlines for glyphs.
@@ -36,26 +36,31 @@
 			(before user code in audio threads, async threads, opengl rendering etc.),
 			that will catch soft- and hardware exceptions, display messages and log
 			the exceptions with stacktraces etc.
- 
+
 *************************************************************************************/
 
 #ifndef CPL_LIBRARYOPTIONS_H
-	#define CPL_LIBRARYOPTIONS_H
-	#include "MacroConstants.h"
-	#if defined(CPL_JUCE) && defined(_DEBUG)
-		#define DONT_SET_USING_JUCE_NAMESPACE 1
-		//#define TYPEFACE_BITMAP_RENDERING
-		//#define CPL_HINT_FONT
-		#define JUCE_ENABLE_LIVE_CONSTANT_EDITOR 1
-	#endif
-	//#define CPL_THROW_ON_NO_RESOURCE
-	#define CPL_TRACEGUARD_ENTRYPOINTS
-	#ifdef CPL_WINDOWS
-		#define CPL_MINIMUM_WINDOWS_SUPPORT NTDDI_WINXP
-	#else
-		#define CPL_MINIMUM_WINDOWS_SUPPORT 0
-	#endif
-	#define CPL_CACHEALIGNMENT 64
+#define CPL_LIBRARYOPTIONS_H
+#include "MacroConstants.h"
+#if defined(CPL_JUCE) && defined(_DEBUG)
+#define DONT_SET_USING_JUCE_NAMESPACE 1
+//#define TYPEFACE_BITMAP_RENDERING
+//#define CPL_HINT_FONT
+#define JUCE_ENABLE_LIVE_CONSTANT_EDITOR 1
+#endif
+//#define CPL_THROW_ON_NO_RESOURCE
+#define CPL_TRACEGUARD_ENTRYPOINTS
+#ifdef CPL_WINDOWS
+#define CPL_MINIMUM_WINDOWS_SUPPORT NTDDI_WINXP
+#else
+#define CPL_MINIMUM_WINDOWS_SUPPORT 0
+#endif
+#define CPL_CACHEALIGNMENT 64
 
-	#define CPL_REMOVE_CWARN
+#define CPL_REMOVE_CWARN
+
+#ifdef CPL_MAC
+#define CPL_CMOD_USECF
+#endif
+
 #endif

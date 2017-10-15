@@ -33,7 +33,7 @@
 namespace cpl
 {
 
-	auto presetDirectory = [] () { return cpl::Misc::DirectoryPath() + "/presets/"; };
+	auto presetDirectory = []() { return cpl::Misc::DirectoryPath() + "/presets/"; };
 
 
 	CPresetManager & CPresetManager::instance()
@@ -57,12 +57,12 @@ namespace cpl
 
 		juce::FileChooser fileChooser(programInfo.name + ": Save preset to a file...",
 			juce::File(presetDirectory()),
- #ifdef CPL_UNIXC
-             // native dialogs hangs programs on the distros I've tried
-             "*." + extension, false);
-#else
-            "*." + extension);
-#endif
+			#ifdef CPL_UNIXC
+			// native dialogs hangs programs on the distros I've tried
+			"*." + extension, false);
+		#else
+			"*." + extension);
+		#endif
 
 		if (fileChooser.browseForFileToSave(true))
 		{
@@ -77,7 +77,7 @@ namespace cpl
 
 			// OS X handles multiple endings by duplicating them.. litterally.
 			// how nice.
-			while(tempString.endsWith(dotExt))
+			while (tempString.endsWith(dotExt))
 			{
 				hasExt = true;
 				finalString = tempString;
@@ -86,8 +86,8 @@ namespace cpl
 
 			std::string path =
 				hasExt ?
-					finalString.toStdString() :
-					result.withFileExtension(extension.c_str()).getFullPathName().toStdString();
+				finalString.toStdString() :
+				result.withFileExtension(extension.c_str()).getFullPathName().toStdString();
 
 			if (!savePreset(path, archive, location))
 			{
@@ -117,14 +117,14 @@ namespace cpl
 
 		juce::FileChooser fileChooser(programInfo.name + ": Load preset from a file...",
 			juce::File(presetDirectory()),
-#ifdef CPL_MAC
-									  "*." + programInfo.programAbbr); // it just doesn't work..
-#elif defined(CPL_UNIXC)
-                                    // native dialogs hangs programs on the distros I've tried
-									  "*." + extension, false);
-#else
-									  "*." + extension);
-#endif
+			#ifdef CPL_MAC
+			"*." + programInfo.programAbbr); // it just doesn't work..
+		#elif defined(CPL_UNIXC)
+			// native dialogs hangs programs on the distros I've tried
+			"*." + extension, false);
+		#else
+			"*." + extension);
+		#endif
 		if (fileChooser.browseForFileToOpen())
 		{
 			auto result = fileChooser.getResult();
@@ -145,12 +145,12 @@ namespace cpl
 					return false;
 				}
 			}
-			else if(!result.getFileName().contains(extension.c_str()))
+			else if (!result.getFileName().contains(extension.c_str()))
 			{
 				auto userAnswer = Misc::MsgBox("Warning: The selected file:\n" + result.getFileName().toStdString() + "\nDoes not have the verifiable extension " + extension +
-											   "\nDo you want to load another file (Yes), proceed with the current (No) or discard the loading query (Cancel)?",
-														   programInfo.name + ": Query about loading preset from file...",
-											   Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning);
+					"\nDo you want to load another file (Yes), proceed with the current (No) or discard the loading query (Cancel)?",
+					programInfo.name + ": Query about loading preset from file...",
+					Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning);
 				if (userAnswer == Misc::MsgButton::bYes)
 				{
 					return loadPresetAs(builder, location, uniqueExt);
@@ -174,7 +174,7 @@ namespace cpl
 		return false;
 	}
 
-		// these functions saves/loads directly
+	// these functions saves/loads directly
 	bool CPresetManager::savePreset(const std::string & path, const ISerializerSystem & archive, juce::File & location)
 	{
 		CExclusiveFile file;

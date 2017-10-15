@@ -48,156 +48,156 @@ namespace cpl
 				T m0, m1, m2;
 			};
 
-            template<typename T>
-            struct SVFCoefficients
-            {
+			template<typename T>
+			struct SVFCoefficients
+			{
 
-            private:
-                template<Response Z> struct dummy { };
+			private:
+				template<Response Z> struct dummy { };
 
-            public:
+			public:
 
 				typedef SVFMix<T> Mix;
 
-                T A, g, k, a1, a2, a3;
+				T A, g, k, a1, a2, a3;
 				T m0, m1, m2;
 
-                using Consts = cpl::simd::consts<T>;
+				using Consts = cpl::simd::consts<T>;
 
 				inline constexpr static SVFCoefficients identity() noexcept
 				{
-					SVFCoefficients ret{ 0 };
+					SVFCoefficients ret {0};
 					ret.m0 = 1;
 					return ret;
 				}
 
-                template<Response R>
-                inline static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain) noexcept
-                {
-                    return design(normalizedFrequency, Q, linearGain, dummy<R>{});
-                }
+				template<Response R>
+				inline static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain) noexcept
+				{
+					return design(normalizedFrequency, Q, linearGain, dummy<R>{});
+				}
 
-                static SVFCoefficients design(Response response, T normalizedFrequency, T Q, T linearGain)
-                {
-                    using R = Response;
+				static SVFCoefficients design(Response response, T normalizedFrequency, T Q, T linearGain)
+				{
+					using R = Response;
 
-                    switch (response)
-                    {
-                    case R::Lowpass:	return design<R::Lowpass>(normalizedFrequency, Q, linearGain);
-                    case R::Bandpass:	return design<R::Bandpass>(normalizedFrequency, Q, linearGain);
-                    case R::Highpass:	return design<R::Highpass>(normalizedFrequency, Q, linearGain);
-                    case R::Notch:		return design<R::Notch>(normalizedFrequency, Q, linearGain);
-                        //case R::Peak:		return design<R::Peak>(normalizedFrequency, Q, linearGain);
-                    case R::Bell:		return design<R::Bell>(normalizedFrequency, Q, linearGain);
-                    case R::Lowshelf:	return design<R::Lowshelf>(normalizedFrequency, Q, linearGain);
-                    case R::Highshelf:	return design<R::Highshelf>(normalizedFrequency, Q, linearGain);
-					case R::Allpass:	return design<R::Allpass>(normalizedFrequency, Q, linearGain);
-                    default:
-                        return SVFCoefficients::zero();
-                    }
-                }
+					switch (response)
+					{
+						case R::Lowpass:	return design<R::Lowpass>(normalizedFrequency, Q, linearGain);
+						case R::Bandpass:	return design<R::Bandpass>(normalizedFrequency, Q, linearGain);
+						case R::Highpass:	return design<R::Highpass>(normalizedFrequency, Q, linearGain);
+						case R::Notch:		return design<R::Notch>(normalizedFrequency, Q, linearGain);
+							//case R::Peak:		return design<R::Peak>(normalizedFrequency, Q, linearGain);
+						case R::Bell:		return design<R::Bell>(normalizedFrequency, Q, linearGain);
+						case R::Lowshelf:	return design<R::Lowshelf>(normalizedFrequency, Q, linearGain);
+						case R::Highshelf:	return design<R::Highshelf>(normalizedFrequency, Q, linearGain);
+						case R::Allpass:	return design<R::Allpass>(normalizedFrequency, Q, linearGain);
+						default:
+							return SVFCoefficients::zero();
+					}
+				}
 
-                static SVFCoefficients zero()
-                {
-                    SVFCoefficients ret;
-                    std::memset(&ret, 0, sizeof(SVFCoefficients));
-                    return ret;
-                }
+				static SVFCoefficients zero()
+				{
+					SVFCoefficients ret;
+					std::memset(&ret, 0, sizeof(SVFCoefficients));
+					return ret;
+				}
 
-            private:
+			private:
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Lowpass>)
-                {
-                    const T A = linearGain;
-                    const T g = std::tan(Consts::pi * normalizedFrequency);
-                    const T k = 1 / Q;
-                    const T a1 = 1 / (1 + g * (g + k));
-                    const T a2 = g * a1;
-                    const T a3 = g * a2;
-                    const T m0 = 0;
-                    const T m1 = 0;
-                    const T m2 = 1;
-                    return{ A, g, k, a1, a2, a3, m0, m1, m2 };
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Lowpass>)
+				{
+					const T A = linearGain;
+					const T g = std::tan(Consts::pi * normalizedFrequency);
+					const T k = 1 / Q;
+					const T a1 = 1 / (1 + g * (g + k));
+					const T a2 = g * a1;
+					const T a3 = g * a2;
+					const T m0 = 0;
+					const T m1 = 0;
+					const T m2 = 1;
+					return{A, g, k, a1, a2, a3, m0, m1, m2};
+				}
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Bandpass>)
-                {
-                    auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
-                    coeffs.m1 = 1;
-                    coeffs.m2 = 0;
-                    return coeffs;
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Bandpass>)
+				{
+					auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
+					coeffs.m1 = 1;
+					coeffs.m2 = 0;
+					return coeffs;
+				}
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Highpass>)
-                {
-                    auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
-                    coeffs.m0 = 1;
-                    coeffs.m1 = -coeffs.k;
-                    coeffs.m2 = -1;
-                    return coeffs;
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Highpass>)
+				{
+					auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
+					coeffs.m0 = 1;
+					coeffs.m1 = -coeffs.k;
+					coeffs.m2 = -1;
+					return coeffs;
+				}
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Notch>)
-                {
-                    auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
-                    coeffs.m0 = 1;
-                    coeffs.m1 = -coeffs.k;
-                    coeffs.m2 = 0;
-                    return coeffs;
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Notch>)
+				{
+					auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
+					coeffs.m0 = 1;
+					coeffs.m1 = -coeffs.k;
+					coeffs.m2 = 0;
+					return coeffs;
+				}
 
-                /* template<>
-                    static SVFCoefficients design<Response::Peak>(T normalizedFrequency, T Q, T linearGain)
-                    {
-                        // missing A somewhere
-                        auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
-                        coeffs.m0 = 1;
-                        coeffs.m1 = -coeffs.k;
-                        coeffs.m2 = -2;
-                        return coeffs;
-                    } */
+				/* template<>
+					static SVFCoefficients design<Response::Peak>(T normalizedFrequency, T Q, T linearGain)
+					{
+						// missing A somewhere
+						auto coeffs = design<Response::Lowpass>(normalizedFrequency, Q, linearGain);
+						coeffs.m0 = 1;
+						coeffs.m1 = -coeffs.k;
+						coeffs.m2 = -2;
+						return coeffs;
+					} */
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Bell>)
-                {
-                    const T A = linearGain;
-                    const T g = std::tan(Consts::pi * normalizedFrequency);
-                    const T k = 1 / (Q * A);
-                    const T a1 = 1 / (1 + g * (g + k));
-                    const T a2 = g * a1;
-                    const T a3 = g * a2;
-                    const T m0 = 1;
-                    const T m1 = k * (A * A - 1);
-                    const T m2 = 0;
-                    return{ A, g, k, a1, a2, a3, m0, m1, m2 };
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Bell>)
+				{
+					const T A = linearGain;
+					const T g = std::tan(Consts::pi * normalizedFrequency);
+					const T k = 1 / (Q * A);
+					const T a1 = 1 / (1 + g * (g + k));
+					const T a2 = g * a1;
+					const T a3 = g * a2;
+					const T m0 = 1;
+					const T m1 = k * (A * A - 1);
+					const T m2 = 0;
+					return{A, g, k, a1, a2, a3, m0, m1, m2};
+				}
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Lowshelf>)
-                {
-                    const T A = linearGain;
-                    const T g = std::tan(Consts::pi * normalizedFrequency) / std::sqrt(A);
-                    const T k = 1 / Q;
-                    const T a1 = 1 / (1 + g * (g + k));
-                    const T a2 = g * a1;
-                    const T a3 = g * a2;
-                    const T m0 = 1;
-                    const T m1 = k * (A - 1);
-                    const T m2 = A * A - 1;
-                    return{ A, g, k, a1, a2, a3, m0, m1, m2 };
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Lowshelf>)
+				{
+					const T A = linearGain;
+					const T g = std::tan(Consts::pi * normalizedFrequency) / std::sqrt(A);
+					const T k = 1 / Q;
+					const T a1 = 1 / (1 + g * (g + k));
+					const T a2 = g * a1;
+					const T a3 = g * a2;
+					const T m0 = 1;
+					const T m1 = k * (A - 1);
+					const T m2 = A * A - 1;
+					return{A, g, k, a1, a2, a3, m0, m1, m2};
+				}
 
-                static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Highshelf>)
-                {
-                    const T A = linearGain;
-                    const T g = std::tan(Consts::pi * normalizedFrequency) * std::sqrt(A);
-                    const T k = 1 / Q;
-                    const T a1 = 1 / (1 + g * (g + k));
-                    const T a2 = g * a1;
-                    const T a3 = g * a2;
-                    const T m0 = A * A;
-                    const T m1 = k * (1 - A) * A;
-                    const T m2 = 1 - A * A;
-                    return{ A, g, k, a1, a2, a3, m0, m1, m2 };
-                }
+				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Highshelf>)
+				{
+					const T A = linearGain;
+					const T g = std::tan(Consts::pi * normalizedFrequency) * std::sqrt(A);
+					const T k = 1 / Q;
+					const T a1 = 1 / (1 + g * (g + k));
+					const T a2 = g * a1;
+					const T a3 = g * a2;
+					const T m0 = A * A;
+					const T m1 = k * (1 - A) * A;
+					const T m2 = 1 - A * A;
+					return{A, g, k, a1, a2, a3, m0, m1, m2};
+				}
 
 				static SVFCoefficients design(T normalizedFrequency, T Q, T linearGain, dummy<Response::Allpass>)
 				{
@@ -207,12 +207,12 @@ namespace cpl
 					coeffs.m2 = 0;
 					return coeffs;
 				}
-            };
+			};
 
 			template<typename T>
 			struct StateVariableFilter
 			{
-                typedef SVFCoefficients<T> Coefficients;
+				typedef SVFCoefficients<T> Coefficients;
 
 				inline T filter(T input, const Coefficients & c) noexcept
 				{
@@ -234,7 +234,7 @@ namespace cpl
 					const T v2 = ic2eq + c.a2 * ic1eq + c.a3 * v3;
 					ic1eq = 2 * v1 - ic1eq;
 					ic2eq = 2 * v2 - ic2eq;
-					
+
 					for (std::size_t i = 0; i < MixSize; ++i)
 						mix[i] = mixes[i].m0 * input + mixes[i].m1 * v1 + mixes[i].m2 * v2;
 

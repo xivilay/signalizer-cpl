@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:Common.h
-	
+
 		Implements common constants, types & macroes used throughout the program.
 		Compilier specific tunings.
 		Also #includes commonly used headers.
@@ -30,59 +30,59 @@
 *************************************************************************************/
 
 #ifndef CPL_COMMON_H
-	#define CPL_COMMON_H
+#define CPL_COMMON_H
 
-	#include "ProgramVersion.h"
-	#include <string>
-	#include <cstdint>
+#include "ProgramVersion.h"
+#include <string>
+#include <cstdint>
 
-	struct ProgramInfo
-	{
-		/// <summary>
-		/// The name of the program
-		/// </summary>
-		std::string name;
-		/// <summary>
-		/// Versioning info for this program
-		/// </summary>
-		cpl::Version version;
-		/// <summary>
-		/// Your (company's) name
-		/// </summary>
-		std::string author;
-		/// <summary>
-		/// Abbreviation of the program's name for small spaces (and file extensions)
-		/// </summary>
-		std::string programAbbr;
-		/// <summary>
-		/// cpl has a generic tree structure, it looks for in the current working directory.
-		/// you can specify your own here - will affect filechoosers, temporary files, resources etc.
-		/// set this to true if you specify your own.
-		/// </summary>
-		bool hasCustomDirectory; 
-		/// <summary>
-		/// A function returning the path (or relative offset) to your custom directory.
-		/// </summary>
-		std::string (*customDirectory)();
-		/// <summary>
-		/// An optional string identifying this build through other means than versioning (branches etc)
-		/// </summary>
-		std::string customBuildInfo;
-	};
+struct ProgramInfo
+{
+	/// <summary>
+	/// The name of the program
+	/// </summary>
+	std::string name;
+	/// <summary>
+	/// Versioning info for this program
+	/// </summary>
+	cpl::Version version;
+	/// <summary>
+	/// Your (company's) name
+	/// </summary>
+	std::string author;
+	/// <summary>
+	/// Abbreviation of the program's name for small spaces (and file extensions)
+	/// </summary>
+	std::string programAbbr;
+	/// <summary>
+	/// cpl has a generic tree structure, it looks for in the current working directory.
+	/// you can specify your own here - will affect filechoosers, temporary files, resources etc.
+	/// set this to true if you specify your own.
+	/// </summary>
+	bool hasCustomDirectory;
+	/// <summary>
+	/// A function returning the path (or relative offset) to your custom directory.
+	/// </summary>
+	std::string(*customDirectory)();
+	/// <summary>
+	/// An optional string identifying this build through other means than versioning (branches etc)
+	/// </summary>
+	std::string customBuildInfo;
+};
 
-	namespace cpl
-	{
-		extern const ProgramInfo programInfo;
-	}
+namespace cpl
+{
+	extern const ProgramInfo programInfo;
+}
 
-	#include "LibraryOptions.h"
+#include "LibraryOptions.h"
 
-	#ifdef CPL_JUCE
-		#ifndef CPL_JUCE_HEADER_PATH
-			#include "../JuceLibraryCode/JuceHeader.h"
-		#else
-			#include CPL_JUCE_HEADER_PATH
-		#endif
-	#endif
+#ifdef CPL_JUCE
+#ifndef CPL_JUCE_HEADER_PATH
+#include "../JuceLibraryCode/JuceHeader.h"
+#else
+#include CPL_JUCE_HEADER_PATH
+#endif
+#endif
 
 #endif

@@ -20,7 +20,7 @@
 	See \licenses\ for additional details on licenses associated with this program.
 
 **************************************************************************************
- 
+
 	file:LexicalConversion.h
 
 		Very similar to boost::lexical_cast, except this is based around not throwing
@@ -29,105 +29,105 @@
 *************************************************************************************/
 
 #ifndef _LEXICAL_CONVERSION
-	#define _LEXICAL_CONVERSION
+#define _LEXICAL_CONVERSION
 
-	#include "Common.h"
-	#include <sstream>
+#include "Common.h"
+#include <sstream>
 
-	namespace cpl
+namespace cpl
+{
+	/// <summary>
+	/// Converts from f to t, lexically, using a stringstream.
+	/// Returns success.
+	/// </summary>
+	/// <param name="f"></param>
+	/// <param name="t"></param>
+	/// <returns></returns>
+	template<typename From, typename To>
+	inline bool lexicalConversion(const From & f, To & t)
 	{
-		/// <summary>
-		/// Converts from f to t, lexically, using a stringstream.
-		/// Returns success.
-		/// </summary>
-		/// <param name="f"></param>
-		/// <param name="t"></param>
-		/// <returns></returns>
-		template<typename From, typename To>
-			inline bool lexicalConversion(const From & f, To & t)
-			{
-				std::stringstream ss;
-				if ((ss << f) && (ss >> t))
-					return true;
-				return false;
-			}
+		std::stringstream ss;
+		if ((ss << f) && (ss >> t))
+			return true;
+		return false;
+	}
 
-		#ifdef CPL_JUCE
-			/// <summary>
-			/// Optimized for JUCE-strings
-			/// </summary>
-			/// <param name="from"></param>
-			/// <param name="to"></param>
-			/// <returns></returns>
-			inline bool lexicalConversion(const juce::String & from, double & to)
-			{
-				double output;
-				char * endPtr = nullptr;
-				output = strtod(from.getCharPointer(), &endPtr);
-				if (endPtr > from.getCharPointer())
-				{
-					to = output;
-					return true;
-				}
-				return false;
-			}
-		#endif
-		/// <summary>
-		/// Optimized for std::strings
-		/// </summary>
-		/// <param name="from"></param>
-		/// <param name="to"></param>
-		/// <returns></returns>
-		inline bool lexicalConversion(const std::string & from, double & to)
+	#ifdef CPL_JUCE
+	/// <summary>
+	/// Optimized for JUCE-strings
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	/// <returns></returns>
+	inline bool lexicalConversion(const juce::String & from, double & to)
+	{
+		double output;
+		char * endPtr = nullptr;
+		output = strtod(from.getCharPointer(), &endPtr);
+		if (endPtr > from.getCharPointer())
 		{
-			double output;
-			char * endPtr = nullptr;
-			output = strtod(from.c_str(), &endPtr);
-			if (endPtr > from.c_str())
-			{
-				to = output;
-				return true;
-			}
-			return false;
+			to = output;
+			return true;
 		}
-
-		/// <summary>
-		/// Optimized for std::strings
-		/// </summary>
-		/// <param name="from"></param>
-		/// <param name="to"></param>
-		/// <returns></returns>
-		inline bool lexicalConversion(const std::string & from, std::int64_t & to)
+		return false;
+	}
+	#endif
+	/// <summary>
+	/// Optimized for std::strings
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	/// <returns></returns>
+	inline bool lexicalConversion(const std::string & from, double & to)
+	{
+		double output;
+		char * endPtr = nullptr;
+		output = strtod(from.c_str(), &endPtr);
+		if (endPtr > from.c_str())
 		{
-			std::int64_t output;
-			char * endPtr = nullptr;
-			output = strtoll(from.c_str(), &endPtr, 0);
-			if (endPtr > from.c_str())
-			{
-				to = output;
-				return true;
-			}
-			return false;
+			to = output;
+			return true;
 		}
+		return false;
+	}
 
-		/// <summary>
-		/// Optimized for numbers to strings
-		/// </summary>
-		/// <param name="from"></param>
-		/// <param name="to"></param>
-		/// <returns></returns>
-		/*inline bool lexicalConversion(const std::int64_t & from, std::string & to)
+	/// <summary>
+	/// Optimized for std::strings
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	/// <returns></returns>
+	inline bool lexicalConversion(const std::string & from, std::int64_t & to)
+	{
+		std::int64_t output;
+		char * endPtr = nullptr;
+		output = strtoll(from.c_str(), &endPtr, 0);
+		if (endPtr > from.c_str())
 		{
-			to.reserve(std::numeric_limits<std::int64_t>::max_digits10());
-			double output;
-			char * endPtr = nullptr;
-			output = strtoll(from.c_str(), &endPtr, 0);
-			if (endPtr > from.c_str())
-			{
-				to = output;
-				return true;
-			}
-			return false;
-		}*/
-	}; // cpl
+			to = output;
+			return true;
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Optimized for numbers to strings
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	/// <returns></returns>
+	/*inline bool lexicalConversion(const std::int64_t & from, std::string & to)
+	{
+		to.reserve(std::numeric_limits<std::int64_t>::max_digits10());
+		double output;
+		char * endPtr = nullptr;
+		output = strtoll(from.c_str(), &endPtr, 0);
+		if (endPtr > from.c_str())
+		{
+			to = output;
+			return true;
+		}
+		return false;
+	}*/
+}; // cpl
 #endif

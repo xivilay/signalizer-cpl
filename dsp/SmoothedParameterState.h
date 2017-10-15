@@ -23,7 +23,7 @@
 
 	file:SmoothedParameterState.h
 
-		Provides N-order parameter smoothing (adjusted so they have same decay rate as 
+		Provides N-order parameter smoothing (adjusted so they have same decay rate as
 		an often used equivalent one-pole).
 
 		It is essentially a non-resonant N pole lowpass.
@@ -31,56 +31,56 @@
 *************************************************************************************/
 
 #ifndef CPL_SMOOTHEDPARAMETERSTATE_H
-	#define CPL_SMOOTHEDPARAMETERSTATE_H
+#define CPL_SMOOTHEDPARAMETERSTATE_H
 
-	#include "../Mathext.h"
+#include "../Mathext.h"
 
-	namespace cpl
+namespace cpl
+{
+	namespace dsp
 	{
-		namespace dsp
+
+		template<typename T, std::size_t Order>
+		class SmoothedParameterState
 		{
+		public:
 
-			template<typename T, std::size_t Order>
-			class SmoothedParameterState
+			typedef T PoleState;
+
+			static_assert(Order > 0, "Order must be greater than one");
+
+			template<typename Ty>
+			static PoleState design(Ty ms, Ty sampleRate)
 			{
-			public:
+				const auto a = std::sqrt((Ty)Order);
+				const auto b = std::exp(-1 / ((ms / 5000) * sampleRate));
 
-				typedef T PoleState;
+				return static_cast<T>(std::pow(b, a));
+			}
 
-				static_assert(Order > 0, "Order must be greater than one");
+			template<typename Y> Y process(PoleState pole, Y input)
+			{
+				state[0] = input + pole * (state[0] - input);
 
-				template<typename Ty>
-				static PoleState design(Ty ms, Ty sampleRate)
+				for (std::size_t i = 1; i < Order; ++i)
 				{
-					const auto a = std::sqrt((Ty)Order);
-					const auto b = std::exp(-1 / ((ms / 5000) * sampleRate));
-
-					return static_cast<T>(std::pow(b, a));
+					state[i] = state[i - 1] + pole * (state[i] - state[i - 1]);
 				}
 
-				template<typename Y> Y process(PoleState pole, Y input)
-				{
-					state[0] = input + pole * (state[0] - input);
+				return static_cast<Y>(state[Order - 1]);
+			}
 
-					for (std::size_t i = 1; i < Order; ++i)
-					{
-						state[i] = state[i - 1] + pole * (state[i] - state[i - 1]);
-					}
+			inline T getState() const noexcept { return state[Order - 1]; }
 
-					return static_cast<Y>(state[Order - 1]);
-				}
+			inline void reset()
+			{
+				std::memset(state, 0, sizeof state);
+			}
 
-				inline T getState() const noexcept { return state[Order - 1]; }
+		private:
 
-				inline void reset()
-				{
-					std::memset(state, 0, sizeof state);
-				}
-
-			private:
-
-				T state[Order]{};
-			};
+			T state[Order] {};
 		};
 	};
+};
 #endif

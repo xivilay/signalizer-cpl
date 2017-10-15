@@ -13,7 +13,7 @@ namespace cpl
 			R, G, B, A, ColourChannels
 		};
 
-#ifdef CPL_JUCE
+		#ifdef CPL_JUCE
 		juce::Colour getAsJuceColour() {
 			auto index = [&](Index i) { return static_cast<float>(getValueIndex(i).getNormalizedValue()); };
 			return juce::Colour::fromFloatRGBA(index(R), index(G), index(B), index(A));
@@ -26,9 +26,9 @@ namespace cpl
 			getValueIndex(B).setNormalizedValue(colour.getFloatBlue());
 			getValueIndex(A).setNormalizedValue(colour.getFloatAlpha());
 		}
-#endif
+		#endif
 		template<std::size_t bits, typename ret = std::uint32_t>
-		typename std::enable_if<bits < 32, ret>::type getIntValueFor(Index i)
+		typename std::enable_if < bits < 32, ret>::type getIntValueFor(Index i)
 		{
 			auto cap = (1 << bits);
 			auto fpoint = getValueIndex(i).getNormalizedValue();
@@ -41,7 +41,7 @@ namespace cpl
 		virtual std::string getBundleName() { return{}; }
 	};
 
-	class CompleteColour 
+	class CompleteColour
 		: private HexFormatter<ValueT>
 		, public ColourValue
 	{
@@ -49,12 +49,12 @@ namespace cpl
 
 		CompleteColour()
 			: range(0, 0xFF)
-			, values{
+			, values {
 				{ &range, this },
 				{ &range, this },
 				{ &range, this },
 				{ &range, this },
-			}
+		}
 		{
 
 		}
@@ -69,7 +69,7 @@ namespace cpl
 
 
 	template<typename ParameterView>
-	class ParameterColourValue 
+	class ParameterColourValue
 		: public ColourValue
 		, public Parameters::BundleUpdate<ParameterView>
 	{
@@ -103,13 +103,13 @@ namespace cpl
 
 		}
 
-		virtual std::string getBundleName() override 
+		virtual std::string getBundleName() override
 		{
 			return name;
 		}
 
 		virtual std::string getContextualName() override
-		{ 
+		{
 			auto & view = values[0].getParameterView();
 
 			return view.getParentPrefix() + getBundleName() + "C";
@@ -136,7 +136,7 @@ namespace cpl
 		void generateInfo() override
 		{
 			parameters = std::make_unique<std::vector<Entry>>();
-			auto add = [&](ParameterType & p) { parameters->push_back(Entry{ &p, true, false }); };
+			auto add = [&](ParameterType & p) { parameters->push_back(Entry {&p, true, false}); };
 			add(r); add(g); add(b); add(a);
 		}
 

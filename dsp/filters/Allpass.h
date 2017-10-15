@@ -33,11 +33,11 @@
 #include "FilterBasics.h"
 #include "../../simd.h"
 
-namespace cpl 
+namespace cpl
 {
-	namespace dsp 
+	namespace dsp
 	{
-		namespace filters 
+		namespace filters
 		{
 
 			template<typename T>
@@ -59,7 +59,7 @@ namespace cpl
 						const T m0 = 1;
 						const T m1 = -k;
 						const T m2 = -1;
-						return{ A, g, k, a1, a2, a3, m0, m1, m2 };
+						return{A, g, k, a1, a2, a3, m0, m1, m2};
 					}
 
 					static Coefficients zero()

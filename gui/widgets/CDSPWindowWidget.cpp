@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:CDSPWindowWidget.cpp
- 
+
 		Source code for CDSPWindowWidget.h
- 
+
 *************************************************************************************/
 
 #include "CDSPWindowWidget.h"
@@ -74,7 +74,7 @@ namespace cpl
 		// only scale bottom if it's out of range.
 		else if (minW > 0)
 			minW = 0;
-		
+
 		if (maxW == 0.0)
 			maxW = 1.0;
 
@@ -96,7 +96,7 @@ namespace cpl
 
 		if (!std::isnormal(y1) && y1 != 0.0)
 		{
-			y1 =bot;
+			y1 = bot;
 		}
 
 		for (std::size_t n = 1; n < ON; ++n)
@@ -120,7 +120,7 @@ namespace cpl
 					y2 = top;
 			}
 
-			g.drawLine({ (float)n - 1, (float)y1, float(n), (float)y2 });
+			g.drawLine({(float)n - 1, (float)y1, float(n), (float)y2});
 
 			y1 = y2;
 		}
@@ -147,7 +147,7 @@ namespace cpl
 			y2 = Math::UnityScale::linear(y2, bot, top);
 
 
-			g.drawLine({ (float)n - 1, (float)y1, float(n), (float)y2 });
+			g.drawLine({(float)n - 1, (float)y1, float(n), (float)y2});
 
 			y1 = y2;
 		}

@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:GraphicComponents.cpp
- 
+
 		Implementation of GraphicComponents.h
 
 *************************************************************************************/
@@ -36,52 +36,52 @@ namespace cpl
 
 
 	/*********************************************************************************************
-	 
+
 	 CTextLabel
-	 
+
 	 *********************************************************************************************/
 	CTextLabel::CTextLabel()
-	: Component(), just(juce::Justification::centredLeft)
+		: Component(), just(juce::Justification::centredLeft)
 	{
 		setSize(200, 20);
 	}
-	
+
 	void CTextLabel::setFontSize(float newSize)
 	{
 		this->size = newSize;
 		repaint();
 	}
-	
+
 	void CTextLabel::setColour(CColour newColour)
 	{
 		this->colour = newColour;
 		repaint();
 	}
-	
+
 	void CTextLabel::setText(const std::string & newText)
 	{
 		text = newText;
 		repaint();
 	}
-	
+
 	void CTextLabel::paint(juce::Graphics & g)
 	{
 		g.setFont(size);
 		g.setColour(colour);
 		g.drawText(text, CRect(0, 0, getWidth(), getHeight()), just, false);
 	}
-	
+
 	void CTextLabel::setPos(int x, int y)
 	{
 		setCentrePosition(x + getWidth() / 2, y + getHeight() / 2);
 	}
 	/*********************************************************************************************
-	 
+
 	 CScrollableContainer
-	 
+
 	 *********************************************************************************************/
 	CScrollableContainer::CScrollableContainer()
-	: Component("CScrollableLineContainer"), CBaseControl(this)
+		: Component("CScrollableLineContainer"), CBaseControl(this)
 	{
 		virtualContainer = new Component();
 		addAndMakeVisible(virtualContainer);
@@ -90,7 +90,7 @@ namespace cpl
 		scb->setColour(juce::ScrollBar::ColourIds::trackColourId, juce::Colours::lightsteelblue);
 		addAndMakeVisible(scb);
 	}
-	
+
 	void CScrollableContainer::bSetSize(const CRect & in)
 	{
 		setSize(in.getWidth(), in.getHeight());
@@ -98,46 +98,46 @@ namespace cpl
 		virtualContainer->setBounds(0, 0, in.getWidth() - scb->getWidth(), 1300);
 		CBaseControl::bSetPos(in.getX(), in.getY());
 	}
-	
+
 	void CScrollableContainer::paint(juce::Graphics & g)
 	{
 		if (background)
 			g.drawImage(*background, 0, 0, getWidth() - scb->getWidth(), getHeight(),
-						0, 0, background->getWidth(), background->getHeight());
+				0, 0, background->getWidth(), background->getHeight());
 	}
-	
+
 	int CScrollableContainer::getVirtualHeight()
 	{
 		return virtualContainer->getHeight();
 	}
-	
+
 	void CScrollableContainer::setVirtualHeight(int height)
 	{
 		virtualContainer->setSize(virtualContainer->getWidth(), height);
 	}
-	
+
 	iCtrlPrec_t CScrollableContainer::bGetValue()
 	{
 		double start = scb->getCurrentRangeStart();
 		auto delta = 1.0 / (1 - scb->getCurrentRangeSize());
 		return static_cast<float>(start * delta);
 	}
-	
+
 	void CScrollableContainer::bSetValue(iCtrlPrec_t newVal)
 	{
 		double delta = 1.0 / (1 - scb->getCurrentRangeSize());
 		scb->setCurrentRangeStart(newVal / delta);
 	}
-	
+
 	void CScrollableContainer::scrollBarMoved(juce::ScrollBar * b, double newRange)
 	{
 		virtualContainer->setBounds(
-									0,
-									static_cast<signed int>(-bGetValue() * (virtualContainer->getHeight() - getHeight())),
-									virtualContainer->getWidth(),
-									virtualContainer->getHeight());
+			0,
+			static_cast<signed int>(-bGetValue() * (virtualContainer->getHeight() - getHeight())),
+			virtualContainer->getWidth(),
+			virtualContainer->getHeight());
 	}
-	
+
 	CScrollableContainer:: ~CScrollableContainer() noexcept
 	{
 		if (virtualContainer)
@@ -145,16 +145,16 @@ namespace cpl
 		if (scb)
 			delete scb;
 	}
-	
+
 	/*********************************************************************************************
-	 
+
 	 CTextControl
-	 
+
 	 *********************************************************************************************/
 	CTextControl::CTextControl()
-	: CBaseControl(this)
+		: CBaseControl(this)
 	{
-		
+
 	}
 	void CTextControl::bSetText(const std::string & newText)
 	{

@@ -166,7 +166,7 @@ namespace cpl
 				return i;
 			}
 		}
-		return (std::size_t)-1;
+		return (std::size_t) - 1;
 	}
 
 	bool CValueComboBox::setEnabledStateFor(const std::string & idx, bool toggle)

@@ -59,7 +59,7 @@ namespace cpl
 			WindowShapeFormatTransformer()
 				: ChoiceFormatter<ValueType>(*static_cast<ChoiceTransformer<ValueType> *>(this))
 			{
-				ChoiceFormatter<ValueType>::setValues({ "Symmetric", "Periodic", "DFT-even" });
+				ChoiceFormatter<ValueType>::setValues({"Symmetric", "Periodic", "DFT-even"});
 			}
 
 		};
@@ -98,8 +98,8 @@ namespace cpl
 			return dsp::windowScale(ltype, w, N, lsym, lalpha, lbeta);
 		}
 
-		dsp::WindowTypes getWindowType() 
-		{ 
+		dsp::WindowTypes getWindowType()
+		{
 			auto & value = getValueIndex(Type);
 			return static_cast<cpl::dsp::WindowTypes>((int)value.getTransformer().transform(value.getNormalizedValue()));
 		}
@@ -127,7 +127,7 @@ namespace cpl
 
 
 
-	class CompleteWindowDesign 
+	class CompleteWindowDesign
 		: public WindowDesignValue
 		, public WindowDesignValue::AlphaFormatter<ValueT>
 	{
@@ -215,10 +215,10 @@ namespace cpl
 		void generateInfo() override
 		{
 			parameters = std::make_unique<std::vector<Entry>>();
-			parameters->push_back(Entry{ &type, true, false });
-			parameters->push_back(Entry{ &symmetry, true, false });
-			parameters->push_back(Entry{ &alpha, true, false });
-			parameters->push_back(Entry{ &beta, true, false });
+			parameters->push_back(Entry {&type, true, false});
+			parameters->push_back(Entry {&symmetry, true, false});
+			parameters->push_back(Entry {&alpha, true, false});
+			parameters->push_back(Entry {&beta, true, false});
 
 		}
 

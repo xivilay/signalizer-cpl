@@ -24,15 +24,15 @@
 	file:Widgets.h
 
 		Extended include for cpl widgets
- 
+
 *************************************************************************************/
 
 #ifndef CPL_WIDGETS_H
-	#define CPL_WIDGETS_H
+#define CPL_WIDGETS_H
 
-	#include "CPresetWidget.h"
-	#include "CDSPWindowWidget.h"
-	#include "CPowerSlopeWidget.h"
-	#include "CTransformWidget.h"
+#include "CPresetWidget.h"
+#include "CDSPWindowWidget.h"
+#include "CPowerSlopeWidget.h"
+#include "CTransformWidget.h"
 
 #endif

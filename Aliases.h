@@ -22,19 +22,19 @@
 **************************************************************************************
 
 	file:Aliases.h
-	
+
 		--
 
 *************************************************************************************/
 
 #ifndef CPL_ALIASES_H
-	#define CPL_ALIASES_H
+#define CPL_ALIASES_H
 
-	#include "lib/AlignedAllocator.h"
+#include "lib/AlignedAllocator.h"
 
-	namespace cpl
-	{
+namespace cpl
+{
 
-	};
+};
 
 #endif

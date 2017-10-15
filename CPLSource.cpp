@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CPLSource.cpp
-	
+
 		All the source code needed to compile the cpl lib ('unity' build).
 		Add this file to your project.
 
@@ -36,25 +36,25 @@
 
 #ifdef CPL_JUCE
 
-	#include "Resources.cpp"
-	//#include "fonts/tahoma.cpp"
+#include "Resources.cpp"
+//#include "fonts/tahoma.cpp"
 
-	// gui elements
-	#include "gui/GUI.cpp"
-	// rendering
-	#include "rendering/CSubpixelSoftwareGraphics.cpp"
-	#include "rendering/CDisplaySetup.cpp"
-	
-	// io and stuff
+// gui elements
+#include "gui/GUI.cpp"
+// rendering
+#include "rendering/CSubpixelSoftwareGraphics.cpp"
+#include "rendering/CDisplaySetup.cpp"
 
-	#include "CPresetManager.cpp"
+// io and stuff
+
+#include "CPresetManager.cpp"
 
 
-#endif	
+#endif
 
 #ifdef CPL_INC_KISS
-	#include "ffts/kiss_fft/tools/kiss_fft.c"
-	#include "ffts/kiss_fft/tools/kiss_fftr.c"
+#include "ffts/kiss_fft/tools/kiss_fft.c"
+#include "ffts/kiss_fft/tools/kiss_fftr.c"
 #endif
 
 #include "CModule.cpp"
@@ -70,13 +70,14 @@
 #include "Protected.cpp"
 #include "state/State.cpp"
 #include "lib/md5/md5.cpp"
+#include "process/Process.cpp"
 
 #if defined(CPL_HINT_FONT)
-	#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
-	#include "FreeType/FreeTypeAmalgam.h"
-	#include "FreeType/FreeTypeAmalgam.cpp"
+#include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
+#include "FreeType/FreeTypeAmalgam.h"
+#include "FreeType/FreeTypeAmalgam.cpp"
 #endif
 
 #if !defined(CPL_LEAN)
-	#include "CPLTests.cpp"
+#include "CPLTests.cpp"
 #endif

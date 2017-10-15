@@ -117,7 +117,7 @@ namespace cpl
 	class DBFormatter : public UnitFormatter<T>
 	{
 	public:
-		
+
 		DBFormatter() : UnitFormatter<T>("dB") {}
 
 		virtual bool format(const T & val, std::string & buf) override
@@ -170,9 +170,9 @@ namespace cpl
 
 		ChoiceFormatter(ChoiceTransformer<T> & transformerRef) : transformer(transformerRef) {}
 
-		void setValues(std::vector<std::string> valuesToConsume) 
+		void setValues(std::vector<std::string> valuesToConsume)
 		{
-			this->values = std::move(valuesToConsume); 
+			this->values = std::move(valuesToConsume);
 			transformer.setQuantization(static_cast<int>(values.size()));
 		}
 		const std::vector<std::string> & getValues() const noexcept { return values; }
@@ -186,7 +186,7 @@ namespace cpl
 
 			auto index = static_cast<std::size_t>(
 				std::min<std::size_t>(values.size() - 1, static_cast<std::size_t>(std::max<T>(std::round(val), (T)0)))
-			);
+				);
 			buf = values[index];
 
 			return true;

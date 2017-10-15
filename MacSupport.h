@@ -22,38 +22,38 @@
 **************************************************************************************
 
 	file:MacSupport.h
-	
+
 		Since Objective-C and C++ doesn't always easily mix, access to the NSApi
 		has been stuffed into its own source file.
- 
+
 *************************************************************************************/
 
 #ifndef CPL_MACSUPPORT_H
-	#define CPL_MACSUPPORT_H
+#define CPL_MACSUPPORT_H
 
-	#include <cstdlib>
+#include <cstdlib>
 
-	struct OSXExtendedScreenInfo
-	{
-		// true if display is confirmable digital
-		bool displayIsDigital;
-		// gamma correction values for each channel, 1.2 .. 2.2
-		double redGamma, blueGamma, greenGamma;
-		// average colour gamma, 1.2 .. 2.2
-		double averageGamma;
-		// see AppleFontSmoothing system defaults. 0 is none, 1 .. 4 is variying degrees.
-		int fontSmoothingLevel;
-		// screen rotation, counterclockwise, in _degrees_
-		double screenRotation;
-		// can be kDisplaySubPixelLayoutRGB, kDisplaySubPixelLayoutBGR or kDisplaySubPixelLayoutUndefined
-		unsigned int subpixelOrientation;
-		
-	};
+struct OSXExtendedScreenInfo
+{
+	// true if display is confirmable digital
+	bool displayIsDigital;
+	// gamma correction values for each channel, 1.2 .. 2.2
+	double redGamma, blueGamma, greenGamma;
+	// average colour gamma, 1.2 .. 2.2
+	double averageGamma;
+	// see AppleFontSmoothing system defaults. 0 is none, 1 .. 4 is variying degrees.
+	int fontSmoothingLevel;
+	// screen rotation, counterclockwise, in _degrees_
+	double screenRotation;
+	// can be kDisplaySubPixelLayoutRGB, kDisplaySubPixelLayoutBGR or kDisplaySubPixelLayoutUndefined
+	unsigned int subpixelOrientation;
+
+};
 
 
-	bool GetExtendedScreenInfo(long x, long y, OSXExtendedScreenInfo * info);
+bool GetExtendedScreenInfo(long x, long y, OSXExtendedScreenInfo * info);
 
-	int MacBox(void * hwndParent, const char *text, const char *caption, int type);
-	std::size_t GetBundlePath(char * buf, std::size_t bufsize);
+int MacBox(void * hwndParent, const char *text, const char *caption, int type);
+std::size_t GetBundlePath(char * buf, std::size_t bufsize);
 
 #endif

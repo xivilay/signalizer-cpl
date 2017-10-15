@@ -58,7 +58,7 @@ namespace cpl
 	};
 
 	template<typename T, class BaseParameter, class FormatterType = VirtualFormatter<T>>
-	class FormattedParameter 
+	class FormattedParameter
 		: public BaseParameter
 		, private BasicFormatter<T> // (compression/EBO)
 	{
@@ -185,7 +185,7 @@ namespace cpl
 
 
 	template<class T, typename InternalFrameworkType, typename BaseParameterT>
-	class ParameterGroup 
+	class ParameterGroup
 		: public CSerializer::Serializable
 		, private DestructionNotifier::EventListener
 	{
@@ -195,7 +195,7 @@ namespace cpl
 		typedef typename BaseParameter::Transformer Transformer;
 		typedef typename BaseParameter::Formatter Formatter;
 		typedef InternalFrameworkType FrameworkType;
-		
+
 		typedef ParameterGroup<T, InternalFrameworkType, BaseParameter> QualifiedGroup;
 
 		static const Parameters::Handle InvalidHandle = -1;
@@ -244,11 +244,11 @@ namespace cpl
 			typedef T ValueType;
 			typedef BaseParameter ParameterType;
 			ParameterView(
-				QualifiedGroup * parentToRef, 
-				BaseParameter * parameterToRef, 
-				Parameters::Handle handleOfThis, 
-				bool paramIsAutomatable = true, 
-				bool paramCanChangeOthers = false, 
+				QualifiedGroup * parentToRef,
+				BaseParameter * parameterToRef,
+				Parameters::Handle handleOfThis,
+				bool paramIsAutomatable = true,
+				bool paramCanChangeOthers = false,
 				std::string nameContext = ""
 			)
 				: parent(parentToRef)
@@ -272,7 +272,7 @@ namespace cpl
 
 			}
 
-			
+
 			ParameterType * getParameter() noexcept { return parameter; }
 			const std::string & getNameContext() const { return nameContext; }
 			std::string getExportedName() { return parent->prefix + nameContext + parameter->getName(); }
@@ -282,38 +282,38 @@ namespace cpl
 			void addListener(UIListener * listener) { parent->addUIListener(handle, listener); }
 			void removeListener(UIListener * listener) { parent->removeUIListener(handle, listener); }
 
-			void updateFromUINormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
-			{ 
-				parent->updateFromUINormalized(handle, value, flags); 
+			void updateFromUINormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
+			{
+				parent->updateFromUINormalized(handle, value, flags);
 			}
 
-			void updateFromProcessorNormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
-			{ 
-				parent->updateFromProcessorNormalized(handle, value, flags); 
+			void updateFromProcessorNormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
+			{
+				parent->updateFromProcessorNormalized(handle, value, flags);
 			}
 
-			void updateFromHostNormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
-			{ 
-				parent->updateFromHostNormalized(handle, value, flags); 
+			void updateFromHostNormalized(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
+			{
+				parent->updateFromHostNormalized(handle, value, flags);
 			}
 
 			void beginChangeGesture() { parent->beginChangeGesture(handle); }
 			void endChangeGesture() { parent->endChangeGesture(handle); }
 
-			void updateFromUITransformed(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All) 
-			{ 
+			void updateFromUITransformed(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
+			{
 				return updateFromUINormalized(parameter->getTransformer().normalize(value), flags);
 			}
 
 			void updateFromProcessorTransformed(ValueType value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
-			{ 
+			{
 				return updateFromProcessorNormalized(parameter->getTransformer().normalize(value), flags);
 			}
 
 			bool updateFromUIStringTransformed(const std::string & value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 			{
 				T interpretedValue;
-				if(parameter->getFormatter()->interpret(value, interpretedValue))
+				if (parameter->getFormatter()->interpret(value, interpretedValue))
 				{
 					return updateFromUINormalized(parameter->getTransformer().normalize(interpretedValue), flags);
 				}
@@ -321,9 +321,9 @@ namespace cpl
 			}
 
 			template<typename Ret = T>
-				Ret getValueNormalized() const { return static_cast<Ret>(parameter->getValue()); }
+			Ret getValueNormalized() const { return static_cast<Ret>(parameter->getValue()); }
 			template<typename Ret = T>
-				Ret getValueTransformed() const { return static_cast<Ret>(parameter->getTransformer().transform(parameter->getValue())); }
+			Ret getValueTransformed() const { return static_cast<Ret>(parameter->getTransformer().transform(parameter->getValue())); }
 
 
 			std::string getDisplayText()
@@ -421,8 +421,8 @@ namespace cpl
 			containedParameters.emplace_back(this, param, (Parameters::Handle)(pos + offset), shouldBeAutomatable, canChangeOthers, nameContext);
 			return static_cast<Parameters::Handle>(pos + offset);
 		}
-		
-		
+
+
 		void registerParameterBundle(Parameters::BundleUpdate<ParameterView> * bundle, std::string contextStack = "")
 		{
 			contextStack += bundle->getBundleContext();
@@ -433,7 +433,7 @@ namespace cpl
 				parameter.handle = registerParameter(parameter.parameter, parameter.shouldBeAutomatable, parameter.canChangeOthers, contextStack);
 			}
 
-			bundleInstalledReferences.get()->push_back({ bundle, &parameters });
+			bundleInstalledReferences.get()->push_back({bundle, &parameters});
 
 			if (auto bundleChilds = bundle->getNestedChilds())
 			{
@@ -449,11 +449,11 @@ namespace cpl
 		{
 			singleRef->generateInfo();
 			singleRef->parameterQuery->handle = registerParameter(
-				singleRef->parameterQuery->parameter, 
-				singleRef->parameterQuery->shouldBeAutomatable, 
+				singleRef->parameterQuery->parameter,
+				singleRef->parameterQuery->shouldBeAutomatable,
 				singleRef->parameterQuery->canChangeOthers
 			);
-			singleInstalledReferences.get()->push_back({ singleRef, singleRef->parameterQuery });
+			singleInstalledReferences.get()->push_back({singleRef, singleRef->parameterQuery});
 		}
 
 		void seal()
@@ -591,7 +591,7 @@ namespace cpl
 				callRTListenersFor(globalHandle - offset);
 			}
 
-			if(flags & Parameters::UpdateFlags::UI)
+			if (flags & Parameters::UpdateFlags::UI)
 				p.changedFromProcessor = true;
 
 			if (flags & Parameters::UpdateFlags::RealTimeSubSystem && p.isAutomatable)
@@ -608,13 +608,13 @@ namespace cpl
 			ParameterView & p = containedParameters.at(globalHandle - offset);
 
 			p.parameter->setValue(value);
-			
+
 			if (flags & Parameters::UpdateFlags::RealTimeListeners)
 			{
 				callRTListenersFor(globalHandle - offset);
 			}
-			
-			if(flags & Parameters::UpdateFlags::UI)
+
+			if (flags & Parameters::UpdateFlags::UI)
 				p.changedFromProcessor = true;
 
 		}
@@ -687,7 +687,7 @@ namespace cpl
 					return static_cast<Parameters::Handle>(i) + offset;
 				}
 			}
-			
+
 			return InvalidHandle;
 		}
 

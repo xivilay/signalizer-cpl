@@ -30,281 +30,281 @@
 *************************************************************************************/
 
 #ifndef _LOCKFREE_DATAQUEUE_H
-	#define _LOCKFREE_DATAQUEUE_H
-	
-	#include "readerwriterqueue/readerwriterqueue.h"
-	#include <vector>
-	#include "../CMutex.h"
-	#include "../Utility.h"
-	#include <atomic>
+#define _LOCKFREE_DATAQUEUE_H
 
-	#if defined(__C11__) && defined(CPL_CLANG)
-		#include <stdatomic.h>
-	#endif
+#include "readerwriterqueue/readerwriterqueue.h"
+#include <vector>
+#include "../CMutex.h"
+#include "../Utility.h"
+#include <atomic>
 
-	#if ATOMIC_LLONG_LOCK_FREE != 2
-		#pragma message cwarn("warning: Atomic integer operations are not lock-free for this platform!") 
-	#endif
+#if defined(__C11__) && defined(CPL_CLANG)
+#include <stdatomic.h>
+#endif
 
-	#if ATOMIC_POINTER_LOCK_FREE != 2
-		#pragma message cwarn("warning: Atomic pointer operations are not lock-free for this platform!") 
-	#endif
+#if ATOMIC_LLONG_LOCK_FREE != 2
+#pragma message cwarn("warning: Atomic integer operations are not lock-free for this platform!") 
+#endif
 
-	namespace cpl
+#if ATOMIC_POINTER_LOCK_FREE != 2
+#pragma message cwarn("warning: Atomic pointer operations are not lock-free for this platform!") 
+#endif
+
+namespace cpl
+{
+
+
+	template<typename T>
+	class CLockFreeDataQueue
 	{
+	public:
+		struct ElementAccess;
+		friend struct ElementAccess;
 
+		CLockFreeDataQueue(std::size_t initialSize)
+			:
+			queue(new moodycamel::ReaderWriterQueue<T *>(initialSize)),
+			oldQueue(nullptr),
+			currentNumElements(initialSize),
+			freeElements(initialSize),
+			enqueuedDataAllocations(false),
+			enqueuedQueueAllocations(false)
+		{
+			insertDataElements(initialSize);
+		}
 
-		template<typename T>
-		class CLockFreeDataQueue
+		/// <summary>
+		/// The only access to the queue you should ever have. 
+		/// </summary>
+		struct ElementAccess : private cpl::Utility::CNoncopyable
 		{
 		public:
-			struct ElementAccess;
-			friend struct ElementAccess;
+			ElementAccess() : data(nullptr), parent(nullptr), isPop(false) {}
 
-			CLockFreeDataQueue(std::size_t initialSize)
-			: 
-				queue(new moodycamel::ReaderWriterQueue<T *>(initialSize)), 
-				oldQueue(nullptr), 
-				currentNumElements(initialSize), 
-				freeElements(initialSize),
-				enqueuedDataAllocations(false),
-				enqueuedQueueAllocations(false)
+			friend class CLockFreeDataQueue;
+
+			T * getData()
 			{
-				insertDataElements(initialSize);
+				#ifdef _DEBUG
+				if (!parent || !data)
+					CPL_RUNTIME_EXCEPTION("Un-initialized element access to queue.");
+				#endif
+				return data;
 			}
 
-			/// <summary>
-			/// The only access to the queue you should ever have. 
-			/// </summary>
-			struct ElementAccess : private cpl::Utility::CNoncopyable
+			~ElementAccess()
 			{
-			public:
-				ElementAccess() : data(nullptr), parent(nullptr), isPop(false) {}
-
-				friend class CLockFreeDataQueue;
-
-				T * getData() 
-				{ 
-#ifdef _DEBUG
-					if(!parent || !data)
-						CPL_RUNTIME_EXCEPTION("Un-initialized element access to queue.");
-#endif
-					return data; 
-				}
-
-				~ElementAccess()
+				if (parent && data)
 				{
-					if (parent && data)
+					if (isPop)
 					{
-						if (isPop)
+						parent->freeElements.enqueue(data);
+					}
+					else
+					{
+						if (!parent->queue.load()->try_enqueue(data))
 						{
-							parent->freeElements.enqueue(data);
-						}
-						else
-						{
-							if (!parent->queue.load()->try_enqueue(data))
-							{
-								parent->enqueuedQueueAllocations = true;
-							}
+							parent->enqueuedQueueAllocations = true;
 						}
 					}
 				}
-			private:
-
-				void initialize(bool isPopped, T * dataToHold, CLockFreeDataQueue & parentQueue)
-				{
-#if _DEBUG
-					if (dataToHold && parent)
-					{
-						// You reached this point if you try to access more than one element of this queue using a single 
-						// elementaccess. The system is stack-based, so it's destructor must run to ensure exception-safety.
-						// You're probably scoping the element wrongly.
-						CPL_RUNTIME_EXCEPTION("Double-initialized element access to queue.");
-					}
-#endif
-					isPop = isPopped;
-					data = dataToHold;
-					parent = &parentQueue;
-				}
-
-				T * data;
-				CLockFreeDataQueue * parent;
-
-				/// <summary>
-				/// If this access to any element is an element whom is popped from the queue (ie. to be consumed),
-				/// this member is set, causing the destructor to push it into the free elements queue. Otherwise, the 
-				/// access is considered to be 'produced', thus it will be pushed to the producer queue.
-				/// </summary>
-				bool isPop;
-			};
-
-			/// <summary>
-			/// PRODUCER ONLY.
-			/// Tries to fill the elementaccess with a T that, on ElementAccess destruction, will enqueue the data to the producer thread.
-			/// if allocOnFail is false (always is for now), it will never allocate memory and the complexity is deterministic (wait-free).
-			/// If enqueueNewAllocations is set, the consumer thread might increase the size at another time, if this call fails.
-			/// </summary>
-			template</*bool allocOnFail = false, */ bool enqueueNewAllocations = true>
-			bool acquireFreeElement(ElementAccess & d)
-			{
-				T * data;
-				if (freeElements.try_dequeue(data))
-				{
-					d.initialize(false, data, *this);
-					return true;
-				}
-				/*else if(allocOnFail)
-				{
-					// enqueue a new element
-					freeElements.enqueue(T());
-					return acquireFreeElement<allocOnFail, enqueueNewAllocations>(d);
-				}*/
-				else if (enqueueNewAllocations)
-				{
-					enqueuedDataAllocations = true;
-				}
-				return false;
 			}
-
-			/// <summary>
-			/// CONSUMER ONLY.
-			/// If true is returned, ElementAccess is filled with the next element enqueued from acquireFreeElement.
-			/// When parameter ElementAccess is destroyed, it will automatically be pushed to the free elements queue of the parent. 
-			/// </summary>
-			/// <param name="d"></param>
-			/// <returns></returns>
-			bool popElement(ElementAccess & d)
-			{
-				T * data;
-				if (oldQueue)
-				{
-					if (oldQueue->try_dequeue(data))
-					{
-						d.initialize(true, data, *this);
-						return true;
-					}
-
-				}
-				// note that if the old queue is empty, and the new has an enqueued element, we can conclusively
-				// prove that it is safe to delete the old queue since it is (a) empty and (b) the thread state 
-				// for the producer is updated such that it uses all the new entities and will never use the old again.
-				// if we successfully dequeue an element, we can delete the old (if it exists).
-				if (queue.load()->try_dequeue(data))
-				{
-					d.initialize(true, data, *this);
-					if (oldQueue)
-					{
-						delete oldQueue;
-						oldQueue = nullptr;
-					}
-					return true;
-				}
-				return false;
-			}
-
-			/// <summary>
-			/// CONSUMER ONLY.
-			/// If any operations has failed and signaled the need for more allocations, this might be done now.
-			/// May allocate memory.
-			/// 
-			/// Will grow the queue to minimumSize at least. If growth is set, then:
-			///		if space_used > total_space * growthRequirement then grow(max(minimumSize, size() * growthFactor)
-			/// 
-			/// Thus you can use this function to automatically grow the queue if it begins to fill up, thereby
-			/// avoiding a full queue. This will NOT delete any enqueued elements, issue locks or in any way mess up 
-			/// ordering of concurrently enqueued elements.
-			/// 
-			/// returns true if the queue was grown, otherwise false.
-			/// 
-			/// Note: You should always grow the queue preemptively, that is, before you dequeue it fully.
-			/// </summary>
-			/// <returns></returns>
-			bool grow(std::size_t minimumSize = 0, bool growth = false, float growthRequirement = 1.0f, int growthFactor = 2)
-			{
-				// old resize not done yet!
-				if (oldQueue)
-					return false;
-
-				auto currentSpaceFilled = queue.load()->size_approx();
-
-				std::size_t newSize(currentNumElements);
-
-				if ((growth && currentSpaceFilled > currentNumElements * growthRequirement) || enqueuedDataAllocations || enqueuedQueueAllocations)
-				{
-					newSize *= growthFactor;
-				}
-
-				newSize = std::max(newSize, minimumSize);
-
-				if(newSize > currentNumElements)
-				{ 
-					oldQueue = queue.exchange(new moodycamel::ReaderWriterQueue<T *>(newSize));
-					insertDataElements(newSize - currentNumElements);
-					enqueuedDataAllocations = enqueuedQueueAllocations = false;
-					currentNumElements = newSize;
-					return true;
-				}
-				return false;
-			}
-
-			std::size_t size() const noexcept
-			{
-				return currentNumElements;
-			}
-
-			std::size_t enqueuededElements() const noexcept
-			{
-				return queue.load()->size_approx();
-			}
-
-			~CLockFreeDataQueue()
-			{
-
-				T * element;
-				auto * q = queue.load();
-				while (freeElements.try_dequeue(element))
-					delete element;
-
-				while (q->try_dequeue(element))
-					delete element;
-
-				if (oldQueue)
-				{
-					while (oldQueue->try_dequeue(element))
-						delete element;
-					delete oldQueue;
-				}
-
-				delete q;
-
-
-			}
-
 		private:
 
-			void insertDataElements(std::size_t elements)
+			void initialize(bool isPopped, T * dataToHold, CLockFreeDataQueue & parentQueue)
 			{
-				for (std::size_t i = 0; i < elements; ++i)
+				#if _DEBUG
+				if (dataToHold && parent)
 				{
-					freeElements.enqueue(new T());
+					// You reached this point if you try to access more than one element of this queue using a single 
+					// elementaccess. The system is stack-based, so it's destructor must run to ensure exception-safety.
+					// You're probably scoping the element wrongly.
+					CPL_RUNTIME_EXCEPTION("Double-initialized element access to queue.");
 				}
+				#endif
+				isPop = isPopped;
+				data = dataToHold;
+				parent = &parentQueue;
 			}
 
-
-			std::atomic<moodycamel::ReaderWriterQueue<T *> *> queue;
-			moodycamel::ReaderWriterQueue<T *> * oldQueue;
-			moodycamel::ReaderWriterQueue<T *> freeElements;
-
-			std::size_t currentNumElements;
+			T * data;
+			CLockFreeDataQueue * parent;
 
 			/// <summary>
-			/// If set, try to grow the freeElements queue
+			/// If this access to any element is an element whom is popped from the queue (ie. to be consumed),
+			/// this member is set, causing the destructor to push it into the free elements queue. Otherwise, the 
+			/// access is considered to be 'produced', thus it will be pushed to the producer queue.
 			/// </summary>
-			volatile bool enqueuedDataAllocations;
-			/// <summary>
-			/// If set, try to grow the queue.
-			/// </summary>
-			volatile bool enqueuedQueueAllocations;
+			bool isPop;
 		};
+
+		/// <summary>
+		/// PRODUCER ONLY.
+		/// Tries to fill the elementaccess with a T that, on ElementAccess destruction, will enqueue the data to the producer thread.
+		/// if allocOnFail is false (always is for now), it will never allocate memory and the complexity is deterministic (wait-free).
+		/// If enqueueNewAllocations is set, the consumer thread might increase the size at another time, if this call fails.
+		/// </summary>
+		template</*bool allocOnFail = false, */ bool enqueueNewAllocations = true>
+		bool acquireFreeElement(ElementAccess & d)
+		{
+			T * data;
+			if (freeElements.try_dequeue(data))
+			{
+				d.initialize(false, data, *this);
+				return true;
+			}
+			/*else if(allocOnFail)
+			{
+				// enqueue a new element
+				freeElements.enqueue(T());
+				return acquireFreeElement<allocOnFail, enqueueNewAllocations>(d);
+			}*/
+			else if (enqueueNewAllocations)
+			{
+				enqueuedDataAllocations = true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// CONSUMER ONLY.
+		/// If true is returned, ElementAccess is filled with the next element enqueued from acquireFreeElement.
+		/// When parameter ElementAccess is destroyed, it will automatically be pushed to the free elements queue of the parent. 
+		/// </summary>
+		/// <param name="d"></param>
+		/// <returns></returns>
+		bool popElement(ElementAccess & d)
+		{
+			T * data;
+			if (oldQueue)
+			{
+				if (oldQueue->try_dequeue(data))
+				{
+					d.initialize(true, data, *this);
+					return true;
+				}
+
+			}
+			// note that if the old queue is empty, and the new has an enqueued element, we can conclusively
+			// prove that it is safe to delete the old queue since it is (a) empty and (b) the thread state 
+			// for the producer is updated such that it uses all the new entities and will never use the old again.
+			// if we successfully dequeue an element, we can delete the old (if it exists).
+			if (queue.load()->try_dequeue(data))
+			{
+				d.initialize(true, data, *this);
+				if (oldQueue)
+				{
+					delete oldQueue;
+					oldQueue = nullptr;
+				}
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// CONSUMER ONLY.
+		/// If any operations has failed and signaled the need for more allocations, this might be done now.
+		/// May allocate memory.
+		/// 
+		/// Will grow the queue to minimumSize at least. If growth is set, then:
+		///		if space_used > total_space * growthRequirement then grow(max(minimumSize, size() * growthFactor)
+		/// 
+		/// Thus you can use this function to automatically grow the queue if it begins to fill up, thereby
+		/// avoiding a full queue. This will NOT delete any enqueued elements, issue locks or in any way mess up 
+		/// ordering of concurrently enqueued elements.
+		/// 
+		/// returns true if the queue was grown, otherwise false.
+		/// 
+		/// Note: You should always grow the queue preemptively, that is, before you dequeue it fully.
+		/// </summary>
+		/// <returns></returns>
+		bool grow(std::size_t minimumSize = 0, bool growth = false, float growthRequirement = 1.0f, int growthFactor = 2)
+		{
+			// old resize not done yet!
+			if (oldQueue)
+				return false;
+
+			auto currentSpaceFilled = queue.load()->size_approx();
+
+			std::size_t newSize(currentNumElements);
+
+			if ((growth && currentSpaceFilled > currentNumElements * growthRequirement) || enqueuedDataAllocations || enqueuedQueueAllocations)
+			{
+				newSize *= growthFactor;
+			}
+
+			newSize = std::max(newSize, minimumSize);
+
+			if (newSize > currentNumElements)
+			{
+				oldQueue = queue.exchange(new moodycamel::ReaderWriterQueue<T *>(newSize));
+				insertDataElements(newSize - currentNumElements);
+				enqueuedDataAllocations = enqueuedQueueAllocations = false;
+				currentNumElements = newSize;
+				return true;
+			}
+			return false;
+		}
+
+		std::size_t size() const noexcept
+		{
+			return currentNumElements;
+		}
+
+		std::size_t enqueuededElements() const noexcept
+		{
+			return queue.load()->size_approx();
+		}
+
+		~CLockFreeDataQueue()
+		{
+
+			T * element;
+			auto * q = queue.load();
+			while (freeElements.try_dequeue(element))
+				delete element;
+
+			while (q->try_dequeue(element))
+				delete element;
+
+			if (oldQueue)
+			{
+				while (oldQueue->try_dequeue(element))
+					delete element;
+				delete oldQueue;
+			}
+
+			delete q;
+
+
+		}
+
+	private:
+
+		void insertDataElements(std::size_t elements)
+		{
+			for (std::size_t i = 0; i < elements; ++i)
+			{
+				freeElements.enqueue(new T());
+			}
+		}
+
+
+		std::atomic<moodycamel::ReaderWriterQueue<T *> *> queue;
+		moodycamel::ReaderWriterQueue<T *> * oldQueue;
+		moodycamel::ReaderWriterQueue<T *> freeElements;
+
+		std::size_t currentNumElements;
+
+		/// <summary>
+		/// If set, try to grow the freeElements queue
+		/// </summary>
+		volatile bool enqueuedDataAllocations;
+		/// <summary>
+		/// If set, try to grow the queue.
+		/// </summary>
+		volatile bool enqueuedQueueAllocations;
 	};
+};
 #endif

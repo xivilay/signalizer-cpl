@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
 **************************************************************************************
- 
+
 	file:CTransformWidget.cpp
- 
+
 		Source code for CTransformWidget.h
-	
+
 *************************************************************************************/
 
 #include "CTransformWidget.h"
@@ -63,7 +63,7 @@ namespace cpl
 		}
 
 		syncEditor();
-		setSize((elementWidth + 15) * 3 , elementHeight * 6);
+		setSize((elementWidth + 15) * 3, elementHeight * 6);
 		bSetIsDefaultResettable(true);
 	}
 
@@ -124,9 +124,9 @@ namespace cpl
 	juce::String CTransformWidget::bGetToolTipForChild(const Component * c) const
 	{
 		juce::String ret = "Set the object's ";
-		const char * params[] = { "position (where {0, 0, 0} is the center, and {1, 1, 1} is upper right back corner)", 
-								  "rotation (in degrees)", "scale (where 1 is identity)" };
-		const char * property[] = { "x-", "y-", "z-" };
+		const char * params[] = {"position (where {0, 0, 0} is the center, and {1, 1, 1} is upper right back corner)",
+								  "rotation (in degrees)", "scale (where 1 is identity)"};
+		const char * property[] = {"x-", "y-", "z-"};
 		for (unsigned y = 0; y < 3; ++y)
 		{
 
@@ -257,7 +257,7 @@ namespace cpl
 
 	CTransformWidget::LabelDescriptor CTransformWidget::getDraggableLabelAt(int mouseX, int mouseY)
 	{
-		LabelDescriptor ret{ {0, 0}, nullptr };
+		LabelDescriptor ret {{0, 0}, nullptr};
 
 		juce::Rectangle<int> currentLabelBounds;
 		for (int y = 0; y < 3; ++y)
@@ -267,7 +267,7 @@ namespace cpl
 				currentLabelBounds.setBounds(x * (elementWidth + 15), elementHeight + y * (elementHeight * 2), 10, elementHeight);
 				if (currentLabelBounds.contains(mouseX, mouseY))
 				{
-					return LabelDescriptor{ {y, x}, &labels[y][x] };
+					return LabelDescriptor {{y, x}, &labels[y][x]};
 				}
 			}
 		}
@@ -282,8 +282,8 @@ namespace cpl
 			for (unsigned y = 0; y < 3; ++y)
 			{
 				labels[y][x].setBounds(
-					10 + x * (elementWidth + 15), 
-					elementHeight + y * (elementHeight * 2), 
+					10 + x * (elementWidth + 15),
+					elementHeight + y * (elementHeight * 2),
 					elementWidth,
 					elementHeight
 				);
@@ -293,8 +293,8 @@ namespace cpl
 	void CTransformWidget::paint(juce::Graphics & g)
 	{
 
-		const char * texts[] = { "x:", "y:", "z:" };
-		const char * titles[] = { " - Position - ", " - Rotation - ", " - Scale - " };
+		const char * texts[] = {"x:", "y:", "z:"};
+		const char * titles[] = {" - Position - ", " - Rotation - ", " - Scale - "};
 
 		g.setFont(TextSize::normalText);
 		g.setColour(GetColour(ColourEntry::AuxillaryText));

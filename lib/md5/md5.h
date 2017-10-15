@@ -30,7 +30,7 @@ documentation and/or software.
 
 */
 
-/* 
+/*
 	CPL modifcation 2016 by Janus Thorborg: ability to get/set results using raw bytes.
 	Added helper struct MD5Result, comparable.
 	Changed to utilize std::uint*_t instead of relying on specific compilers.
@@ -40,6 +40,7 @@ documentation and/or software.
 #define BZF_MD5_H
 
 #include <cstring>
+#include <climits>
 #include <iostream>
 
 namespace bzf

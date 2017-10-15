@@ -1,30 +1,30 @@
 /*************************************************************************************
- 
+
 	cpl - cross-platform library - v. 0.1.0.
- 
+
 	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
- 
+
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
- 
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
- 
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 	See \licenses\ for additional details on licenses associated with this program.
- 
+
  **************************************************************************************
- 
+
 	file:CColourControl.cpp
- 
+
 		Source code for CColourControl.h
- 
+
  *************************************************************************************/
 
 #include "CColourControl.h"
@@ -33,24 +33,24 @@
 
 namespace cpl
 {
-	
+
 	juce::Colour ColourFromPixelARGB(juce::PixelARGB pixel)
 	{
 		return juce::Colour(pixel.getRed(), pixel.getGreen(), pixel.getBlue(), pixel.getAlpha());
 	}
-	
-	const char * ColourToneTypes[] = 
+
+	const char * ColourToneTypes[] =
 	{
 		"RGB",
 		"ARGB",
 		"GreyTone",
 		"Red",
-		"Green", 
+		"Green",
 		"Blue"
 	};
 
 	class CustomColourSelector
-	:
+		:
 		public juce::ColourSelector
 	{
 	public:
@@ -83,7 +83,7 @@ namespace cpl
 			// for this widget, we only need to display two characters,
 			// so we shrink them a little bit.
 
-			const char * names[] = { "r", "g", "b", "a" };
+			const char * names[] = {"r", "g", "b", "a"};
 
 			for (std::size_t i = 0; i < colourSliders.size(); ++i)
 			{
@@ -100,7 +100,7 @@ namespace cpl
 		std::vector<juce::Slider *> colourSliders;
 	};
 
-	class ColourEditor 
+	class ColourEditor
 		: public CKnobSliderEditor
 		, private juce::Slider::Listener
 		, private ValueEntityBase::ValueEntityListener
@@ -109,7 +109,7 @@ namespace cpl
 	public:
 
 		ColourEditor(CColourControl * parentControl)
-			: CKnobSliderEditor(parentControl), parent(parentControl), selector(15, 5, 5), 
+			: CKnobSliderEditor(parentControl), parent(parentControl), selector(15, 5, 5),
 			recursionFlagWeChanged(false), recursionFlagTheyChanged(false)
 		{
 			oldHeight = fullHeight;
@@ -146,17 +146,17 @@ namespace cpl
 
 		virtual void resized() override
 		{
-			selector.setBounds(1, oldHeight, fullWidth - elementHeight - 3, extraHeight );
+			selector.setBounds(1, oldHeight, fullWidth - elementHeight - 3, extraHeight);
 			CKnobSliderEditor::resized();
 		}
 
 		virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * object) override
 		{
 			auto currentColour = selector.getCurrentColour();
-			auto red = 
-				currentColour.getRed(), 
-				green = currentColour.getGreen(), 
-				blue = currentColour.getBlue(), 
+			auto red =
+				currentColour.getRed(),
+				green = currentColour.getGreen(),
+				blue = currentColour.getBlue(),
 				alpha = currentColour.getAlpha();
 
 			auto value = object->getNormalizedValue();
@@ -180,7 +180,7 @@ namespace cpl
 			}
 
 
-			selector.setCurrentColour({ red, green, blue, alpha }, juce::NotificationType::dontSendNotification);
+			selector.setCurrentColour({red, green, blue, alpha}, juce::NotificationType::dontSendNotification);
 		}
 
 		virtual void sliderDragStarted(juce::Slider * s) override
@@ -370,7 +370,7 @@ namespace cpl
 		for (int i = 0; i < 4; ++i)
 			valueObject->getValueIndex((cpl::ColourValue::Index)i).addListener(this);
 
-		if(resetAlpha)
+		if (resetAlpha)
 			valueObject->getValueIndex(cpl::ColourValue::A).setNormalizedValue(1.0);
 	}
 
@@ -394,7 +394,7 @@ namespace cpl
 		std::uint8_t a, r, g, b;
 		ar >> a; ar >> r; ar >> g; ar >> b;
 		ar >> Serialization::Consume(4);
-		if(ar.getModifier(CSerializer::Modifiers::RestoreValue))
+		if (ar.getModifier(CSerializer::Modifiers::RestoreValue))
 			setControlColour(juce::Colour(r, g, b, a));
 	}
 
@@ -438,14 +438,14 @@ namespace cpl
 			return true;
 		}
 		return false;
-	}			
+	}
 
 	iCtrlPrec_t CColourControl::bGetValue() const
 	{
 		return valueObject->getAsJuceColour().getARGB() / (double)0xFFFFFFFF;
 	}
 
-	void CColourControl::bSetValue(iCtrlPrec_t val, bool sync) 
+	void CColourControl::bSetValue(iCtrlPrec_t val, bool sync)
 	{
 		setControlColour((juce::Colour)static_cast<std::uint32_t>(val >= 1.0 ? 0xFFFFFFFF : val * 0x100000000ul));
 	}

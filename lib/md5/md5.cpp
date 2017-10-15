@@ -114,7 +114,7 @@ namespace bzf
 	MD5::MD5(const std::string &text)
 	{
 		init();
-		if(text.length() > std::numeric_limits<size_type>::max())
+		if (text.length() > std::numeric_limits<size_type>::max())
 			throw std::runtime_error("MD5 size too large");
 		update(text.c_str(), static_cast<size_type>(text.length()));
 		finalize();
@@ -343,7 +343,7 @@ namespace bzf
 			return "";
 
 		char buf[33];
-		for (int i = 0; i<16; i++)
+		for (int i = 0; i < 16; i++)
 			sprintf(buf + i * 2, "%02x", digest[i]);
 		buf[32] = 0;
 
@@ -383,21 +383,21 @@ namespace bzf
 		return md5.finalize().rawdigest();
 	}
 
-#undef BZF_S11 
-#undef BZF_S12 
-#undef BZF_S13 
-#undef BZF_S14 
-#undef BZF_S21 
-#undef BZF_S22 
-#undef BZF_S23 
-#undef BZF_S24 
-#undef BZF_S31
-#undef BZF_S32 
-#undef BZF_S33 
-#undef BZF_S34
-#undef BZF_S41 
-#undef BZF_S42 
-#undef BZF_S43
-#undef BZF_S44
+	#undef BZF_S11 
+	#undef BZF_S12 
+	#undef BZF_S13 
+	#undef BZF_S14 
+	#undef BZF_S21 
+	#undef BZF_S22 
+	#undef BZF_S23 
+	#undef BZF_S24 
+	#undef BZF_S31
+	#undef BZF_S32 
+	#undef BZF_S33 
+	#undef BZF_S34
+	#undef BZF_S41 
+	#undef BZF_S42 
+	#undef BZF_S43
+	#undef BZF_S44
 
 };

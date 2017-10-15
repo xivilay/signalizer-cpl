@@ -25,40 +25,40 @@
 
 		An object parsing static SVGs, and turning them into drawable objects based on
 		paths.
- 
+
 *************************************************************************************/
 
 #ifndef CPL_CDRAWABLESVG_H
-	#define CPL_CDRAWABLESVG_H
+#define CPL_CDRAWABLESVG_H
 
-	#include "Common.h"
-	#include "Misc.h"
+#include "Common.h"
+#include "Misc.h"
 
-	namespace cpl
+namespace cpl
+{
+	class CDrawableSVG
 	{
-		class CDrawableSVG
+
+		bool parseSVG(const std::string & svgResourceName)
 		{
+			auto const path = Misc::DirectoryPath() + "/resources/" + svgResourceName;
 
-			bool parseSVG(const std::string & svgResourceName)
+			auto const file = juce::File(path);
+
+			if (file.existsAsFile())
 			{
-				auto const path = Misc::DirectoryPath() + "/resources/" + svgResourceName;
-
-				auto const file = juce::File(path);
-
-				if (file.existsAsFile())
+				if (juce::ScopedPointer<juce::InputStream> fileStream = file.createInputStream())
 				{
-					if (juce::ScopedPointer<juce::InputStream> fileStream = file.createInputStream())
-					{
 
-					}
 				}
-
 			}
 
-		private:
+		}
 
-			juce::Path svgPath;
-		};
+	private:
 
-	}; // std
+		juce::Path svgPath;
+	};
+
+}; // std
 #endif

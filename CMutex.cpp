@@ -22,7 +22,7 @@
 **************************************************************************************
 
 	file:CMutex.cpp
-		
+
 		Implementation of some basic routines to avoid cyclic dependencies.
 
 *************************************************************************************/
@@ -39,7 +39,7 @@ namespace cpl
 			NULL,
 			true);
 	}
-	
+
 	void CMutex::release(CMutex::Lockable * l)
 	{
 		// default value
@@ -51,15 +51,15 @@ namespace cpl
 		if (l->refCount == 0)
 		{
 			l->ownerThread = std::thread::id();
-			
+
 			if (l)
 				l->flag.clear();
 			std::atomic_thread_fence(std::memory_order_release);
 			resource = nullptr;
 		}
-		
+
 	}
-	
+
 	bool CMutex::spinLock(unsigned ms, CMutex::Lockable *  bVal)
 	{
 		using namespace Misc;
@@ -77,20 +77,20 @@ namespace cpl
 					goto time_out;
 				Delay(0);
 			}
-			
+
 		}
-		
+
 		// normal exitpoint
 		return true;
 		// deadlock occurs
-		
+
 	time_out:
 		// hello - you have reached this point if mutex was frozen.
 		CPL_BREAKIFDEBUGGED();
 		ret = AlertUserAboutMutex();
 		switch (ret)
 		{
-		default:
+			default:
 			case MsgButton::bTryAgain:
 				goto loop;
 			case MsgButton::bContinue:
@@ -103,14 +103,14 @@ namespace cpl
 		// not needed (except for warns)
 		return false;
 	}
-	
+
 	void CMutex::acquire(CMutex::Lockable * l)
 	{
 		auto this_id = std::this_thread::get_id();
-		
+
 		// TODO: fix race condition
 		bool lockOwnedByThread = l->ownerThread == this_id;
-		
+
 		if (resource)
 		{
 			if (lockOwnedByThread && l == resource)
@@ -123,7 +123,7 @@ namespace cpl
 				release(resource);
 			}
 		}
-		
+
 		if (!lockOwnedByThread)
 		{
 			if (!spinLock(2000, l))
@@ -137,18 +137,18 @@ namespace cpl
 		}
 		l->refCount++;
 		resource = l;
-		
+
 		std::atomic_thread_fence(std::memory_order_acquire);
 	}
-	
-	
+
+
 	void CFastMutex::acquire(CMutex::Lockable * l)
 	{
 		auto this_id = std::this_thread::get_id();
-		
+
 		// TODO: fix race condition
 		bool lockOwnedByThread = l->ownerThread == this_id;
-		
+
 		if (resource)
 		{
 			if (lockOwnedByThread && l == resource)
@@ -161,7 +161,7 @@ namespace cpl
 				release(resource);
 			}
 		}
-		
+
 		if (!lockOwnedByThread)
 		{
 			if (!spinLock(l))
@@ -175,10 +175,10 @@ namespace cpl
 		}
 		l->refCount++;
 		resource = l;
-		
+
 		std::atomic_thread_fence(std::memory_order_acquire);
 	}
-	
+
 	void CFastMutex::release(CMutex::Lockable * l)
 	{
 		if (l->refCount == 0)
@@ -192,12 +192,12 @@ namespace cpl
 			if (l)
 				l->flag.clear();
 			resource = nullptr;
-			
+
 			std::atomic_thread_fence(std::memory_order_release);
 		}
-		
+
 	}
-	
+
 	bool CFastMutex::spinLock(CMutex::Lockable *  bVal)
 	{
 		using namespace Misc;
@@ -205,7 +205,7 @@ namespace cpl
 		int ret;
 		unsigned int ms = 2000;
 	loop:
-		
+
 		start = QuickTime();
 		int count = 0;
 		while (bVal->flag.test_and_set(std::memory_order_relaxed)) {
@@ -220,14 +220,14 @@ namespace cpl
 		// normal exitpoint
 		return true;
 		// deadlock occurs
-		
+
 	time_out:
 		// hello - you have reached this point if mutex was frozen.
 		CPL_BREAKIFDEBUGGED();
 		ret = AlertUserAboutMutex();
 		switch (ret)
 		{
-		default:
+			default:
 			case MsgButton::bTryAgain:
 				goto loop;
 			case MsgButton::bContinue:
@@ -240,5 +240,5 @@ namespace cpl
 		// not needed (except for warns)
 		return false;
 	}
-	
+
 };

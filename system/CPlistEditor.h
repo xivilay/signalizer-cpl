@@ -22,168 +22,168 @@
 **************************************************************************************
 
 	file:CPListEditor.h
-	
+
 		An interface for editing common data in plist files for audio-plugins on OSX.
 
 *************************************************************************************/
 
 #ifndef CPL_CPLISTEDITOR_H
-	#define CPL_CPLISTEDITOR_H
+#define CPL_CPLISTEDITOR_H
 
-	#include "Common.h"
+#include "Common.h"
 
-	namespace cpl
+namespace cpl
+{
+	namespace PList
 	{
-		namespace PList
+		class Property
 		{
-			class Property
-			{
-			protected:
-				void setElement(XmlElement * key) { element = key; }
-				Property() : element(nullptr) {};
-				XmlElement * element;
-			public:
-				Property(XmlElement * key) : element(key) {}
-
-				virtual ~Property() {}
-				bool exists() { return element != nullptr; }
-
-				Property getKey(const std::string & key)
-				{
-					if(element)
-					{
-						auto & parent = *element;
-						forEachXmlChildElement(parent, childKey)
-						{
-							//std::cout << childKey->getNamespace() << " == " << key << childKey->getNextElement()->getAllSubText() <<  std::endl;
-							if(childKey->getNamespace() == key ||childKey->getAllSubText() == key)
-							{
-								return childKey;
-							}
-						}
-					}
-					return Property();
-				}
-				bool setValue(const std::string & valueString)
-				{
-					if(element)
-					{
-						auto value = element->getNextElement();
-						if(value)
-						{
-							auto child = value->getFirstChildElement();
-							if(child && child->isTextElement())
-							{
-								child->setText(valueString);
-								return true;
-							}
-						}
-					}
-					return false;
-					
-				}
-				
-				Property getValue()
-				{
-					if(element)
-					{
-						auto value = element->getNextElement();
-						if(value)
-						{
-							auto child = value->getFirstChildElement();
-							if(child && child->isTextElement())
-								return child;
-							else
-								return value;
-						}
-					}
-					return Property();
-				}
-				std::string toString()
-				{
-					if(element)
-					{
-						if(element->isTextElement())
-							return element->getText().toStdString();
-						else
-							return element->getNamespace().toStdString();
-						
-						
-					}
-					return "";
-				}
-			};
-		};
-		
-		class CPListEditor : public PList::Property
-		{
-		private:
-			juce::File plist;
-			ScopedPointer<XmlElement> xml;
+		protected:
+			void setElement(XmlElement * key) { element = key; }
+			Property() : element(nullptr) {};
+			XmlElement * element;
 		public:
-			
-			
-			
-			CPListEditor(juce::File list)
-				: plist(list)
+			Property(XmlElement * key) : element(key) {}
+
+			virtual ~Property() {}
+			bool exists() { return element != nullptr; }
+
+			Property getKey(const std::string & key)
 			{
-			}
-			virtual ~CPListEditor() {}
-			bool parse()
-			{
-				xml = element = XmlDocument::parse(plist);
-				return exists();
-			}
-			
-			bool editKey(const std::string key, const std::string value)
-			{
-				if(xml)
+				if (element)
 				{
-					auto & parent = *xml->getFirstChildElement();
+					auto & parent = *element;
 					forEachXmlChildElement(parent, childKey)
 					{
-						if(childKey->getAllSubText() == key)
+						//std::cout << childKey->getNamespace() << " == " << key << childKey->getNextElement()->getAllSubText() <<  std::endl;
+						if (childKey->getNamespace() == key || childKey->getAllSubText() == key)
 						{
-							auto valueEntry = childKey->getNextElement();
-							if(valueEntry)
-							{
-								auto child = valueEntry->getFirstChildElement();
-								if(child && child->isTextElement())
-								{
-									child->setText(value);
-									return true;
-								}
-							}
-							
+							return childKey;
 						}
-						
-						
+					}
+				}
+				return Property();
+			}
+			bool setValue(const std::string & valueString)
+			{
+				if (element)
+				{
+					auto value = element->getNextElement();
+					if (value)
+					{
+						auto child = value->getFirstChildElement();
+						if (child && child->isTextElement())
+						{
+							child->setText(valueString);
+							return true;
+						}
 					}
 				}
 				return false;
+
 			}
-			
-			bool serialize()
+
+			Property getValue()
 			{
-				if (xml) {
-					return xml->writeToFile(plist, getplistDTD());
+				if (element)
+				{
+					auto value = element->getNextElement();
+					if (value)
+					{
+						auto child = value->getFirstChildElement();
+						if (child && child->isTextElement())
+							return child;
+						else
+							return value;
+					}
 				}
-				else
-					return false;
+				return Property();
 			}
-			bool saveAs(juce::File location)
+			std::string toString()
 			{
-				if (xml) {
-					return xml->writeToFile(location, getplistDTD());
+				if (element)
+				{
+					if (element->isTextElement())
+						return element->getText().toStdString();
+					else
+						return element->getNamespace().toStdString();
+
+
 				}
-				else
-					return false;
-				
-			}
-			const char * getplistDTD()
-			{
-				return "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
+				return "";
 			}
 		};
-	}
+	};
+
+	class CPListEditor : public PList::Property
+	{
+	private:
+		juce::File plist;
+		ScopedPointer<XmlElement> xml;
+	public:
+
+
+
+		CPListEditor(juce::File list)
+			: plist(list)
+		{
+		}
+		virtual ~CPListEditor() {}
+		bool parse()
+		{
+			xml = element = XmlDocument::parse(plist);
+			return exists();
+		}
+
+		bool editKey(const std::string key, const std::string value)
+		{
+			if (xml)
+			{
+				auto & parent = *xml->getFirstChildElement();
+				forEachXmlChildElement(parent, childKey)
+				{
+					if (childKey->getAllSubText() == key)
+					{
+						auto valueEntry = childKey->getNextElement();
+						if (valueEntry)
+						{
+							auto child = valueEntry->getFirstChildElement();
+							if (child && child->isTextElement())
+							{
+								child->setText(value);
+								return true;
+							}
+						}
+
+					}
+
+
+				}
+			}
+			return false;
+		}
+
+		bool serialize()
+		{
+			if (xml) {
+				return xml->writeToFile(plist, getplistDTD());
+			}
+			else
+				return false;
+		}
+		bool saveAs(juce::File location)
+		{
+			if (xml) {
+				return xml->writeToFile(location, getplistDTD());
+			}
+			else
+				return false;
+
+		}
+		const char * getplistDTD()
+		{
+			return "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
+		}
+	};
+}
 #endif

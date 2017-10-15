@@ -26,68 +26,68 @@
 		A widget that can display a colour and allow the user to choose a new.
 		Note the explicit use of juce::PixelARGB - avoid representing colours
 		through integers (platforms has binary inconsistensies).
- 
+
 *************************************************************************************/
 
 #ifndef CDSPWINDOWWIDGET_H
-	#define CDSPWINDOWWIDGET_H
+#define CDSPWINDOWWIDGET_H
 
-	#include "WidgetBase.h"
-	#include "../../dsp/DSPWindows.h"
+#include "WidgetBase.h"
+#include "../../dsp/DSPWindows.h"
 
-	namespace cpl
+namespace cpl
+{
+
+	class CDSPWindowWidget
+		: public juce::Component
+		, public ValueControl<WindowDesignValue, CompleteWindowDesign>
 	{
+	public:
 
-		class CDSPWindowWidget
-			: public juce::Component
-			, public ValueControl<WindowDesignValue, CompleteWindowDesign>
+		enum ChoiceOptions
+		{
+			All,
+			FiniteDFTWindows
+		};
+
+		/// <summary>
+		/// 
+		/// </summary>
+		CDSPWindowWidget(WindowDesignValue * value = nullptr, bool takeOwnership = false);
+
+		void setWindowOptions(ChoiceOptions c);
+
+
+	protected:
+
+		virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
+
+		virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
+		virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
+
+		class WindowAnalyzer : public juce::Component
 		{
 		public:
 
-			enum ChoiceOptions
-			{
-				All,
-				FiniteDFTWindows
-			};
+			WindowAnalyzer(CDSPWindowWidget & parent);
+			void paint(juce::Graphics & g) override;
 
-			/// <summary>
-			/// 
-			/// </summary>
-			CDSPWindowWidget(WindowDesignValue * value = nullptr, bool takeOwnership = false);
-
-			void setWindowOptions(ChoiceOptions c);
-
-
-		protected:
-
-			virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
-
-			virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
-			virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
-
-			class WindowAnalyzer : public juce::Component
-			{
-			public:
-
-				WindowAnalyzer(CDSPWindowWidget & parent);
-				void paint(juce::Graphics & g) override;
-
-			private:
-				CDSPWindowWidget & p;
-			};
-
-			virtual void resized() override;
-			void initControls();
-
-			// data
-			CValueComboBox kwindowList;
-			CValueComboBox ksymmetryList;
-			CValueKnobSlider kalpha, kbeta;
-			MatrixSection layout;
-			WindowAnalyzer analyzer;
-
+		private:
+			CDSPWindowWidget & p;
 		};
 
+		virtual void resized() override;
+		void initControls();
+
+		// data
+		CValueComboBox kwindowList;
+		CValueComboBox ksymmetryList;
+		CValueKnobSlider kalpha, kbeta;
+		MatrixSection layout;
+		WindowAnalyzer analyzer;
+
 	};
+
+};
 
 #endif

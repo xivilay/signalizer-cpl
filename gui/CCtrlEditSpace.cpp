@@ -1,30 +1,30 @@
 /*************************************************************************************
 
-	Audio Programming Environment VST. 
-		
+	Audio Programming Environment VST.
+
 		VST is a trademark of Steinberg Media Technologies GmbH.
 
-    Copyright (C) 2013 Janus Lynggaard Thorborg [LightBridge Studios]
+	Copyright (C) 2013 Janus Lynggaard Thorborg [LightBridge Studios]
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	See \licenses\ for additional details on licenses associated with this program.
 
 **************************************************************************************
 
 	file:CCtrlEditSpace.cpp
-		
+
 		Implementation of CCtrlEditSpace.h
 
 *************************************************************************************/
@@ -187,7 +187,7 @@ namespace cpl
 	{
 
 		expanderButton->setBounds
-		(	
+		(
 			centerRectInsideRegion
 			(
 				getBounds().withPosition(0, 0).withLeft(getWidth() - (compactHeight)).withBottom(compactHeight - 1),
@@ -213,7 +213,7 @@ namespace cpl
 			iconError.setBounds(getWidth() - 20, intValueLabel.getBounds().getY() + 3, 15, 15);
 
 			intValueLabel.setVisible(true);
-			
+
 		}
 		errorVisualizer.setBounds(getBounds().withPosition(0, 0));
 		fmtValueLabel.grabKeyboardFocus();
@@ -376,10 +376,10 @@ namespace cpl
 	void CCtrlEditSpace::focusOfChildComponentChanged(FocusChangeType cause)
 	{
 		// commit suicide
-		if(!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
+		if (!hasKeyboardFocus(true) && !parentControl->bGetView()->hasKeyboardFocus(true))
 			delete this;
 	}
-	
+
 	void CCtrlEditSpace::visibilityChanged()
 	{
 
@@ -395,7 +395,7 @@ namespace cpl
 		auto val = parentControl->bGetValue();
 		CBaseControl::bMapIntValueToString(intText, val);
 		parentControl->bFormatValue(fmtText, val);
-		
+
 		fmtValueLabel.setText(fmtText, juce::NotificationType::dontSendNotification);
 		intValueLabel.setText(intText, juce::NotificationType::dontSendNotification);
 	}
@@ -409,7 +409,7 @@ namespace cpl
 
 	void CCtrlEditSpace::looseFocus()
 	{
-		
+
 		unfocusAllComponents();
 	}
 
@@ -455,12 +455,12 @@ namespace cpl
 		}
 	}
 
-	CCtrlEditSpace::~CCtrlEditSpace() 
+	CCtrlEditSpace::~CCtrlEditSpace()
 	{
 		notifyDestruction();
 		// warning - the control may have been deleted at this point
 		// if so, the callback on onDeathDestruction sets the parentControl pointer to zero.
-		if(parentControl)
+		if (parentControl)
 			parentControl->bRemoveChangeListener(this);
 
 		getAnimator().removeChangeListener(this);

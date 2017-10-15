@@ -83,7 +83,7 @@ namespace cpl
 	};
 
 	template<typename ParameterView>
-	class ParameterPowerSlopeValue 
+	class ParameterPowerSlopeValue
 		: public PowerSlopeValue
 		, public cpl::Parameters::BundleUpdate<ParameterView>
 	{
@@ -131,7 +131,7 @@ namespace cpl
 		void generateInfo() override
 		{
 			parameters = std::make_unique<std::vector<Entry>>();
-			auto add = [&](ParameterType & p) { parameters->push_back(Entry{ &p, true, false }); };
+			auto add = [&](ParameterType & p) { parameters->push_back(Entry {&p, true, false}); };
 			add(base); add(pivot); add(slope);
 		}
 
