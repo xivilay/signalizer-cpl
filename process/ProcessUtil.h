@@ -137,7 +137,7 @@ namespace cpl
 
 				#ifdef CPL_WINDOWS
 				DWORD dwWritten;
-				if (::WriteFile(pipe.get(), buffer, nc, &dwWritten, nullptr) && dwWritten == nc)
+				if (::WriteFile(pipe.get(), buffer, static_cast<DWORD>(nc), &dwWritten, nullptr) && dwWritten == static_cast<DWORD>(nc))
 				{
 					return 0;
 				}

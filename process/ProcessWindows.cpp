@@ -52,7 +52,7 @@ namespace cpl
 		std::string ret;
 		ret.resize(GetSystemDirectoryA(nullptr, 0));
 
-		if (GetSystemDirectoryA(ret.data(), ret.size()) != ret.size() - 1)
+		if (GetSystemDirectoryA(ret.data(), static_cast<UINT>(ret.size())) != ret.size() - 1)
 		{
 			CPL_SYSTEM_EXCEPTION("GetWindowsDirectoryA");
 		}
@@ -224,7 +224,7 @@ namespace cpl
 			siStartInfo.StartupInfo.hStdInput = hIn;
 			siStartInfo.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-			DWORD dwNeededListSize;
+			std::size_t dwNeededListSize;
 			if (!InitializeProcThreadAttributeList(nullptr, 1, 0, &dwNeededListSize) && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 				CPL_SYSTEM_EXCEPTION("InitializeProcThreadAttributeList");
 

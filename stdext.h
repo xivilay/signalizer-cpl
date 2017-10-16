@@ -97,95 +97,20 @@ namespace cpl
 	{
 		return arr;
 	}
+
+	template<typename T, typename U>
+	T reinterpret_noub_cast(const U & origin)
+	{
+		T ret;
+		std::memcpy(&ret, &origin, sizeof(T));
+		return ret;
+	}
 };
 
 
 
 namespace std
 {
-
-
-
-	template <>
-	struct modulus < float >
-	{
-<<<<<<< HEAD
-		extern const char * newl;
-		const char tab = '\t';
-
-		typedef std::make_signed<std::size_t>::type ssize_t;
-
-		template<class C, typename T>
-			std::pair<std::size_t, bool> index_of(const C & c, const T & t)
-			{
-				auto it = begin(c);
-				std::size_t count = 0;
-				for (; it != end(c); it++)
-				{
-					count++;
-				}
-				return it == end(c) ? std::make_pair(0ul, false) : std::make_pair(count, true);
-			}
-
-		template<class C, class T>
-			inline auto _contains_impl(const C& c, const T& x, int)
-				-> decltype(c.find(x), true)
-			{
-				return end(c) != c.find(x);
-			}
-
-		template<class C, class T>
-			inline bool _contains_impl(const C& v, const T& x, long)
-			{
-				return end(v) != std::find(begin(v), end(v), x);
-			}
-
-		template<class C, class T>
-			inline auto contains(const C& c, const T& x)
-				-> decltype(end(c), true)
-			{
-				return _contains_impl(c, x, 0);
-			}
-
-			template <class C>
-				constexpr auto data(C& c) -> decltype(c.data())
-				{
-					return c.data();
-				}
-			template <class C>
-				constexpr auto data(const C& c) -> decltype(c.data())
-				{
-					return c.data();
-				}
-
-			template <class T, std::size_t N>
-				constexpr T* data(T(&arr)[N]) noexcept
-				{
-					return arr;
-				}
-
-			template <class T>
-				constexpr T * data(T * arr) noexcept
-				{
-					return arr;
-				}
-
-			template<typename T, typename U>
-			T reinterpret_noub_cast(const U & origin)
-			{
-				T ret;
-				std::memcpy(&ret, &origin, sizeof(T));
-				return ret;
-			}
-=======
-		typedef float T;
-		T operator() (const T& x, const T& y) const { return std::fmod(x, y); }
-		typedef T first_argument_type;
-		typedef T second_argument_type;
-		typedef T result_type;
->>>>>>> 022db86ea3eac803879cd9488f186df5af57fc94
-	};
-
 	template <>
 	struct modulus < double >
 	{

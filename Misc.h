@@ -77,6 +77,8 @@ namespace cpl
 	namespace Misc
 	{
 		std::pair<int, std::string> ExecCommand(const std::string & arg);
+		std::pair<bool, std::string> ReadFile(const std::string & path) noexcept;
+		bool WriteFile(const std::string & path, const std::string & contents) noexcept;
 		std::string GetTime();
 		std::string GetDate();
 		std::string DemangleRawName(const std::string & name);
@@ -219,166 +221,12 @@ namespace cpl
 		/// </summary>
 		inline void * alignedBytesMalloc(std::size_t size, std::size_t alignment)
 		{
-<<<<<<< HEAD
-			std::pair<int, std::string> ExecCommand(const std::string & arg);
-			std::pair<bool, std::string> ReadFile(const std::string & path) noexcept;
-			bool WriteFile(const std::string & path, const std::string & contents) noexcept;
-			std::string GetTime ();
-			std::string GetDate();
-			std::string DemangleRawName(const std::string & name);
 
-			template<class T>
-				std::string DemangledTypeName(const T & object)
-				{
-					return DemangleRawName(typeid(object).name());
-				}
-
-			int ObtainUniqueInstanceID();
-			void ReleaseUniqueInstanceID(int ID);
-			bool IsBeingDebugged();
-
-			/// <summary>
-			/// Returns a pointer to the base of the current image (DLL/DYLIB/SO)
-			/// </summary>
-			const char * GetImageBase();
-
-			const std::string & DirectoryPath();
-
-			enum ExceptionStatus {
-				Undefined,
-				CSubsystem
-
-			};
-			long Round(double number);
-			long Delay(int ms);
-			void PreciseDelay(double msecs);
-
-			unsigned int QuickTime();
-			int GetSizeRequiredFormat(const char * fmt, va_list pargs);
-
-			std::uint64_t ClockCounter();
-			long long TimeCounter();
-			double TimeDifference(long long);
-			double TimeToMilisecs(long long);
-
-			void LogException(const std::string & errorMessage);
-
-			void CrashIfUserDoesntDebug(const std::string & errorMessage);
-
-			Types::OSError GetLastOSErrorCode();
-			Types::tstring GetLastOSErrorMessage();
-			Types::tstring GetLastOSErrorMessage(Types::OSError errorToPrint);
-
-			/// <summary>
-			/// Consumes any key from the console, without requiring enter to be hit.
-			/// </summary>
-			bool ConsumeAnyKey();
-			/// <summary>
-			/// Promts the user to press any key in the console to continue
-			/// </summary>
-			bool PromptAnyKey();
-
-			/// <summary>
-			/// Returns uninitialized memory aligned to alignment boundary.
-			/// Has same behaviour as std::malloc
-			/// </summary>
-			template<class Type, size_t alignment = 32>
-				Type * alignedMalloc(std::size_t numObjects)
-				{
-					void * ptr = nullptr;
-					std::size_t size = sizeof(Type) * numObjects;
-					#ifdef CPL_WINDOWS
-						ptr = _aligned_malloc(size, alignment);
-					#else
-						// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
-
-						#ifdef CPL_MAC
-							// all allocations on OS X are aligned to 16-byte boundaries
-							// NOTE: removed, as alignedFree doesn't account for this
-							// if(alignment <= 16)
-							//	return reinterpret_cast<Type *>(std::malloc(numObjects * sizeof(Type)));
-						#endif
-
-						void *mem = malloc( size + (alignment-1) + sizeof(void*) );
-
-						char *amem = ((char*)mem) + sizeof(void*);
-						amem += (alignment - ((uintptr_t)amem & (alignment - 1)) & (alignment - 1));
-
-						((void**)amem)[-1] = mem;
-						ptr = amem;
-					#endif
-
-					return reinterpret_cast<Type * >(ptr);
-				}
-
-			/// <summary>
-			/// Returns uninitialized memory aligned to alignment boundary.
-			/// Has same behaviour as std::realloc. Alignment between calls
-			/// has to be consistent.
-			/// </summary>
-			template<class Type, size_t alignment = 32>
-				inline Type * alignedRealloc(Type * ptr, std::size_t numObjects)
-				{
-					static_assert(std::is_trivially_copyable<Type>::value, "Reallocations may need to trivially copy buffer");
-					#ifdef CPL_WINDOWS
-						return reinterpret_cast<Type *>(_aligned_realloc(ptr, numObjects * sizeof(Type), alignment));
-					#else
-						#ifdef CPL_MAC
-							// all allocations on OS X are aligned to 16-byte boundaries
-							// NOTE: removed, as alignedFree doesn't account for this
-							//if(alignment <= 16)
-							//	return reinterpret_cast<Type *>(std::realloc(ptr, numObjects * sizeof(Type)));
-						#endif
-						// https://github.com/numpy/numpy/issues/5312
-						void *p1, **p2, *base;
-						std::size_t
-							old_offs,
-							offs = alignment - 1 + sizeof(void*),
-							n = sizeof(Type) * numObjects;
-
-						if (ptr != nullptr)
-						{
-							base = *(((void**)ptr)-1);
-							if ((p1 = std::realloc(base, n + offs)) == nullptr)
-								return nullptr;
-							if (p1 == base)
-								return ptr;
-							p2 = (void**)(((std::uintptr_t)(p1)+offs) & ~(alignment-1));
-							old_offs = (size_t)((std::uintptr_t)ptr - (std::uintptr_t)base);
-							std::memmove(p2, (char*)p1 + old_offs, n);
-						}
-						else
-						{
-							if ((p1 = std::malloc(n + offs)) == nullptr)
-								return nullptr;
-							p2 = (void**)(((std::uintptr_t)(p1)+offs) & ~(alignment-1));
-						}
-						*(p2-1) = p1;
-						return reinterpret_cast<Type *>(p2);
-
-					#endif
-				}
-
-			/// <summary>
-			/// Returns uninitialized memory aligned to alignment boundary.
-			/// Has same behaviour as std::malloc
-			/// </summary>
-			inline void * alignedBytesMalloc(std::size_t size, std::size_t alignment)
-			{
-				void * ptr = nullptr;
-				#ifdef CPL_WINDOWS
-					ptr = _aligned_malloc(size, alignment);
-				#else
-					// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
-=======
 			void * ptr = nullptr;
 			#ifdef CPL_WINDOWS
 			ptr = _aligned_malloc(size, alignment);
 			#else
 			// : http://stackoverflow.com/questions/196329/osx-lacks-memalign
->>>>>>> 022db86ea3eac803879cd9488f186df5af57fc94
-
-
 			void *mem = malloc(size + (alignment - 1) + sizeof(void*));
 
 			char *amem = ((char*)mem) + sizeof(void*);
