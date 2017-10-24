@@ -127,7 +127,7 @@ namespace cpl
 	}
 
 	Process::Process(std::string process, Args&& args, int ioFlags, ScopeExitOperation operation, const EnvStrings * strings, const std::string * cwd, int customFlags)
-		: pname(std::move(process)), pArgs(pname + args), scopeExitOp(operation), pid(npid), explicitlyJoined(false), hasCustomEnvironment(false)
+		: pname(std::move(process)), pArgs(Args().arg(pname, Args::Escaped) + args), scopeExitOp(operation), pid(npid), explicitlyJoined(false), hasCustomEnvironment(false)
 	{
 		flags = static_cast<IOStreamFlags>(ioFlags);
 

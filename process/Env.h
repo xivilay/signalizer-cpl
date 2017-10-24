@@ -77,6 +77,14 @@ namespace cpl
 			return std::move(left);
 		}
 
+		EnvStrings& operator += (EnvStrings right)
+		{
+			compiledArgs += right.compiledArgs;
+			compiledArgs.push_back('\0');
+			std::move(right.vectorArgs.begin(), right.vectorArgs.end(), std::back_inserter(vectorArgs));
+			return *this;
+		}
+
 		std::string doubleNullList() const
 		{
 			return compiledArgs + "\0";

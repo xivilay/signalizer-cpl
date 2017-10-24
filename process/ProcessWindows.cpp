@@ -248,7 +248,7 @@ namespace cpl
 		}
 
 
-		DWORD dwCreationFlags = EXTENDED_STARTUPINFO_PRESENT;
+		DWORD dwCreationFlags = EXTENDED_STARTUPINFO_PRESENT | CREATE_NO_WINDOW;
 
 		if (customFlags & Options::Terminal)
 			dwCreationFlags |= CREATE_NEW_CONSOLE;

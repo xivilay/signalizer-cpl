@@ -121,6 +121,13 @@ namespace cpl
 			return std::move(left);
 		}
 
+		Args& operator += (Args right)
+		{
+			compiledArgs += " " + right.compiledArgs;
+			std::move(right.vectorArgs.begin(), right.vectorArgs.end(), std::back_inserter(vectorArgs));
+			return *this;
+		}
+
 		const std::string& commandLine() const
 		{
 			return compiledArgs;

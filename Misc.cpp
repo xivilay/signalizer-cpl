@@ -213,7 +213,7 @@ namespace cpl
 			if (!file)
 				return { false, result };
 
-			if(!std::fseek(file.get(), 0, SEEK_END))
+			if(std::fseek(file.get(), 0, SEEK_END))
 				return { false, result };
 
 			result.reserve(std::ftell(file.get()));
