@@ -40,54 +40,22 @@
 
 namespace cpl
 {
-
-	CProtected::StaticData CProtected::staticData;
 	CPL_THREAD_LOCAL CProtected::ThreadData CProtected::threadData;
-	std::atomic<int> checkCounter {0};
-	// TODO: make atomic. It is safe on all x86 systems, though.
-	std::unique_ptr<CProtected> internalInstance;
-	CMutex::Lockable creationLock;
 
 	CProtected & CProtected::instance()
 	{
-		// TODO: perfect double-checked pattern by creating by using atomic<unique_ptr> instead
-		// problem is, atomic<T>::T must be trivially copyable.
-		std::atomic_thread_fence(std::memory_order_acquire);
-		if (!internalInstance.get())
-		{
-			CMutex lock(creationLock);
-
-			if (!internalInstance.get())
-			{
-				std::atomic_thread_fence(std::memory_order_release);
-				internalInstance.reset(new CProtected());
-				return *internalInstance.get();
-			}
-			else
-			{
-				return *internalInstance.get();
-			}
-		}
-		else
-		{
-			return *internalInstance.get();
-		}
+		static CProtected internalInstance;
+		return internalInstance;
 	}
 
 	CProtected::CProtected()
 	{
-		checkCounter.fetch_add(1);
-		if (checkCounter.load() > 1)
-			CPL_RUNTIME_EXCEPTION("More than one Protected instance created at a time.");
-		#ifndef CPL_WINDOWS
-		registerHandlers();
-		#endif
+
 	}
 
 	CProtected::~CProtected()
 	{
-		unregisterHandlers();
-		checkCounter.fetch_sub(1);
+
 	}
 
 	/// <summary>
@@ -454,11 +422,7 @@ namespace cpl
 		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
 		#endif
 	}
-	/*********************************************************************************************
 
-		Implementation specific exception handlers for unix systems.
-
-	 *********************************************************************************************/
 	void CProtected::signalHandler(int some_number)
 	{
 		throw (XWORD)some_number;
@@ -655,48 +619,4 @@ namespace cpl
 		#endif
 	}
 
-	/*********************************************************************************************
-
-		Implementation specefic exception handlers for unix systems.
-
-	 *********************************************************************************************/
-	bool CProtected::registerHandlers()
-	{
-		#ifndef CPL_MSVC
-		CMutex lock(staticData.signalLock);
-		if (!staticData.signalReferenceCount)
-		{
-			staticData.newHandler.sa_sigaction = &CProtected::signalActionHandler;
-			staticData.newHandler.sa_flags = SA_SIGINFO;
-			sigemptyset(&staticData.newHandler.sa_mask);
-			sigaction(SIGILL, &staticData.newHandler, &staticData.oldHandlers[SIGILL]);
-			sigaction(SIGSEGV, &staticData.newHandler, &staticData.oldHandlers[SIGSEGV]);
-			sigaction(SIGFPE, &staticData.newHandler, &staticData.oldHandlers[SIGFPE]);
-			sigaction(SIGBUS, &staticData.newHandler, &staticData.oldHandlers[SIGBUS]);
-		}
-		staticData.signalReferenceCount++;
-		return true;
-		#endif
-		return false;
-	}
-
-	bool CProtected::unregisterHandlers()
-	{
-		#ifndef CPL_MSVC
-		CMutex lock(staticData.signalLock);
-		staticData.signalReferenceCount--;
-		if (staticData.signalReferenceCount == 0)
-		{
-			for (auto & signalData : staticData.oldHandlers)
-			{
-				// restore all registrered old signal handlers
-				sigaction(signalData.first, &signalData.second, nullptr);
-			}
-			staticData.oldHandlers.clear();
-			return true;
-		}
-		return false;
-		#endif
-		return false;
-	}
 }

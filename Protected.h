@@ -97,80 +97,67 @@ namespace cpl
 		/// Throws CSystemException on errors, crashes on unrecoverable errors.
 		///
 		/// Does NOT catch software exceptions.
+		/// 
+		/// Is NOT guaranteed to capture all system hardware exceptions/signals,
+		/// in general only those that are synchronous.
+		/// Guaranteed handled exceptions:
+		///		segmentation violations, bus errors, floating point exceptions, illegal instructions.
+		/// 
+		/// This function is reentrant (with expected behaviour), and safe in multithreaded programs.
 		///
-		/// Note that the stack may NOT be unwound (it wouldn't be anyway if we caught any exception),
+		/// Note that the stack may NOT (until this point) be unwound,
 		/// so consider your program to be in an UNDEFINED state; write some info to a file and crash gracefully
 		/// afterwards!
 		/// </summary>
 		template <class func>
 		void runProtectedCode(func && function)
 		{
-			threadData.isInStack = true;
-			/*
-				This is not really crossplatform, but I'm working on it!
-			*/
+			auto oldThreadData = threadData;
+			oldThreadData.isInStack = true;
+
+			auto scopeRelease = [&]()
+			{
+				threadData = oldThreadData;
+			};
+
+			Utility::OnScopeExit<decltype(scopeRelease)> releaser(
+				scopeRelease
+			);
+
 			#ifdef CPL_MSVC
-			bool exception_caught = false;
+				[&]() {
+					bool exception_caught = false;
 
-			CSystemException::eStorage exceptionData;
+					CSystemException::eStorage exceptionData;
 
-			__try {
+					__try {
 
-				//	CPL_BREAKIFDEBUGGED();
-				function();
-			}
-			__except (CProtected::structuredExceptionHandler(GetExceptionCode(), exceptionData, GetExceptionInformation()))
-			{
-				// this is a way of leaving the SEH block before we throw a C++ software exception
-				exception_caught = true;
-			}
-			if (exception_caught)
-				throw CSystemException(exceptionData);
+						function();
+					}
+					__except (CProtected::structuredExceptionHandler(GetExceptionCode(), exceptionData, GetExceptionInformation()))
+					{
+						// this is a way of leaving the SEH block before we throw a C++ software exception
+						exception_caught = true;
+					}
+					if (exception_caught)
+						throw CSystemException(exceptionData);
+				} ();
 			#else
-			// trigger int 3
-			//CPL_BREAKIFDEBUGGED();
-			// set the jump in case a signal gets raised
-			if (sigsetjmp(threadData.threadJumpBuffer, 1))
-			{
-				/*
-					return from exception handler.
-					current exception is in CState::currentException
-				*/
-				threadData.isInStack = false;
-				throw CSystemException(threadData.currentExceptionData);
-			}
-			// run the potentially bad code
-			function();
+
+				ScopedSignalThreadHandler h;
+				// set the jump in case a signal gets raised
+				if (sigsetjmp(threadData.threadJumpBuffer, 1))
+				{
+					/*
+						return from exception handler.
+						current exception is in CState::currentException
+					*/
+					throw CSystemException(threadData.currentExceptionData);
+				}
+				// run the potentially bad code
+				function();
 
 			#endif
-			/*
-
-				This is the ideal code.
-				Unfortunately, to succesfully throw from a signal handler,
-				there must not be any non-c++ stackframes in between.
-				If, the exception will be uncaught even though we have this handler
-				lower down on the stack. Therefore, we have to implement the
-				exception system using longjmps
-
-
-				try {
-					// <-- breakpoint disables SIGBUS
-					CPL_BREAKIFDEBUGGED();
-					function();
-				}
-				catch(const CSystemException & e) {
-					activeStateObject = nullptr;
-					// rethrow it
-					throw e;
-				}
-				catch(...)
-				{
-					Misc::MsgBox("Unknown exception thrown, breakpoint is triggered afterwards");
-					CPL_BREAKIFDEBUGGED();
-
-				}
-			 */
-			threadData.isInStack = false;
 		}
 
 		template <class func>
@@ -181,18 +168,15 @@ namespace cpl
 		{
 
 			PreembeddedFormatter debugOutput(levelDescription);
-
+			auto oldThreadData = threadData;
 			threadData.isInStack = true;
 			threadData.traceIntercept = true;
 			threadData.propagate = true;
 			threadData.debugTraceBuffer = &debugOutput;
 
-			auto scopeRelease = []()
+			auto scopeRelease = [&]()
 			{
-				threadData.isInStack = false;
-				threadData.traceIntercept = false;
-				threadData.propagate = false;
-				threadData.debugTraceBuffer = nullptr;
+				threadData = oldThreadData;
 			};
 
 			Utility::OnScopeExit<decltype(scopeRelease)> releaser(
@@ -204,7 +188,7 @@ namespace cpl
 			return internalSEHTraceInterceptor(debugOutput, function);
 			#else
 				// async signals will be captured further up
-			return internalCxxTraceInterceptor(debugOutput, function);
+			return internalSignalTraceInterceptor(debugOutput, function)
 			#endif
 		}
 
@@ -216,9 +200,9 @@ namespace cpl
 				CProtected::instance().runProtectedCode
 				(
 					[&]()
-				{
-					function();
-				}
+					{
+						function();
+					}
 				);
 			}
 			catch (CProtected::CSystemException & cs)
@@ -395,19 +379,30 @@ namespace cpl
 			#endif
 		}
 
-		static struct StaticData
+		template <class func>
+		auto internalSignalTraceInterceptor(PreembeddedFormatter & out, func && function)
+			-> decltype(function())
 		{
-			#ifndef CPL_WINDOWS
-			std::map<int, struct sigaction> oldHandlers;
-			struct sigaction newHandler;
-			volatile int signalReferenceCount;
-			CMutex::Lockable signalLock;
+
+			#ifndef CPL_MSVC
+			ScopedThreadSignalHandler h;
+			// set the jump in case a signal gets raised
+			if (sigsetjmp(threadData.threadJumpBuffer, 1))
+			{
+				/*
+				return from exception handler.
+				current exception is in CState::currentException
+				*/
+				throw CSystemException(threadData.currentExceptionData);
+			}
+
+			return internalCxxTraceInterceptor(out, function);
+
 			#endif
+		}
 
-		} staticData;
 
-
-		static CPL_THREAD_LOCAL struct ThreadData
+		struct ThreadData
 		{
 			/// <summary>
 			/// Thread local set on entry and exit of protected code stack frames.
@@ -432,7 +427,45 @@ namespace cpl
 			CSystemException::eStorage currentExceptionData;
 			#endif
 			unsigned fpuMask;
-		} threadData;
+		};
+
+		static CPL_THREAD_LOCAL ThreadData threadData;
+
+
+		#ifndef CPL_MSVC
+			struct ScopedThreadSignalHandler
+			{
+				ScopedThreadSignalHandler()
+				{
+					struct sigaction handler {};
+
+					handler.sa_sigaction = &CProtected::signalActionHandler;
+					handler.sa_flags = SA_SIGINFO;
+					sigemptyset(&handler.sa_mask);
+
+					sigaction(SIGILL, &handler, &oldSigIll);
+					sigaction(SIGSEGV, &handler, &oldSigSegv);
+					sigaction(SIGFPE, &handler, &oldSigFPE);
+					sigaction(SIGBUS, &handler, &oldSigBus);
+
+				}
+
+				~ScopedThreadSignalHandler()
+				{
+					sigaction(SIGILL, &oldSigIll, nullptr);
+					sigaction(SIGSEGV, &oldSigSegv, nullptr);
+					sigaction(SIGFPE, &oldSigFPE, nullptr);
+					sigaction(SIGBUS, &oldSigBus, nullptr);
+				}
+
+				struct sigaction
+					oldSigIll,
+					oldSigSegv,
+					oldSigFPE,
+					oldSigBus;
+			};
+
+		#endif
 
 		XWORD structuredExceptionHandler(XWORD _code, CSystemException::eStorage & e, void * _systemInformation);
 		XWORD structuredExceptionHandlerTraceInterceptor(PreembeddedFormatter & outputStream, XWORD _code, CSystemException::eStorage & e, void * _systemInformation);
@@ -440,8 +473,6 @@ namespace cpl
 		static void signalTraceInterceptor(CSystemException::eStorage & e);
 		static void signalHandler(int some_number);
 		static void signalActionHandler(int signal, siginfo_t * siginfo, void * extraData);
-		static bool registerHandlers();
-		static bool unregisterHandlers();
 	};
 };
 #endif
