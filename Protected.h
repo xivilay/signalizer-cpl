@@ -46,6 +46,7 @@
 #include <map>
 #include <sstream>
 #include "Utility.h"
+#include <memory>
 
 #define CPL_TRACEGUARD_START \
 	cpl::CProtected::instance().topLevelTraceGuardedCode([&]() {
@@ -59,6 +60,58 @@ namespace cpl
 
 	class CProtected : Utility::CNoncopyable
 	{
+		static constexpr int OSCustomRaiseCode = 0xBEEF;
+
+		struct Throwable
+		{
+			virtual ~Throwable() {};
+			virtual void throwImpl() = 0;
+		};
+
+		struct PendingException
+		{
+			bool isPending() const noexcept
+			{
+				return throwable.get() != nullptr;
+			}
+
+			void throwException()
+			{
+				if (!isPending())
+					CPL_RUNTIME_EXCEPTION_SPECIFIC("not pending", std::logic_error);
+
+				auto local = std::move(throwable);
+
+				local->throwImpl();
+			}
+			
+			void reset(std::unique_ptr<Throwable> newThrowable)
+			{
+				throwable = std::move(newThrowable);
+			}
+
+			void reset(Throwable* newThrowable)
+			{
+				throwable.reset(newThrowable);
+			}
+
+		private:
+
+			std::unique_ptr<Throwable> throwable;
+		};
+
+		template<typename Exception>
+		struct ThrowableException : std::enable_if<std::is_base_of<std::exception, Exception>::value, Throwable>::type
+		{
+			ThrowableException(Exception&& e) : storage(std::move(e)) {}
+
+			void throwImpl() override
+			{
+				throw storage;
+			}
+
+			Exception storage;
+		};
 
 	public:
 
@@ -96,7 +149,9 @@ namespace cpl
 		/// calls lambda inside 'safe wrappers', catches OS errors and filters them.
 		/// Throws CSystemException on errors, crashes on unrecoverable errors.
 		///
-		/// Does NOT catch software exceptions.
+		/// Does NOT catch software exceptions, but it IS C++ exception safe.
+		/// Additionally, if you want to catch C++ exceptions across external
+		/// code, you have to use this function (and Proctected::throwException{T}()).
 		/// 
 		/// Is NOT guaranteed to capture all system hardware exceptions/signals,
 		/// in general only those that are synchronous.
@@ -112,12 +167,12 @@ namespace cpl
 		template <class func>
 		void runProtectedCode(func && function)
 		{
-			auto oldThreadData = threadData;
-			oldThreadData.isInStack = true;
+			auto oldThreadData = std::move(threadData);
+			threadData.isInStack = true;
 
 			auto scopeRelease = [&]()
 			{
-				threadData = oldThreadData;
+				threadData = std::move(oldThreadData);
 			};
 
 			Utility::OnScopeExit<decltype(scopeRelease)> releaser(
@@ -128,19 +183,26 @@ namespace cpl
 				[&]() {
 					bool exception_caught = false;
 
-					CSystemException::eStorage exceptionData;
+					CSystemException::Storage exceptionData;
 
 					__try {
 
 						function();
 					}
-					__except (CProtected::structuredExceptionHandler(GetExceptionCode(), exceptionData, GetExceptionInformation()))
+					__except (structuredExceptionHandler(GetExceptionCode(), exceptionData, GetExceptionInformation()))
 					{
 						// this is a way of leaving the SEH block before we throw a C++ software exception
 						exception_caught = true;
 					}
 					if (exception_caught)
+					{
+						#ifdef CPL_M_32BIT
+							if (threadData.pendingException.isPending())
+								threadData.pendingException.throwException();
+						#endif
 						throw CSystemException(exceptionData);
+					}
+
 				} ();
 			#else
 
@@ -148,6 +210,9 @@ namespace cpl
 				// set the jump in case a signal gets raised
 				if (sigsetjmp(threadData.threadJumpBuffer, 1))
 				{
+					if (threadData.pendingException.isPending())
+						threadData.pendingException.throwException();
+
 					/*
 						return from exception handler.
 						current exception is in CState::currentException
@@ -168,7 +233,7 @@ namespace cpl
 		{
 
 			PreembeddedFormatter debugOutput(levelDescription);
-			auto oldThreadData = threadData;
+			auto oldThreadData = std::move(threadData);
 			threadData.isInStack = true;
 			threadData.traceIntercept = true;
 			threadData.propagate = true;
@@ -176,7 +241,7 @@ namespace cpl
 
 			auto scopeRelease = [&]()
 			{
-				threadData = oldThreadData;
+				threadData = std::move(oldThreadData);
 			};
 
 			Utility::OnScopeExit<decltype(scopeRelease)> releaser(
@@ -235,7 +300,7 @@ namespace cpl
 			// the retarted create() pattern is used because clang STILL doesn't support thread_local,
 			// thus we must use __thread, which DOESN'T support non-trivial destruction (implied by use of constructors).
 			// TODO: fix the upper messages.
-			struct eStorage
+			struct Storage
 			{
 				const void * faultAddr; // the address the exception occured
 				const void * attemptedAddr; // if exception is a memory violation, this is the attempted address
@@ -249,13 +314,13 @@ namespace cpl
 					bool aVInProtectedMemory; // whether an access violation happened in our protected memory
 				};
 
-				static eStorage create(XWORD exp, bool resolved = true, const void * faultAddress = nullptr,
+				static Storage create(XWORD exp, bool resolved = true, const void * faultAddress = nullptr,
 					const void * attemptedAddress = nullptr, int extraCode = 0, int actualCode = 0)
 				{
 					return {faultAddress, attemptedAddress, exp, extraCode, actualCode, resolved};
 				}
 
-				static eStorage create()
+				static Storage create()
 				{
 					return {};
 				}
@@ -264,26 +329,26 @@ namespace cpl
 			enum status : XWORD {
 				nullptr_from_plugin = 1,
 				#ifdef CPL_WINDOWS
-				// this is not good: these are not crossplatform constants.
-				access_violation = EXCEPTION_ACCESS_VIOLATION,
-				intdiv_zero = EXCEPTION_INT_DIVIDE_BY_ZERO,
-				fdiv_zero = EXCEPTION_FLT_DIVIDE_BY_ZERO,
-				finvalid = EXCEPTION_FLT_INVALID_OPERATION,
-				fdenormal = EXCEPTION_FLT_DENORMAL_OPERAND,
-				finexact = EXCEPTION_FLT_INEXACT_RESULT,
-				foverflow = EXCEPTION_FLT_OVERFLOW,
-				funderflow = EXCEPTION_FLT_UNDERFLOW
+					// this is not good: these are not crossplatform constants.
+					access_violation = EXCEPTION_ACCESS_VIOLATION,
+					intdiv_zero = EXCEPTION_INT_DIVIDE_BY_ZERO,
+					fdiv_zero = EXCEPTION_FLT_DIVIDE_BY_ZERO,
+					finvalid = EXCEPTION_FLT_INVALID_OPERATION,
+					fdenormal = EXCEPTION_FLT_DENORMAL_OPERAND,
+					finexact = EXCEPTION_FLT_INEXACT_RESULT,
+					foverflow = EXCEPTION_FLT_OVERFLOW,
+					funderflow = EXCEPTION_FLT_UNDERFLOW
 				#elif defined(CPL_MAC) || defined(CPL_UNIXC)
-				access_violation = SIGSEGV,
-				intdiv_zero,
-				fdiv_zero,
-				finvalid,
-				fdenormal,
-				finexact,
-				foverflow,
-				funderflow,
-				intsubscript,
-				intoverflow
+					access_violation = SIGSEGV,
+					intdiv_zero,
+					fdiv_zero,
+					finvalid,
+					fdenormal,
+					finexact,
+					foverflow,
+					funderflow,
+					intsubscript,
+					intoverflow
 				#endif
 			};
 			CSystemException()
@@ -291,7 +356,7 @@ namespace cpl
 
 			}
 
-			CSystemException(const eStorage & eData)
+			CSystemException(const Storage & eData)
 			{
 				data = eData;
 			}
@@ -307,13 +372,34 @@ namespace cpl
 
 			CSystemException(XWORD exp, bool resolved = true, const void * faultAddress = nullptr, const void * attemptedAddress = nullptr, int extraCode = 0, int actualCode = 0)
 			{
-				data = eStorage::create(exp, resolved, faultAddress, attemptedAddress, extraCode, actualCode);
+				data = Storage::create(exp, resolved, faultAddress, attemptedAddress, extraCode, actualCode);
 			}
 			const char * what() const noexcept override
 			{
-				return "CProtected::CSystemException (non-software exception)";
+				return "OS specific hardware exception";
 			}
 		};
+
+		template<typename Exception, typename... Args>
+		void throwException(Args&&... args)
+		{
+#if !defined(CPL_MSVC) || defined(CPL_M_32BIT)
+			if (!threadData.isInStack)
+				throw Exception(args...);
+			else
+			{
+				threadData.pendingException.reset(new ThrowableException<Exception>(Exception(args...)));
+				#ifdef CPL_MSVC
+					RaiseException(OSCustomRaiseCode, 0, 0, nullptr);
+				#else
+					siglongjmp(threadData.jumpBuffer, OSCustomRaiseCode);
+				#endif
+			}
+#else
+			throw Exception(args...);
+#endif
+		}
+
 		~CProtected();
 
 	protected:
@@ -362,7 +448,7 @@ namespace cpl
 		{
 
 			#ifdef CPL_MSVC
-			CSystemException::eStorage exceptionInformation;
+			CSystemException::Storage exceptionInformation;
 			__try
 			{
 				return internalCxxTraceInterceptor(out, function);
@@ -402,6 +488,7 @@ namespace cpl
 		}
 
 
+
 		struct ThreadData
 		{
 			/// <summary>
@@ -423,8 +510,11 @@ namespace cpl
 			PreembeddedFormatter * debugTraceBuffer;
 
 			#ifndef CPL_MSVC
-			sigjmp_buf threadJumpBuffer;
-			CSystemException::eStorage currentExceptionData;
+				sigjmp_buf threadJumpBuffer;
+				CSystemException::Storage currentExceptionData;
+			#endif
+			#if !defined(CPL_MSVC) || defined(CPL_M_32BIT)
+				PendingException pendingException;
 			#endif
 			unsigned fpuMask;
 		};
@@ -467,10 +557,10 @@ namespace cpl
 
 		#endif
 
-		XWORD structuredExceptionHandler(XWORD _code, CSystemException::eStorage & e, void * _systemInformation);
-		XWORD structuredExceptionHandlerTraceInterceptor(PreembeddedFormatter & outputStream, XWORD _code, CSystemException::eStorage & e, void * _systemInformation);
+		XWORD structuredExceptionHandler(XWORD _code, CSystemException::Storage & e, void * _systemInformation);
+		XWORD structuredExceptionHandlerTraceInterceptor(PreembeddedFormatter & outputStream, XWORD _code, CSystemException::Storage & e, void * _systemInformation);
 
-		static void signalTraceInterceptor(CSystemException::eStorage & e);
+		static void signalTraceInterceptor(CSystemException::Storage & e);
 		static void signalHandler(int some_number);
 		static void signalActionHandler(int signal, siginfo_t * siginfo, void * extraData);
 	};

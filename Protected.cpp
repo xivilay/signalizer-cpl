@@ -225,7 +225,7 @@ namespace cpl
 		Structured exception handler for windows
 
 	 *********************************************************************************************/
-	XWORD CProtected::structuredExceptionHandler(XWORD _code, CSystemException::eStorage & e, void * systemInformation)
+	XWORD CProtected::structuredExceptionHandler(XWORD _code, CSystemException::Storage & e, void * systemInformation)
 	{
 		CPL_BREAKIFDEBUGGED();
 
@@ -239,6 +239,10 @@ namespace cpl
 			exceptionAddress = exp->ExceptionRecord->ExceptionAddress;
 		switch (_code)
 		{
+			case OSCustomRaiseCode:
+			{
+				e = CSystemException::Storage::create(OSCustomRaiseCode, true, exceptionAddress, nullptr, 0xDEAD);
+			}
 			case EXCEPTION_ACCESS_VIOLATION:
 			{
 				std::ptrdiff_t addr = 0; // nullptr invalid here?
@@ -251,7 +255,7 @@ namespace cpl
 					additionalCode = static_cast<int>(exp->ExceptionRecord->ExceptionInformation[0]);
 				}
 
-				e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress, (const void *)addr, additionalCode);
+				e = CSystemException::Storage::create(exceptCode, safeToContinue, exceptionAddress, (const void *)addr, additionalCode);
 
 				return EXCEPTION_EXECUTE_HANDLER;
 			}
@@ -267,7 +271,7 @@ namespace cpl
 			case EXCEPTION_FLT_DENORMAL_OPERAND:
 				_clearfp();
 				safeToContinue = true;
-				e = CSystemException::eStorage::create(exceptCode, safeToContinue, exceptionAddress);
+				e = CSystemException::Storage::create(exceptCode, safeToContinue, exceptionAddress);
 
 				return EXCEPTION_EXECUTE_HANDLER;
 
@@ -351,14 +355,14 @@ namespace cpl
 
 	}
 	#endif
-	XWORD CProtected::structuredExceptionHandlerTraceInterceptor(CProtected::PreembeddedFormatter & output, XWORD code, CSystemException::eStorage & e, void * systemInformation)
+	XWORD CProtected::structuredExceptionHandlerTraceInterceptor(CProtected::PreembeddedFormatter & output, XWORD code, CSystemException::Storage & e, void * systemInformation)
 	{
 
 		XWORD ret = 0;
 		#ifdef CPL_WINDOWS
 		auto & outputStream = output.get();
 		CPL_BREAKIFDEBUGGED();
-		CSystemException::eStorage exceptionInformation;
+		CSystemException::Storage exceptionInformation;
 		// ignore return and basically use it to fill in the exception information
 		structuredExceptionHandler(code, exceptionInformation, systemInformation);
 
@@ -377,7 +381,7 @@ namespace cpl
 		return ret;
 	}
 
-	void CProtected::signalTraceInterceptor(CSystemException::eStorage & exceptionInformation)
+	void CProtected::signalTraceInterceptor(CSystemException::Storage & exceptionInformation)
 	{
 		CPL_BREAKIFDEBUGGED();
 		#ifdef CPL_UNIXC
@@ -459,7 +463,7 @@ namespace cpl
 				case SIGSEGV:
 				{
 
-					threadData.currentExceptionData = CSystemException::eStorage::create(
+					threadData.currentExceptionData = CSystemException::Storage::create(
 						CSystemException::access_violation,
 						safeToContinue,
 						nullptr,
@@ -516,7 +520,7 @@ namespace cpl
 
 					safeToContinue = true;
 
-					threadData.currentExceptionData = CSystemException::eStorage::create(
+					threadData.currentExceptionData = CSystemException::Storage::create(
 						code_status,
 						safeToContinue,
 						fault_address

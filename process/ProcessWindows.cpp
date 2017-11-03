@@ -224,7 +224,7 @@ namespace cpl
 			siStartInfo.StartupInfo.hStdInput = hIn;
 			siStartInfo.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-			std::size_t dwNeededListSize;
+			SIZE_T dwNeededListSize;
 			if (!InitializeProcThreadAttributeList(nullptr, 1, 0, &dwNeededListSize) && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 				CPL_SYSTEM_EXCEPTION("InitializeProcThreadAttributeList");
 
