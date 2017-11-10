@@ -196,10 +196,6 @@ namespace cpl
 					}
 					if (exception_caught)
 					{
-						#ifdef CPL_M_32BIT
-							if (threadData.pendingException.isPending())
-								threadData.pendingException.throwException();
-						#endif
 						throw CSystemException(exceptionData);
 					}
 
@@ -383,17 +379,13 @@ namespace cpl
 		template<typename Exception, typename... Args>
 		void throwException(Args&&... args)
 		{
-#if !defined(CPL_MSVC) || defined(CPL_M_32BIT)
+#ifndef CPL_MSVC
 			if (!threadData.isInStack)
 				throw Exception(args...);
 			else
 			{
 				threadData.pendingException.reset(new ThrowableException<Exception>(Exception(args...)));
-				#ifdef CPL_MSVC
-					RaiseException(OSCustomRaiseCode, 0, 0, nullptr);
-				#else
 					siglongjmp(threadData.jumpBuffer, OSCustomRaiseCode);
-				#endif
 			}
 #else
 			throw Exception(args...);
@@ -512,8 +504,6 @@ namespace cpl
 			#ifndef CPL_MSVC
 				sigjmp_buf threadJumpBuffer;
 				CSystemException::Storage currentExceptionData;
-			#endif
-			#if !defined(CPL_MSVC) || defined(CPL_M_32BIT)
 				PendingException pendingException;
 			#endif
 			unsigned fpuMask;
