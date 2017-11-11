@@ -30,6 +30,7 @@
 #include "Protected.h"
 #include "lib/StackBuffer.h"
 #include <memory>
+#include <sstream>
 #ifdef CPL_MSVC
 #include <dbghelp.h>
 #pragma comment(lib, "Dbghelp.lib")
@@ -93,7 +94,7 @@ namespace cpl
 	std::string CProtected::formatExceptionMessage(const CSystemException & e)
 	{
 		auto imageBase = (const void *)Misc::GetImageBase();
-		Misc::CStringFormatter base;
+		std::stringstream base;
 
 		base << "Non-software exception at 0x" << std::hex << e.data.faultAddr
 			<< " (at image base " + formatDifferenceAddress(imageBase, e.data.faultAddr) + ")" << newl;
@@ -124,7 +125,7 @@ namespace cpl
 				return base.str() + "An API function was called with 'this' as an null pointer.";
 			case CSystemException::status::access_violation:
 			{
-				Misc::CStringFormatter fmt;
+				std::stringstream fmt;
 				#ifndef CPL_MSVC
 				switch (e.data.actualCode)
 				{

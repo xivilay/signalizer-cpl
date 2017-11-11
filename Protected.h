@@ -39,7 +39,6 @@
 #include "PlatformSpecific.h"
 #include "Misc.h"
 #include <vector>
-#include <exception>
 #include <signal.h>
 #include <thread>
 #include "CMutex.h"

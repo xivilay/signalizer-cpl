@@ -39,6 +39,8 @@
 #include "Types.h"
 #include <typeinfo>
 #include <cstring>
+#include <exception>
+#include <stdexcept>
 #include "Common.h"
 
 namespace cpl
@@ -100,11 +102,6 @@ namespace cpl
 
 		const std::string & DirectoryPath();
 
-		enum ExceptionStatus {
-			Undefined,
-			CSubsystem
-
-		};
 		long Round(double number);
 		long Delay(int ms);
 		void PreciseDelay(double msecs);
@@ -252,43 +249,6 @@ namespace cpl
 			#endif
 			obj = nullptr;
 		}
-
-
-
-
-		class CStringFormatter
-		{
-			std::stringstream stream;
-		public:
-			CStringFormatter(const std::string & start)
-			{
-				stream << start;
-			}
-			CStringFormatter() {}
-			template <typename Type>
-			std::stringstream & operator << (const Type & input)
-			{
-				stream << input;
-				return stream;
-			}
-			std::string str()
-			{
-				return stream.str();
-			}
-		};
-
-		class CStrException : public std::exception
-		{
-			std::string info;
-		public:
-			CStrException(const std::string & str)
-				: info(str)
-			{}
-			virtual const char * what() const throw()
-			{
-				return info.c_str();
-			}
-		};
 
 		enum MsgButton : int
 		{
