@@ -30,8 +30,8 @@ namespace cpl
 		typedef TransformerType Transformer;
 		typedef T ValueType;
 
-		ThreadedParameter(const std::string & name, Transformer & parameterTransformer)
-			: transformer(parameterTransformer), name(name), value(0)
+		ThreadedParameter(std::string name, Transformer & parameterTransformer)
+			: transformer(parameterTransformer), name(std::move(name)), value(0)
 		{
 
 		}
@@ -45,7 +45,7 @@ namespace cpl
 		T getValue() const { return value.load(LoadOrdering); }
 		void setValue(T newValue) { value.store(Restricter()(newValue), StoreOrdering); }
 
-		std::string getName() { return name; }
+		const std::string& getName() { return name; }
 		Transformer & getTransformer() { return transformer; }
 		const Transformer & getTransformer() const { return transformer; }
 
@@ -65,8 +65,8 @@ namespace cpl
 	public:
 		typedef FormatterType Formatter;
 
-		FormattedParameter(const std::string & name, typename BaseParameter::Transformer & transformer, Formatter * formatterToUse = nullptr)
-			: BaseParameter(name, transformer), formatter(formatterToUse)
+		FormattedParameter(std::string name, typename BaseParameter::Transformer & transformer, Formatter * formatterToUse = nullptr)
+			: BaseParameter(std::move(name), transformer), formatter(formatterToUse)
 		{
 
 		}
@@ -276,8 +276,8 @@ namespace cpl
 			ParameterType * getParameter() noexcept { return parameter; }
 			const std::string & getNameContext() const { return nameContext; }
 			std::string getExportedName() { return parent->prefix + nameContext + parameter->getName(); }
-			std::string getLocalName() { return parameter->getName(); }
-			const std::string & getParentPrefix() const { return parent->getExportPrefix(); }
+			const std::string& getLocalName() { return parameter->getName(); }
+			const std::string& getParentPrefix() const { return parent->getExportPrefix(); }
 			Parameters::Handle getHandle() { return handle; }
 			void addListener(UIListener * listener) { parent->addUIListener(handle, listener); }
 			void removeListener(UIListener * listener) { parent->removeUIListener(handle, listener); }
@@ -310,7 +310,7 @@ namespace cpl
 				return updateFromProcessorNormalized(parameter->getTransformer().normalize(value), flags);
 			}
 
-			bool updateFromUIStringTransformed(const std::string & value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
+			bool updateFromUIStringTransformed(const std::string_view value, Parameters::UpdateFlagsT flags = Parameters::UpdateFlags::All)
 			{
 				T interpretedValue;
 				if (parameter->getFormatter()->interpret(value, interpretedValue))
@@ -350,8 +350,8 @@ namespace cpl
 
 
 
-		ParameterGroup(const std::string & name, const std::string & exportPrefix, AutomatedProcessor & processorToAutomate, int parameterOffset = 0)
-			: processor(processorToAutomate), offset(parameterOffset), groupName(name), prefix(exportPrefix), isSealed(false)
+		ParameterGroup(std::string name, std::string exportPrefix, AutomatedProcessor & processorToAutomate, int parameterOffset = 0)
+			: processor(processorToAutomate), offset(parameterOffset), groupName(std::move(name)), prefix(std::move(exportPrefix)), isSealed(false)
 		{
 			bundleInstalledReferences = std::make_unique<std::vector<BundleInstallReference>>();
 			singleInstalledReferences = std::make_unique<std::vector<SingleInstallReference>>();
@@ -678,7 +678,7 @@ namespace cpl
 		/// <summary>
 		/// O(N)
 		/// </summary>
-		Parameters::Handle handleFromName(const std::string & name) const noexcept
+		Parameters::Handle handleFromName(const std::string_view name) const noexcept
 		{
 			for (std::size_t i = 0; i < containedParameters.size(); ++i)
 			{
@@ -694,7 +694,7 @@ namespace cpl
 		/// <summary>
 		/// Must only be called from the UI thread
 		/// </summary>
-		Parameters::Handle mapName(const std::string & name) noexcept
+		Parameters::Handle mapName(const std::string_view name) noexcept
 		{
 			auto it = nameMap.find(name);
 			if (it == nameMap.end())
@@ -702,7 +702,7 @@ namespace cpl
 				auto handle = handleFromName(name);
 				if (handle != InvalidHandle)
 				{
-					return (nameMap[name] = handle) + offset;
+					return (nameMap[std::string(name)] = handle) + offset;
 				}
 			}
 			else
@@ -730,7 +730,7 @@ namespace cpl
 			return nullptr;
 		}
 
-		ParameterView * findParameter(const std::string & name) noexcept
+		ParameterView * findParameter(const std::string_view name) noexcept
 		{
 			if (!isSealed)
 				CPL_RUNTIME_EXCEPTION("ParameterView being acquired while the system isn't sealed");
@@ -805,7 +805,7 @@ namespace cpl
 		std::unique_ptr<Parameters::UserContent, Utility::MaybeDelete<Parameters::UserContent>> userContent;
 		std::string prefix;
 		std::string groupName;
-		std::map<std::string, Parameters::Handle> nameMap;
+		std::map<std::string, Parameters::Handle, std::less<>> nameMap;
 		Parameters::Handle offset;
 		AutomatedProcessor & processor;
 		std::vector<ParameterView> containedParameters;

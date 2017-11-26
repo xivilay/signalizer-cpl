@@ -27,6 +27,8 @@
 
 *************************************************************************************/
 
+#include <string>
+
 namespace cpl
 {
 	#ifdef CPL_WINDOWS
@@ -34,4 +36,6 @@ namespace cpl
 	#else
 	const char * newl = "\n";
 	#endif
+
+	const std::string empty_string;
 };

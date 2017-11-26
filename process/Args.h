@@ -40,9 +40,7 @@ namespace cpl
 	public:
 
 		Args() {}
-		Args(const char * arg) : compiledArgs(arg ? arg : "") { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
-		Args(const std::string& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
-		Args(std::string&& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
+		Args(std::string seq) : compiledArgs(std::move(seq)) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back(' '); }
 		Args(Args&&) = default;
 		Args& operator = (Args&&) = default;
 		Args(const Args&) = default;

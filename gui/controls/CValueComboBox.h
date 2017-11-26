@@ -46,7 +46,7 @@ namespace cpl
 		CValueComboBox(ValueEntityBase * valueToReferTo = nullptr, bool takeOwnerShip = false);
 
 		// overrides
-		virtual void bSetTitle(const std::string & newTitle) override;
+		virtual void bSetTitle(std::string newTitle) override;
 		virtual std::string bGetTitle() const override;
 
 		virtual void paint(juce::Graphics & g) override;
@@ -70,7 +70,7 @@ namespace cpl
 			valueObject->setNormalizedValue(valueObject->getTransformer().normalize(static_cast<ValueT>(input)));
 		}
 
-		bool setEnabledStateFor(const std::string & idx, bool toggle);
+		bool setEnabledStateFor(const std::string_view idx, bool toggle);
 		bool setEnabledStateFor(std::size_t idx, bool toggle);
 
 
@@ -79,7 +79,7 @@ namespace cpl
 
 		virtual void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * value) override;
 
-		std::size_t indexOfValue(const std::string & idx) const noexcept;
+		std::size_t indexOfValue(const std::string_view idx) const noexcept;
 
 		void setZeroBasedSelIndex(int index);
 		// overrides
@@ -90,7 +90,7 @@ namespace cpl
 
 	private:
 		// list of |-seperated values
-		virtual void setValues(const std::vector<std::string> & values);
+		virtual void setValues(std::vector<std::string> values);
 
 		void initialize();
 

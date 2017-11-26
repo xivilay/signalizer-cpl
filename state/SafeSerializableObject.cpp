@@ -61,7 +61,7 @@ namespace cpl
 				"System exception while trying to serialize " + tryComposeIdentifiableName() + ": " +
 				CProtected::formatExceptionMessage(e);
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -78,12 +78,12 @@ namespace cpl
 					ar.clear();
 			}
 		}
-		catch (const Misc::CPLRuntimeException & e)
+		catch (const CPLRuntimeException & e)
 		{
 			auto const exceptionString =
 				"Exception while trying to serialize " + tryComposeIdentifiableName() + ": " + e.what();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -105,7 +105,7 @@ namespace cpl
 			auto const exceptionString =
 				"Exception while trying to serialize " + tryComposeIdentifiableName() + ": " + e.what();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -127,7 +127,7 @@ namespace cpl
 			auto const exceptionString =
 				"Unknown exception while trying to serialize " + tryComposeIdentifiableName();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString + ", continuing is most likely very dangerous.\n\n" + options,
@@ -179,7 +179,7 @@ namespace cpl
 				"System exception while trying to deserialize " + tryComposeIdentifiableName() + ": " +
 				CProtected::formatExceptionMessage(e);
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -203,7 +203,7 @@ namespace cpl
 			auto const exceptionString =
 				"Exception while trying to deserialize " + tryComposeIdentifiableName() + ": " + e.what();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -223,12 +223,12 @@ namespace cpl
 				}
 			}
 		}
-		catch (const Misc::CPLRuntimeException & e)
+		catch (const CPLRuntimeException & e)
 		{
 			auto const exceptionString =
 				"Exception while trying to deserialize " + tryComposeIdentifiableName() + ": " + e.what();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -252,7 +252,7 @@ namespace cpl
 			auto const exceptionString =
 				"Exception while trying to deserialize " + tryComposeIdentifiableName() + ": " + e.what();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
@@ -276,7 +276,7 @@ namespace cpl
 			auto const exceptionString =
 				"Unidentifiable exception while trying to deserialize " + tryComposeIdentifiableName();
 
-			Misc::LogException(exceptionString);
+			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString + ", continuing is most likely very dangerous.\n\n" + options,

@@ -351,14 +351,9 @@ namespace cpl
 		typedef CSerializer Archiver;
 		typedef CSerializer Builder;
 
-		class ExhaustedException : public Misc::CPLRuntimeException
+		class ExhaustedException : public CPLRuntimeException
 		{
-		public:
-			ExhaustedException(const std::string & error)
-				: CPLRuntimeException(error)
-			{
-
-			}
+			using CPLRuntimeException::CPLRuntimeException;
 		};
 
 		class Serializable
@@ -770,7 +765,7 @@ namespace cpl
 			return *this;
 		}
 
-		CSerializer & operator << (const std::string & str)
+		CSerializer & operator << (const zstr_view str)
 		{
 			if (virtualCount > 0)
 				fill(str.size() + 1);
@@ -842,8 +837,8 @@ namespace cpl
 	class CCheckedSerializer : public ISerializerSystem
 	{
 	public:
-		CCheckedSerializer(const std::string & uniqueNameReference)
-			: nameReference(uniqueNameReference)
+		CCheckedSerializer(std::string uniqueNameReference)
+			: nameReference(std::move(uniqueNameReference))
 		{
 			if (!nameReference.size())
 				CPL_RUNTIME_EXCEPTION("CheckedSerializer needs to have a non-null name!");

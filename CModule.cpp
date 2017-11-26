@@ -47,13 +47,13 @@ namespace cpl
 
 	}
 
-	CModule::CModule(const std::string & moduleName)
+	CModule::CModule(std::string moduleName)
 		: moduleHandle(nullptr)
 	{
-		load(moduleName);
+		load(std::move(moduleName));
 	}
 
-	void * CModule::getFuncAddress(const std::string & functionName)
+	void * CModule::getFuncAddress(const zstr_view functionName)
 	{
 		#ifdef CPL_WINDOWS
 		return GetProcAddress(static_cast<HMODULE>(moduleHandle), functionName.c_str());
@@ -79,11 +79,10 @@ namespace cpl
 		#endif
 	}
 
-	int CModule::load(const std::string & moduleName)
+	int CModule::load(std::string moduleName)
 	{
 		if (moduleHandle != nullptr)
 			return false;
-		name = moduleName;
 		#ifdef CPL_WINDOWS
 		moduleHandle = static_cast<ModuleHandle>(LoadLibraryA(moduleName.c_str()));
 		if (moduleHandle != nullptr)
@@ -128,6 +127,8 @@ namespace cpl
 		#else
 		#error no implementation for LoadModule
 		#endif
+
+		name = std::move(moduleName);
 	};
 
 	bool CModule::release()

@@ -61,14 +61,6 @@ namespace cpl
 		extern BoundingRect Rectangle;
 	};
 
-	/*enum TextSize
-	{
-		smallerText = 10,
-		smallText = 12,
-		normalText = 14,
-		largeText = 17
-	};*/
-
 	namespace TextSize
 	{
 		extern float smallerText;
@@ -82,23 +74,7 @@ namespace cpl
 	// small = 11.7
 	// medium = 12.8 / 13
 	// large = 16.1
-	// enum emulation
 
-
-
-
-	/*extern juce::Colour colourDeactivated;
-	extern juce::Colour colourNormal;
-	extern juce::Colour colourActivated;
-	extern juce::Colour colourAux;
-	extern juce::Colour colourAuxFont;
-	extern juce::Colour colourSeparator;
-	extern juce::Colour colourSelFont;
-	extern juce::Colour colourSuccess;
-	extern juce::Colour colourError;
-	extern juce::Colour colourCtrlText;*/
-
-	//extern juce::Font systemFont;
 
 	struct SchemeColour
 	{
@@ -121,8 +97,7 @@ namespace cpl
 		ControlText,
 		End
 	};
-
-
+	
 
 	class CLookAndFeel_CPL
 		:
@@ -160,7 +135,7 @@ namespace cpl
 
 		// extra interface
 		juce::Font getStdFont();
-		virtual const std::vector<char> & getFaceMemory(const std::string & s);
+		virtual const std::vector<char> & getFaceMemory(const std::string_view s);
 		virtual void setShouldRenderSubpixels(bool shouldRender);
 		virtual void updateColours();
 	protected:
@@ -170,7 +145,7 @@ namespace cpl
 	private:
 		bool tryToRenderSubpixel;
 		std::vector<SchemeColour> colours;
-		std::map<std::string, std::vector<char>> loadedFonts;
+		std::map<std::string, std::vector<char>, std::less<>> loadedFonts;
 	};
 
 	// saves some typing if you only want the colour.

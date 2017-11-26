@@ -32,8 +32,8 @@
 namespace cpl
 {
 
-	CInputControl::CInputControl(const std::string & name)
-		: CBaseControl(this), title(name)
+	CInputControl::CInputControl(std::string name)
+		: CBaseControl(this), title(std::move(name))
 	{
 		bToggleEditSpaces(false);
 		initialize();
@@ -65,9 +65,9 @@ namespace cpl
 		errorVisualizer.setBounds(getBounds().withPosition(0, 0));
 
 	}
-	void CInputControl::bSetTitle(const std::string & newTitle)
+	void CInputControl::bSetTitle(std::string newTitle)
 	{
-		title = newTitle;
+		title = std::move(newTitle);
 	}
 	std::string CInputControl::bGetTitle() const
 	{
@@ -127,14 +127,14 @@ namespace cpl
 		getAnimator().animateComponent(&errorVisualizer, errorVisualizer.getBounds(), 0.f, 300, false, 1.0, 1.0);
 	}
 
-	void CInputControl::setInputValue(const std::string & inputValue, bool sync)
+	void CInputControl::setInputValue(const zstr_view inputValue, bool sync)
 	{
-		box.setText(inputValue, sync ? juce::NotificationType::sendNotificationSync : juce::sendNotificationAsync);
+		box.setText(juce::String(inputValue.c_str(), inputValue.size()), sync ? juce::NotificationType::sendNotificationSync : juce::sendNotificationAsync);
 	}
 
-	void CInputControl::setInputValueInternal(const std::string & inputValue)
+	void CInputControl::setInputValueInternal(const zstr_view inputValue)
 	{
-		box.setText(inputValue, juce::NotificationType::dontSendNotification);
+		box.setText(juce::String(inputValue.c_str(), inputValue.size()), juce::NotificationType::dontSendNotification);
 	}
 
 	std::string CInputControl::getInputValue() const

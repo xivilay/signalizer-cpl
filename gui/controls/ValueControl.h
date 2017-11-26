@@ -89,7 +89,7 @@ namespace cpl
 			valueObject->setNormalizedValue(newValue);
 		}
 
-		bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override
+		bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override
 		{
 			iCtrlPrec_t tempValue;
 			if (valueObject->getFormatter().interpret(valueString, tempValue))

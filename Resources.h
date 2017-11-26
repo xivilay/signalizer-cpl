@@ -54,9 +54,9 @@ namespace cpl
 		juce::ScopedPointer<juce::Drawable> drawableImage;
 
 	public:
-		CImage(const std::string & inPath);
+		CImage(std::string inPath);
 		CImage();
-		void setPath(const std::string & inPath);
+		void setPath(std::string inPath);
 		bool load();
 		juce::Image & getImage();
 		juce::Drawable * getDrawable();
@@ -75,16 +75,16 @@ namespace cpl
 	{
 	public:
 		typedef std::unique_ptr<juce::Drawable> OwnedDrawable;
-		OwnedDrawable createDrawable(const std::string & name);
-		juce::Image getImage(const std::string & name);
+		OwnedDrawable createDrawable(const std::string_view name);
+		juce::Image getImage(const std::string_view name);
 		static CResourceManager & instance();
 
 	private:
 
-		CImage * loadResource(const std::string & name);
+		CImage * loadResource(const std::string_view name);
 		CImage defaultImage;
 		static std::atomic<CResourceManager *> internalResourceInstance;
-		std::map<std::string, CImage> resources;
+		std::map<std::string, CImage, std::less<>> resources;
 		~CResourceManager();
 		CResourceManager();
 		static std::mutex loadMutex;
@@ -101,7 +101,7 @@ namespace cpl
 
 		}
 
-		CVectorResource(const std::string & name)
+		CVectorResource(const std::string_view name)
 			: oldColour(juce::Colours::black)
 		{
 			oldColour = juce::Colours::black;
@@ -141,7 +141,7 @@ namespace cpl
 			svg->drawWithin(g, size.withPosition(0, 0).toFloat(), juce::RectanglePlacement::centred, opacity);
 		}
 
-		static juce::Image renderSVGToImage(const std::string & path, juce::Rectangle<int> size, juce::Colour colour = juce::Colour(0, 0, 0), float opacity = 1.f)
+		static juce::Image renderSVGToImage(const std::string_view path, juce::Rectangle<int> size, juce::Colour colour = juce::Colour(0, 0, 0), float opacity = 1.f)
 		{
 			auto resource = CResourceManager::instance().createDrawable(path);
 
@@ -160,7 +160,7 @@ namespace cpl
 
 		juce::Drawable * getDrawable() { return svg.get(); }
 
-		bool associate(std::string path)
+		bool associate(std::string_view path)
 		{
 			svg = CResourceManager::instance().createDrawable(path);
 			return !!svg.get();

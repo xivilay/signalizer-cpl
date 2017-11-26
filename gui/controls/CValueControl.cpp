@@ -37,18 +37,18 @@ namespace cpl
 		CValueControl - constructor
 
 	*********************************************************************************************/
-	CValueControl::CValueControl(const std::string & name, const std::string & inputValues, const std::string & unit)
-		: unit(unit)
+	CValueControl::CValueControl(std::string name, const std::string_view inputValues, std::string unit)
+		: unit(std::move(unit))
 	{
-
+		bSetTitle(std::move(name));
 		setValues(inputValues);
 
 	}
 
-	CValueControl::CValueControl(const std::string & name, const std::vector<std::string> & inputValues, const std::string & unit)
-		: unit(unit), values(inputValues)
+	CValueControl::CValueControl(std::string name, std::vector<std::string> inputValues, std::string unit)
+		: unit(std::move(unit)), values(std::move(inputValues))
 	{
-
+		bSetTitle(std::move(name));
 	}
 
 	/*********************************************************************************************
@@ -61,7 +61,7 @@ namespace cpl
 
 	}
 	/*********************************************************************************************/
-	void CValueControl::setValues(const std::string & inputValues)
+	void CValueControl::setValues(const std::string_view inputValues)
 	{
 		values.clear();
 		std::size_t iter_pos(0);
@@ -70,25 +70,25 @@ namespace cpl
 		{
 			if (inputValues[i] == '|')
 			{
-				values.push_back(inputValues.substr(iter_pos, i));
+				values.emplace_back(inputValues.substr(iter_pos, i));
 				iter_pos = i + 1;
 			}
 			else if (i == (len - 1))
 			{
-				values.push_back(inputValues.substr(iter_pos, i + 1));
+				values.emplace_back(inputValues.substr(iter_pos, i + 1));
 
 			}
 		}
 	}
 	/*********************************************************************************************/
-	void CValueControl::setValues(const std::vector<std::string> & inputValues)
+	void CValueControl::setValues(std::vector<std::string> inputValues)
 	{
-		values = inputValues;
+		values = std::move(inputValues);
 	}
 	/*********************************************************************************************/
-	void CValueControl::setUnit(const std::string & newUnit)
+	void CValueControl::setUnit(std::string newUnit)
 	{
-		unit = newUnit;
+		unit = std::move(newUnit);
 	}
 	/*********************************************************************************************/
 	bool CValueControl::bValueToString(std::string & valueString, iCtrlPrec_t val) const
@@ -99,7 +99,7 @@ namespace cpl
 	}
 
 	/*********************************************************************************************/
-	bool CValueControl::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
+	bool CValueControl::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
 	{
 		for (std::size_t i = 0; i < values.size(); ++i)
 		{

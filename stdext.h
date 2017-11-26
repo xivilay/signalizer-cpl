@@ -40,6 +40,7 @@ namespace cpl
 {
 	extern const char * newl;
 	const char tab = '\t';
+	extern const std::string empty_string;
 
 	typedef std::make_signed<std::size_t>::type ssize_t;
 

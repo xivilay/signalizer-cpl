@@ -33,15 +33,16 @@
 #define CPL_MISC_H
 
 #include <string>
-#include "MacroConstants.h"
 #include <sstream>
-#include "PlatformSpecific.h"
-#include "Types.h"
 #include <typeinfo>
 #include <cstring>
-#include <exception>
-#include <stdexcept>
+#include <system_error>
+#include <filesystem>
+
 #include "Common.h"
+#include "PlatformSpecific.h"
+#include "Types.h"
+#include "Core.h"
 
 namespace cpl
 {
@@ -76,14 +77,25 @@ namespace cpl
 			f(i);
 	}
 
+	template<typename ... Args>
+	std::string format(const zstr_view format, Args ... args)
+	{
+		using namespace std;
+		size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1;
+		string ret;
+		ret.resize(size);
+		snprintf(ret.data(), size, format.c_str(), args ...);
+		return move(ret); 
+	}
+
 	namespace Misc
 	{
-		std::pair<int, std::string> ExecCommand(const std::string & arg);
-		std::pair<bool, std::string> ReadFile(const std::string & path) noexcept;
-		bool WriteFile(const std::string & path, const std::string & contents) noexcept;
+		std::pair<int, std::string> ExecCommand(const zstr_view arg);
+		std::pair<bool, std::string> ReadFile(const fs::path& path) noexcept;
+		bool WriteFile(const fs::path& path, const zstr_view contents) noexcept;
 		std::string GetTime();
 		std::string GetDate();
-		std::string DemangleRawName(const std::string & name);
+		std::string DemangleRawName(const zstr_view name);
 
 		template<class T>
 		std::string DemangledTypeName(const T & object)
@@ -107,20 +119,12 @@ namespace cpl
 		void PreciseDelay(double msecs);
 
 		unsigned int QuickTime();
-		int GetSizeRequiredFormat(const char * fmt, va_list pargs);
+		int GetSizeRequiredFormat(const zstr_view fmt, va_list pargs);
 
 		std::uint64_t ClockCounter();
 		long long TimeCounter();
 		double TimeDifference(long long);
 		double TimeToMilisecs(long long);
-
-		void LogException(const std::string & errorMessage);
-
-		void CrashIfUserDoesntDebug(const std::string & errorMessage);
-
-		Types::OSError GetLastOSError();
-		Types::tstring GetLastOSErrorMessage();
-		Types::tstring GetLastOSErrorMessage(Types::OSError errorToPrint);
 
 		/// <summary>
 		/// Consumes any key from the console, without requiring enter to be hit.
@@ -324,8 +328,8 @@ namespace cpl
 			#endif
 		};
 
-		int MsgBox(const std::string & text,
-			const std::string & title = "",
+		int MsgBox(const zstr_view text,
+			const zstr_view title = "",
 			int nStyle = MsgStyle::sOk,
 			void * parent = NULL,
 			const bool bBlocking = true);
@@ -419,94 +423,6 @@ namespace cpl
 			// not needed (except for warns)
 			return false;
 		}
-
-		class CPLRuntimeException : public std::runtime_error
-		{
-		public:
-			CPLRuntimeException(const std::string & error)
-				: runtime_error(error)
-			{
-
-			}
-		};
-
-		class CPLNotImplementedException : public std::runtime_error
-		{
-		public:
-			CPLNotImplementedException(const std::string & error)
-				: runtime_error(error)
-			{
-
-			}
-		};
-
-
-		class CPLAssertionException : public CPLRuntimeException
-		{
-		public:
-			CPLAssertionException(const std::string & error)
-				: CPLRuntimeException(error)
-			{
-
-			}
-		};
-
-		#define CPL_EXPANDED_MESSAGE message
-
-
-		#define CPL_INTERNAL_EXCEPTION(msg, file, line, funcname, isassert, exceptionT, exceptionExpression) \
-				do \
-				{ \
-					std::string message = std::string("Runtime exception (" #exceptionT ") in ") + ::cpl::programInfo.name + " (" + ::cpl::programInfo.version.toString() + "): \"" + msg + "\" in " + file + ":" + ::std::to_string(line) + " -> " + funcname; \
-					auto e = exceptionExpression;\
-					CPL_DEBUGOUT((message + "\n").c_str()); \
-					cpl::Misc::LogException(message); \
-					if(CPL_ISDEBUGGED()) DBG_BREAK(); \
-					bool doAbort = isassert; \
-					if(doAbort) \
-						std::abort(); \
-					else \
-						throw e; \
-				} while(0)
-
-		#define CPL_EVAL(a, b) a b
-
-		#define CPL_RUNTIME_EXCEPTION_SPECIFIC(msg, exceptionT) \
-				CPL_INTERNAL_EXCEPTION(msg, __FILE__, __LINE__, __func__, false, exceptionT, exceptionT (CPL_EXPANDED_MESSAGE))
-
-		#define CPL_RUNTIME_EXCEPTION(msg) \
-				CPL_RUNTIME_EXCEPTION_SPECIFIC(msg, cpl::Misc::CPLRuntimeException)
-
-		#define CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, exceptionT, args) \
-				CPL_INTERNAL_EXCEPTION(msg, \
-				__FILE__, \
-				__LINE__, \
-				__func__, \
-				false, \
-				exceptionT, \
-				CPL_EVAL(exceptionT,args) \
-            )\
-
-		/// <summary>
-		/// Throws a suitable system_error from errno with a what() message
-		/// </summary>
-		#define CPL_POSIX_EXCEPTION(msg) CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, std::system_error, (errno, std::generic_category(), CPL_EXPANDED_MESSAGE))
-
-		#ifdef CPL_WINDOWS
-		#define CPL_SYSTEM_EXCEPTION(msg) CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, \
-                std::system_error, (cpl::Misc::GetLastOSError(), std::system_category(), CPL_EXPANDED_MESSAGE))
-		#else
-		#define CPL_SYSTEM_EXCEPTION(msg) CPL_RUNTIME_EXCEPTION_SPECIFIC_ARGS(msg, \
-                std::system_error, (errno, std::system_category(), CPL_EXPANDED_MESSAGE))
-		#endif
-		#define CPL_RUNTIME_ASSERTION(expression) \
-				if(!(expression)) \
-					CPL_INTERNAL_EXCEPTION("Runtime assertion failed: " #expression, \
-					__FILE__, __LINE__, __func__, true, cpl::Misc::CPLAssertionException, cpl::Misc::CPLAssertionException (CPL_EXPANDED_MESSAGE))
-
-		#define CPL_NOTIMPLEMENTED_EXCEPTION() \
-				CPL_RUNTIME_EXCEPTION_SPECIFIC("The requested behaviour is not implemented (yet)", cpl::Misc::CPLNotImplementedException)
-
 
 	}; // Misc
 }; // APE

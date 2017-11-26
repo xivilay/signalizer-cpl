@@ -58,13 +58,13 @@ namespace cpl
 	public:
 
 
-		CView(const std::string & name)
+		CView(std::string name)
 			: isFullScreen(false)
 			, isSynced(false)
 			, oglc(nullptr)
 			, bufferSwapInterval(0)
 			, refreshRate(0)
-			, viewName(name)
+			, viewName(std::move(name))
 		{
 		}
 
@@ -143,8 +143,8 @@ namespace cpl
 	{
 	public:
 
-		CSubView(const std::string & name)
-			: CView(name)
+		CSubView(std::string name)
+			: CView(std::move(name))
 		{
 
 		}
@@ -177,8 +177,8 @@ namespace cpl
 			virtual ~OpenGLEventListener() {}
 		};
 
-		COpenGLView(const std::string & name)
-			: CSubView(name)
+		COpenGLView(std::string name)
+			: CSubView(std::move(name))
 		{
 			graphicsStamp = juce::Time::getHighResolutionTicks();
 			openGLStamp = juce::Time::getHighResolutionTicks();
@@ -376,8 +376,8 @@ namespace cpl
 	{
 
 	public:
-		CTopView(juce::Component * parent, const std::string & name)
-			: CView(name), isTooltipsOn(false), tipWindow(nullptr), editSpawner(*parent)
+		CTopView(juce::Component * parent, std::string name)
+			: CView(std::move(name)), isTooltipsOn(false), tipWindow(nullptr), editSpawner(*parent)
 		{
 			parent->setLookAndFeel(&CLookAndFeel_CPL::defaultLook());
 		}

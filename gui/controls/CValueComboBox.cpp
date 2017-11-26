@@ -76,9 +76,9 @@ namespace cpl
 		box.setBounds(0, stringBounds.getBottom(), getWidth(), getHeight() - stringBounds.getHeight());
 
 	}
-	void CValueComboBox::bSetTitle(const std::string & newTitle)
+	void CValueComboBox::bSetTitle(std::string newTitle)
 	{
-		title = newTitle;
+		title = std::move(newTitle);
 	}
 	std::string CValueComboBox::bGetTitle() const
 	{
@@ -118,9 +118,9 @@ namespace cpl
 		return value;
 	}
 
-	void CValueComboBox::setValues(const std::vector<std::string> & inputValues)
+	void CValueComboBox::setValues(std::vector<std::string> inputValues)
 	{
-		values = inputValues;
+		values = std::move(inputValues);
 		auto currentIndex = box.getItemText(box.getSelectedItemIndex() - 1);
 		box.clear(NotificationType::dontSendNotification);
 		juce::StringArray arr;
@@ -157,7 +157,7 @@ namespace cpl
 	}
 
 
-	std::size_t CValueComboBox::indexOfValue(const std::string & idx) const noexcept
+	std::size_t CValueComboBox::indexOfValue(const std::string_view idx) const noexcept
 	{
 		for (std::size_t i = 0; i < values.size(); ++i)
 		{
@@ -169,7 +169,7 @@ namespace cpl
 		return (std::size_t) - 1;
 	}
 
-	bool CValueComboBox::setEnabledStateFor(const std::string & idx, bool toggle)
+	bool CValueComboBox::setEnabledStateFor(const std::string_view idx, bool toggle)
 	{
 		return setEnabledStateFor(indexOfValue(idx), toggle);
 	}

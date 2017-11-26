@@ -39,7 +39,7 @@
 #include "CExclusiveFile.h"
 #include <typeinfo>
 #include <future>
-#include <string.h>
+#include "Exceptions.h"
 
 #ifdef __GNUG__
 #include <cstdlib>
@@ -63,7 +63,7 @@ namespace cpl
 
 		#ifdef __GNUG__
 
-		std::string DemangleRawName(const std::string & name) {
+		std::string DemangleRawName(const zstr_view name) {
 			//http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
 			int status = -4; // some arbitrary value to eliminate the compiler warning
 
@@ -77,50 +77,20 @@ namespace cpl
 		}
 
 		#else
-		std::string DemangleRawName(const std::string & name) {
-			return name;
+
+		std::string DemangleRawName(const zstr_view name) 
+		{
+			return name.string();
 		}
 
 		#endif
-
-		void LogException(const std::string & errorMessage)
-		{
-			CExclusiveFile exceptionLog;
-
-			exceptionLog.open(GetDirectoryPath() + "/" + programInfo.name + " exceptions.log",
-				exceptionLog.writeMode | exceptionLog.append, true);
-			exceptionLog.newline();
-			exceptionLog.write(("----------------" + GetDate() + ", " + GetTime() + "----------------").c_str());
-			exceptionLog.newline();
-			exceptionLog.write(("- Exception in \"" + programInfo.name + "\" v.\"" + std::to_string(programInfo.version) + "\"").c_str());
-			exceptionLog.newline();
-			exceptionLog.write(errorMessage.data(), errorMessage.size());
-			exceptionLog.newline();
-		}
-
-
-		/*********************************************************************************************
-
-			This function allows the user/programmer to attach a debugger on fatal errors.
-			Otherwise, crash (assumingly).
-
-		*********************************************************************************************/
-		void CrashIfUserDoesntDebug(const std::string & errorMessage)
-		{
-			auto ret = MsgBox(errorMessage + newl + newl + "Press yes to break after attaching a debugger. Press no to crash.", programInfo.name + ": Fatal error",
-				MsgStyle::sYesNo | MsgIcon::iStop);
-			if (ret == MsgButton::bYes)
-			{
-				CPL_BREAKIFDEBUGGED();
-			}
-		}
 
 		void __cdecl _purescall(void)
 		{
 			auto except = "Pure virtual function called. This is a programming error, usually happening if a freed object is used again, "
 				"or calling virtual functions inside destructors/constructors.";
 			LogException(except);
-			cpl::Misc::CrashIfUserDoesntDebug(except);
+			cpl::CrashIfUserDoesntDebug(except);
 		}
 
 		void terminateHook()
@@ -165,13 +135,13 @@ namespace cpl
 			return 0;
 		}
 
-		std::pair<int, std::string> ExecCommand(const std::string & cmd)
+		std::pair<int, std::string> ExecCommand(const zstr_view cmd)
 		{
 			// http://stackoverflow.com/a/478960/1287254
 			char buffer[1024];
 			std::string result;
 
-			auto PipeOpen = [](const std::string & cmd)
+			auto PipeOpen = [](const zstr_view cmd)
 			{
 				#ifdef CPL_WINDOWS
 				return ::_popen(cmd.c_str(), "r");
@@ -192,7 +162,7 @@ namespace cpl
 			auto pipe = PipeOpen(cmd);
 
 			if (!pipe)
-				CPL_RUNTIME_EXCEPTION("Error executing commandline: \"" + cmd + "\"");
+				CPL_RUNTIME_EXCEPTION(format("Error executing commandline: \"%s\"", cmd.c_str()));
 
 
 			while (!std::feof(pipe))
@@ -201,14 +171,14 @@ namespace cpl
 					result += buffer;
 			}
 
-			return {PipeClose(pipe), result};
+			return { PipeClose(pipe), result };
 		}
 
-		std::pair<bool, std::string> ReadFile(const std::string & path) noexcept
+		std::pair<bool, std::string> ReadFile(const fs::path& path) noexcept
 		{
 			char buffer[1024];
 			std::string result;
-			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.c_str(), "r"), &std::fclose);
+			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.string().c_str(), "r"), &std::fclose);
 
 			if (!file)
 				return { false, result };
@@ -229,9 +199,9 @@ namespace cpl
 			return { true, result };
 		}
 
-		bool WriteFile(const std::string & path, const std::string& contents) noexcept
+		bool WriteFile(const fs::path& path, const zstr_view contents) noexcept
 		{
-			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.c_str(), "w"), &std::fclose);
+			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.string().c_str(), "w"), &std::fclose);
 
 			if (!file)
 				return false;
@@ -278,45 +248,6 @@ namespace cpl
 		{
 			static std::string dirPath = GetDirectoryPath();
 			return dirPath;
-		}
-
-		Types::OSError GetLastOSError()
-		{
-			#ifdef CPL_WINDOWS
-			return GetLastError();
-			#else
-			return errno;
-			#endif
-		}
-
-		Types::tstring GetLastOSErrorMessage(Types::OSError errorToUse)
-		{
-			auto lastError = errorToUse;
-			#ifdef CPL_WINDOWS
-			Types::char_t * apiPointer = nullptr;
-
-			Types::OSError numChars = FormatMessage
-			(
-				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-				0,
-				lastError,
-				0,
-				reinterpret_cast<LPTSTR>(&apiPointer),
-				0,
-				0
-			);
-
-			Types::tstring ret(apiPointer, numChars);
-			LocalFree(apiPointer);
-			return ret;
-			#else
-			return "Error (" + std::to_string(lastError) + "): " + strerror(lastError);
-			#endif
-		}
-
-		Types::tstring GetLastOSErrorMessage()
-		{
-			return GetLastOSErrorMessage(GetLastOSError());
 		}
 
 		/*********************************************************************************************
@@ -422,9 +353,7 @@ namespace cpl
 		{
 			#ifdef CPL_WINDOWS
 			HMODULE hMod;
-			if (GetModuleHandleExA(
-				GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-				(const char*)&GetDirectoryPath, &hMod))
+			if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const char*)&GetDirectoryPath, &hMod))
 			{
 				return reinterpret_cast<char *>(hMod);
 			}
@@ -442,15 +371,15 @@ namespace cpl
 			EXCLUDING the null character
 
 		 *********************************************************************************************/
-		int GetSizeRequiredFormat(const char * fmt, va_list pargs)
+		int GetSizeRequiredFormat(const zstr_view fmt, va_list pargs)
 		{
 			#ifdef CPL_WINDOWS
-			return _vscprintf(fmt, pargs);
+			return _vscprintf(fmt.c_str(), pargs);
 			#else
 			int retval;
 			va_list argcopy;
 			va_copy(argcopy, pargs);
-			retval = vsnprintf(nullptr, 0, fmt, argcopy);
+			retval = vsnprintf(nullptr, 0, fmt.c_str(), argcopy);
 			va_end(argcopy);
 			return retval;
 			#endif
@@ -754,7 +683,7 @@ namespace cpl
 			'private' function, maps to a MessageBox
 
 		*********************************************************************************************/
-		inline static int _mbx(void * systemData, const char * text, const char * title, int nStyle = 0)
+		inline static int _mbx(void * systemData, const zstr_view text, const zstr_view title, int nStyle = 0)
 		{
 			std::promise<int> promise;
 			auto future = promise.get_future();
@@ -764,61 +693,61 @@ namespace cpl
 			auto boxGenerator = [&]()
 			{
 				#ifdef CPL_WINDOWS
-				if (!systemData)
-					nStyle |= MB_DEFAULT_DESKTOP_ONLY;
-				auto ret = (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text, title, nStyle);
+					if (!systemData)
+						nStyle |= MB_DEFAULT_DESKTOP_ONLY;
+					auto ret = (int)MessageBoxA(reinterpret_cast<HWND>(systemData), text.c_str(), title.c_str(), nStyle);
 				#elif defined(CPL_MAC)
-				auto ret = MacBox(systemData, text, title, nStyle);
+					auto ret = MacBox(systemData, text.c_str(), title.c_str(), nStyle);
 				#elif defined(CPL_JUCE)
-				auto ret = MsgButton::bOk;
+					auto ret = MsgButton::bOk;
 
-				auto iconStyle = (nStyle >> 8) & 0xFF;
-				auto buttonStyle = nStyle & 0xFF;
-				juce::AlertWindow::AlertIconType iconType;
-				switch (iconStyle)
-				{
-					case iInfo:
-						iconType = juce::AlertWindow::AlertIconType::InfoIcon;
-						break;
-					case iWarning:
-					case iStop:
-						iconType = juce::AlertWindow::AlertIconType::WarningIcon;
-						break;
-					case iQuestion:
-						iconType = juce::AlertWindow::AlertIconType::QuestionIcon;
-						break;
-					default:
-						iconType = juce::AlertWindow::AlertIconType::NoIcon;
-						break;
-				}
+					auto iconStyle = (nStyle >> 8) & 0xFF;
+					auto buttonStyle = nStyle & 0xFF;
+					juce::AlertWindow::AlertIconType iconType;
+					switch (iconStyle)
+					{
+						case iInfo:
+							iconType = juce::AlertWindow::AlertIconType::InfoIcon;
+							break;
+						case iWarning:
+						case iStop:
+							iconType = juce::AlertWindow::AlertIconType::WarningIcon;
+							break;
+						case iQuestion:
+							iconType = juce::AlertWindow::AlertIconType::QuestionIcon;
+							break;
+						default:
+							iconType = juce::AlertWindow::AlertIconType::NoIcon;
+							break;
+					}
 
-				switch (buttonStyle)
-				{
-					case MsgStyle::sOk:
+					switch (buttonStyle)
 					{
-						juce::NativeMessageBox::showMessageBox(iconType, title, text, nullptr);
-						ret = MsgButton::bOk;
-						break;
+						case MsgStyle::sOk:
+						{
+							juce::NativeMessageBox::showMessageBox(iconType, title.c_str(), text.c_str(), nullptr);
+							ret = MsgButton::bOk;
+							break;
+						}
+						case MsgStyle::sYesNo:
+						{
+							bool result = juce::NativeMessageBox::showOkCancelBox(iconType, title.c_str(), text.c_str(), nullptr, nullptr);
+							ret = result ? MsgButton::bYes : MsgButton::bNo;
+							break;
+						}
+						case sYesNoCancel:
+						case sConTryCancel:
+						{
+							int result = juce::NativeMessageBox::showYesNoCancelBox(iconType, title.c_str(), text.c_str(), nullptr, nullptr);
+							if (result == 0)
+								ret = MsgButton::bCancel;
+							else if (result == 1)
+								ret = MsgButton::bYes;
+							else
+								ret = MsgButton::bNo;
+							break;
+						}
 					}
-					case MsgStyle::sYesNo:
-					{
-						bool result = juce::NativeMessageBox::showOkCancelBox(iconType, title, text, nullptr, nullptr);
-						ret = result ? MsgButton::bYes : MsgButton::bNo;
-						break;
-					}
-					case sYesNoCancel:
-					case sConTryCancel:
-					{
-						int result = juce::NativeMessageBox::showYesNoCancelBox(iconType, title, text, nullptr, nullptr);
-						if (result == 0)
-							ret = MsgButton::bCancel;
-						else if (result == 1)
-							ret = MsgButton::bYes;
-						else
-							ret = MsgButton::bNo;
-						break;
-					}
-				}
 				#elif defined(CPL_UNIXC)
 				std::string options = "zenity ";
 
@@ -832,7 +761,7 @@ namespace cpl
 					case iQuestion: options += "--question "; break;
 				}
 
-				options += "--text=\"" + std::string(text) + "\" --title=\"" + title + "\"";
+				options += "--text=\"" + text.string() + "\" --title=\"" + title.string() + "\"";
 
 				auto ret = ExecCommand(options).first ? MsgButton::bNo : MsgButton::bYes;
 
@@ -886,10 +815,8 @@ namespace cpl
 			std::string text;
 			int nStyle;
 			void * systemWindow;
-			MsgBoxData(const char * title, const char * text, int style, void * window = NULL)
-				: title(title), text(text), nStyle(style), systemWindow(window) {};
-			MsgBoxData(const std::string & title, const std::string & text, int style, void * window = NULL)
-				: title(title), text(text), nStyle(style), systemWindow(window) {};
+			MsgBoxData(const zstr_view title, const zstr_view text, int style, void * window = NULL)
+				: title(title.string()), text(text.string()), nStyle(style), systemWindow(window) {};
 		};
 
 		/*********************************************************************************************
@@ -921,7 +848,7 @@ namespace cpl
 			MsgBox - Spawns a messagebox, optionally blocking.
 
 		*********************************************************************************************/
-		int MsgBox(const std::string & text, const std::string & title, int nStyle, void * parent, const bool bBlocking)
+		int MsgBox(const zstr_view text, const zstr_view title, int nStyle, void * parent, const bool bBlocking)
 		{
 			if (bBlocking)
 				return _mbx(parent, text.c_str(), title.c_str(), nStyle);

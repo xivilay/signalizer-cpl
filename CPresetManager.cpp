@@ -251,7 +251,7 @@ namespace cpl
 		if (!loadPreset(path, builder, location))
 		{
 			auto answer = cpl::Misc::MsgBox(
-				"Error loading default preset at:\n" + path + "\n" + Misc::GetLastOSErrorMessage() +
+				"Error loading default preset at:\n" + path + "\n" + GetLastOSErrorMessage() +
 				"\nLoad a different preset?",
 				programInfo.name + ": Error loading preset...",
 				Misc::MsgIcon::iQuestion | Misc::MsgStyle::sYesNoCancel);

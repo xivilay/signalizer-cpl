@@ -47,8 +47,8 @@ namespace cpl
 		// overrides
 		virtual iCtrlPrec_t bGetValue() const override;
 		virtual void bSetInternal(iCtrlPrec_t) override;
-		virtual void bSetText(const std::string & in) override;
-		virtual void bSetTitle(const std::string & in) override;
+		virtual void bSetText(std::string in) override;
+		virtual void bSetTitle(std::string in) override;
 		virtual void bSetValue(iCtrlPrec_t newValue, bool sync = false) override;
 		virtual void bRedraw() override;
 		virtual std::string bGetText() const override;
@@ -71,7 +71,7 @@ namespace cpl
 		virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 		virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
-		virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
+		virtual bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override;
 		virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 
 		// true if this is displayed as a knob, otherwise it is a slider.

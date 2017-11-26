@@ -74,7 +74,7 @@ namespace cpl
 			{
 				// you must call notifyListeners() in your destructor!
 				CPL_BREAKIFDEBUGGED();
-				Misc::LogException("A destruction server didn't notify it's listeners upon destruction!");
+				LogException("A destruction server didn't notify it's listeners upon destruction!");
 			}
 		}
 

@@ -7,6 +7,7 @@
 #include "../../gui/Tools.h"
 #include "../../Misc.h"
 #include "../../state/Serialization.h"
+#include "../../stdext.h"
 #include <set>
 #include <array>
 #include <string>
@@ -21,7 +22,7 @@ namespace cpl
 	class ContextualName
 	{
 	public:
-		virtual std::string getContextualName() { return{}; }
+		virtual std::string getContextualName() { return empty_string; }
 		virtual ~ContextualName() {}
 	};
 
@@ -88,7 +89,7 @@ namespace cpl
 			return ret;
 		}
 
-		bool setFormattedValue(const std::string & formattedValue)
+		bool setFormattedValue(const zstr_view formattedValue)
 		{
 			ValueT val = 0;
 			if (getFormatter().interpret(formattedValue, val))
@@ -238,7 +239,7 @@ namespace cpl
 		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<typename ParameterView::ValueType>(value)); }
 		virtual void beginChangeGesture() override { return parameterView->beginChangeGesture(); }
 		virtual void endChangeGesture() override { return parameterView->endChangeGesture(); }
-		virtual std::string getContextualName() override { return parameterView->getExportedName(); }
+		virtual const std::string& getContextualName() override { return parameterView->getExportedName(); }
 
 	private:
 		ParameterView * parameterView;

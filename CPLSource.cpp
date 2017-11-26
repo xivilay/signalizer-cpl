@@ -71,6 +71,7 @@
 #include "state/State.cpp"
 #include "lib/md5/md5.cpp"
 #include "process/Process.cpp"
+#include "Exceptions.cpp"
 
 #if defined(CPL_HINT_FONT)
 #include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
@@ -78,6 +79,8 @@
 #include "FreeType/FreeTypeAmalgam.cpp"
 #endif
 
+/*
 #if !defined(CPL_LEAN)
 #include "CPLTests.cpp"
 #endif
+*/

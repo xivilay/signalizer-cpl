@@ -43,7 +43,7 @@ namespace cpl
 				return true;
 			}
 
-			virtual bool interpret(const std::string & buf, ValueType & val) override
+			virtual bool interpret(const zstr_view buf, ValueType & val) override
 			{
 				val = enum_cast<ValueType>(cpl::dsp::Windows::enumFromString(buf)) / enum_cast<ValueType>(cpl::dsp::WindowTypes::End);
 				return true;

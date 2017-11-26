@@ -72,7 +72,7 @@ namespace cpl
 		/// The unique name/ID that identifies the parent. This will be a part of the filename and file,
 		/// ensures only this name can load presets saved with that name.
 		/// </param>
-		CPresetWidget(SafeSerializableObject * contentToBeSerialized, const std::string & uniqueName, Setup s = Minimal);
+		CPresetWidget(SafeSerializableObject * contentToBeSerialized, const std::string_view uniqueName, Setup s = Minimal);
 
 		// overrides
 		virtual void valueChanged(const cpl::CBaseControl * c) override;
@@ -97,7 +97,7 @@ namespace cpl
 
 	protected:
 		std::string presetWithoutExtension(juce::File preset);
-		std::string fullPathToPreset(const std::string &);
+		std::string fullPathToPreset(const std::string_view);
 		void setDisplayedPreset(juce::File location);
 
 

@@ -40,9 +40,7 @@ namespace cpl
 	public:
 
 		EnvStrings() {}
-		EnvStrings(const char * arg) : compiledArgs(arg ? arg : "") { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
-		EnvStrings(const std::string& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
-		EnvStrings(std::string&& seq) : compiledArgs(seq) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
+		EnvStrings(std::string seq) : compiledArgs(std::move(seq)) { vectorArgs.emplace_back(compiledArgs); compiledArgs.push_back('\0'); }
 		EnvStrings(EnvStrings&&) = default;
 		EnvStrings& operator = (EnvStrings&&) = default;
 		EnvStrings(const EnvStrings&) = default;

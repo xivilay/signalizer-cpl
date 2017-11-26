@@ -21,44 +21,28 @@
 
 **************************************************************************************
 
-	file:CDrawableSVG.h
+	file:core.h
 
-		An object parsing static SVGs, and turning them into drawable objects based on
-		paths.
+		
 
 *************************************************************************************/
 
-#ifndef CPL_CDRAWABLESVG_H
-#define CPL_CDRAWABLESVG_H
+#ifndef CPL_CORE_H
+#define CPL_CORE_H
 
-#include "Common.h"
-#include "Misc.h"
+#include "MacroConstants.h"
+#include "lib/zstr_view.h"
+
+namespace std { namespace experimental { namespace filesystem {} } }
 
 namespace cpl
 {
-	class CDrawableSVG
-	{
+#ifdef CPL_MSVC
+	namespace fs = std::experimental::filesystem;
+#else
+	namespace fs = std::filesystem;
+#endif
 
-		bool parseSVG(const std::string & svgResourceName)
-		{
-			auto const path = Misc::DirectoryPath() + "/resources/" + svgResourceName;
+} 
 
-			auto const file = juce::File(path);
-
-			if (file.existsAsFile())
-			{
-				if (juce::ScopedPointer<juce::InputStream> fileStream = file.createInputStream())
-				{
-
-				}
-			}
-
-		}
-
-	private:
-
-		juce::Path svgPath;
-	};
-
-}; // std
 #endif

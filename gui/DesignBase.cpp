@@ -323,9 +323,13 @@ namespace cpl
 		return staticData;
 	}
 
-	const std::vector<char> & CLookAndFeel_CPL::getFaceMemory(const std::string & s)
+	const std::vector<char> & CLookAndFeel_CPL::getFaceMemory(const std::string_view s)
 	{
-		return loadedFonts[s];
+		auto it = loadedFonts.find(s);
+		if(it != loadedFonts.end())
+			return it->second;
+
+		return loadedFonts[std::string(s)];
 	}
 
 	void CLookAndFeel_CPL::setShouldRenderSubpixels(bool shouldRender)

@@ -32,14 +32,13 @@
 
 namespace cpl
 {
-	CPresetWidget::CPresetWidget(SafeSerializableObject * content, const std::string & uName, Setup s)
-		:
-		CBaseControl(this),
-		name(uName),
-		parent(content),
-		ext(uName + "." + programInfo.programAbbr),
-		layoutSetup(s),
-		version(programInfo.version)
+	CPresetWidget::CPresetWidget(SafeSerializableObject * content, const std::string_view uName, Setup s)
+		: CBaseControl(this)
+		, name(uName)
+		, parent(content)
+		, ext(std::string(uName) + "." + programInfo.programAbbr)
+		, layoutSetup(s)
+		, version(programInfo.version)
 
 	{
 		initControls();
@@ -62,9 +61,9 @@ namespace cpl
 		return "";
 	}
 
-	std::string CPresetWidget::fullPathToPreset(const std::string & name)
+	std::string CPresetWidget::fullPathToPreset(const std::string_view name)
 	{
-		return CPresetManager::instance().getPresetDirectory() + name + "." + ext;
+		return CPresetManager::instance().getPresetDirectory() + std::string(name) + "." + ext;
 	}
 
 	void CPresetWidget::valueChanged(const CBaseControl * c)

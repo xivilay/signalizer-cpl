@@ -64,7 +64,7 @@ namespace cpl
 
 
 
-	bool CKnobSlider::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
+	bool CKnobSlider::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
 	{
 		return cpl::lexicalConversion(valueString, val);
 	}
@@ -246,18 +246,18 @@ namespace cpl
 
 	}
 
-	void CKnobSlider::bSetText(const std::string & in)
+	void CKnobSlider::bSetText(std::string in)
 	{
-		text = in;
+		text = std::move(in);
 	}
 	void CKnobSlider::bSetInternal(iCtrlPrec_t newValue)
 	{
 		setValue(newValue, dontSendNotification);
 	}
 
-	void CKnobSlider::bSetTitle(const std::string & in)
+	void CKnobSlider::bSetTitle(std::string in)
 	{
-		title = in;
+		title = std::move(in);
 	}
 
 	void CKnobSlider::bSetValue(iCtrlPrec_t newValue, bool sync)

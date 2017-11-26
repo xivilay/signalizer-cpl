@@ -331,16 +331,16 @@ namespace cpl
 		Builder(Builder&& other) = default;
 		Builder& operator = (Builder&& other) = default;
 
-		Builder(const std::string& processLocation)
-			: process(processLocation)
+		Builder(std::string processLocation)
+			: process(std::move(processLocation))
 		{
 
 		}
 
-		Builder& workingDir(const std::string& newWorkingDir)
+		Builder& workingDir(std::string newWorkingDir)
 		{
 			hasCWD = true;
-			cwd = newWorkingDir;
+			cwd = std::move(newWorkingDir);
 			return *this;
 		}
 

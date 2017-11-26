@@ -54,15 +54,15 @@ namespace cpl
 
 	public:
 
-		CInputControl(const std::string & name);
+		CInputControl(std::string name);
 		~CInputControl();
 		// list of |-seperated values
-		virtual void setInputValue(const std::string & value, bool sync = true);
-		virtual void setInputValueInternal(const std::string & value);
+		virtual void setInputValue(const zstr_view value, bool sync = true);
+		virtual void setInputValueInternal(const zstr_view value);
 		virtual std::string getInputValue() const;
 
 		// overrides
-		virtual void bSetTitle(const std::string & newTitle) override;
+		virtual void bSetTitle(std::string newTitle) override;
 		virtual std::string bGetTitle() const override;
 
 		//virtual iCtrlPrec_t bGetValue() const override;

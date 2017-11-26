@@ -38,6 +38,9 @@
 #define CPL_CMODULE_H
 
 #include <string>
+//#include "Common.h"
+#include "Core.h"
+
 // if set, uses corefoundation instead of the dyld loader on mac
 
 typedef void * ModuleHandle;
@@ -50,15 +53,15 @@ namespace cpl
 		std::string name;
 	public:
 		CModule();
-		CModule(const std::string & moduleName);
+		CModule(std::string moduleName);
 		/// <summary>
 		/// Returns a pointer to a symbol inside the loaded module of this instance
 		/// </summary>
-		void * getFuncAddress(const std::string & functionName);
+		void * getFuncAddress(const zstr_view functionName);
 		/// <summary>
 		/// If no module is loaded, loads moduleName
 		/// </summary>
-		int load(const std::string & moduleName);
+		int load(std::string moduleName);
 		/// <summary>
 		/// Increases the reference of the loaded module
 		/// </summary>
@@ -76,6 +79,8 @@ namespace cpl
 		/// </summary>
 		ModuleHandle getHandle();
 		CModule(const CModule &);
+		CModule(CModule &&) = default;
+		CModule& operator = (CModule&& other) = default;
 		/// <summary>
 		/// Destructor. Releases the module
 		/// </summary>

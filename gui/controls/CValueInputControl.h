@@ -58,7 +58,7 @@ namespace cpl
 		CValueInputControl(ValueEntityBase * valueToReferTo = nullptr, bool takeOwnerShip = false);
 
 		// overrides
-		virtual void bSetTitle(const std::string & newTitle) override;
+		virtual void bSetTitle(std::string newTitle) override;
 		virtual std::string bGetTitle() const override;
 
 		virtual void paint(juce::Graphics & g) override;

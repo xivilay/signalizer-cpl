@@ -46,16 +46,16 @@ namespace cpl
 	public:
 		// 'C' constructor
 		// 'values' is a list of |-seperated values
-		CComboBox(const std::string & name, const std::string & values);
-		CComboBox(const std::string & name, const std::vector<std::string> & values);
+		CComboBox(std::string name, const std::string_view values);
+		CComboBox(std::string name, std::vector<std::string> values);
 		CComboBox();
 
 		// list of |-seperated values
-		virtual void setValues(const std::string & values);
-		virtual void setValues(const std::vector<std::string> & values);
+		virtual void setValues(const std::string_view values);
+		virtual void setValues(std::vector<std::string> values);
 
 		// overrides
-		virtual void bSetTitle(const std::string & newTitle) override;
+		virtual void bSetTitle(std::string newTitle) override;
 		virtual std::string bGetTitle() const override;
 
 		virtual iCtrlPrec_t bGetValue() const override;
@@ -82,15 +82,15 @@ namespace cpl
 			box.setSelectedId(((int)input) - 1);
 		}
 
-		bool setEnabledStateFor(const std::string & idx, bool toggle);
+		bool setEnabledStateFor(const std::string_view idx, bool toggle);
 		bool setEnabledStateFor(std::size_t idx, bool toggle);
 	protected:
 
-		std::size_t indexOfValue(const std::string & idx) const noexcept;
+		std::size_t indexOfValue(const std::string_view idx) const noexcept;
 
 		void setZeroBasedSelIndex(int index);
 		// overrides
-		virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
+		virtual bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override;
 		virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 		virtual void resized() override;
 		virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;

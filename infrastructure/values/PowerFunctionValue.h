@@ -101,11 +101,12 @@ namespace cpl
 			std::string context = "PF.";
 		};
 
-		ParameterPowerSlopeValue(SharedBehaviour & b, const std::string & name = "")
+		ParameterPowerSlopeValue(SharedBehaviour & b, std::string name = "")
 			: base("Bs", b.baseRange, &b.basicFormatter)
 			, pivot("Pvt", b.pivotRange, &b.basicFormatter)
 			, slope("Slp", b.dbRange, &b.dbFormatter)
 			, behaviour(b)
+			, contextName(std::move(name))
 		{
 
 		}
@@ -135,7 +136,7 @@ namespace cpl
 			add(base); add(pivot); add(slope);
 		}
 
-		virtual std::string getContextualName() override { return contextName; }
+		virtual const std::string& getContextualName() override { return contextName; }
 		ValueEntityBase & getValueIndex(std::size_t i) override { return values[i]; }
 
 		std::array<ParameterValueWrapper<ParameterView>, 3> values;

@@ -48,6 +48,11 @@
 #include <numeric>
 #include "Protected.h"
 
+#ifdef CPL_MSVC
+#pragma warning(push, 3)
+#pragma warning(disable:4100) // unused parameters
+#endif
+
 namespace cpl
 {
 	namespace
@@ -1728,4 +1733,9 @@ namespace cpl
 	};
 
 };
+
+#ifdef CPL_MSVC
+#pragma warning(pop)
+#endif
+
 #endif

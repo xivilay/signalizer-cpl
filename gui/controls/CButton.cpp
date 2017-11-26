@@ -67,12 +67,12 @@ namespace cpl
 		return texts[0].toStdString();
 	}
 
-	void CButton::bSetTitle(const std::string & input)
+	void CButton::bSetTitle(std::string input)
 	{
-		texts[0] = input;
+		texts[0] = std::move(input);
 	}
 
-	void CButton::setSingleText(const std::string & input)
+	void CButton::setSingleText(std::string input)
 	{
 		setTexts(input, input);
 	}
@@ -82,22 +82,22 @@ namespace cpl
 		setClickingTogglesState(toggle = isAble);
 	}
 
-	void CButton::setTexts(const std::string & untoggled, const std::string & toggled)
+	void CButton::setTexts(std::string untoggled, std::string toggled)
 	{
-		texts[0] = untoggled;
-		texts[1] = toggled;
+		texts[0] = std::move(untoggled);
+		texts[1] = std::move(toggled);
 		repaint();
 	}
 
-	void CButton::setUntoggledText(const std::string & newText)
+	void CButton::setUntoggledText(std::string newText)
 	{
-		this->texts[0] = newText;
+		this->texts[0] = std::move(newText);
 		repaint();
 	}
 
-	void CButton::setToggledText(const std::string & newText)
+	void CButton::setToggledText(std::string newText)
 	{
-		this->texts[1] = newText;
+		this->texts[1] = std::move(newText);
 		repaint();
 	}
 

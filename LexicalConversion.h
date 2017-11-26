@@ -33,6 +33,7 @@
 
 #include "Common.h"
 #include <sstream>
+#include "lib/zstr_view.h"
 
 namespace cpl
 {
@@ -52,33 +53,13 @@ namespace cpl
 		return false;
 	}
 
-	#ifdef CPL_JUCE
-	/// <summary>
-	/// Optimized for JUCE-strings
-	/// </summary>
-	/// <param name="from"></param>
-	/// <param name="to"></param>
-	/// <returns></returns>
-	inline bool lexicalConversion(const juce::String & from, double & to)
-	{
-		double output;
-		char * endPtr = nullptr;
-		output = strtod(from.getCharPointer(), &endPtr);
-		if (endPtr > from.getCharPointer())
-		{
-			to = output;
-			return true;
-		}
-		return false;
-	}
-	#endif
 	/// <summary>
 	/// Optimized for std::strings
 	/// </summary>
 	/// <param name="from"></param>
 	/// <param name="to"></param>
 	/// <returns></returns>
-	inline bool lexicalConversion(const std::string & from, double & to)
+	inline bool lexicalConversion(const zstr_view from, double & to)
 	{
 		double output;
 		char * endPtr = nullptr;
@@ -97,7 +78,7 @@ namespace cpl
 	/// <param name="from"></param>
 	/// <param name="to"></param>
 	/// <returns></returns>
-	inline bool lexicalConversion(const std::string & from, std::int64_t & to)
+	inline bool lexicalConversion(const zstr_view from, std::int64_t & to)
 	{
 		std::int64_t output;
 		char * endPtr = nullptr;

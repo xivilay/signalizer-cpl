@@ -69,10 +69,10 @@ namespace cpl
 				colours[id] = colour;
 		}
 
-		virtual void addTab(const std::string & name)
+		virtual void addTab(std::string name)
 		{
 			if (name.size())
-				buttons.push_back(name);
+				buttons.emplace_back(std::move(name));
 		}
 
 		virtual void paint(juce::Graphics & g) override
@@ -227,11 +227,11 @@ namespace cpl
 				colours[id] = colour;
 		}
 
-		virtual CTextTabBar & addTab(const std::string & name)
+		virtual CTextTabBar & addTab(std::string name)
 		{
 			if (name.size())
 			{
-				buttons.push_back(name);
+				buttons.emplace_back(std::move(name));
 				renderTriangle();
 			}
 			return *this;
@@ -739,14 +739,14 @@ namespace cpl
 
 		}
 
-		CTextTabBar<> & addTab(const std::string & name) override
+		CTextTabBar<> & addTab(std::string name) override
 		{
 			if (name.size())
 			{
 				if (cpl::contains(buttons, name))
 					CPL_RUNTIME_EXCEPTION("Multiple tabs with same unique name!");
-				buttons.push_back(name);
 				vectors.emplace_back(name);
+				buttons.emplace_back(std::move(name));
 				resized();
 			}
 			return *this;

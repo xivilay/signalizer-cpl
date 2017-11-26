@@ -90,9 +90,9 @@ namespace cpl
 		errorVisualizer.setBounds(getBounds().withPosition(0, 0));
 
 	}
-	void CValueInputControl::bSetTitle(const std::string & newTitle)
+	void CValueInputControl::bSetTitle(std::string newTitle)
 	{
-		title = newTitle;
+		title = std::move(newTitle);
 	}
 	std::string CValueInputControl::bGetTitle() const
 	{

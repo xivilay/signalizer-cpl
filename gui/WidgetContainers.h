@@ -54,7 +54,7 @@ namespace cpl
 			spaceAfterLargest = trigger;
 		}
 
-		cpl::CBaseControl * operator [](const std::string & name) const
+		cpl::CBaseControl * operator [](const std::string_view name) const
 		{
 			for (unsigned y = 0; y < controls.size(); ++y)
 			{

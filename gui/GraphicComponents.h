@@ -55,7 +55,7 @@ namespace cpl
 		CTextLabel();
 		void setFontSize(float newSize);
 		void setColour(CColour newColour);
-		virtual void setText(const std::string & newText);
+		virtual void setText(std::string newText);
 		virtual void paint(juce::Graphics & g) override;
 		void setPos(int x, int y);
 		void setJustification(juce::Justification j) { just = j; }
@@ -115,7 +115,7 @@ namespace cpl
 	{
 	public:
 		CTextControl();
-		void bSetText(const std::string & newText) override;
+		void bSetText(std::string newText) override;
 		std::string bGetText() const override;
 		void paint(juce::Graphics & g) override;
 

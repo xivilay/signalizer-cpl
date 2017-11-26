@@ -228,7 +228,7 @@ namespace cpl
 	 *********************************************************************************************/
 	XWORD CProtected::structuredExceptionHandler(XWORD _code, CSystemException::Storage & e, void * systemInformation)
 	{
-		CPL_BREAKIFDEBUGGED();
+		//CPL_BREAKIFDEBUGGED();
 
 		#ifdef CPL_WINDOWS
 		auto exceptCode = _code;
@@ -368,13 +368,13 @@ namespace cpl
 		structuredExceptionHandler(code, exceptionInformation, systemInformation);
 
 		auto exceptionString = formatExceptionMessage(exceptionInformation);
-		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+		CrashIfUserDoesntDebug(exceptionString);
 		outputStream << "- SEH exception description: " << newl << exceptionString << newl;
 		outputStream << "- Stack backtrace: " << newl;
 		WindowsBackTrace(outputStream, (PEXCEPTION_POINTERS)systemInformation);
 		ret = EXCEPTION_CONTINUE_SEARCH;
 
-		cpl::Misc::LogException(outputStream.str());
+		LogException(outputStream.str());
 
 
 		#endif
@@ -423,8 +423,8 @@ namespace cpl
 		}
 		free(symbols);
 
-		cpl::Misc::LogException(outputStream.str());
-		cpl::Misc::CrashIfUserDoesntDebug(exceptionString);
+		LogException(outputStream.str());
+		CrashIfUserDoesntDebug(exceptionString);
 		#endif
 	}
 

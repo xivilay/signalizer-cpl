@@ -32,16 +32,16 @@
 
 namespace cpl
 {
-	CComboBox::CComboBox(const std::string & name, const std::string & inputValues)
-		: CBaseControl(this), title(name), internalValue(0.0), recursionFlag(false)
+	CComboBox::CComboBox(std::string name, const std::string_view inputValues)
+		: CBaseControl(this), title(std::move(name)), internalValue(0.0), recursionFlag(false)
 	{
 		bToggleEditSpaces(true);
 		setValues(inputValues);
 		initialize();
 	}
 
-	CComboBox::CComboBox(const std::string & name, const std::vector<std::string> & inputValues)
-		: CBaseControl(this), title(name), values(inputValues), internalValue(0.0), recursionFlag(false)
+	CComboBox::CComboBox(std::string name, std::vector<std::string> inputValues)
+		: CBaseControl(this), title(std::move(name)), values(std::move(inputValues)), internalValue(0.0), recursionFlag(false)
 	{
 		initialize();
 	}
@@ -75,9 +75,9 @@ namespace cpl
 		box.setBounds(0, stringBounds.getBottom(), getWidth(), getHeight() - stringBounds.getHeight());
 
 	}
-	void CComboBox::bSetTitle(const std::string & newTitle)
+	void CComboBox::bSetTitle(std::string newTitle)
 	{
-		title = newTitle;
+		title = std::move(newTitle);
 	}
 	std::string CComboBox::bGetTitle() const
 	{
@@ -94,7 +94,7 @@ namespace cpl
 	}
 
 
-	void CComboBox::setValues(const std::string & inputValues)
+	void CComboBox::setValues(const std::string_view inputValues)
 	{
 		values.clear();
 		std::size_t iter_pos(0);
@@ -103,12 +103,12 @@ namespace cpl
 		{
 			if (inputValues[i] == '|')
 			{
-				values.push_back(inputValues.substr(iter_pos, i - iter_pos));
+				values.emplace_back(inputValues.substr(iter_pos, i - iter_pos));
 				iter_pos = i + 1;
 			}
 			else if (i == (len - 1))
 			{
-				values.push_back(inputValues.substr(iter_pos, i + 1 - iter_pos));
+				values.emplace_back(inputValues.substr(iter_pos, i + 1 - iter_pos));
 
 			}
 		}
@@ -166,9 +166,9 @@ namespace cpl
 		return value;
 	}
 
-	void CComboBox::setValues(const std::vector<std::string> & inputValues)
+	void CComboBox::setValues(std::vector<std::string> inputValues)
 	{
-		values = inputValues;
+		values = std::move(inputValues);
 		auto currentIndex = box.getItemText(box.getSelectedItemIndex() - 1);
 		box.clear(NotificationType::dontSendNotification);
 		juce::StringArray arr;
@@ -221,7 +221,7 @@ namespace cpl
 	}
 
 
-	bool CComboBox::bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const
+	bool CComboBox::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
 	{
 		auto idx = indexOfValue(valueString);
 		if (idx != static_cast<std::size_t>(-1))
@@ -235,7 +235,7 @@ namespace cpl
 		return false;
 	}
 
-	std::size_t CComboBox::indexOfValue(const std::string & idx) const noexcept
+	std::size_t CComboBox::indexOfValue(const std::string_view idx) const noexcept
 	{
 		for (std::size_t i = 0; i < values.size(); ++i)
 		{
@@ -247,7 +247,7 @@ namespace cpl
 		return (std::size_t) - 1;
 	}
 
-	bool CComboBox::setEnabledStateFor(const std::string & idx, bool toggle)
+	bool CComboBox::setEnabledStateFor(const std::string_view idx, bool toggle)
 	{
 		return setEnabledStateFor(indexOfValue(idx), toggle);
 	}

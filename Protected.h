@@ -37,15 +37,14 @@
 
 #include "LibraryOptions.h"
 #include "PlatformSpecific.h"
-#include "Misc.h"
 #include <vector>
 #include <signal.h>
 #include <thread>
-#include "CMutex.h"
 #include <map>
 #include <sstream>
 #include "Utility.h"
 #include <memory>
+#include "Exceptions.h"
 
 #define CPL_TRACEGUARD_START \
 	cpl::CProtected::instance().topLevelTraceGuardedCode([&]() {
@@ -128,7 +127,7 @@ namespace cpl
 			{
 				if (!hasBeenConstructed)
 				{
-					stream.reference() << "Handler: " << prefix << newl;
+					stream.reference() << "Handler: " << prefix << '\n';
 					hasBeenConstructed = true;
 				}
 				return stream.reference();
@@ -410,24 +409,24 @@ namespace cpl
 			}
 			catch (CProtected::CSystemException & cs)
 			{
-				out.get() << "Hardware -> " << CProtected::formatExceptionMessage(cs) << newl;
-				out.get() << "what() -> " << cs.what() << newl;
-				Misc::LogException(out.get().str());
-				Misc::CrashIfUserDoesntDebug(out.get().str());
+				out.get() << "Hardware -> " << CProtected::formatExceptionMessage(cs) << '\n';
+				out.get() << "what() -> " << cs.what() << '\n';
+				LogException(out.get().str());
+				CrashIfUserDoesntDebug(out.get().str());
 				throw;
 			}
 			catch (std::exception & e)
 			{
-				out.get() << "Software -> " << e.what() << newl;
-				Misc::LogException(out.get().str());
-				Misc::CrashIfUserDoesntDebug(out.get().str());
+				out.get() << "Software -> " << e.what() << '\n';
+				LogException(out.get().str());
+				CrashIfUserDoesntDebug(out.get().str());
 				throw;
 			}
 			catch (...)
 			{
 				out.get() << "Unknown software exception";
-				Misc::LogException(out.get().str());
-				Misc::CrashIfUserDoesntDebug(out.get().str());
+				LogException(out.get().str());
+				CrashIfUserDoesntDebug(out.get().str());
 				throw;
 			}
 

@@ -103,7 +103,7 @@ namespace cpl
 		class ValueFormatter : virtual public Utility::DestructionServer<CBaseControl>::Client
 		{
 		public:
-			virtual bool stringToValue(const CBaseControl * ctrl, const std::string & buffer, iCtrlPrec_t & value) = 0;
+			virtual bool stringToValue(const CBaseControl * ctrl, const zstr_view buffer, iCtrlPrec_t & value) = 0;
 			virtual bool valueToString(const CBaseControl * ctrl, std::string & buffer, iCtrlPrec_t value) = 0;
 			virtual ~ValueFormatter() {};
 		};
@@ -126,9 +126,9 @@ namespace cpl
 		/// <summary>
 		/// Sets the displayed tooltip. Remember to call enableTooltip(true) if you want to use this.
 		/// </summary>
-		void bSetDescription(const std::string & tip)
+		void bSetDescription(std::string tip)
 		{
-			tooltip = tip;
+			tooltip = std::move(tip);
 		}
 
 		void enableTooltip(bool toggle = true)
@@ -224,7 +224,7 @@ namespace cpl
 		/// <param name="synchronizedEvent">
 		/// Whether the propagated event is synchronized
 		/// </param>
-		virtual bool bInterpretAndSet(const std::string & valueString, bool setInternal = false, bool synchronizedEvent = false)
+		virtual bool bInterpretAndSet(const zstr_view valueString, bool setInternal = false, bool synchronizedEvent = false)
 		{
 			iCtrlPrec_t val(0);
 			if (bInterpret(valueString, val))
@@ -240,7 +240,7 @@ namespace cpl
 		/// <summary>
 		/// Maps the string to a 0-1 range, if it was succesfully interpreted.
 		/// </summary>
-		virtual bool bInterpret(const std::string & valueString, iCtrlPrec_t & val) const
+		virtual bool bInterpret(const zstr_view valueString, iCtrlPrec_t & val) const
 		{
 			for (auto rit = formatters.rbegin(); rit != formatters.rend(); ++rit)
 			{
@@ -267,7 +267,7 @@ namespace cpl
 		/// <summary>
 		/// Sets the display title of the control
 		/// </summary>
-		virtual void bSetTitle(const std::string & text)
+		virtual void bSetTitle(std::string text)
 		{
 
 		}
@@ -284,13 +284,13 @@ namespace cpl
 		/// <returns></returns>
 		virtual std::string bGetTitle() const
 		{
-			return "";
+			return empty_string;
 		}
 		/// <summary>
 		/// Sets the text value of the control. This may not be visible and/or included in the control.
 		/// You probably want the formatter interface.
 		/// </summary>
-		virtual void bSetText(const std::string & text)
+		virtual void bSetText(std::string text)
 		{
 
 		}
@@ -299,7 +299,7 @@ namespace cpl
 		/// </summary>
 		virtual std::string bGetText() const
 		{
-			return "";
+			return empty_string;
 		}
 		/// <summary>
 		/// Returns the size of this control.
@@ -345,7 +345,7 @@ namespace cpl
 				base->setBounds(x, y, base->getWidth(), base->getHeight());
 		}
 
-		virtual void bSetSize(const CRect & size)
+		virtual void bSetSize(const CRect& size)
 		{
 			if (base)
 				base->setBounds(size);
@@ -458,7 +458,7 @@ namespace cpl
 			}
 		}
 
-		virtual bool bStringToValue(const std::string & stringInput, iCtrlPrec_t & val) const
+		virtual bool bStringToValue(const zstr_view stringInput, iCtrlPrec_t & val) const
 		{
 			return bMapStringToInternal(stringInput, val);
 		}
@@ -507,7 +507,7 @@ namespace cpl
 				bSetValue(value, true);
 		}
 
-		static bool bMapStringToInternal(const std::string & stringInput, iCtrlPrec_t & val)
+		static bool bMapStringToInternal(const zstr_view stringInput, iCtrlPrec_t & val)
 		{
 			char * ptr = nullptr;
 			iCtrlPrec_t pVal(0);

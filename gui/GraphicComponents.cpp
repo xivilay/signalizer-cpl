@@ -58,9 +58,9 @@ namespace cpl
 		repaint();
 	}
 
-	void CTextLabel::setText(const std::string & newText)
+	void CTextLabel::setText(std::string newText)
 	{
-		text = newText;
+		text = std::move(newText);
 		repaint();
 	}
 
@@ -156,9 +156,9 @@ namespace cpl
 	{
 
 	}
-	void CTextControl::bSetText(const std::string & newText)
+	void CTextControl::bSetText(std::string newText)
 	{
-		CTextLabel::setText(newText);
+		CTextLabel::setText(std::move(newText));
 	}
 	std::string CTextControl::bGetText() const
 	{

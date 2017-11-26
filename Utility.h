@@ -31,33 +31,14 @@
 #define CPL_UTILITY_H
 
 #include "MacroConstants.h"
-#include "Common.h"
-#include "Mathext.h"
 #include <functional>
 #include <set>
-#include "stdext.h"
-#include "Misc.h"
+#include "Exceptions.h"
+#include <cmath>
+#include <type_traits>
 
 namespace cpl
 {
-
-	/*
-		Maps the input floating-point value evenly to the range of the enum, that must have the element
-		'end'. The enumerated values in Enum must be linearly distributed, and 'end' must be the number of
-		elements.
-	*/
-	template<typename Enum, typename VType>
-	typename std::enable_if<std::is_enum<Enum>::value, Enum>::type distribute(VType val)
-	{
-		return static_cast<Enum>(cpl::Math::round<signed>(val * (int(Enum::end) - 1)));
-	}
-
-	template<typename EnumStruct, typename VType>
-	inline typename std::enable_if<!std::is_enum<EnumStruct>::value, typename EnumStruct::Enum>::type distribute(VType val)
-	{
-		return static_cast<typename EnumStruct::Enum>(cpl::Math::round<signed>(val * (EnumStruct::end - 1)));
-	}
-
 
 	namespace Utility
 	{

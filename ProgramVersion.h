@@ -37,7 +37,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
-#include "Mathext.h"
+#include <algorithm>
 
 namespace cpl
 {
@@ -80,9 +80,9 @@ namespace cpl
 
 			std::sscanf(version.c_str(), "%d.%d.%d", &parts[0], &parts[1], &parts[2]);
 
-			ret.parts.major = (std::uint16_t) cpl::Math::confineTo(parts[0], 0, std::numeric_limits<std::uint16_t>::max());
-			ret.parts.minor = (std::uint16_t) cpl::Math::confineTo(parts[1], 0, std::numeric_limits<std::uint16_t>::max());
-			ret.parts.build = (std::uint32_t) cpl::Math::confineTo(parts[2], 0, std::numeric_limits<std::uint32_t>::max());
+			ret.parts.major = (std::uint16_t) std::clamp<int>(parts[0], 0, std::numeric_limits<std::uint16_t>::max());
+			ret.parts.minor = (std::uint16_t) std::clamp<int>(parts[1], 0, std::numeric_limits<std::uint16_t>::max());
+			ret.parts.build = (std::uint32_t) std::clamp<int>(parts[2], 0, std::numeric_limits<std::uint32_t>::max());
 
 			return ret;
 		}

@@ -620,6 +620,28 @@ namespace cpl
 			return ret;
 		}
 
+		///	<summary>
+		/// Maps the input floating-point value evenly to the range of the enum, that must have the element
+		///	'end'.The enumerated values in Enum must be linearly distributed, and 'end' must be the number of
+		///	elements.
+		/// </summary>
+		template<typename Enum, typename VType>
+		typename std::enable_if<std::is_enum<Enum>::value, Enum>::type distribute(VType val)
+		{
+			return static_cast<Enum>(round<signed>(val * (int(Enum::end) - 1)));
+		}
+
+		///	<summary>
+		/// Maps the input floating-point value evenly to the range of the enum, that must have the element
+		///	'end'.The enumerated values in Enum must be linearly distributed, and 'end' must be the number of
+		///	elements.
+		/// </summary>
+		template<typename EnumStruct, typename VType>
+		inline typename std::enable_if<!std::is_enum<EnumStruct>::value, typename EnumStruct::Enum>::type distribute(VType val)
+		{
+			return static_cast<typename EnumStruct::Enum>(round<signed>(val * (EnumStruct::end - 1)));
+		}
+
 
 		inline static std::uint8_t roundedMul(std::uint8_t a, std::uint8_t b) noexcept
 		{

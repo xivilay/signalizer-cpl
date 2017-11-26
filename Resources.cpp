@@ -28,6 +28,8 @@
 *************************************************************************************/
 
 #include "Resources.h"
+#include "Misc.h"
+
 namespace cpl
 {
 	std::mutex CResourceManager::loadMutex;
@@ -38,8 +40,8 @@ namespace cpl
 	 CImage
 
 	 *********************************************************************************************/
-	CImage::CImage(const std::string & inPath)
-		: path(inPath)
+	CImage::CImage(std::string inPath)
+		: path(std::move(inPath))
 	{
 
 	}
@@ -48,9 +50,9 @@ namespace cpl
 	{
 	}
 
-	void CImage::setPath(const std::string & inPath)
+	void CImage::setPath(std::string inPath)
 	{
-		path = inPath;
+		path = std::move(inPath);
 
 	}
 
@@ -117,7 +119,7 @@ namespace cpl
 
 	 *********************************************************************************************/
 
-	CImage * CResourceManager::loadResource(const std::string & name)
+	CImage * CResourceManager::loadResource(const std::string_view name)
 	{
 		auto it = resources.find(name);
 		if (it != resources.end())
@@ -128,12 +130,14 @@ namespace cpl
 
 		std::string dir = Misc::DirectoryPath() + "/resources/";
 
-		auto & image = resources[name];
-		std::string path = (dir + name);
+		std::string key { name };
+
+		auto & image = resources[key];
+		std::string path = (dir + key);
 		image.setPath(path);
 		if (!image.load())
 		{
-			Misc::MsgBox("Error loading resource " + path + ":" + newl + Misc::GetLastOSErrorMessage(), programInfo.name + " error!", Misc::MsgIcon::iStop);
+			Misc::MsgBox("Error loading resource " + path + ":" + newl + GetLastOSErrorMessage(), programInfo.name + " error!", Misc::MsgIcon::iStop);
 			CPL_BREAKIFDEBUGGED();
 			return nullptr;
 		}
@@ -151,7 +155,7 @@ namespace cpl
 		internalResourceInstance = nullptr;
 	}
 
-	std::unique_ptr<juce::Drawable> CResourceManager::createDrawable(const std::string & name)
+	std::unique_ptr<juce::Drawable> CResourceManager::createDrawable(const std::string_view name)
 	{
 		std::lock_guard<std::mutex> lock(loadMutex);
 		CImage * resource = loadResource(name);
@@ -159,7 +163,7 @@ namespace cpl
 		if (!resource)
 		{
 			#ifdef CPL_THROW_ON_NO_RESOURCE
-			CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
+			CPL_RUNTIME_EXCEPTION(std::string("Resource ") + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
 			#endif
 			resource = &defaultImage;
 		}
@@ -167,14 +171,14 @@ namespace cpl
 		return std::unique_ptr<juce::Drawable>(resource->getDrawable()->createCopy());
 	}
 
-	juce::Image CResourceManager::getImage(const std::string & name)
+	juce::Image CResourceManager::getImage(const std::string_view name)
 	{
 		std::lock_guard<std::mutex> lock(loadMutex);
 		CImage * resource = loadResource(name);
 		if (!resource)
 		{
 			#ifdef CPL_THROW_ON_NO_RESOURCE
-			CPL_RUNTIME_EXCEPTION("Resource " + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
+			CPL_RUNTIME_EXCEPTION(std::string("Resource ") + name + " was not found. Compile without CPL_THROW_ON_NO_RESOURCE to remove this exception.");
 			#endif
 			resource = &defaultImage;
 		}

@@ -48,18 +48,18 @@ namespace cpl
 	public:
 		// 'C' constructor
 		// 'values' is a list of |-seperated values
-		CValueControl(const std::string & name, const std::string & values, const std::string & unit);
-		CValueControl(const std::string & name, const std::vector<std::string> & values, const std::string & unit);
+		CValueControl(std::string name, const std::string_view values, std::string unit);
+		CValueControl(std::string name, std::vector<std::string> values, std::string unit);
 		CValueControl();
 
 		// list of |-seperated values
-		virtual void setValues(const std::string & values);
-		virtual void setValues(const std::vector<std::string> & values);
-		virtual void setUnit(const std::string & unit);
+		virtual void setValues(const std::string_view values);
+		virtual void setValues(std::vector<std::string> values);
+		virtual void setUnit(std::string unit);
 
 	protected:
 		// overrides
-		virtual bool bStringToValue(const std::string & valueString, iCtrlPrec_t & val) const override;
+		virtual bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override;
 		virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 		//virtual void baseControlValueChanged() override;
 

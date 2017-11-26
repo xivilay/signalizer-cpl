@@ -136,7 +136,7 @@ namespace cpl
 			namespace
 			{
 
-				typedef std::map<std::string, WindowTypes> WMap;
+				typedef std::map<std::string, WindowTypes, std::less<>> WMap;
 
 				inline WMap InitializeWindowMap()
 				{
@@ -165,7 +165,7 @@ namespace cpl
 			/// Matches a window name with a WindowType, returning it if possible, and
 			/// returning a Rectangular window if not possible.
 			/// </summary>
-			inline WindowTypes enumFromString(const std::string & w)
+			inline WindowTypes enumFromString(const std::string_view w)
 			{
 				auto it = WindowNameMap.find(w);
 				if (it == WindowNameMap.end())

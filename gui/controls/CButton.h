@@ -50,12 +50,12 @@ namespace cpl
 
 		virtual void clicked() override;
 		void setToggleable(bool isAble);
-		void setSingleText(const std::string & input);
-		void setTexts(const std::string & toggled, const std::string & untoggled);
-		void setUntoggledText(const std::string &);
-		void setToggledText(const std::string &);
+		void setSingleText(std::string input);
+		void setTexts(std::string toggled, std::string untoggled);
+		void setUntoggledText(std::string);
+		void setToggledText(std::string);
 		std::string bGetTitle() const override;
-		void bSetTitle(const std::string &) override;
+		void bSetTitle(std::string) override;
 
 	private:
 		void onValueObjectChange(ValueEntityListener * sender, ValueEntityBase * object) override;
