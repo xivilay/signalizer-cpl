@@ -77,17 +77,6 @@ namespace cpl
 			f(i);
 	}
 
-	template<typename ... Args>
-	std::string format(const zstr_view format, Args ... args)
-	{
-		using namespace std;
-		size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1;
-		string ret;
-		ret.resize(size);
-		snprintf(ret.data(), size, format.c_str(), args ...);
-		return move(ret); 
-	}
-
 	namespace Misc
 	{
 		std::pair<int, std::string> ExecCommand(const zstr_view arg);
@@ -103,8 +92,14 @@ namespace cpl
 			return DemangleRawName(typeid(object).name());
 		}
 
-		int ObtainUniqueInstanceID();
-		void ReleaseUniqueInstanceID(int ID);
+		/// <summary>
+		/// Returns a system-wide unique ID.
+		/// </summary>
+		std::int32_t AcquireUniqueInstanceID();
+		/// <summary>
+		/// Releases a ID previously acquired.
+		/// </summary>
+		void ReleaseUniqueInstanceID(std::int32_t ID);
 		bool IsBeingDebugged();
 
 		/// <summary>
@@ -113,6 +108,7 @@ namespace cpl
 		const char * GetImageBase();
 
 		const std::string & DirectoryPath();
+		const fs::path& DirFSPath();
 
 		long Round(double number);
 		long Delay(int ms);

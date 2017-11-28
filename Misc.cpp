@@ -40,6 +40,8 @@
 #include <typeinfo>
 #include <future>
 #include "Exceptions.h"
+#include "Core.h"
+#include <queue>
 
 #ifdef __GNUG__
 #include <cstdlib>
@@ -49,11 +51,15 @@
 
 namespace cpl
 {
-	namespace Misc {
+	namespace Misc
+	{
+
+		std::mutex idMutex;
+		std::queue<int> freeIDList;
+		int instanceCounter;
 
 		int addHandlers();
 
-		static int instanceCount = 0;
 		static std::string GetDirectoryPath();
 		static int GetInstanceCounter();
 		static int __unusedInitialization = addHandlers();
@@ -250,45 +256,48 @@ namespace cpl
 			return dirPath;
 		}
 
-		/*********************************************************************************************
-
-			This returns an identifier, that is unqiue system- and cross-process-wide.
-
-		 *********************************************************************************************/
-		int ObtainUniqueInstanceID()
+		const fs::path& DirFSPath()
 		{
+			static fs::path path = GetDirectoryPath();
+			return path;
+		}
+
+
+
+		std::int32_t AcquireInstanceCounter()
+		{
+			std::unique_lock<std::mutex> lockGuard(idMutex);
+			if (freeIDList.size() > 0)
+			{
+				auto top = freeIDList.front();
+				freeIDList.pop();
+				return top;
+			}
+
+			return instanceCounter++;
+		}
+
+		int AcquireUniqueInstanceID()
+		{
+			std::int32_t pID;
 			#if defined(CPL_WINDOWS)
-			int pID;
-			pID = GetProcessId(GetCurrentProcess());
+				pID = static_cast<std::int32_t>(GetProcessId(GetCurrentProcess()));
 			#elif defined(CPL_MAC) || defined(CPL_UNIXC)
-			pid_t pID;
-			pID = getpid();
+				pid_t pID;
+				pID = static_cast<std::int32_t>(getpid());
 			#endif
-			if (instanceCount > std::numeric_limits<unsigned char>::max())
+			if (instanceCounter > std::numeric_limits<unsigned char>::max())
 				MsgBox("Warning: You currently have had more than 256 instances open, this may cause a wrap around in instance-id's", programInfo.name, iInfo | sOk, nullptr, true);
-			int iD = (pID << 8) | GetInstanceCounter();
-			return iD;
+			std::int32_t id = ((pID << 8) & 0xFFFFFF00) | AcquireInstanceCounter();
+			return id;
 		}
-		/*********************************************************************************************
 
-			Releases a previous unique id.
-
-		 *********************************************************************************************/
-		void ReleaseUniqueInstanceID(int id)
+		void ReleaseUniqueInstanceID(std::int32_t id)
 		{
-
+			std::unique_lock<std::mutex> lockGuard(idMutex);
+			freeIDList.push(id);
 		}
-		/*********************************************************************************************
 
-			Returns a global, ever increasing counter each call.
-
-		 *********************************************************************************************/
-		int GetInstanceCounter()
-		{
-			// maybe change this to a threaded solution some day,
-			// although it is highly improbably it will ever pose a problem
-			return instanceCount++;
-		}
 		/*********************************************************************************************
 
 			Checks whether we are being debugged.

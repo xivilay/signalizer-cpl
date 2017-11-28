@@ -32,6 +32,9 @@
 
 #include "MacroConstants.h"
 #include "lib/zstr_view.h"
+#include <utility>
+#include <cstdio>
+
 
 namespace std { namespace experimental { namespace filesystem {} } }
 
@@ -42,6 +45,18 @@ namespace cpl
 #else
 	namespace fs = std::filesystem;
 #endif
+
+	template<typename ... Args>
+	std::string format(const cpl::zstr_view& format, Args ... args)
+	{
+		using namespace std;
+		size_t size = snprintf(nullptr, 0, format.data(), args ...) + 1;
+		string ret;
+		ret.resize(size);
+		snprintf(ret.data(), size, format.data(), args ...);
+		return move(ret);
+	}
+
 
 } 
 
