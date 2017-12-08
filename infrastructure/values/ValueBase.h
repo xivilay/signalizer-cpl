@@ -89,7 +89,7 @@ namespace cpl
 			return ret;
 		}
 
-		bool setFormattedValue(const zstr_view formattedValue)
+		bool setFormattedValue(const string_ref formattedValue)
 		{
 			ValueT val = 0;
 			if (getFormatter().interpret(formattedValue, val))
@@ -239,7 +239,7 @@ namespace cpl
 		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<typename ParameterView::ValueType>(value)); }
 		virtual void beginChangeGesture() override { return parameterView->beginChangeGesture(); }
 		virtual void endChangeGesture() override { return parameterView->endChangeGesture(); }
-		virtual const std::string& getContextualName() override { return parameterView->getExportedName(); }
+		virtual std::string getContextualName() override { return parameterView->getExportedName(); }
 
 	private:
 		ParameterView * parameterView;

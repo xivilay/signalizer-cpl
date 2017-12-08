@@ -33,7 +33,7 @@
 
 #include "Common.h"
 #include <sstream>
-#include "lib/zstr_view.h"
+#include "lib/string_ref.h"
 
 namespace cpl
 {
@@ -59,7 +59,7 @@ namespace cpl
 	/// <param name="from"></param>
 	/// <param name="to"></param>
 	/// <returns></returns>
-	inline bool lexicalConversion(const zstr_view from, double & to)
+	inline bool lexicalConversion(const string_ref from, double & to)
 	{
 		double output;
 		char * endPtr = nullptr;
@@ -78,7 +78,7 @@ namespace cpl
 	/// <param name="from"></param>
 	/// <param name="to"></param>
 	/// <returns></returns>
-	inline bool lexicalConversion(const zstr_view from, std::int64_t & to)
+	inline bool lexicalConversion(const string_ref from, std::int64_t & to)
 	{
 		std::int64_t output;
 		char * endPtr = nullptr;

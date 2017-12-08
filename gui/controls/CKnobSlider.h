@@ -71,7 +71,7 @@ namespace cpl
 		virtual void onControlSerialization(CSerializer::Archiver & ar, Version version) override;
 		virtual void onControlDeserialization(CSerializer::Builder & ar, Version version) override;
 
-		virtual bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override;
+		virtual bool bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const override;
 		virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 
 		// true if this is displayed as a knob, otherwise it is a slider.

@@ -53,7 +53,7 @@ namespace cpl
 		load(std::move(moduleName));
 	}
 
-	void * CModule::getFuncAddress(const zstr_view functionName)
+	void * CModule::getFuncAddress(const string_ref functionName)
 	{
 		#ifdef CPL_WINDOWS
 		return GetProcAddress(static_cast<HMODULE>(moduleHandle), functionName.c_str());

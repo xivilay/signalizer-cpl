@@ -127,12 +127,12 @@ namespace cpl
 		getAnimator().animateComponent(&errorVisualizer, errorVisualizer.getBounds(), 0.f, 300, false, 1.0, 1.0);
 	}
 
-	void CInputControl::setInputValue(const zstr_view inputValue, bool sync)
+	void CInputControl::setInputValue(const string_ref inputValue, bool sync)
 	{
 		box.setText(juce::String(inputValue.c_str(), inputValue.size()), sync ? juce::NotificationType::sendNotificationSync : juce::sendNotificationAsync);
 	}
 
-	void CInputControl::setInputValueInternal(const zstr_view inputValue)
+	void CInputControl::setInputValueInternal(const string_ref inputValue)
 	{
 		box.setText(juce::String(inputValue.c_str(), inputValue.size()), juce::NotificationType::dontSendNotification);
 	}

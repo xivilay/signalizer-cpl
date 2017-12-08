@@ -57,8 +57,8 @@ namespace cpl
 		CInputControl(std::string name);
 		~CInputControl();
 		// list of |-seperated values
-		virtual void setInputValue(const zstr_view value, bool sync = true);
-		virtual void setInputValueInternal(const zstr_view value);
+		virtual void setInputValue(const string_ref value, bool sync = true);
+		virtual void setInputValueInternal(const string_ref value);
 		virtual std::string getInputValue() const;
 
 		// overrides

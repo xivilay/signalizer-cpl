@@ -57,7 +57,7 @@ namespace cpl
 		/// <summary>
 		/// Returns a pointer to a symbol inside the loaded module of this instance
 		/// </summary>
-		void * getFuncAddress(const zstr_view functionName);
+		void * getFuncAddress(const string_ref functionName);
 		/// <summary>
 		/// If no module is loaded, loads moduleName
 		/// </summary>

@@ -427,7 +427,7 @@ namespace cpl
 		valueObject->setFromJuceColour(newColour);
 	}
 
-	bool CColourControl::bStringToValue(const zstr_view valueString, iCtrlPrec_t & value) const
+	bool CColourControl::bStringToValue(const string_ref valueString, iCtrlPrec_t & value) const
 	{
 		std::uint32_t result(0);
 		char * endPtr = nullptr;

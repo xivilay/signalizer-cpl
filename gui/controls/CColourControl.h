@@ -59,7 +59,7 @@ namespace cpl
 		virtual void paint(juce::Graphics & g) override;
 		virtual iCtrlPrec_t bGetValue() const override;
 		virtual void bSetValue(iCtrlPrec_t val, bool sync = false) override;
-		virtual bool bStringToValue(const zstr_view, iCtrlPrec_t &) const override;
+		virtual bool bStringToValue(const string_ref, iCtrlPrec_t &) const override;
 		virtual bool bValueToString(std::string &, iCtrlPrec_t) const override;
 
 		// used to be different -- stored for legacy

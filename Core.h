@@ -31,7 +31,7 @@
 #define CPL_CORE_H
 
 #include "MacroConstants.h"
-#include "lib/zstr_view.h"
+#include "lib/string_ref.h"
 #include <utility>
 #include <cstdio>
 
@@ -47,7 +47,7 @@ namespace cpl
 #endif
 
 	template<typename ... Args>
-	std::string format(const cpl::zstr_view& format, Args ... args)
+	std::string format(const cpl::string_ref& format, Args ... args)
 	{
 		using namespace std;
 		size_t size = snprintf(nullptr, 0, format.data(), args ...) + 1;

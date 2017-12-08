@@ -47,8 +47,8 @@ namespace cpl
 	std::string GetLastOSErrorMessage();
 	std::string GetLastOSErrorMessage(int errorToPrint);
 
-	void LogException(const zstr_view errorMessage);
-	void CrashIfUserDoesntDebug(const zstr_view errorMessage);
+	void LogException(const string_ref errorMessage);
+	void CrashIfUserDoesntDebug(const string_ref errorMessage);
 
 	class CPLRuntimeException : public std::runtime_error
 	{

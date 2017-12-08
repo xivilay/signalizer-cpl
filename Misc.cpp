@@ -69,7 +69,7 @@ namespace cpl
 
 		#ifdef __GNUG__
 
-		std::string DemangleRawName(const zstr_view name) {
+		std::string DemangleRawName(const string_ref name) {
 			//http://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
 			int status = -4; // some arbitrary value to eliminate the compiler warning
 
@@ -84,7 +84,7 @@ namespace cpl
 
 		#else
 
-		std::string DemangleRawName(const zstr_view name) 
+		std::string DemangleRawName(const string_ref name) 
 		{
 			return name.string();
 		}
@@ -141,13 +141,13 @@ namespace cpl
 			return 0;
 		}
 
-		std::pair<int, std::string> ExecCommand(const zstr_view cmd)
+		std::pair<int, std::string> ExecCommand(const string_ref cmd)
 		{
 			// http://stackoverflow.com/a/478960/1287254
 			char buffer[1024];
 			std::string result;
 
-			auto PipeOpen = [](const zstr_view cmd)
+			auto PipeOpen = [](const string_ref cmd)
 			{
 				#ifdef CPL_WINDOWS
 				return ::_popen(cmd.c_str(), "r");
@@ -205,7 +205,7 @@ namespace cpl
 			return { true, result };
 		}
 
-		bool WriteFile(const fs::path& path, const zstr_view contents) noexcept
+		bool WriteFile(const fs::path& path, const string_ref contents) noexcept
 		{
 			std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen(path.string().c_str(), "w"), &std::fclose);
 
@@ -380,7 +380,7 @@ namespace cpl
 			EXCLUDING the null character
 
 		 *********************************************************************************************/
-		int GetSizeRequiredFormat(const zstr_view fmt, va_list pargs)
+		int GetSizeRequiredFormat(const string_ref fmt, va_list pargs)
 		{
 			#ifdef CPL_WINDOWS
 			return _vscprintf(fmt.c_str(), pargs);
@@ -692,7 +692,7 @@ namespace cpl
 			'private' function, maps to a MessageBox
 
 		*********************************************************************************************/
-		inline static int _mbx(void * systemData, const zstr_view text, const zstr_view title, int nStyle = 0)
+		inline static int _mbx(void * systemData, const string_ref text, const string_ref title, int nStyle = 0)
 		{
 			std::promise<int> promise;
 			auto future = promise.get_future();
@@ -824,7 +824,7 @@ namespace cpl
 			std::string text;
 			int nStyle;
 			void * systemWindow;
-			MsgBoxData(const zstr_view title, const zstr_view text, int style, void * window = NULL)
+			MsgBoxData(const string_ref title, const string_ref text, int style, void * window = NULL)
 				: title(title.string()), text(text.string()), nStyle(style), systemWindow(window) {};
 		};
 
@@ -857,7 +857,7 @@ namespace cpl
 			MsgBox - Spawns a messagebox, optionally blocking.
 
 		*********************************************************************************************/
-		int MsgBox(const zstr_view text, const zstr_view title, int nStyle, void * parent, const bool bBlocking)
+		int MsgBox(const string_ref text, const string_ref title, int nStyle, void * parent, const bool bBlocking)
 		{
 			if (bBlocking)
 				return _mbx(parent, text.c_str(), title.c_str(), nStyle);

@@ -59,7 +59,7 @@ namespace cpl
 		virtual void startedDragging() override;
 		virtual void stoppedDragging() override;
 
-		virtual bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override;
+		virtual bool bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const override;
 		virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 
 		virtual void valueEntityChanged(ValueEntityListener * sender, ValueEntityBase * value) override;

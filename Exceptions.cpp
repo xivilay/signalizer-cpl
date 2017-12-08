@@ -74,7 +74,7 @@ namespace cpl
 	}
 
 
-	void LogException(const zstr_view errorMessage)
+	void LogException(const string_ref errorMessage)
 	{
 		using namespace cpl::Misc;
 		CExclusiveFile exceptionLog;
@@ -90,7 +90,7 @@ namespace cpl
 		exceptionLog.newline();
 	}
 
-	void CrashIfUserDoesntDebug(const zstr_view errorMessage)
+	void CrashIfUserDoesntDebug(const string_ref errorMessage)
 	{
 		using namespace cpl::Misc;
 

@@ -64,7 +64,7 @@ namespace cpl
 
 
 
-	bool CKnobSlider::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
+	bool CKnobSlider::bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const
 	{
 		return cpl::lexicalConversion(valueString, val);
 	}

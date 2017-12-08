@@ -125,7 +125,7 @@ namespace cpl
 		box.clear(NotificationType::dontSendNotification);
 		juce::StringArray arr;
 		auto newIndex = -1; auto counter = 0;
-		for (const auto & str : inputValues)
+		for (const auto & str : values)
 		{
 			counter++;
 			if (currentIndex == str)

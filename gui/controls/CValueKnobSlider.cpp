@@ -71,7 +71,7 @@ namespace cpl
 		valueObject->addListener(this);
 	}
 
-	bool CValueKnobSlider::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
+	bool CValueKnobSlider::bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const
 	{
 		iCtrlPrec_t tempValue;
 		if (valueObject->getFormatter().interpret(valueString, tempValue))

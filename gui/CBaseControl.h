@@ -45,6 +45,7 @@
 #include "../Utility.h"
 #include "DesignBase.h"
 #include "../state/Serialization.h"
+#include "../Mathext.h"
 
 namespace cpl
 {
@@ -103,7 +104,7 @@ namespace cpl
 		class ValueFormatter : virtual public Utility::DestructionServer<CBaseControl>::Client
 		{
 		public:
-			virtual bool stringToValue(const CBaseControl * ctrl, const zstr_view buffer, iCtrlPrec_t & value) = 0;
+			virtual bool stringToValue(const CBaseControl * ctrl, const string_ref buffer, iCtrlPrec_t & value) = 0;
 			virtual bool valueToString(const CBaseControl * ctrl, std::string & buffer, iCtrlPrec_t value) = 0;
 			virtual ~ValueFormatter() {};
 		};
@@ -224,7 +225,7 @@ namespace cpl
 		/// <param name="synchronizedEvent">
 		/// Whether the propagated event is synchronized
 		/// </param>
-		virtual bool bInterpretAndSet(const zstr_view valueString, bool setInternal = false, bool synchronizedEvent = false)
+		virtual bool bInterpretAndSet(const string_ref valueString, bool setInternal = false, bool synchronizedEvent = false)
 		{
 			iCtrlPrec_t val(0);
 			if (bInterpret(valueString, val))
@@ -240,7 +241,7 @@ namespace cpl
 		/// <summary>
 		/// Maps the string to a 0-1 range, if it was succesfully interpreted.
 		/// </summary>
-		virtual bool bInterpret(const zstr_view valueString, iCtrlPrec_t & val) const
+		virtual bool bInterpret(const string_ref valueString, iCtrlPrec_t & val) const
 		{
 			for (auto rit = formatters.rbegin(); rit != formatters.rend(); ++rit)
 			{
@@ -458,7 +459,7 @@ namespace cpl
 			}
 		}
 
-		virtual bool bStringToValue(const zstr_view stringInput, iCtrlPrec_t & val) const
+		virtual bool bStringToValue(const string_ref stringInput, iCtrlPrec_t & val) const
 		{
 			return bMapStringToInternal(stringInput, val);
 		}
@@ -507,7 +508,7 @@ namespace cpl
 				bSetValue(value, true);
 		}
 
-		static bool bMapStringToInternal(const zstr_view stringInput, iCtrlPrec_t & val)
+		static bool bMapStringToInternal(const string_ref stringInput, iCtrlPrec_t & val)
 		{
 			char * ptr = nullptr;
 			iCtrlPrec_t pVal(0);

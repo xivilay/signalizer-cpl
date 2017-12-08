@@ -90,7 +90,7 @@ namespace cpl
 
 		void setZeroBasedSelIndex(int index);
 		// overrides
-		virtual bool bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const override;
+		virtual bool bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const override;
 		virtual bool bValueToString(std::string & valueString, iCtrlPrec_t val) const override;
 		virtual void resized() override;
 		virtual void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;

@@ -765,7 +765,7 @@ namespace cpl
 			return *this;
 		}
 
-		CSerializer & operator << (const zstr_view str)
+		CSerializer & operator << (const string_ref str)
 		{
 			if (virtualCount > 0)
 				fill(str.size() + 1);

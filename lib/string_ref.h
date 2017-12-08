@@ -21,15 +21,15 @@
 
 **************************************************************************************
 
-	file:zstr_view.h
+	file:string_ref.h
 
 		Something very similar to std::string_view, but is guaranteed to be null-terminated,
 		and always contain a valid string.
 
 *************************************************************************************/
 
-#ifndef CPL_ZSTR_VIEW_H
-#define CPL_ZSTR_VIEW_H
+#ifndef CPL_STRING_REF_H
+#define CPL_STRING_REF_H
 
 #include <string_view>
 #include <string>
@@ -51,22 +51,22 @@ namespace cpl
 			precondition_zstr(const T* begin, const T* end)
 			{
 				if (!begin || !end)
-					throw std::logic_error("invalid begin/end pairs to basic_zstr_view");
+					throw std::logic_error("invalid begin/end pairs to basic_string_ref");
 
 				if(*end != '\0')
-					throw std::logic_error("*end != '\0' in basic_zstr_view");
+					throw std::logic_error("*end != '\0' in basic_string_ref");
 			}
 
 			precondition_zstr(const T* begin)
 			{
 				if (!begin)
-					throw std::logic_error("invalid begin/end pairs to basic_zstr_view");
+					throw std::logic_error("invalid begin/end pairs to basic_string_ref");
 			}
 
 			precondition_zstr(const T* begin, std::size_t size)
 			{
 				if (!begin)
-					throw std::logic_error("invalid begin/end pairs to basic_zstr_view");
+					throw std::logic_error("invalid begin/end pairs to basic_string_ref");
 
 				if (begin[size] != '\0')
 					throw std::logic_error("invalid str[size] != '\0'");
@@ -75,38 +75,38 @@ namespace cpl
 	}
 
 	template<typename T>
-	class basic_zstr_view : private detail::precondition_zstr<T>, public std::basic_string_view<T>
+	class basic_string_ref : private detail::precondition_zstr<T>, public std::basic_string_view<T>
 	{
 	public:
 		
-		basic_zstr_view(const basic_zstr_view<T>& other)
+		basic_string_ref(const basic_string_ref<T>& other)
 			: std::basic_string_view<T>(other)
 		{
 
 		}
 
-		basic_zstr_view(const T* begin)
+		basic_string_ref(const T* begin)
 			: detail::precondition_zstr<T>(begin)
 			, std::basic_string_view<T>(begin)
 		{
 
 		}
 
-		basic_zstr_view(const T* begin, std::size_t size)
+		basic_string_ref(const T* begin, std::size_t size)
 			: detail::precondition_zstr<T>(begin, size)
 			, std::basic_string_view<T>(begin, size)
 		{
 
 		}
 
-		basic_zstr_view(const T* begin, const T* end)
+		basic_string_ref(const T* begin, const T* end)
 			: detail::precondition_zstr<T>(begin, end)
 			, std::basic_string_view<T>(begin, end - begin)
 		{
 
 		}
 
-		basic_zstr_view(const std::string& str)
+		basic_string_ref(const std::string& str)
 			: std::basic_string_view<T>(str.c_str(), str.size())
 		{
 
@@ -122,7 +122,7 @@ namespace cpl
 			return { begin(), end() };
 		}
 
-		constexpr void swap(basic_zstr_view& v) noexcept
+		constexpr void swap(basic_string_ref& v) noexcept
 		{
 			std::basic_string_view<T>::swap(v);
 		}
@@ -133,7 +133,7 @@ namespace cpl
 		constexpr void remove_suffix(size_type n);
 	};
 
-	typedef basic_zstr_view<char> zstr_view;
+	typedef basic_string_ref<char> string_ref;
 
 };
 #endif

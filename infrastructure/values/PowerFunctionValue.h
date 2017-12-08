@@ -136,7 +136,7 @@ namespace cpl
 			add(base); add(pivot); add(slope);
 		}
 
-		virtual const std::string& getContextualName() override { return contextName; }
+		virtual std::string getContextualName() override { return contextName; }
 		ValueEntityBase & getValueIndex(std::size_t i) override { return values[i]; }
 
 		std::array<ParameterValueWrapper<ParameterView>, 3> values;

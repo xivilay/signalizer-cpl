@@ -29,7 +29,7 @@ namespace cpl
 	{
 	public:
 		virtual bool format(const T & val, std::string & buf) = 0;
-		virtual bool interpret(const zstr_view buf, T & val) = 0;
+		virtual bool interpret(const string_ref buf, T & val) = 0;
 		virtual ~VirtualFormatter() {}
 	};
 
@@ -43,7 +43,7 @@ namespace cpl
 			return true;
 		}
 
-		virtual bool interpret(const zstr_view buf, T & val) override
+		virtual bool interpret(const string_ref buf, T & val) override
 		{
 			return cpl::lexicalConversion(buf, val);
 		}
@@ -61,7 +61,7 @@ namespace cpl
 			return true;
 		}
 
-		virtual bool interpret(const zstr_view buf, T & val) override
+		virtual bool interpret(const string_ref buf, T & val) override
 		{
 			return cpl::lexicalConversion(buf, val);
 		}
@@ -80,7 +80,7 @@ namespace cpl
 			return true;
 		}
 
-		virtual bool interpret(const zstr_view buf, T & val) override
+		virtual bool interpret(const string_ref buf, T & val) override
 		{
 			if (buf == "true" || buf == "True" || buf == "on" || buf == "On" || buf == "1")
 				val = (T)1;
@@ -125,7 +125,7 @@ namespace cpl
 			return UnitFormatter<T>::format(20 * std::log10(val), buf);
 		}
 
-		virtual bool interpret(const zstr_view buf, T & val) override
+		virtual bool interpret(const string_ref buf, T & val) override
 		{
 			T dbVal;
 			if (UnitFormatter<T>::interpret(buf, dbVal))
@@ -150,7 +150,7 @@ namespace cpl
 			return UnitFormatter<T>::format(std::round(val * 100), buf);
 		}
 
-		virtual bool interpret(const zstr_view buf, T & val) override
+		virtual bool interpret(const string_ref buf, T & val) override
 		{
 			T dbVal;
 			if (UnitFormatter<T>::interpret(buf, dbVal))
@@ -192,7 +192,7 @@ namespace cpl
 			return true;
 		}
 
-		virtual bool interpret(const zstr_view buf, T & val) override
+		virtual bool interpret(const string_ref buf, T & val) override
 		{
 			for (std::size_t i = 0; i < values.size(); ++i)
 			{

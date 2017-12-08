@@ -106,7 +106,7 @@ namespace cpl
 			return name;
 		}
 
-		virtual const std::string& getContextualName() override
+		virtual std::string getContextualName() override
 		{
 			auto & view = values[0].getParameterView();
 

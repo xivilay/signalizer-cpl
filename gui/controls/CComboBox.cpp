@@ -173,7 +173,7 @@ namespace cpl
 		box.clear(NotificationType::dontSendNotification);
 		juce::StringArray arr;
 		auto newIndex = -1; auto counter = 0;
-		for (const auto & str : inputValues)
+		for (const auto & str : values)
 		{
 			counter++;
 			if (currentIndex == str)
@@ -221,7 +221,7 @@ namespace cpl
 	}
 
 
-	bool CComboBox::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
+	bool CComboBox::bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const
 	{
 		auto idx = indexOfValue(valueString);
 		if (idx != static_cast<std::size_t>(-1))

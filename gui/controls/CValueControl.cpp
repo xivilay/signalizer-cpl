@@ -99,7 +99,7 @@ namespace cpl
 	}
 
 	/*********************************************************************************************/
-	bool CValueControl::bStringToValue(const zstr_view valueString, iCtrlPrec_t & val) const
+	bool CValueControl::bStringToValue(const string_ref valueString, iCtrlPrec_t & val) const
 	{
 		for (std::size_t i = 0; i < values.size(); ++i)
 		{

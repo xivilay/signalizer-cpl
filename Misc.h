@@ -79,12 +79,12 @@ namespace cpl
 
 	namespace Misc
 	{
-		std::pair<int, std::string> ExecCommand(const zstr_view arg);
+		std::pair<int, std::string> ExecCommand(const string_ref arg);
 		std::pair<bool, std::string> ReadFile(const fs::path& path) noexcept;
-		bool WriteFile(const fs::path& path, const zstr_view contents) noexcept;
+		bool WriteFile(const fs::path& path, const string_ref contents) noexcept;
 		std::string GetTime();
 		std::string GetDate();
-		std::string DemangleRawName(const zstr_view name);
+		std::string DemangleRawName(const string_ref name);
 
 		template<class T>
 		std::string DemangledTypeName(const T & object)
@@ -115,7 +115,7 @@ namespace cpl
 		void PreciseDelay(double msecs);
 
 		unsigned int QuickTime();
-		int GetSizeRequiredFormat(const zstr_view fmt, va_list pargs);
+		int GetSizeRequiredFormat(const string_ref fmt, va_list pargs);
 
 		std::uint64_t ClockCounter();
 		long long TimeCounter();
@@ -324,8 +324,8 @@ namespace cpl
 			#endif
 		};
 
-		int MsgBox(const zstr_view text,
-			const zstr_view title = "",
+		int MsgBox(const string_ref text,
+			const string_ref title = "",
 			int nStyle = MsgStyle::sOk,
 			void * parent = NULL,
 			const bool bBlocking = true);
