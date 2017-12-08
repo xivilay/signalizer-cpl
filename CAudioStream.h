@@ -1369,7 +1369,8 @@ namespace cpl
 				std::size_t numSamples[2] = {0, 0};
 
 				// insert the frame we already captured at the top of the loop
-				auto handleFrame = [&](const auto & frame) {
+				auto handleFrame = [&](const auto & frame) 
+				{
 					switch (frame.streamBase.utility)
 					{
 						case MessageStreamBase::MessageType::TransportMessage:
@@ -1395,7 +1396,7 @@ namespace cpl
 
 				auto channels = AudioFrame::getChannelCount(recv.streamBase.utility);
 
-				bool signalChange = false;
+				bool signalChange = audioHistoryBuffers.size() != channels;
 				{
 
 					// dont lock unless it's necessary
@@ -1422,7 +1423,7 @@ namespace cpl
 
 					}
 
-					signalChange = asyncSignalChange.cas();
+					signalChange = asyncSignalChange.cas() || signalChange;
 					auto localAudioHistorySize = internalInfo.audioHistorySize.load(std::memory_order_acquire);
 					auto localAudioHistoryCapacity = internalInfo.audioHistoryCapacity.load(std::memory_order_acquire);
 					bool somethingWasDone = false;
