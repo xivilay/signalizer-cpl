@@ -39,8 +39,9 @@
 
 #include <string>
 //#include "Common.h"
+#include <filesystem>
 #include "Core.h"
-
+#include <vector>
 // if set, uses corefoundation instead of the dyld loader on mac
 
 typedef void * ModuleHandle;
@@ -49,15 +50,16 @@ namespace cpl
 {
 	class CModule
 	{
-		ModuleHandle moduleHandle;
-		std::string name;
 	public:
 		CModule();
 		CModule(std::string moduleName);
+
+		bool addSearchPath(const fs::path& directory);
+
 		/// <summary>
 		/// Returns a pointer to a symbol inside the loaded module of this instance
 		/// </summary>
-		void * getFuncAddress(const string_ref functionName);
+		void* getFuncAddress(const string_ref functionName);
 		/// <summary>
 		/// If no module is loaded, loads moduleName
 		/// </summary>
@@ -85,6 +87,12 @@ namespace cpl
 		/// Destructor. Releases the module
 		/// </summary>
 		~CModule();
+
+	private:
+
+		ModuleHandle moduleHandle;
+		std::string name;
+		std::vector<ModuleHandle> directoryCookies;
 	};
 }
 #endif

@@ -53,7 +53,23 @@ namespace cpl
 		load(std::move(moduleName));
 	}
 
-	void * CModule::getFuncAddress(const string_ref functionName)
+	bool CModule::addSearchPath(const fs::path& path)
+	{
+#ifdef CPL_WINDOWS
+		auto cookie = AddDllDirectory(path.c_str());
+		if (cookie != nullptr)
+		{
+			directoryCookies.emplace_back(cookie);
+		}
+
+		return true;
+#else
+		// ?
+
+#endif
+	}
+
+	void* CModule::getFuncAddress(const string_ref functionName)
 	{
 		#ifdef CPL_WINDOWS
 		return GetProcAddress(static_cast<HMODULE>(moduleHandle), functionName.c_str());
@@ -84,12 +100,12 @@ namespace cpl
 		if (moduleHandle != nullptr)
 			return false;
 		#ifdef CPL_WINDOWS
-		moduleHandle = static_cast<ModuleHandle>(LoadLibraryA(moduleName.c_str()));
+		moduleHandle = static_cast<ModuleHandle>(LoadLibraryExA(moduleName.c_str(), nullptr, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS));
 		if (moduleHandle != nullptr)
 			return 0;
 		else
 			return GetLastError();
-		#elif defined(CPL_MAC) && defined(CPL_CMOD_USECF)
+		#elif defined(CPL_MAC) && defined(CPL_CMOD_USECF)	
 		/*
 			This api is only slightly better than old-style K&R c-programming
 		*/
@@ -230,6 +246,10 @@ namespace cpl
 	CModule::~CModule()
 	{
 		release();
+#ifdef CPL_WINDOWS
+		for (auto cookie : directoryCookies)
+			RemoveDllDirectory(cookie);
+#endif
 	}
 
 	CModule::CModule(const CModule & other)
