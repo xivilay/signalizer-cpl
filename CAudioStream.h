@@ -976,7 +976,7 @@ namespace cpl
 			return internalInfo;
 		}
 
-		virtual ~CAudioStream() noexcept(false)
+		virtual ~CAudioStream()
 		{
 			// the audio thread is created inside this flag.
 			// and that flag is set by this thread.
@@ -1002,7 +1002,7 @@ namespace cpl
 					if (asyncAudioThread.joinable())
 						asyncAudioThread.join();
 					else
-						CPL_RUNTIME_EXCEPTION("CAudioStream's audio thread crashed.");
+						std::terminate(); // (audio thread crashed)
 				}
 			}
 
