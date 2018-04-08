@@ -690,7 +690,7 @@ namespace cpl
 		}
 
 		#ifdef _DEBUG
-		mutable std::atomic<int> proxyCount;
+		mutable std::atomic<int> proxyCount{ 0 };
 
 		void releaseProxy(IteratorBase & p) const
 		{
