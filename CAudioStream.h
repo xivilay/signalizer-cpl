@@ -137,7 +137,7 @@ namespace cpl
 			static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong packing");
 		}
 
-		AudioPacket(MessageType channelConfiguratio, std::uint8_t numChannels, std::uint16_t elementsUsed)
+		AudioPacket(MessageType channelConfiguration, std::uint8_t numChannels, std::uint16_t elementsUsed)
 			: MessageStreamBase(channelConfiguration), size(elementsUsed), channels(numChannels)
 		{
 			static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong packing");
@@ -146,9 +146,9 @@ namespace cpl
 		AudioPacket() : size() {}
 
 		static constexpr std::size_t getCapacityForChannels(std::size_t channels) noexcept { return capacity / channels; }
-		constexpr std::size_t getChannelCount() noexcept { return channels; }
-		constexpr std::size_t getNumFrames() noexcept { return size / channels; }
-		constexpr std::size_t getTotalSamples() noexcept { return size; }
+		constexpr std::size_t getChannelCount() const noexcept { return channels; }
+		constexpr std::size_t getNumFrames() const noexcept { return size / channels; }
+		constexpr std::size_t getTotalSamples() const noexcept { return size; }
 		
 		T * begin() noexcept { return buffer; }
 		T * end() noexcept { return buffer + size; }
@@ -896,7 +896,7 @@ namespace cpl
 						// TODO: ensure aSamples < std::uint16_T::max()
 						AudioFrame af(AudioFrame::MessageType::AudioPacketSeparate, 1, static_cast<std::uint16_t>(aSamples));
 						frame.audioPacket = af;
-						std::memcpy(frame.audioPacket.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
+						std::memcpy(frame.audioPacket.begin(), (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 
 						if (!audioFifo.pushElement(frame))
 						{
@@ -927,7 +927,7 @@ namespace cpl
 
 						for (std::size_t c = 0; c < numChannels; ++c)
 						{
-							std::memcpy(frame.audioPacket.buffer + aSamples * c, (buffer[c] + numSamples - n), byteSize);
+							std::memcpy(frame.audioPacket.begin() + aSamples * c, (buffer[c] + numSamples - n), byteSize);
 						}
 
 						if (!audioFifo.pushElement(frame))
@@ -986,9 +986,9 @@ namespace cpl
 				// so the thread has been created; wait for it to enter function space.
 				cpl::Misc::WaitOnCondition(10000,
 					[&]()
-				{
-					return asyncAudioThreadInitiated.load(std::memory_order_relaxed);
-				}
+					{
+						return asyncAudioThreadInitiated.load(std::memory_order_relaxed);
+					}
 				);
 
 				// TODO: consider 'success'
@@ -1343,18 +1343,19 @@ namespace cpl
 				for (std::size_t c = 0; c < channels; ++c)
 				{
 					buffer[c].resize(samples);
+					pointer[c] = buffer[c].data();
 				}
 			}
 
 			void resetOffsets()
 			{
-				currentSamplesContained = 0;
+				containedSamples = 0;
 			}
 
 			void insertFrameIntoBuffer(const AudioFrame & frame)
 			{
-				const auto numSamples = frame.getNumSamples();
-				const auto numChannels = frame.getNumChannels();
+				const auto numSamples = frame.getNumFrames();
+				const auto numChannels = frame.getChannelCount();
 
 				ensureSize(numChannels, numSamples + containedSamples);
 
@@ -1366,7 +1367,7 @@ namespace cpl
 						{
 							std::memcpy(
 								buffer[c].data() + containedSamples,
-								frame.begin() + c * numSamples + containedSamples,
+								frame.begin() + c * numSamples,
 								numSamples * sizeof(T)
 							);
 						}
@@ -1545,7 +1546,7 @@ namespace cpl
 								mask |= (unsigned)rawListener->onAsyncAudio
 								(
 									*this,
-									audioInput.pointer,
+									audioInput.pointer.data(),
 									channels,
 									audioInput.containedSamples
 								);
@@ -1584,12 +1585,12 @@ namespace cpl
 							{
 								auto && w = audioHistoryBuffers[i].createWriter();
 								// first, insert all the old stuff that happened while this buffer was blocked
-								w.copyIntoHead(deferredAudioInput[i].data(), deferredAudioInput[i].size());
+								w.copyIntoHead(deferredAudioInput.buffer[i].data(), deferredAudioInput.containedSamples);
 								// next, insert current samples.
-								w.copyIntoHead(audioInput[i].data(), numSamples[i]);
+								w.copyIntoHead(audioInput.buffer[i].data(), audioInput.containedSamples);
 							}
 							// clear up temporary deferred stuff
-							deferredAudioInput[i].clear();
+							deferredAudioInput.buffer[i].clear();
 							// bit redundant, but ensures it will be called.
 							numDeferredAsyncSamples.store(0, std::memory_order_release);
 						}
@@ -1599,20 +1600,21 @@ namespace cpl
 						// defer current samples to a later point in time.
 						for (std::size_t i = 0; i < channels; ++i)
 						{
-							deferredAudioInput[i].insert
+							deferredAudioInput.buffer[i].insert
 							(
-								deferredAudioInput[i].end(),
-								audioInput[i].begin(),
-								audioInput[i].begin() + numSamples[i]
+								deferredAudioInput.buffer[i].end(),
+								audioInput.buffer[i].begin(),
+								audioInput.buffer[i].begin() + audioInput.containedSamples
 							);
 						}
 
-						numDeferredAsyncSamples.store(deferredAudioInput[0].size(), std::memory_order::memory_order_release);
+						if(channels > 0)
+							numDeferredAsyncSamples.store(deferredAudioInput.buffer[0].size(), std::memory_order::memory_order_release);
 					}
 				}
 
 				// post measurements.
-				double timeFraction = (double)std::accumulate(std::begin(numSamples), std::end(numSamples), 0.0) / (std::end(numSamples) - std::begin(numSamples));
+				double timeFraction = (double)audioInput.containedSamples;
 				if (std::isnormal(timeFraction))
 				{
 					timeFraction /= internalInfo.sampleRate.load(std::memory_order::memory_order_relaxed);
