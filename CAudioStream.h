@@ -103,25 +103,12 @@ namespace cpl
 			/// Signifies a change or discontinuity in the transport
 			/// </summary>
 			TransportMessage,
-			AudioMessageStart = TransportMessage + 1,
 			/// <summary>
-			/// All samples are mono, and belongs to left
-			/// </summary>
-			AudioPacketLeft = AudioMessageStart,
-			/// <summary>
-			/// Same as mono
-			/// </summary>
-			AudioPacketMono = AudioPacketLeft,
-			/// <summary>
-			/// All samples are mono, and belongs to right
-			/// </summary>
-			AudioPacketRight,
-			/// <summary>
-			/// Every 2N sample is left, every 2N+1 sample is right
+			/// For N channels, every N + K belongs to the Kth channel
 			/// </summary>
 			AudioPacketInterleaved,
 			/// <summary>
-			/// First half is left, second half is right
+			/// For N channels of M size, every N + K * M belongs to the Kth channel 
 			/// </summary>
 			AudioPacketSeparate
 		} utility;
@@ -129,6 +116,8 @@ namespace cpl
 		MessageStreamBase(MessageType type) : utility(type) {}
 
 	};
+
+#define AUDIOSTREAM_AUDIOPACKET_DATA_ALIGNMENT 8
 
 	/// <summary>
 	/// A simple blob of audio channel data transmitted,
@@ -139,38 +128,46 @@ namespace cpl
 	struct PACKED AudioPacket : public MessageStreamBase
 	{
 	public:
-		AudioPacket(std::uint16_t elementsUsed)
-			: MessageStreamBase(MessageType::None), size(elementsUsed)
+
+		static_assert(bufsize > AUDIOSTREAM_AUDIOPACKET_DATA_ALIGNMENT + sizeof(T), "Audio packet cannot hold a single element");
+
+		AudioPacket(std::uint8_t numChannels, std::uint16_t elementsUsed)
+			: MessageStreamBase(MessageType::None), size(elementsUsed), channels(numChannels)
 		{
 			static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong packing");
 		}
 
-		AudioPacket(std::uint16_t elementsUsed, MessageType channelConfiguration)
-			: MessageStreamBase(channelConfiguration), size(elementsUsed)
+		AudioPacket(MessageType channelConfiguratio, std::uint8_t numChannels, std::uint16_t elementsUsed)
+			: MessageStreamBase(channelConfiguration), size(elementsUsed), channels(numChannels)
 		{
 			static_assert(sizeof(AudioPacket<T, bufsize>) == bufsize, "Wrong packing");
 		}
 
 		AudioPacket() : size() {}
 
-		/// <summary>
-		/// The total number of samples.
-		/// </summary>
-		std::uint16_t size;
-
-		static std::size_t getChannelCount(MessageType channelType) noexcept
-		{
-			return channelType > MessageType::AudioPacketRight ? 2 : 1;
-		}
-
-		static const std::uint32_t element_size = sizeof(T);
-		static const std::uint32_t capacity = (bufsize - sizeof(std::uint32_t)) / element_size;
-
+		static constexpr std::size_t getCapacityForChannels(std::size_t channels) noexcept { return capacity / channels; }
+		constexpr std::size_t getChannelCount() noexcept { return channels; }
+		constexpr std::size_t getNumFrames() noexcept { return size / channels; }
+		constexpr std::size_t getTotalSamples() noexcept { return size; }
+		
 		T * begin() noexcept { return buffer; }
 		T * end() noexcept { return buffer + size; }
 		const T * begin() const noexcept { return buffer; }
 		const T * end() const noexcept { return buffer + size; }
-		T buffer[capacity];
+
+		static const std::size_t element_size = sizeof(T);
+
+	private:
+
+		static const std::uint32_t capacity = (bufsize - AUDIOSTREAM_AUDIOPACKET_DATA_ALIGNMENT) / element_size;
+
+		/// <summary>
+		/// The total number of samples.
+		/// </summary>
+		std::uint16_t size;
+		std::uint8_t channels;
+
+		alignas(AUDIOSTREAM_AUDIOPACKET_DATA_ALIGNMENT) T buffer[capacity];
 	};
 
 	struct PACKED ArrangementData : public MessageStreamBase
@@ -885,62 +882,66 @@ namespace cpl
 			std::size_t droppedSamples = 0;
 
 			// publish all data to audio consumer thread
-			switch (numChannels)
+			if (numChannels == 1)
 			{
-				case 1:
-					while (n > 0)
+				constexpr std::int64_t singleChannelCapacity = static_cast<std::int64_t>(AudioFrame::getCapacityForChannels(1));
+
+				while (n > 0)
+				{
+
+					auto const aSamples = std::min(singleChannelCapacity, n - std::max(std::int64_t(0), n - singleChannelCapacity));
+
+					if (aSamples > 0)
 					{
-						auto const aSamples = std::min(std::int64_t(AudioFrame::capacity), n - std::max(std::int64_t(0), n - std::int64_t(AudioFrame::capacity)));
+						// TODO: ensure aSamples < std::uint16_T::max()
+						AudioFrame af(AudioFrame::MessageType::AudioPacketSeparate, 1, static_cast<std::uint16_t>(aSamples));
+						frame.audioPacket = af;
+						std::memcpy(frame.audioPacket.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
 
-						if (aSamples > 0)
+						if (!audioFifo.pushElement(frame))
 						{
-							// TODO: ensure aSamples < std::uint16_T::max()
-							AudioFrame af(static_cast<std::uint16_t>(aSamples), AudioFrame::MessageType::AudioPacketMono);
-							frame.audioPacket = af;
-							std::memcpy(frame.audioPacket.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
-
-							if (!audioFifo.pushElement(frame))
-							{
-								measures.droppedAudioFrames++;
-								droppedSamples += static_cast<std::size_t>(aSamples);
-							}
-
+							measures.droppedAudioFrames++;
+							droppedSamples += static_cast<std::size_t>(aSamples);
 						}
 
-						n -= aSamples;
-					}
-					break;
-				case 2:
-					while (n > 0)
-					{
-						auto const aSamples = std::min(std::int64_t(AudioFrame::capacity / 2), n - std::max(std::int64_t(0), n - std::int64_t(AudioFrame::capacity / 2)));
-
-						if (aSamples > 0)
-						{
-							// TODO: ensure aSamples < std::uint16_T::max()
-							frame.audioPacket = AudioFrame(static_cast<std::uint16_t>(aSamples * 2), AudioFrame::MessageType::AudioPacketSeparate);
-							std::memcpy(frame.audioPacket.buffer, (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
-							std::memcpy(frame.audioPacket.buffer + aSamples, (buffer[1] + numSamples - n), static_cast<std::size_t>(aSamples * AudioFrame::element_size));
-							if (!audioFifo.pushElement(frame))
-							{
-								measures.droppedAudioFrames++;
-								droppedSamples += static_cast<std::size_t>(aSamples);
-							}
-
-						}
-
-						n -= aSamples;
 					}
 
-					break;
-				default:
-					// TODO: what to do?
-					CPL_BREAKIFDEBUGGED();
-					break;
+					n -= aSamples;
+				}
 			}
+			else
+			{
+				const std::int64_t capacity = static_cast<std::int64_t>(AudioFrame::getCapacityForChannels(numChannels));
 
+				while (n > 0)
+				{
 
+					auto const aSamples = std::min(capacity, n - std::max(std::int64_t(0), n - capacity));
 
+					if (aSamples > 0)
+					{
+						// TODO: ensure aSamples < std::uint16_T::max()
+						frame.audioPacket = AudioFrame(AudioFrame::MessageType::AudioPacketSeparate, numChannels, static_cast<std::uint16_t>(aSamples * numChannels));
+
+						auto const byteSize = static_cast<std::size_t>(aSamples * AudioFrame::element_size);
+
+						for (std::size_t c = 0; c < numChannels; ++c)
+						{
+							std::memcpy(frame.audioPacket.buffer + aSamples * c, (buffer[c] + numSamples - n), byteSize);
+						}
+
+						if (!audioFifo.pushElement(frame))
+						{
+							measures.droppedAudioFrames++;
+							droppedSamples += static_cast<std::size_t>(aSamples);
+						}
+
+					}
+
+					n -= aSamples;
+				}
+			}
+			
 			framesWereDropped = droppedSamples != 0;
 
 			// post new measures
@@ -1332,6 +1333,78 @@ namespace cpl
 			#endif
 		}
 
+		struct ChannelMatrix
+		{
+			void ensureSize(std::size_t channels, std::size_t samples)
+			{
+				buffer.resize(channels);
+				pointer.resize(channels);
+
+				for (std::size_t c = 0; c < channels; ++c)
+				{
+					buffer[c].resize(samples);
+				}
+			}
+
+			void resetOffsets()
+			{
+				currentSamplesContained = 0;
+			}
+
+			void insertFrameIntoBuffer(const AudioFrame & frame)
+			{
+				const auto numSamples = frame.getNumSamples();
+				const auto numChannels = frame.getNumChannels();
+
+				ensureSize(numChannels, numSamples + containedSamples);
+
+				switch (frame.utility)
+				{
+					case AudioFrame::MessageType::AudioPacketSeparate:
+					{
+						for (std::size_t c = 0; c < numChannels; ++c)
+						{
+							std::memcpy(
+								buffer[c].data() + containedSamples,
+								frame.begin() + c * numSamples + containedSamples,
+								numSamples * sizeof(T)
+							);
+						}
+
+						break;
+					}
+
+					case AudioFrame::MessageType::AudioPacketInterleaved:
+					{
+						for (std::size_t c = 0; c < numChannels; ++c)
+						{
+							for (std::size_t n = 0; n < numSamples; ++n)
+							{
+								buffer[c][n + containedSamples] = *(frame.begin() + n * numChannels + c);
+							}
+						}
+
+						break;
+					}
+				}
+
+				containedSamples += numSamples;
+			}
+
+
+
+			/*
+			T* begin(std::size_t y) noexcept { return buffer.data() + y * rowSize; }
+			T* end(std::size_t y) noexcept { return buffer.data() + y * rowSize + rowSize; }
+
+			const T* begin(std::size_t y) const noexcept { return buffer.data() + y * rowSize; }
+			const T* end(std::size_t y) const noexcept { return buffer.data() + y * rowSize + rowSize; } */
+
+			std::vector<T*> pointer;
+			std::size_t containedSamples;
+			std::vector<std::vector<T>> buffer;
+		};
+
 		/// <summary>
 		/// Asynchronous subsystem.
 		/// </summary>
@@ -1342,9 +1415,8 @@ namespace cpl
 
 			Frame recv;
 			int pops(20);
-			// TODO: support more channels
-			std::vector<T> audioInput[2];
-			std::vector<T> deferredAudioInput[2];
+
+			ChannelMatrix audioInput, deferredAudioInput;
 
 			// when it returns false, its time to quit this thread.
 			while (audioFifo.popElementBlocking(recv))
@@ -1362,11 +1434,7 @@ namespace cpl
 					pops = 0;
 				}
 
-				// resize each channel
-				for (auto & ch : audioInput)
-					ensureVSize(ch, AudioFrame::capacity * (2 + numExtraEntries)); // close to worst case possible
-
-				std::size_t numSamples[2] = {0, 0};
+				audioInput.resetOffsets();
 
 				// insert the frame we already captured at the top of the loop
 				auto handleFrame = [&](const auto & frame) 
@@ -1380,7 +1448,7 @@ namespace cpl
 							asyncPlayhead.arrangement = frame.arrangement;
 							break;
 						default:
-							insertFrameIntoBuffer(audioInput, numSamples, frame.audioPacket);
+							audioInput.insertFrameIntoBuffer(frame.audioPacket);
 							break;
 					}
 				};
@@ -1394,7 +1462,7 @@ namespace cpl
 					handleFrame(recv);
 				}
 
-				auto channels = AudioFrame::getChannelCount(recv.streamBase.utility);
+				auto channels = audioInput.buffer.size();
 
 				bool signalChange = audioHistoryBuffers.size() != channels;
 				{
@@ -1455,8 +1523,6 @@ namespace cpl
 						if (!llock.owns_lock())
 							llock.lock();
 
-						T * audioBuffers[2] = {audioInput[0].data(), audioInput[1].data()};
-
 						auto & listeners = *audioListeners.getObjectWithoutSignaling();
 
 
@@ -1479,14 +1545,14 @@ namespace cpl
 								mask |= (unsigned)rawListener->onAsyncAudio
 								(
 									*this,
-									audioBuffers,
+									audioInput.pointer,
 									channels,
-									numSamples[0]
+									audioInput.containedSamples
 								);
 							}
 						}
 
-						asyncPlayhead.advance(numSamples[0]);
+						asyncPlayhead.advance(audioInput.containedSamples);
 
 						if (signalChange)
 						{
@@ -1589,39 +1655,6 @@ namespace cpl
 			if (vsize < size)
 			{
 				v.resize(std::max(size, std::size_t(size * factor)));
-			}
-		}
-		template<class ChannelVector, class OffsetVector>
-		static inline void insertFrameIntoBuffer(ChannelVector & inputBuffer, OffsetVector & offsets, const AudioFrame & frame)
-		{
-			auto const totalSize = frame.size;
-			switch (frame.utility)
-			{
-				case AudioFrame::MessageType::AudioPacketMono:
-				{
-					ensureVSize(inputBuffer[0], offsets[0] + totalSize);
-					// TODO: use std::copy when we can proove _restrict_ to the compiler, so it doesn't default
-					// to memmove!
-					std::memcpy(inputBuffer[0].data() + offsets[0], frame.begin(), totalSize * AudioFrame::capacity);
-					offsets[0] += totalSize;
-					break;
-				}
-
-				case AudioFrame::MessageType::AudioPacketSeparate:
-				{
-					auto const halfSize = totalSize >> 1;
-					auto const startOffset = frame.begin() + halfSize;
-					ensureVSize(inputBuffer[0], offsets[0] + halfSize);
-					ensureVSize(inputBuffer[1], offsets[1] + halfSize);
-					std::memcpy(inputBuffer[0].data() + offsets[0], frame.begin(), halfSize * AudioFrame::capacity);
-					std::memcpy(inputBuffer[1].data() + offsets[1], startOffset, halfSize * AudioFrame::capacity);
-					offsets[0] += halfSize;
-					offsets[1] += halfSize;
-					break;
-				}
-
-				default:
-					break;
 			}
 		}
 
