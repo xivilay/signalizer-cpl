@@ -104,6 +104,10 @@ namespace cpl
 			/// </summary>
 			TransportMessage,
 			/// <summary>
+			/// Changes the name of a channel
+			/// </summary>
+			NameMessage,
+			/// <summary>
 			/// For N channels, every N + K belongs to the Kth channel
 			/// </summary>
 			AudioPacketInterleaved,
@@ -224,6 +228,28 @@ namespace cpl
 		return !(left == right);
 	}
 
+	struct PACKED ChannelNameData : public MessageStreamBase
+	{
+		ChannelNameData(std::size_t index, std::string&& contents)
+			: MessageStreamBase(MessageType::NameMessage), channelIndex(index)
+		{
+			new (&stringStorage) std::string(std::move(contents));
+		}
+
+		std::size_t channelIndex;
+		std::string& getString()
+		{
+			return reinterpret_cast<std::string&>(stringStorage);
+		}
+
+		void release()
+		{
+			(&getString())->~basic_string();
+		}
+
+		std::aligned_storage<sizeof(std::string), alignof(std::string)>::type stringStorage;
+	};
+
 	template<typename T, std::size_t bufSize>
 	union PACKED StreamMessage
 	{
@@ -233,6 +259,7 @@ namespace cpl
 		ArrangementData arrangement;
 		TransportData transport;
 		AudioFrameType audioPacket;
+		ChannelNameData channelName;
 	};
 
 	#ifdef CPL_MSVC
@@ -614,12 +641,12 @@ namespace cpl
 					std::pair<bool, bool> res;
 					bool success = cpl::Misc::WaitOnCondition(10000,
 						[&]()
-					{
-						res = s1->removeListener(this);
-						return res.first || res.second; // whether the listener was removed.
-					},
+						{
+							res = s1->removeListener(this);
+							return res.first || res.second; // whether the listener was removed.
+						},
 						100 // 100 ms retries
-						);
+					);
 
 					if (!success) // we never succeded in 10 seconds; listener may be present
 					{
@@ -698,10 +725,9 @@ namespace cpl
 		/// </summary>
 		/// <param name="enableAsyncSubsystem"></param>
 		CAudioStream(std::size_t defaultListenerBankSize = 16, bool enableAsyncSubsystem = false, size_t initialFifoSize = 20, std::size_t maxFifoSize = 1000)
-			:
-			audioFifo(initialFifoSize, maxFifoSize),
-			numDeferredAsyncSamples(0),
-			objectIsDead(false)
+			: audioFifo(initialFifoSize, maxFifoSize)
+			, numDeferredAsyncSamples(0)
+			, objectIsDead(false)
 		{
 			auto newListeners = std::make_unique<ListenerQueue>(defaultListenerBankSize);
 			if (!audioListeners.tryReplace(newListeners.get()))
@@ -735,6 +761,14 @@ namespace cpl
 
 			audioSignalChange = true;
 			asyncSignalChange = true;
+		}
+
+		bool enqueueChannelName(std::size_t index, std::string&& name)
+		{
+			Frame frame;
+			frame.channelName = { index, std::move(name) };
+
+			return audioFifo.pushElement(frame);
 		}
 
 		/// <summary>
@@ -1134,6 +1168,14 @@ namespace cpl
 			return numDeferredAsyncSamples.load(std::memory_order_acquire);
 		}
 
+		/// <summary>
+		/// Only valid to call from any async callback.
+		/// </summary>		
+		const std::vector<std::string>& getAsyncChannelNames() const noexcept
+		{
+			return channelNames;
+		}
+
 	protected:
 		template<std::memory_order order = std::memory_order_relaxed>
 		inline void lpFilterTimeToMeasurement(std::atomic<double> & old, double newTime, double timeFraction)
@@ -1438,7 +1480,7 @@ namespace cpl
 				audioInput.resetOffsets();
 
 				// insert the frame we already captured at the top of the loop
-				auto handleFrame = [&](const auto & frame) 
+				auto handleFrame = [&](auto & frame) 
 				{
 					switch (frame.streamBase.utility)
 					{
@@ -1447,6 +1489,11 @@ namespace cpl
 							break;
 						case MessageStreamBase::MessageType::ArrangementMessage:
 							asyncPlayhead.arrangement = frame.arrangement;
+							break;
+						case MessageStreamBase::MessageType::NameMessage:
+							channelNames.resize(std::max(channelNames.size(), frame.channelName.channelIndex + 1));
+							channelNames[frame.channelName.channelIndex] = std::move(frame.channelName.getString());
+							frame.channelName.release();
 							break;
 						default:
 							audioInput.insertFrameIntoBuffer(frame.audioPacket);
@@ -1677,6 +1724,7 @@ namespace cpl
 		bool framesWereDropped {false}, problemsPushingPlayHead {false};
 		std::atomic<std::size_t> numDeferredAsyncSamples;
 		std::vector<AudioBuffer> audioHistoryBuffers;
+		std::vector<std::string> channelNames;
 		std::thread::id audioRTThreadID;
 		std::thread asyncAudioThread;
 		CBlockingLockFreeQueue<Frame> audioFifo;
