@@ -1389,6 +1389,11 @@ namespace cpl
 				}
 			}
 
+			void ensureChannels(std::size_t channels)
+			{
+				ensureSize(channels, buffer.size() ? buffer[0].size() : 0);
+			}
+
 			void resetOffsets()
 			{
 				containedSamples = 0;
@@ -1444,7 +1449,7 @@ namespace cpl
 			const T* end(std::size_t y) const noexcept { return buffer.data() + y * rowSize + rowSize; } */
 
 			std::vector<T*> pointer;
-			std::size_t containedSamples;
+			std::size_t containedSamples = 0;
 			std::vector<std::vector<T>> buffer;
 		};
 
@@ -1511,6 +1516,7 @@ namespace cpl
 				}
 
 				auto channels = audioInput.buffer.size();
+				deferredAudioInput.ensureChannels(channels);
 
 				bool signalChange = audioHistoryBuffers.size() != channels;
 				{
