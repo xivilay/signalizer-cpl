@@ -33,6 +33,7 @@
 
 #include "ThreadAllocator.h"
 #include <iterator>
+#include <initializer_list>
 
 namespace cpl
 {
@@ -64,6 +65,21 @@ namespace cpl
 			initialize(value);
 		}
 
+		variable_array(const_pointer beginIt, const_pointer endIt)
+			: buffer(static_cast<T*>(ThreadAllocator::get().alloc(alignof(T), sizeof(T) * std::distance(beginIt, endIt))))
+			, length(std::distance(beginIt, endIt))
+		{
+			if constexpr(std::is_trivially_copyable<T>::value)
+			{
+				std::copy(beginIt, endIt, begin());
+			}
+			else
+			{
+				for (std::size_t i = 0; i < length; ++i)
+					emplace(buffer + i, *beginIt++);
+			}
+		}
+
 		variable_array(variable_array<T>&& other)
 			: buffer(other.buffer)
 			, length(other.length)
@@ -74,7 +90,22 @@ namespace cpl
 		variable_array(const variable_array<T>& other)
 			: variable_array<T>(other.length, uninitialized_tag)
 		{
-			std::copy(other.begin(), other.end(), begin());
+			if constexpr(std::is_trivially_copyable<T>::value)
+			{
+				std::copy(other.begin(), other.end(), begin());
+			}
+			else
+			{
+				for (std::size_t i = 0; i < length; ++i)
+					emplace(buffer + i, other[i]);
+			}
+
+		}
+
+		variable_array(std::initializer_list<T> init)
+			: variable_array<T>(init.begin(), init.end())
+		{
+
 		}
 
 		~variable_array()
@@ -82,7 +113,7 @@ namespace cpl
 			if (buffer)
 			{
 				for (auto elem = rbegin(); elem != rend(); ++elem)
-					elem->~T();
+					(*elem).~T();
 
 				ThreadAllocator::get().free(buffer);
 			}
@@ -122,6 +153,9 @@ namespace cpl
 			return buffer[index];
 		}
 
+		const_pointer data() const noexcept { return buffer; }
+		pointer data() noexcept { return buffer; }
+
 		const_pointer begin() const noexcept { return buffer; }
 		const_pointer end() const noexcept { return buffer + length; }
 
@@ -158,6 +192,11 @@ namespace cpl
 		}
 
 	private:
+
+		void emplace(pointer where, const T& value)
+		{
+			new (where) T(value);
+		}
 
 		void initialize(const T& value = T())
 		{
