@@ -955,7 +955,7 @@ namespace cpl
 					if (aSamples > 0)
 					{
 						// TODO: ensure aSamples < std::uint16_T::max()
-						frame.audioPacket = AudioFrame(AudioFrame::MessageType::AudioPacketSeparate, numChannels, static_cast<std::uint16_t>(aSamples * numChannels));
+						frame.audioPacket = AudioFrame(AudioFrame::MessageType::AudioPacketSeparate, static_cast<std::uint8_t>(numChannels), static_cast<std::uint16_t>(aSamples * numChannels));
 
 						auto const byteSize = static_cast<std::size_t>(aSamples * AudioFrame::element_size);
 
@@ -1389,6 +1389,11 @@ namespace cpl
 				}
 			}
 
+			void ensureChannels(std::size_t channels)
+			{
+				ensureSize(channels, buffer.size() ? buffer[0].size() : 0);
+			}
+
 			void resetOffsets()
 			{
 				containedSamples = 0;
@@ -1444,7 +1449,7 @@ namespace cpl
 			const T* end(std::size_t y) const noexcept { return buffer.data() + y * rowSize + rowSize; } */
 
 			std::vector<T*> pointer;
-			std::size_t containedSamples;
+			std::size_t containedSamples = 0;
 			std::vector<std::vector<T>> buffer;
 		};
 
