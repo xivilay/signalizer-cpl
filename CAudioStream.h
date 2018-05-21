@@ -1459,7 +1459,8 @@ namespace cpl
 			Frame recv;
 			int pops(20);
 
-			ChannelMatrix audioInput, deferredAudioInput;
+			ChannelMatrix audioInput;
+			std::vector<std::vector<T>> deferredAudioInput;
 
 			// when it returns false, its time to quit this thread.
 			while (audioFifo.popElementBlocking(recv))
@@ -1511,6 +1512,7 @@ namespace cpl
 				}
 
 				auto channels = audioInput.buffer.size();
+				deferredAudioInput.resize(channels);
 
 				bool signalChange = audioHistoryBuffers.size() != channels;
 				{
@@ -1632,12 +1634,12 @@ namespace cpl
 							{
 								auto && w = audioHistoryBuffers[i].createWriter();
 								// first, insert all the old stuff that happened while this buffer was blocked
-								w.copyIntoHead(deferredAudioInput.buffer[i].data(), deferredAudioInput.containedSamples);
+								w.copyIntoHead(deferredAudioInput[i].data(), deferredAudioInput[i].size());
 								// next, insert current samples.
 								w.copyIntoHead(audioInput.buffer[i].data(), audioInput.containedSamples);
 							}
 							// clear up temporary deferred stuff
-							deferredAudioInput.buffer[i].clear();
+							deferredAudioInput[i].clear();
 							// bit redundant, but ensures it will be called.
 							numDeferredAsyncSamples.store(0, std::memory_order_release);
 						}
@@ -1647,16 +1649,16 @@ namespace cpl
 						// defer current samples to a later point in time.
 						for (std::size_t i = 0; i < channels; ++i)
 						{
-							deferredAudioInput.buffer[i].insert
+							deferredAudioInput[i].insert
 							(
-								deferredAudioInput.buffer[i].end(),
+								deferredAudioInput[i].end(),
 								audioInput.buffer[i].begin(),
 								audioInput.buffer[i].begin() + audioInput.containedSamples
 							);
 						}
 
 						if(channels > 0)
-							numDeferredAsyncSamples.store(deferredAudioInput.buffer[0].size(), std::memory_order::memory_order_release);
+							numDeferredAsyncSamples.store(deferredAudioInput[0].size(), std::memory_order::memory_order_release);
 					}
 				}
 
