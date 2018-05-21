@@ -88,7 +88,7 @@ namespace cpl
 		}
 
 		variable_array(const variable_array<T>& other)
-			: variable_array<T>(other.length, uninitialized_tag)
+			: variable_array<T>(other.length, uninitialized_tag())
 		{
 			if constexpr(std::is_trivially_copyable<T>::value)
 			{
@@ -108,12 +108,25 @@ namespace cpl
 
 		}
 
+		template<typename Fn>
+		variable_array(std::size_t size, Fn&& generator)
+			: variable_array<T>(size, uninitialized_tag())
+		{
+			for (std::size_t i = 0; i < size; ++i)
+			{
+				emplace(buffer + i, generator(i));
+			}
+		}
+
 		~variable_array()
 		{
 			if (buffer)
 			{
-				for (auto elem = rbegin(); elem != rend(); ++elem)
-					(*elem).~T();
+				if (length != 0)
+				{
+					for (auto elem = rbegin(); elem != rend(); ++elem)
+						(*elem).~T();
+				}
 
 				ThreadAllocator::get().free(buffer);
 			}
@@ -165,11 +178,11 @@ namespace cpl
 		pointer begin() noexcept { return buffer; }
 		pointer end() noexcept { return buffer + length; }
 
-		reverse_iterator rbegin() CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(&back()); }
-		reverse_iterator rend() CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(&front() - 1); }
+		reverse_iterator rbegin() CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(end()); }
+		reverse_iterator rend() CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(begin()); }
 
-		const_reverse_iterator crbegin() const CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(&back()); }
-		const_reverse_iterator crend() const CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(&front() - 1); }
+		const_reverse_iterator crbegin() const CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(end()); }
+		const_reverse_iterator crend() const CPL_NOEXCEPT_IF_RELEASE { return std::make_reverse_iterator(begin()); }
 
 		const_reference front() const CPL_NOEXCEPT_IF_RELEASE { return operator[](0); }
 		const_reference back() const CPL_NOEXCEPT_IF_RELEASE { return operator[](length - 1); }
@@ -198,6 +211,11 @@ namespace cpl
 			new (where) T(value);
 		}
 
+		void emplace(pointer where, T&& value)
+		{
+			new (where) T(std::move(value));
+		}
+
 		void initialize(const T& value = T())
 		{
 			for (std::size_t i = 0; i < length; ++i)
@@ -206,7 +224,7 @@ namespace cpl
 			}
 		}
 
-		variable_array(std::size_t length, uninitialized_tag)
+		variable_array(std::size_t size, uninitialized_tag)
 			: buffer(static_cast<T*>(ThreadAllocator::get().alloc(alignof(T), sizeof(T) * size)))
 			, length(size)
 		{
