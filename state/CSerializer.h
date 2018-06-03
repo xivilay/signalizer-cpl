@@ -738,7 +738,7 @@ namespace cpl
 		template<typename T>
 		CSerializer& operator << (const std::atomic<T> & object)
 		{
-			return (*this) << object.load(std::memory_order_release);
+			return (*this) << object.load(std::memory_order_acquire);
 		}
 
 		inline CSerializer & operator >> (Serializable * object)
