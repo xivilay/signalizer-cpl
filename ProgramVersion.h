@@ -39,6 +39,11 @@
 #include <string>
 #include <algorithm>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4996)
+#endif
+
 namespace cpl
 {
 	union Version
@@ -155,4 +160,9 @@ namespace std
 		return p.toString();
 	}
 };
+
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 #endif
