@@ -51,7 +51,7 @@ namespace cpl
 		/// The end-user is responsible for whatever is serialized, so you have to trust that person.
 		/// The return code indicates if there were errors, though.
 		/// </summary>
-		bool deserializeObject(CSerializer::Builder & ar, Version version);
+		bool deserializeObject(CSerializer::Builder & builder, Version version);
 
 	private:
 

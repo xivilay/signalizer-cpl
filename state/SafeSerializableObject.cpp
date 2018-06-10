@@ -39,9 +39,11 @@ namespace cpl
 	{
 		bool serializedCorrectly = false;
 
-		const std::string options = "Emulated version is " + std::to_string(version) + ". Do you want to propagate the error, "
-			"potentially crashing the program (YES), ignore the error and keep the changes as is - no guarantees about object behaviour - (NO) "
-			"or null out the stored settings for this object (CANCEL)?";
+		auto options = [=]() {
+			return "Emulated version is " + std::to_string(version) + ". Do you want to propagate the error, "
+				"potentially crashing the program (YES), ignore the error and keep the changes as is - no guarantees about object behaviour - (NO) "
+				"or null out the stored settings for this object (CANCEL)?";
+		};
 
 		try
 		{
@@ -65,7 +67,7 @@ namespace cpl
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
-				"\nThe exception is unknown from an unknown place, and is very dangerous.\n\n" + options,
+				"\nThe exception is unknown from an unknown place, and is very dangerous.\n\n" + options(),
 				programInfo.name + ": Error saving data", Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning
 			);
 
@@ -87,7 +89,7 @@ namespace cpl
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
-				"\nThe exception is intrinsic to this program, however it can still potentially be dangerous.\n\n" + options,
+				"\nThe exception is intrinsic to this program, however it can still potentially be dangerous.\n\n" + options(),
 				programInfo.name + ": Error saving data", Misc::MsgStyle::sYesNo | Misc::MsgIcon::iWarning
 			);
 
@@ -109,7 +111,7 @@ namespace cpl
 
 			int userAnswer = Misc::MsgBox(
 				exceptionString +
-				"\nThe exception is unknown from an unknown place, and is probably dangerous.\n\n" + options,
+				"\nThe exception is unknown from an unknown place, and is probably dangerous.\n\n" + options(),
 				programInfo.name + ": Error saving data", Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning
 			);
 
@@ -130,7 +132,7 @@ namespace cpl
 			LogException(exceptionString);
 
 			int userAnswer = Misc::MsgBox(
-				exceptionString + ", continuing is most likely very dangerous.\n\n" + options,
+				exceptionString + ", continuing is most likely very dangerous.\n\n" + options(),
 				programInfo.name + ": Error saving data", Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iWarning
 			);
 
