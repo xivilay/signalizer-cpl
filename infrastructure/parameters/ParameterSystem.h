@@ -585,6 +585,7 @@ namespace cpl
 			ParameterView & p = containedParameters.at(globalHandle - offset);
 
 			p.parameter->setValue(value);
+			value = p.parameter->getValue();
 
 			if (flags & Parameters::UpdateFlags::RealTimeListeners)
 			{
@@ -626,6 +627,7 @@ namespace cpl
 		{
 			ParameterView & p = containedParameters.at(globalHandle - offset);
 			p.parameter->setValue(value);
+			value = p.parameter->getValue();
 
 			if (flags & Parameters::UpdateFlags::RealTimeSubSystem && p.isAutomatable)
 			{

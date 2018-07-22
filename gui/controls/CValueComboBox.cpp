@@ -48,7 +48,7 @@ namespace cpl
 
 		bSetTitle(valueObject->getContextualName());
 
-		setValues(values);
+		setValues(std::move(values));
 
 		initialize();
 	}

@@ -233,13 +233,13 @@ namespace cpl
 		//	setParameterReference(nullptr);
 		//}
 
-		virtual const VirtualTransformer<ValueT> & getTransformer() const override { return parameterView->getTransformer(); }
-		virtual VirtualFormatter<ValueT> & getFormatter() override { return parameterView->getFormatter(); }
-		virtual ValueT getNormalizedValue() const override { return parameterView->template getValueNormalized<ValueT>(); }
-		virtual void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<typename ParameterView::ValueType>(value)); }
-		virtual void beginChangeGesture() override { return parameterView->beginChangeGesture(); }
-		virtual void endChangeGesture() override { return parameterView->endChangeGesture(); }
-		virtual std::string getContextualName() override { return parameterView->getExportedName(); }
+		const VirtualTransformer<ValueT> & getTransformer() const override { return parameterView->getTransformer(); }
+		VirtualFormatter<ValueT> & getFormatter() override { return parameterView->getFormatter(); }
+		ValueT getNormalizedValue() const override { return parameterView->template getValueNormalized<ValueT>(); }
+		void setNormalizedValue(ValueT value) override { parameterView->updateFromUINormalized(static_cast<typename ParameterView::ValueType>(value)); }
+		void beginChangeGesture() override { return parameterView->beginChangeGesture(); }
+		void endChangeGesture() override { return parameterView->endChangeGesture(); }
+		std::string getContextualName() override { return parameterView->getExportedName(); }
 
 	private:
 		ParameterView * parameterView;
