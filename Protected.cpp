@@ -123,6 +123,8 @@ namespace cpl
 				return base.str() + "One of the operands for a floating point operation was denormal (too small to be represented)";
 			case CSystemException::status::nullptr_from_plugin:
 				return base.str() + "An API function was called with 'this' as an null pointer.";
+			case CSystemException::status::undefined_behaviour:
+				return base.str() + "Undefined behaviour was executed (unreachable code inserted by compiler)";
 			case CSystemException::status::access_violation:
 			{
 				std::stringstream fmt;
@@ -233,7 +235,7 @@ namespace cpl
 		#ifdef CPL_WINDOWS
 		auto exceptCode = _code;
 		bool safeToContinue(false);
-		void * exceptionAddress = nullptr;
+		const void * exceptionAddress = nullptr;
 		int additionalCode = 0;
 		EXCEPTION_POINTERS * exp = reinterpret_cast<EXCEPTION_POINTERS *>(systemInformation);
 		if (exp)
@@ -243,7 +245,22 @@ namespace cpl
 			case OSCustomRaiseCode:
 			{
 				e = CSystemException::Storage::create(OSCustomRaiseCode, true, exceptionAddress, nullptr, 0xDEAD);
+				break;
 			}
+			case EXCEPTION_ILLEGAL_INSTRUCTION:
+			{
+				if (exceptionAddress)
+				{
+					const std::uint16_t* assembly = static_cast<const std::uint16_t*>(exceptionAddress);
+
+					if (*assembly == 0x0B0F) // ud2 - #UD undefined behaviour, compiler trigger.
+					{
+						e = CSystemException::Storage::create(exceptCode, false, exceptionAddress, nullptr, additionalCode);
+						return EXCEPTION_EXECUTE_HANDLER;
+					}
+				}
+				break;
+			}			
 			case EXCEPTION_ACCESS_VIOLATION:
 			{
 				std::ptrdiff_t addr = 0; // nullptr invalid here?

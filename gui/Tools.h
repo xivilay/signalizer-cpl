@@ -31,13 +31,15 @@
 #ifndef CPL_TOOLS_H
 #define CPL_TOOLS_H
 
+#include <future>
+#include <thread>
+#include <set>
+
 #include "../Common.h"
 #include "../PlatformSpecific.h"
 #include "../Misc.h"
 #include "../CMutex.h"
-#include <future>
-#include <thread>
-#include <set>
+#include "../Exceptions.h"
 
 namespace cpl
 {

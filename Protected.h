@@ -325,6 +325,7 @@ namespace cpl
 				#ifdef CPL_WINDOWS
 					// this is not good: these are not crossplatform constants.
 					access_violation = EXCEPTION_ACCESS_VIOLATION,
+					undefined_behaviour = EXCEPTION_ILLEGAL_INSTRUCTION,
 					intdiv_zero = EXCEPTION_INT_DIVIDE_BY_ZERO,
 					fdiv_zero = EXCEPTION_FLT_DIVIDE_BY_ZERO,
 					finvalid = EXCEPTION_FLT_INVALID_OPERATION,
