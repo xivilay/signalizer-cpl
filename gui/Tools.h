@@ -359,6 +359,42 @@ namespace cpl
 		}
 
 		template<typename Functor>
+		void MainEventBlocking(DestructionNotifier & notifServer, Functor functionToRun)
+		{
+			struct CustomMessage : public DestructionNotifier::EventListener
+			{
+				CustomMessage(Functor func, DestructionNotifier & server) : f(func), notif(&server) { notif->addEventListener(this); }
+
+				void messageCallback() { if (!contextWasDeleted) f(); }
+
+				void onServerDestruction(DestructionNotifier * e) override { contextWasDeleted = true; }
+
+				virtual ~CustomMessage()
+				{
+					if (!contextWasDeleted && notif)
+					{
+						notif->removeEventListener(this);
+					}
+				};
+
+				Functor f;
+				DestructionNotifier * notif;
+				bool contextWasDeleted = false;
+			};
+
+			CustomMessage m(functionToRun, notifServer);
+
+			juce::MessageManager::getInstance()->callFunctionOnMessageThread(
+				[](void* message) 
+				{ 
+					static_cast<CustomMessage*>(message)->messageCallback();
+					return (void*)nullptr; 
+				}, 
+				static_cast<void*>(&m)
+			);
+		}
+
+		template<typename Functor>
 		void MainEvent(Functor functionToRun)
 		{
 			struct CustomMessage : public juce::MessageManager::MessageBase
