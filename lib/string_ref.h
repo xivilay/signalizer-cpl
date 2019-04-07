@@ -79,6 +79,8 @@ namespace cpl
 	{
 	public:
 		
+		using typename std::basic_string_view<T>::size_type;
+
 		basic_string_ref(const basic_string_ref<T>& other)
 			: std::basic_string_view<T>(other)
 		{

@@ -108,6 +108,7 @@
 	#define CPL_NOOP while(false){}
 
 	#if defined(_WIN32) || defined (_WIN64)
+
 		#define CPL_ISDEBUGGED() !!IsDebuggerPresent()
 		#define CPL_DEBUGOUT(x) OutputDebugStringA(x)
 	#else

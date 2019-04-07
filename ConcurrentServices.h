@@ -116,8 +116,8 @@ namespace cpl
 			std::atomic<Obj *> obj;
 			std::atomic_bool flag;
 
-			static_assert(ATOMIC_BOOL_LOCK_FREE, "Atomic bools need to be lock free.");
-			static_assert(ATOMIC_POINTER_LOCK_FREE, "Atomic pointers need to be lock free.");
+			static_assert(ATOMIC_BOOL_LOCK_FREE != 0, "Atomic bools need to be lock free.");
+			static_assert(ATOMIC_POINTER_LOCK_FREE != 0, "Atomic pointers need to be lock free.");
 
 			void signalInUse() { flag.store(true); }
 			bool isSignaled() const { return flag.load(); }

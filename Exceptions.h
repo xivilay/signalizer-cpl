@@ -40,6 +40,7 @@
 #include "MacroConstants.h"
 #include "ProgramInfo.h"
 #include "Core.h"
+#include "PlatformSpecific.h"
 
 namespace cpl
 {
