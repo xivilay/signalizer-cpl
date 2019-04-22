@@ -453,7 +453,7 @@ namespace cpl
 			"/bin/sh",
 			std::move(Args().arg("-c").arg((process + args).commandLine())),
 			ioFlags,
-			ScopeExitOperation::Join,
+			operation,
 			hasEnv ? &env : nullptr,
 			hasCWD ? &cwd : nullptr
 		};
@@ -465,7 +465,7 @@ namespace cpl
 			"/bin/sh",
 			std::move(Args().arg("-c") + Args().arg("gnome-terminal").arg("--disable-factory").arg("-e").arg((process + args).commandLine()).commandLine()),
 			IOStreamFlags::None,
-			ScopeExitOperation::Join,
+			operation,
 			hasEnv ? &env : nullptr,
 			hasCWD ? &cwd : nullptr
 		};

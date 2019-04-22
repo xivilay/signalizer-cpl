@@ -508,9 +508,9 @@ namespace cpl
 			// not cross platform.
 			#ifdef CPL_MSVC
 
-			sprintf_s(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
+			sprintf_s(buffer, "%01d:%01d:%01d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 			#else
-			sprintf(buffer, "%d:%d:%d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
+			sprintf(buffer, "%01d:%01d:%01d", ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 			#endif
 			return buffer;
 		}

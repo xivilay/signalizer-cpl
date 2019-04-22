@@ -361,7 +361,7 @@ namespace cpl
 				process,
 				std::move(args),
 				ioFlags,
-				ScopeExitOperation::Join,
+				operation,
 				hasEnv ? &env : nullptr,
 				hasCWD ? &cwd : nullptr
 			};

@@ -287,7 +287,7 @@ namespace cpl
 			shellLocation,
 			std::move(Args().arg("/A").arg("/C").arg((process + args).commandLine(), Args::Escaped)),
 			ioFlags,
-			ScopeExitOperation::Join,
+			operation,
 			hasEnv ? &env : nullptr,
 			hasCWD ? &cwd : nullptr
 		};
@@ -299,7 +299,7 @@ namespace cpl
 			shellLocation,
 			std::move(Args().arg("/A").arg("/C").arg((process + args).commandLine(), Args::Escaped)),
 			IOStreamFlags::None,
-			ScopeExitOperation::Join,
+			operation,
 			hasEnv ? &env : nullptr,
 			hasCWD ? &cwd : nullptr,
 			Options::Terminal
