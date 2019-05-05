@@ -2,7 +2,7 @@
 
 	cpl - cross-platform library - v. 0.1.0.
 
-	Copyright (C) 2016 Janus Lynggaard Thorborg (www.jthorborg.com)
+	Copyright (C) 2019 Janus Lynggaard Thorborg (www.jthorborg.com)
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,30 +21,34 @@
 
 **************************************************************************************
 
-	file:core.h
-
+	file:filesystem.h
+	
+		Provides a minimal working version of TS std::filesystem
+	
 *************************************************************************************/
 
-#ifndef CPL_CORE_H
-#define CPL_CORE_H
+#ifndef CPL_FILESYSTEM_H
+#define CPL_FILESYSTEM_H
 
-#include "MacroConstants.h"
-#include "lib/string_ref.h"
-#include <utility>
-#include <cstdio>
+#if __has_include(<filesystem>)
 
-namespace cpl
-{
-	template<typename ... Args>
-	std::string format(const cpl::string_ref& format, Args ... args)
-	{
-		using namespace std;
-		size_t size = snprintf(nullptr, 0, format.data(), args ...) + 1;
-		string ret;
-		ret.resize(size);
-		snprintf(ret.data(), size, format.data(), args ...);
-		return move(ret);
-	}
-} 
+	#include <filesystem>
+	namespace cpl { namespace fs = std::filesystem; }
+
+#elif __has_include(<experimental/filesystem>)
+
+	#include <experimental/filesystem>
+	namespace cpl { namespace fs = std::experimental::filesystem; }
+
+#elif __has_include(<boost/filesystem.hpp>)
+
+	#include <boost/filesystem.hpp>
+	namespace cpl { namespace fs = boost::filesystem; }
+
+#else
+
+	#error no <filesystem> implementation detected, update compiler or configure boost
+
+#endif
 
 #endif

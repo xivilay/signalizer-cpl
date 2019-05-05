@@ -453,8 +453,6 @@ namespace cpl
 	void CProtected::signalActionHandler(int sig, siginfo_t * siginfo, void * extra)
 	{
 		#ifndef CPL_WINDOWS
-		// consider locking signalLock here -- not sure if its well-defined, though
-
 		/*
 			Firstly, check if the exception occured at our stack, after runProtectedCode
 			which sets activeStateObject to a valid object
@@ -477,6 +475,36 @@ namespace cpl
 			switch (sig)
 			{
 				case SIGILL:
+                {
+                    if (fault_address)
+                    {
+                        const std::uint16_t* assembly = static_cast<const std::uint16_t*>(fault_address);
+                        
+                        if (*assembly == 0x0B0F) // ud2 - #UD undefined behaviour, compiler trigger.
+                        {
+                            threadData.currentExceptionData = CSystemException::Storage::create(
+                                CSystemException::undefined_behaviour,
+                                safeToContinue,
+                                nullptr,
+                                fault_address,
+                                ecode,
+                                sig
+                            );
+
+                            if (threadData.traceIntercept)
+                                signalTraceInterceptor(threadData.currentExceptionData);
+
+                            // jump back to CState::runProtectedCode. Note, we know that function was called
+                            // earlier in the stackframe, because threadData.activeStateObject is non-null
+                            // : that field is __only__ set in runProtectedCode. Therefore, the threadJumpBuffer
+                            // IS valid.
+
+                            if (!threadData.propagate)
+                                siglongjmp(threadData.threadJumpBuffer, 1);
+                            break;
+                        }
+                    }
+                }
 				case SIGBUS:
 				case SIGSEGV:
 				{
@@ -566,75 +594,6 @@ namespace cpl
 			First we try to call the old signal handlers
 		*/
 	default_handler:
-		/*
-			consider checking here that sa_handler/sa_sigaction is actually valid and not something like
-			SIG_DFLT, in which case re have to reset the handlers and manually raise the signal again
-		*/
-
-		if (staticData.oldHandlers[sig].sa_flags & SA_SIGINFO)
-		{
-			auto addr = staticData.oldHandlers[sig].sa_sigaction;
-
-			// why is this system so ugly
-			if ((void*)addr == SIG_DFL)
-			{
-				struct sigaction current;
-				if (sigaction(sig, &staticData.oldHandlers[sig], &current))
-				{
-					goto die_brutally;
-				}
-				else
-				{
-					if (raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
-						goto die_brutally;
-					else
-						return;
-				}
-			}
-			else if ((void*)addr == SIG_IGN)
-			{
-				return;
-			}
-			else
-			{
-				return staticData.oldHandlers[sig].sa_sigaction(sig, siginfo, extra);
-			}
-
-
-		}
-		else
-		{
-			auto addr = staticData.oldHandlers[sig].sa_handler;
-
-			if (addr == SIG_DFL)
-			{
-				struct sigaction current;
-				if (sigaction(sig, &staticData.oldHandlers[sig], &current))
-				{
-					goto die_brutally;
-				}
-				else
-				{
-					if (raise(sig) || sigaction(sig, &current, &staticData.oldHandlers[sig]))
-						goto die_brutally;
-					else
-						return;
-				}
-			}
-			else if (addr == SIG_IGN)
-			{
-				return;
-			}
-			else
-			{
-				return staticData.oldHandlers[sig].sa_handler(sig);
-			}
-
-		}
-		/*
-			WE SHOULD NEVER REACH THIS POINT. NEVER. Except for nuclear war and/or nearby black hole
-		*/
-
 		// no handler found, throw exception (that will call terminate)
 	die_brutally:
 		CPL_RUNTIME_EXCEPTION(programInfo.name + " - CProtected:signalActionHandler called for unregistrered signal; no appropriate signal handler to call.");

@@ -79,7 +79,7 @@ namespace cpl
 				std::free
 			};
 
-			return (status == 0) ? res.get() : name;
+            return (status == 0) ? res.get() : name.c_str();
 		}
 
 		#else
@@ -283,7 +283,6 @@ namespace cpl
 			#if defined(CPL_WINDOWS)
 				pID = static_cast<std::int32_t>(GetProcessId(GetCurrentProcess()));
 			#elif defined(CPL_MAC) || defined(CPL_UNIXC)
-				pid_t pID;
 				pID = static_cast<std::int32_t>(getpid());
 			#endif
 			if (instanceCounter > std::numeric_limits<unsigned char>::max())

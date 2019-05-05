@@ -45,6 +45,7 @@
 #include "Utility.h"
 #include <memory>
 #include "Exceptions.h"
+#include "Misc.h"
 
 #define CPL_TRACEGUARD_START \
 	cpl::CProtected::instance().topLevelTraceGuardedCode([&]() {
@@ -56,7 +57,7 @@
 namespace cpl
 {
 
-	class CProtected : Utility::CNoncopyable
+	class CProtected final : Utility::CNoncopyable
 	{
 		static constexpr int OSCustomRaiseCode = 0xBEEF;
 
@@ -111,6 +112,42 @@ namespace cpl
 			Exception storage;
 		};
 
+		#ifndef CPL_MSVC
+
+		struct ScopedThreadSignalHandler
+		{
+			ScopedThreadSignalHandler()
+			{
+				struct sigaction handler {};
+
+				handler.sa_sigaction = &CProtected::signalActionHandler;
+				handler.sa_flags = SA_SIGINFO;
+				sigemptyset(&handler.sa_mask);
+
+				sigaction(SIGILL, &handler, &oldSigIll);
+				sigaction(SIGSEGV, &handler, &oldSigSegv);
+				sigaction(SIGFPE, &handler, &oldSigFPE);
+				sigaction(SIGBUS, &handler, &oldSigBus);
+
+			}
+
+			~ScopedThreadSignalHandler()
+			{
+				sigaction(SIGILL, &oldSigIll, nullptr);
+				sigaction(SIGSEGV, &oldSigSegv, nullptr);
+				sigaction(SIGFPE, &oldSigFPE, nullptr);
+				sigaction(SIGBUS, &oldSigBus, nullptr);
+			}
+
+			struct sigaction
+				oldSigIll,
+				oldSigSegv,
+				oldSigFPE,
+				oldSigBus;
+		};
+
+		#endif
+
 	public:
 
 		struct CSystemException;
@@ -138,6 +175,7 @@ namespace cpl
 			bool hasBeenConstructed = false;
 			Utility::LazyStackPointer<std::stringstream> stream;
 		};
+
 		static void useFPUExceptions(bool b);
 		static std::string formatExceptionMessage(const CSystemException &);
 
@@ -200,7 +238,7 @@ namespace cpl
 				} ();
 			#else
 
-				ScopedSignalThreadHandler h;
+				ScopedThreadSignalHandler h;
 				// set the jump in case a signal gets raised
 				if (sigsetjmp(threadData.threadJumpBuffer, 1))
 				{
@@ -246,8 +284,8 @@ namespace cpl
 			#ifdef CPL_MSVC
 			return internalSEHTraceInterceptor(debugOutput, function);
 			#else
-				// async signals will be captured further up
-			return internalSignalTraceInterceptor(debugOutput, function)
+			// async signals will be captured further up
+			return internalSignalTraceInterceptor(debugOutput, function);
 			#endif
 		}
 
@@ -267,15 +305,15 @@ namespace cpl
 			catch (CProtected::CSystemException & cs)
 			{
 				auto error = CProtected::formatExceptionMessage(cs);
-				Misc::LogException(error);
-				Misc::CrashIfUserDoesntDebug(error);
+				LogException(error);
+				CrashIfUserDoesntDebug(error);
 				cs.reraise();
 			}
 			catch (std::exception & e)
 			{
 				auto error = e.what();
-				Misc::LogException(error);
-				Misc::CrashIfUserDoesntDebug(error);
+				LogException(error);
+				CrashIfUserDoesntDebug(error);
 				throw;
 			}
 
@@ -343,9 +381,12 @@ namespace cpl
 					foverflow,
 					funderflow,
 					intsubscript,
-					intoverflow
+					intoverflow,
+					undefined_behaviour
+
 				#endif
 			};
+
 			CSystemException()
 			{
 
@@ -369,6 +410,7 @@ namespace cpl
 			{
 				data = Storage::create(exp, resolved, faultAddress, attemptedAddress, extraCode, actualCode);
 			}
+
 			const char * what() const noexcept override
 			{
 				return "OS specific hardware exception";
@@ -384,7 +426,7 @@ namespace cpl
 			else
 			{
 				threadData.pendingException.reset(new ThrowableException<Exception>(Exception(args...)));
-					siglongjmp(threadData.jumpBuffer, OSCustomRaiseCode);
+					siglongjmp(threadData.threadJumpBuffer, OSCustomRaiseCode);
 			}
 #else
 			throw Exception(args...);
@@ -394,8 +436,8 @@ namespace cpl
 		~CProtected();
 
 	protected:
-		CProtected();
 
+		CProtected();
 
 	private:
 
@@ -478,8 +520,6 @@ namespace cpl
 			#endif
 		}
 
-
-
 		struct ThreadData
 		{
 			/// <summary>
@@ -509,42 +549,6 @@ namespace cpl
 		};
 
 		static CPL_THREAD_LOCAL ThreadData threadData;
-
-
-		#ifndef CPL_MSVC
-			struct ScopedThreadSignalHandler
-			{
-				ScopedThreadSignalHandler()
-				{
-					struct sigaction handler {};
-
-					handler.sa_sigaction = &CProtected::signalActionHandler;
-					handler.sa_flags = SA_SIGINFO;
-					sigemptyset(&handler.sa_mask);
-
-					sigaction(SIGILL, &handler, &oldSigIll);
-					sigaction(SIGSEGV, &handler, &oldSigSegv);
-					sigaction(SIGFPE, &handler, &oldSigFPE);
-					sigaction(SIGBUS, &handler, &oldSigBus);
-
-				}
-
-				~ScopedThreadSignalHandler()
-				{
-					sigaction(SIGILL, &oldSigIll, nullptr);
-					sigaction(SIGSEGV, &oldSigSegv, nullptr);
-					sigaction(SIGFPE, &oldSigFPE, nullptr);
-					sigaction(SIGBUS, &oldSigBus, nullptr);
-				}
-
-				struct sigaction
-					oldSigIll,
-					oldSigSegv,
-					oldSigFPE,
-					oldSigBus;
-			};
-
-		#endif
 
 		XWORD structuredExceptionHandler(XWORD _code, CSystemException::Storage & e, void * _systemInformation);
 		XWORD structuredExceptionHandlerTraceInterceptor(PreembeddedFormatter & outputStream, XWORD _code, CSystemException::Storage & e, void * _systemInformation);

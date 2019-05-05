@@ -107,7 +107,7 @@
 #include "process/ProcessUtil.h"
 #include <functional>
 // TODO: Fix to detect GCC C++17 support
-#ifdef CPL_UNIXC
+#if !__has_include(<optional>)
 #include <experimental/optional>
 #else
 #include <optional>
@@ -266,7 +266,7 @@ namespace cpl
 
 		bool doJoin(int timeout);
 		// TODO: Detect GCC C++17 instead
-		#ifdef CPL_UNIXC
+		#if defined(CPL_UNIXC) && defined(CPL_GCC)
 		template<typename T>
 		using optional = std::experimental::optional<T>;
 		#else

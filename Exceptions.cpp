@@ -103,5 +103,8 @@ namespace cpl
 		}
 	}
 
-
+	bool IsDebuggerAttached()
+	{
+		return cpl::Misc::IsBeingDebugged();
+	}
 }

@@ -26,9 +26,7 @@
 		Objective-C code.
  
  *************************************************************************************/
-#include "MacSupport.h"
 
-#include "Misc.h"
 // i dont know why. i seriously dont.
 // but all hell breaks loose if this is not here.
 //#define Point CarbonDummyPointName
@@ -39,6 +37,10 @@
 #import <AppKit/AppKit.h>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/graphics/IOGraphicsLib.h>
+
+#include "MacSupport.h"
+#include "Misc.h"
+#include "Exceptions.h"
 
 #include <string.h>
 #include "Common.h"

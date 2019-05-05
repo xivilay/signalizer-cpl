@@ -168,13 +168,13 @@ namespace cpl
 				frequency = dwMHz;
 				#elif defined(CPL_MAC)
 
-				std::string contents = Misc::ExecCommand("sysctl hw.cpufrequency");
-				if (contents.size() > 0)
+				auto contents = Misc::ExecCommand("sysctl hw.cpufrequency");
+				if (contents.first == 0 && contents.second.size() > 0)
 				{
-					auto pos = contents.find(": ");
+					auto pos = contents.second.find(": ");
 					if (pos != std::string::npos)
 					{
-						auto number = contents.c_str() + pos + 2;
+						auto number = contents.second.c_str() + pos + 2;
 						frequency = std::strtod(number, nullptr);
 						if (frequency != 0)
 							frequency /= 1000000;

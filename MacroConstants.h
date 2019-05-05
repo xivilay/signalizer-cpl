@@ -286,11 +286,7 @@
 
 		#define cwarn(exp) ("warning: " exp)
 
-		#if __clang_major__ > 7 && !defined(__apple_build_version__)
-			#define CPL_THREAD_LOCAL thread_local
-		#else
-			#define CPL_THREAD_LOCAL __thread
-		#endif
+		#define CPL_THREAD_LOCAL thread_local
 
 		#if __clang_major__ > 7
 			#define __C11__

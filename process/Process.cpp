@@ -89,7 +89,7 @@ namespace cpl
 		if (!explicitlyJoined)
 			CPL_RUNTIME_EXCEPTION_SPECIFIC("Process not succesfully joined", std::logic_error);
 
-		return exitCode.value();
+		return *exitCode;
 	}
 
 	std::int64_t Process::getPid() const noexcept

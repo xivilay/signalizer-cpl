@@ -29,9 +29,14 @@
 
 #include "../Process.h"
 #include <signal.h>
+#ifdef CPL_MAC
+#include <sys/wait.h>
+#else
 #include <wait.h>
+#endif
 #include <system_error>
 #include <mutex>
+#include "../Exceptions.h"
 
 extern char ** environ;
 
@@ -430,7 +435,7 @@ namespace cpl
 			// parent
 			if (result != 0)
 			{
-				auto failedDesc = "process creation failed (" + std::to_string(result) + "): " + Misc::GetLastOSErrorMessage(childError);
+				auto failedDesc = "process creation failed (" + std::to_string(result) + "): " + GetLastOSErrorMessage(childError);
 				// must reap the child
 				int ignored;
 				if (pidf != waitpid(pidf, &ignored, 0))

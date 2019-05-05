@@ -64,8 +64,7 @@ namespace cpl
 
 		return true;
 #else
-		// ?
-
+		return false;
 #endif
 	}
 

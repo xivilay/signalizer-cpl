@@ -37,12 +37,12 @@
 #include <typeinfo>
 #include <cstring>
 #include <system_error>
-#include <filesystem>
 
 #include "Common.h"
 #include "PlatformSpecific.h"
 #include "Types.h"
 #include "Core.h"
+#include "filesystem.h"
 
 namespace cpl
 {

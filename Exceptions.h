@@ -50,6 +50,7 @@ namespace cpl
 
 	void LogException(const string_ref errorMessage);
 	void CrashIfUserDoesntDebug(const string_ref errorMessage);
+	bool IsDebuggerAttached();
 
 	class CPLRuntimeException : public std::runtime_error
 	{
@@ -83,7 +84,7 @@ namespace cpl
 				auto e = exceptionExpression;\
 				CPL_DEBUGOUT((message + "\n").c_str()); \
 				cpl::LogException(message); \
-				if(CPL_ISDEBUGGED()) DBG_BREAK(); \
+				if(cpl::IsDebuggerAttached()) DBG_BREAK(); \
 				bool doAbort = isassert; \
 				if(doAbort) \
 					std::abort(); \

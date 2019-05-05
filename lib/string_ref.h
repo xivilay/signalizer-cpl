@@ -116,12 +116,12 @@ namespace cpl
 
 		constexpr const T* c_str() const noexcept
 		{
-			return data();
+			return this->data();
 		}
 
 		std::basic_string<T> string() const
 		{
-			return { begin(), end() };
+			return { this->begin(), this->end() };
 		}
 
 		constexpr void swap(basic_string_ref& v) noexcept
