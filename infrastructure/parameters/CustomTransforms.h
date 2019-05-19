@@ -4,7 +4,7 @@
 #include <string>
 #include <type_traits>
 #include "../../Mathext.h"
-
+#include "../../Exceptions.h"
 namespace cpl
 {
 	template<typename T>
@@ -63,7 +63,7 @@ namespace cpl
 		{
 			if (rquantization <= 1)
 			{
-				CPL_BREAKIFDEBUGGED();
+				CPL_RUNTIME_EXCEPTION("quantization must be higher than zero");
 			}
 			quantization = rquantization;
 		}

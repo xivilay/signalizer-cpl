@@ -276,6 +276,8 @@ namespace cpl
 	class SerializableStateObject : public DecoupledStateObject<T>
 	{
 	public:
+		using typename DecoupledStateObject<T>::FGenerator;
+
 		static_assert(std::is_base_of<cpl::SafeSerializableObject, T>::value, "T must be serializable");
 
 		SerializableStateObject(FGenerator generatorFunc)
