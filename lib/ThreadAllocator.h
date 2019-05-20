@@ -132,17 +132,17 @@ namespace cpl
 				return sizeof(Node) + pad + sizeof(void*);
 			}
 
-			constexpr std::size_t amountOfPad() const noexcept
+			std::size_t amountOfPad() const noexcept
 			{
 				return static_cast<std::size_t>(reinterpret_cast<const char*>(memory) - (reinterpret_cast<const char*>(this) + sizeof(Node)));
 			}
 
-			constexpr std::size_t blobSize() const noexcept
+			std::size_t blobSize() const noexcept
 			{
 				return static_cast<std::size_t>(tip() - reinterpret_cast<const char*>(this));
 			}
 
-			constexpr static Node* fromUnmanaged(void* location) noexcept
+			static Node* fromUnmanaged(void* location) noexcept
 			{
 				return reinterpret_cast<Node*>(reinterpret_cast<void**>(location)[-1]);
 			}
@@ -175,7 +175,7 @@ namespace cpl
 				cpl::Misc::alignedFree(_this);
 			}
 
-			constexpr const char* tip() const noexcept
+			const char* tip() const noexcept
 			{
 				return reinterpret_cast<const char*>(memory) + size;
 			}

@@ -46,9 +46,7 @@ namespace cpl
 
 		using value_type = T;
 		using reference = T&;
-		using const_reference = const reference;
-		using reference = value_type&;
-		using const_reference = const reference;
+		using const_reference = std::add_lvalue_reference_t<const std::remove_reference_t<reference>>;
 		using pointer = value_type*;
 		using const_pointer	= const value_type*;
 		using iterator = pointer;
@@ -201,7 +199,7 @@ namespace cpl
 
 		static variable_array<T> uninitialized(std::size_t length)
 		{
-			return variable_array<T>(length, uninitialized_tag);
+			return variable_array<T>(length, uninitialized_tag());
 		}
 
 	private:
@@ -248,10 +246,7 @@ namespace std
 {
 	template<typename T>
 	inline cpl::variable_array<T>&&
-		move(cpl::variable_array<T>& t) noexcept
-	{
-		static_assert(false, "Explicitly moving variable arrays is not supported");
-	}
+		move(cpl::variable_array<T>& t) noexcept = delete;
 }
 
 #endif
