@@ -60,7 +60,7 @@
 #define CPL_REMOVE_CWARN
 
 #ifdef CPL_MAC
-#define CPL_CMOD_USECF
+//#define CPL_CMOD_USECF
 #endif
 
 #endif

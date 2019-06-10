@@ -42,6 +42,7 @@
 #include "Exceptions.h"
 #include "Core.h"
 #include <queue>
+#include "filesystem.h"
 
 #ifdef __GNUG__
 #include <cstdlib>
@@ -547,89 +548,87 @@ namespace cpl
 		{
 			if (programInfo.hasCustomDirectory)
 				return programInfo.customDirectory();
+
 			#ifdef CPL_WINDOWS
-			// change to MAX_PATH on all supported systems
-			char path[MAX_PATH + 2];
-			unsigned long nLen = 0;
-			unsigned long nSize = sizeof path;
-			/*
-				GetModuleFileName() returns the path to the dll, inclusive of the dll name.
-				We shave this off to get the directory
-			*/
+				// change to MAX_PATH on all supported systems
+				char path[MAX_PATH + 2];
+				unsigned long nLen = 0;
+				unsigned long nSize = sizeof path;
+				/*
+					GetModuleFileName() returns the path to the dll, inclusive of the dll name.
+					We shave this off to get the directory
+				*/
 
-			HMODULE hMod;
-			GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-				(char*)&GetDirectoryPath, &hMod);
+				HMODULE hMod;
+				GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+					(char*)&GetDirectoryPath, &hMod);
 
-			nLen = GetModuleFileNameA(hMod, path, nSize);
-			if (!nLen)
-				return "";
-			while (nLen-- > 0) {
-				if (CPL_DIRC_COMP(path[nLen])) {
-					path[nLen] = '\0';
-					break;
-				}
-			};
-			path[MAX_PATH + 1] = NULL;
-			return path;
+				nLen = GetModuleFileNameA(hMod, path, nSize);
+				if (!nLen)
+					return "";
+				while (nLen-- > 0) {
+					if (CPL_DIRC_COMP(path[nLen])) {
+						path[nLen] = '\0';
+						break;
+					}
+				};
+				path[MAX_PATH + 1] = NULL;
+				return path;
+
 			#elif defined(CPL_MAC) && defined(__APE_LOCATE_USING_COCOA)
-			/*
-				GetBundlePath() returns the path to the bundle, inclusive of the bundle name.
-				Since everything we have is in the subdir /contents/ we append that.
-				NOTE: This is broken
-			*/
-			// change to MAX_PATH on all supported systems
-			char path[MAX_PATH + 2];
-			unsigned long nLen = 0;
-			unsigned long nSize = sizeof path;
-			nLen = GetBundlePath(path, nSize);
-			if (!nLen)
-				return "";
-			path[nLen] = '\0';
-			std::string ret = path;
-			ret += "/Contents";
-			return ret;
-			#elif defined(CPL_MAC) && defined(__APE_LOCATE_USING_CF)
-			// change to MAX_PATH on all supported systems
-			char path[MAX_PATH + 2];
-			unsigned long nLen = 0;
-			unsigned long nSize = sizeof path;
-			CFBundleRef ref = CFBundleGetBundleWithIdentifier(CFSTR("com.Lightbridge.AudioProgrammingEnvironment"));
-			if (ref)
-			{
-				CFURLRef url = CFBundleCopyBundleURL(ref);
-				if (url)
-				{
-					CFURLGetFileSystemRepresentation(url, true, (unsigned char*)path, nSize);
-					CFRelease(url);
-					return path;
-				}
-			}
-			#elif defined(CPL_UNIXC) || defined(CPL_MAC)
-			Dl_info exeInfo;
-			dladdr((void*)GetDirectoryPath, &exeInfo);
 
-			std::string fullPath(exeInfo.dli_fname);
-			for (int i = fullPath.length(), z = 0; i != 0; --i) {
-				// directory slash detected
-				if (CPL_DIRC_COMP(fullPath[i]))
-					z++;
-				#ifndef CPL_MAC
-				if (z == 1)
+				/*
+					GetBundlePath() returns the path to the bundle, inclusive of the bundle name.
+					Since everything we have is in the subdir /contents/ we append that.
+					NOTE: This is broken
+				*/
+				// change to MAX_PATH on all supported systems
+				char path[MAX_PATH + 2];
+				unsigned long nLen = 0;
+				unsigned long nSize = sizeof path;
+				nLen = GetBundlePath(path, nSize);
+				if (!nLen)
+					return "";
+				path[nLen] = '\0';
+				std::string ret = path;
+				ret += "/Contents";
+				return ret;
+				#elif defined(CPL_MAC) && defined(__APE_LOCATE_USING_CF)
+				// change to MAX_PATH on all supported systems
+				char path[MAX_PATH + 2];
+				unsigned long nLen = 0;
+				unsigned long nSize = sizeof path;
+				CFBundleRef ref = CFBundleGetBundleWithIdentifier(CFSTR("com.Lightbridge.AudioProgrammingEnvironment"));
+				if (ref)
 				{
-					return std::string(fullPath.begin(), fullPath.begin() + (long)i);
+					CFURLRef url = CFBundleCopyBundleURL(ref);
+					if (url)
+					{
+						CFURLGetFileSystemRepresentation(url, true, (unsigned char*)path, nSize);
+						CFRelease(url);
+						return path;
+					}
 				}
-				#else
-				// need to chop off 2 directories here
-				if (z == 2)
-				{
-					return std::string(fullPath.begin(), fullPath.begin() + (long)i) +
-						"/resources/";
-				}
+
+			#elif defined(CPL_UNIXC) || defined(CPL_MAC)
+
+				Dl_info exeInfo;
+				dladdr((void*)GetDirectoryPath, &exeInfo);
+
+				fs::path fullPath(exeInfo.dli_fname);
+
+				auto parent = fullPath.parent_path();
+
+				#ifdef CPL_MAC
+					if(parent.stem().string() == "MacOS" && parent.parent_path().stem() == "Contents")
+						parent = parent.parent_path() / "Resources";
+
 				#endif
 
-			}
+				return parent.string() + "/";
+
 			#endif
+				
 			return "<Error getting directory of executable>";
 		}
 		/*********************************************************************************************

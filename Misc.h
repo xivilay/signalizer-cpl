@@ -107,6 +107,11 @@ namespace cpl
 		/// </summary>
 		const char * GetImageBase();
 
+		/// <summary>
+		/// For Unix & Windows, returns the parent directory of the executable.
+		/// Additionally, for OS X, if the executable is inside a bundle, returns "(...) .bundle/Contents/Resources/".
+		/// Trailing slash always included.
+		/// </summary>
 		const std::string & DirectoryPath();
 		const fs::path& DirFSPath();
 
