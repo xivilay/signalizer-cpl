@@ -765,6 +765,15 @@ namespace cpl
 			object.serialize(*this, version);
 			return *this;
 		}
+        
+		CSerializer & operator << (const std::string& str)
+		{
+			if (virtualCount > 0)
+				fill(str.size() + 1);
+			else
+				data.appendBytes(str.c_str(), str.size() + 1);
+			return *this;
+		}
 
 		CSerializer & operator << (const string_ref str)
 		{
@@ -774,6 +783,7 @@ namespace cpl
 				data.appendBytes(str.c_str(), str.size() + 1);
 			return *this;
 		}
+        
 		CSerializer & operator >> (std::string & str)
 		{
 			if (virtualCount > 0)
