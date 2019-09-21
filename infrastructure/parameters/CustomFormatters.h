@@ -50,6 +50,30 @@ namespace cpl
 	};
 
 	template<typename T>
+	class IntegerFormatter : public VirtualFormatter<T>
+	{
+	public:
+		virtual bool format(const T & val, std::string & buf) override
+		{
+			auto intValue = static_cast<std::int64_t>(std::round(val));
+			buf = printer(intValue, 2);
+			return true;
+		}
+
+		virtual bool interpret(const string_ref buf, T & val) override
+		{
+			std::int64_t ret;
+			if (cpl::lexicalConversion(buf, ret))
+			{
+				val = ret;
+				return true;
+			}
+
+			return false;
+		}
+	};
+
+	template<typename T>
 	class HexFormatter : public VirtualFormatter<T>
 	{
 	public:

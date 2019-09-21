@@ -141,6 +141,28 @@ namespace cpl
 	};
 
 	template<typename T>
+	class IntegerLinearRange : public RangedVirtualTransformerBase<T>
+	{
+	public:
+
+		using RangedVirtualTransformerBase<T>::min;
+		using RangedVirtualTransformerBase<T>::max;
+
+		IntegerLinearRange(T minimum, T maximum) : RangedVirtualTransformerBase<T>(minimum, maximum) {}
+		IntegerLinearRange() {}
+
+		T normalize(T val) const noexcept override
+		{
+			return static_cast<T>(Math::UnityScale::Inv::linear(std::round(val), min, max));
+		}
+
+		T transform(T val) const noexcept override
+		{
+			return static_cast<T>(std::round(Math::UnityScale::linear(val, min, max)));
+		}
+	};
+
+	template<typename T>
 	class ExponentialRange : public RangedVirtualTransformerBase<T>
 	{
 	public:
