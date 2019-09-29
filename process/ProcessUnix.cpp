@@ -217,7 +217,11 @@ namespace cpl
 
 	static bool CloseAllFiles()
 	{
+#ifdef CPL_MAC
+		const char * selfFds = "/dev/fd";
+#elif CPL_UNIXC
 		const char * selfFds = "/proc/self/fd";
+#endif
 
 		if (auto fds = opendir(selfFds))
 		{
@@ -408,7 +412,7 @@ namespace cpl
 			sigset_t allSet;
 			sigfillset(&allSet);
 
-			for (int i = 0; i < NSIG; i++)
+			for (int i = 1; i < NSIG; i++)
 			{
 				if (i == SIGKILL || i == SIGSTOP)
 					continue;
