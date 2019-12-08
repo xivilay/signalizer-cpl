@@ -29,13 +29,14 @@
 
 #ifndef CPL_FILESYSTEM_H
 #define CPL_FILESYSTEM_H
+#include "MacroConstants.h"
 
-#if __has_include(<filesystem>)
-
+// TODO: Find version macro to allow fs on deployment targer => 10.15
+#if !defined(CPL_MAC) && __has_include(<filesystem>)
 	#include <filesystem>
 	namespace cpl { namespace fs = std::filesystem; }
 
-#elif __has_include(<experimental/filesystem>)
+#elif !defined(CPL_MAC) && __has_include(<experimental/filesystem>)
 
 	#include <experimental/filesystem>
 	namespace cpl { namespace fs = std::experimental::filesystem; }
