@@ -65,6 +65,10 @@ namespace cpl
 		/// </summary>
 		int load(std::string moduleName);
 		/// <summary>
+		/// If no module is loaded, loads moduleName
+		/// </summary>
+		int load(std::string moduleName, std::string& error);
+		/// <summary>
 		/// Increases the reference of the loaded module
 		/// </summary>
 		void increaseReference();

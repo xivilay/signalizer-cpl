@@ -29,6 +29,7 @@
 
 #include "CModule.h"
 #include "MacroConstants.h"
+#include "Exceptions.h"
 #ifdef CPL_WINDOWS
 #include <Windows.h>
 #else
@@ -94,10 +95,34 @@ namespace cpl
 		#endif
 	}
 
+	int CModule::load(std::string moduleName, std::string& msg)
+	{
+		const auto error = load(moduleName);
+		
+		if(error < 0)
+		{
+			msg = "Internal error";
+			return error;
+		}
+		else if (error > 0)
+		{
+#ifdef CPL_WINDOWS
+			msg = GetLastOSErrorMessage();
+#elif defined(CPL_MAC) && defined(CPL_CMOD_USECF)
+			msg = GetLastOSErrorMessage();
+#elif defined(CPL_UNIXC)
+			msg = dlerror();
+#endif
+			return error;
+		}
+		
+		return 0;
+	}
+
 	int CModule::load(std::string moduleName)
 	{
 		if (moduleHandle != nullptr)
-			return false;
+			return -3;
 		#ifdef CPL_WINDOWS
 		moduleHandle = static_cast<ModuleHandle>(LoadLibraryExA(moduleName.c_str(), nullptr, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS));
 		if (moduleHandle != nullptr)
