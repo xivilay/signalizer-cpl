@@ -125,7 +125,7 @@ namespace cpl
 						case 16:
 						case 8:
 							#ifdef CPL_COMPILER_SUPPORTS_AVX
-							return ClassDispatcher::dispatch<isa_traits<Types::v8sf, true>>(std::forward<Args>(args)...);
+							return ClassDispatcher::template dispatch<isa_traits<Types::v8sf, true>>(std::forward<Args>(args)...);
 							#endif
 						case 4:
 							return ClassDispatcher::template dispatch<isa_traits<Types::v4sf, true>>(std::forward<Args>(args)...);
@@ -144,7 +144,7 @@ namespace cpl
 						case 16:
 						case 8:
 							#ifdef CPL_COMPILER_SUPPORTS_AVX
-							return ClassDispatcher::dispatch<isa_traits<Types::v8sf, false>>(std::forward<Args>(args)...);
+							return ClassDispatcher::template dispatch<isa_traits<Types::v8sf, false>>(std::forward<Args>(args)...);
 							#endif
 						case 4:
 							return ClassDispatcher::template dispatch<isa_traits<Types::v4sf, false>>(std::forward<Args>(args)...);
@@ -169,7 +169,7 @@ namespace cpl
 						case 8:
 						case 4:
 							#ifdef CPL_COMPILER_SUPPORTS_AVX
-							return ClassDispatcher::dispatch<isa_traits<Types::v4sd, true>>(std::forward<Args>(args)...);
+							return ClassDispatcher::template dispatch<isa_traits<Types::v4sd, true>>(std::forward<Args>(args)...);
 							break;
 							#endif
 						case 2:
@@ -189,7 +189,7 @@ namespace cpl
 						case 16:
 						case 8:
 							#ifdef CPL_COMPILER_SUPPORTS_AVX
-							return ClassDispatcher::dispatch<isa_traits<Types::v4sd, false>>(std::forward<Args>(args)...);
+							return ClassDispatcher::template dispatch<isa_traits<Types::v4sd, false>>(std::forward<Args>(args)...);
 							break;
 							#endif
 						case 2:
