@@ -176,7 +176,7 @@ namespace cpl
 		/// <summary>
 		/// May return immediately.
 		/// </summary>
-		/// <remarks> 
+		/// <remarks>
 		/// Throws std::logic_error if not actual().
 		/// </remarks>
 		const std::string & name() const;
@@ -190,16 +190,16 @@ namespace cpl
 		/// <summary>
 		/// Closes all connected streams, and orphans off the process
 		/// such that the process will never turn into a "zombie"
-		/// (for all practical purposes), regardless of when, 
+		/// (for all practical purposes), regardless of when,
 		/// if ever, the process exits. After this operation, this object
 		/// is as if in a moved or default-constructed state.
-		/// 
+		///
 		/// Notice that the child process' lifetime may still be connected
 		/// to the parent group session. Use Builder::launchDetached() to completely
 		/// avoid that situation.
 		/// </summary>
-		/// <remarks> 
-		/// Throws std::logic_error if not actual(). Can also throw on grave library runtime errors (like std::bad_alloc) 
+		/// <remarks>
+		/// Throws std::logic_error if not actual(). Can also throw on grave library runtime errors (like std::bad_alloc)
 		/// </remarks>
 		void detach();
 		/// <summary>
@@ -216,7 +216,7 @@ namespace cpl
 		/// pid. No other process system-wide can use this pid while
 		/// this object exists.
 		/// </summary>
-		/// <remarks> 
+		/// <remarks>
 		/// Throws std::logic_error if not actual().
 		/// </remarks>
 		bool alive();
@@ -226,8 +226,8 @@ namespace cpl
 		/// a longer timeout will try joining until the timeout.
 		/// If join() returns true, alive() will be mutated to false.
 		/// </summary>
-		/// <remarks> 
-		/// Throws std::logic_error if not actual(). 
+		/// <remarks>
+		/// Throws std::logic_error if not actual().
 		/// </remarks>
 		bool join(int timeoutMs = -1);
 		/// <summary>
@@ -253,8 +253,8 @@ namespace cpl
 		/// <summary>
 		/// Returns the exit code of the process.
 		/// </summary>
-		/// <remarks> 
-		/// Throws std::logic_error if not actual(), or alive(). 
+		/// <remarks>
+		/// Throws std::logic_error if not actual(), or alive().
 		/// </remarks>
 		std::int64_t getExitCode();
 
@@ -265,8 +265,7 @@ namespace cpl
 	private:
 
 		bool doJoin(int timeout);
-		// TODO: Detect GCC C++17 instead
-		#if defined(CPL_UNIXC) && defined(CPL_GCC)
+		#if defined(CPL_UNIXC) && defined(CPL_GCC) && __cplusplus < 201703L
 		template<typename T>
 		using optional = std::experimental::optional<T>;
 		#else
@@ -383,7 +382,7 @@ namespace cpl
 		/// <summary>
 		/// Invokes the default terminal UI, and runs the program inside it.
 		/// Note that the returned process represents a wrapper parent process,
-		/// and not the child process. It is implementation-defined whether the exit 
+		/// and not the child process. It is implementation-defined whether the exit
 		/// code from the child is propagated.
 		/// </summary>
 		Process terminal(Args args = Args(), ScopeExitOperation operation = ScopeExitOperation::Join);

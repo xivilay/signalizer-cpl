@@ -219,7 +219,7 @@ namespace cpl
 	{
 #ifdef CPL_MAC
 		const char * selfFds = "/dev/fd";
-#elif CPL_UNIXC
+#elif defined(CPL_UNIXC)
 		const char * selfFds = "/proc/self/fd";
 #endif
 
