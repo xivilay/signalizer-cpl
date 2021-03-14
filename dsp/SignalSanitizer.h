@@ -78,26 +78,60 @@ namespace cpl
 				{
 					for (std::size_t c = 0; c < channels; ++c)
 					{
-						for (std::size_t i = 0; i < samples; ++i)
-						{
-							const auto sample = input[c][i];
-							const auto fpclass = std::fpclassify(sample);
-							const bool good = (fpclass != FP_INFINITE && fpclass != FP_NAN);
-							if (good)
-							{
-								output[c][i] = sample;
-							}
-							else
-							{
-								output[c][i] = defaultValue;
-								ret.hasNaN = true;
-							}
-						}
+						const auto channelRet = process(samples, input[c], output[c], defaultValue);
+
+						ret.hasDenormal |= channelRet.hasDenormal;
+						ret.hasNaN |= channelRet.hasNaN;
+
 					}
 				}
 				return ret;
 			}
 
+			template<typename T, class InVector, class OutVector>
+			inline typename std::enable_if<std::is_floating_point<T>::value, Results>::type process(std::size_t samples, const InVector& input, OutVector& output, T defaultValue = (T)0)
+			{
+				Results ret;
+				if (flags & NaN)
+				{
+					for (std::size_t i = 0; i < samples; ++i)
+					{
+						const auto sample = input[i];
+						const auto fpclass = std::fpclassify(sample);
+						const bool good = (fpclass != FP_INFINITE && fpclass != FP_NAN);
+						if (good)
+						{
+							output[i] = sample;
+
+							if (fpclass == FP_SUBNORMAL)
+								ret.hasDenormal = true;
+						}
+						else
+						{
+							output[i] = defaultValue;
+							ret.hasNaN = true;
+						}
+					}
+				}
+				else
+				{
+					for (std::size_t i = 0; i < samples; ++i)
+					{
+						const auto sample = input[i];
+						const auto fpclass = std::fpclassify(sample);
+						const bool good = (fpclass != FP_INFINITE && fpclass != FP_NAN);
+
+						output[i] = sample;
+
+						if (fpclass == FP_SUBNORMAL)
+							ret.hasDenormal = true;
+
+						if(!good)
+							ret.hasNaN = true;
+					}
+				}
+				return ret;
+			}
 
 			~SignalSanitizer()
 			{
