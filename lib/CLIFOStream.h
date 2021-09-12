@@ -27,7 +27,7 @@
 		ring.
 		This class is NOT thread-safe, it is your job to protect it.
 		It is not a FIFO queue, although it supports reading the buffer FIFO-style.
-		However, per default, it acts like a LIFO - the produer advances the ring, while the consumer doesn't.
+		However, per default, it acts like a LIFO - the producer advances the ring, while the consumer doesn't.
 		TODO: refactor dual memory system into a templated parameter allocator class,
 		and refactor proxyview and writer into a single class controlled by const overloads.
 
@@ -140,6 +140,22 @@ namespace cpl
 			inline std::size_t getItRange(std::size_t index) const noexcept
 			{
 				return index ? cursor : bsize - cursor;
+			}
+
+			/// <summary>
+			/// Alters the cursor position. Capped at size()
+			/// </summary>
+			void seek(std::size_t newCursor) noexcept
+			{
+				cursor = std::min(bsize, newCursor);
+			}
+
+			/// <summary>
+			/// Alters the cursor position with a circular offset
+			/// </summary>
+			void offset(ssize_t offset) noexcept
+			{
+				cursor = cpl::Math::mod((ssize_t)cursor + offset, (ssize_t)bsize);
 			}
 
 			~IteratorBase()
@@ -261,7 +277,7 @@ namespace cpl
 			/// Copies the data from head into mem.
 			/// Safe for any bufSize, but it will wrap around, producing a circular output.
 			/// </summary>
-			void copyFromHead(const T * mem, std::size_t bufSize) const noexcept
+			void copyFromHead(T * mem, std::size_t bufSize) const noexcept
 			{
 				// TODO: if bufSize > size() only copy remainder
 				// TODO: handle mem + bufsize > ptrsize()
@@ -269,6 +285,9 @@ namespace cpl
 				ssize_t n = bufSize;
 
 				Types::fuint_t it = 0;
+
+				if (this->bsize == 0)
+					return;
 
 				while (n > 0)
 				{
@@ -326,6 +345,9 @@ namespace cpl
 			/// </summary>
 			void copyIntoHead(const T * mem, std::size_t bufSize)
 			{
+				if (this->bsize == 0)
+					return;
+
 				// TODO: handle mem + bufsize > ptrsize()
 				// TODO: handle space > ssize_t::max()
 				ssize_t n = (ssize_t)bufSize + std::min((ssize_t)this->size() - (ssize_t)bufSize, (ssize_t)0);
@@ -347,7 +369,7 @@ namespace cpl
 
 			void copyIntoHead(const IteratorBase & other, std::size_t bufSize, ssize_t offset = 0)
 			{
-				if (other.bsize == 0)
+				if (other.bsize == 0 || this->bsize == 0)
 					return;
 
 				auto start = static_cast<ssize_t>(other.cursor) + (static_cast<ssize_t>(other.bsize) + offset);
@@ -387,14 +409,6 @@ namespace cpl
 			{
 				this->buffer[this->cursor] = newElement;
 				advance(1);
-			}
-
-			/// <summary>
-			/// Alters the cursor position. Capped at size()
-			/// </summary>
-			void seek(std::size_t newCursor) noexcept
-			{
-				cursor = std::min(this->bsize, newCursor);
 			}
 
 			/// <summary>

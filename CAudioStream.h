@@ -1176,6 +1176,11 @@ namespace cpl
 			return channelNames;
 		}
 
+		std::size_t getApproximateInFlightPackets() const noexcept
+		{
+			return audioFifo.enqueuededElements();
+		}
+
 	protected:
 		template<std::memory_order order = std::memory_order_relaxed>
 		inline void lpFilterTimeToMeasurement(std::atomic<double> & old, double newTime, double timeFraction)
