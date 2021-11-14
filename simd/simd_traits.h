@@ -31,13 +31,14 @@
 #define CPL_SIMD_TRAITS_H
 
 #include "../Types.h"
+#include <type_traits>
 
 namespace cpl
 {
 	namespace simd
 	{
 		using namespace cpl::Types;
-
+#ifdef CPL_MSVC
 		template<typename V>
 		struct is_simd : public std::false_type {};
 
@@ -59,6 +60,22 @@ namespace cpl
 		template<>
 		struct is_simd<v256si> : public std::true_type {};
 
+#else
+	
+	template<class T>
+	struct is_simd {
+		static std::false_type test(...);
+
+		template<class B>
+		static auto test(B) ->
+			decltype(__builtin_convertvector(std::declval<B>(), B), std::true_type{});
+
+		static constexpr bool value = decltype(test(std::declval<T>()))::value;
+	};
+	
+	
+#endif
+	
 		template<typename V>
 		struct only_simd : public std::false_type {};
 
