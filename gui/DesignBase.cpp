@@ -126,7 +126,7 @@ namespace cpl
 			"Used for seperating/dividing sections of other colours."
 		},
 		{
-			{ 153, 153, 102 },	//Colour colourSelFont(153, 153, 102);
+			{ 183, 183, 132 },	//Colour colourSelFont(153, 153, 102);
 			"Selected Text",
 			"Colour of text, that is selected."
 		},
@@ -181,7 +181,9 @@ namespace cpl
 		{ ComboBox::textColourId, ColourEntry::AuxillaryText },
 
 		// text editors
+		{ juce::TextEditor::backgroundColourId, ColourEntry::Deactivated },
 		{ juce::TextEditor::focusedOutlineColourId, ColourEntry::Auxillary },
+		{ juce::TextEditor::highlightColourId, ColourEntry::Activated },
 		{ juce::TextEditor::outlineColourId, ColourEntry::Activated },
 		{ juce::TextEditor::textColourId, ColourEntry::AuxillaryText },
 		{ juce::TextEditor::highlightedTextColourId, ColourEntry::SelectedText },
@@ -190,6 +192,9 @@ namespace cpl
 		{ juce::Slider::textBoxBackgroundColourId, ColourEntry::Deactivated },
 		{ juce::Slider::textBoxHighlightColourId, ColourEntry::SelectedText },
 		{ juce::Slider::textBoxOutlineColourId, ColourEntry::Separator },
+
+		// carets and such
+		{ juce::CaretComponent::caretColourId, ColourEntry::ControlText },
 
 		// colour selectors
 		{ ColourSelector::backgroundColourId, ColourEntry::Deactivated },
