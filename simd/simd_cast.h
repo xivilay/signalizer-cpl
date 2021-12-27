@@ -107,9 +107,9 @@ namespace cpl
 		////////////////////////////////////// reinterpret_vector_cast
 
 		// identity reinterpret_cast
-		template<typename Vdest>
-		CPL_SIMD_FUNC Vdest
-			reinterpret_vector_cast(Vdest in)
+		template<typename Vto, typename Vfrom>
+		CPL_SIMD_FUNC typename std::enable_if<std::is_same<Vto, Vfrom>::value, Vto>::type
+			reinterpret_vector_cast(Vfrom in)
 		{
 			return in;
 		}
@@ -119,7 +119,8 @@ namespace cpl
 		CPL_SIMD_FUNC typename std::enable_if<
 			sizeof(Vfrom) == sizeof(Vto) &&
 			!is_simd<Vfrom>::value &&
-			!is_simd<Vto>::value,
+			!is_simd<Vto>::value &&
+			!std::is_same<Vto, Vfrom>::value,
 			Vto>::type
 			reinterpret_vector_cast(Vfrom Vin)
 		{
@@ -136,7 +137,8 @@ namespace cpl
 		CPL_SIMD_FUNC typename std::enable_if<
 			sizeof(Vfrom) == sizeof(Vto) &&
 			is_simd<Vfrom>::value &&
-			is_simd<Vto>::value,
+			is_simd<Vto>::value &&
+			!std::is_same<Vto, Vfrom>::value,
 			Vto>::type
 			reinterpret_vector_cast(Vfrom Vin)
 		{
@@ -144,10 +146,9 @@ namespace cpl
 		}
 	
 #else
-	
 		// primary template
 		template<typename Vto, typename Vfrom>
-		CPL_SIMD_FUNC Vto
+		CPL_SIMD_FUNC typename std::enable_if<!std::is_same<Vto, Vfrom>::value && is_simd<Vfrom>::value && is_simd<Vto>::value, Vto>::type
 			reinterpret_vector_cast(Vfrom Vin);
 	
 		/*
@@ -155,7 +156,7 @@ namespace cpl
 		*/
 		template<>
 		CPL_SIMD_FUNC v4sf
-			reinterpret_vector_cast2<v4sf>(v128i Vin)
+			reinterpret_vector_cast<v4sf>(v128i Vin)
 		{
 			return _mm_castsi128_ps(Vin);
 		}
