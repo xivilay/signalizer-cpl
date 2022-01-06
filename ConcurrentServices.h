@@ -58,6 +58,12 @@ namespace cpl
 	{
 	public:
 		ABoolFlag() : flag(false) {}
+		ABoolFlag(ABoolFlag&& other) noexcept : flag(other.flag.load(std::memory_order_acquire)) {}
+		ABoolFlag& operator =(ABoolFlag&& other) noexcept
+		{
+			flag.store(other.flag.load(std::memory_order_acquire));
+			return *this;
+		}
 
 		ABoolFlag & operator = (bool val)
 		{

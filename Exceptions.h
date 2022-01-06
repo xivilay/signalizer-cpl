@@ -129,5 +129,12 @@ namespace cpl
 
 	#define CPL_NOTIMPLEMENTED_EXCEPTION() \
 			CPL_RUNTIME_EXCEPTION_SPECIFIC("The requested behaviour is not implemented (yet)", cpl::CPLNotImplementedException)
+
+	#ifdef CPL_MSVC
+		#define CPL_UNREACHABLE() __assume(0)
+	#else
+		#define CPL_UNREACHABLE() __builtin_unreachable()
+	#endif
+
 }
 #endif
