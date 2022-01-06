@@ -121,6 +121,7 @@
 #include "../Misc.h"
 #include "../ProgramVersion.h"
 #include "../Exceptions.h"
+#include "../lib/weak_atomic.h"
 
 namespace cpl
 {
@@ -740,6 +741,36 @@ namespace cpl
 		CSerializer& operator << (const std::atomic<T> & object)
 		{
 			return (*this) << object.load(std::memory_order_acquire);
+		}
+
+		template<typename T>
+		CSerializer& operator >> (weak_atomic<T>& object)
+		{
+			T temp;
+			(*this) >> temp;
+			object = temp;
+			return *this;
+		}
+
+		template<typename T>
+		CSerializer& operator >> (relaxed_atomic<T>& object)
+		{
+			T temp;
+			(*this) >> temp;
+			object = temp;
+			return *this;
+		}
+
+		template<typename T>
+		CSerializer& operator << (const weak_atomic<T>& object)
+		{
+			return (*this) << object.load();
+		}
+
+		template<typename T>
+		CSerializer& operator << (const relaxed_atomic<T>& object)
+		{
+			return (*this) << object.load();
 		}
 
 		inline CSerializer & operator >> (Serializable * object)

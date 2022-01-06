@@ -36,6 +36,7 @@
 #include "../Utility.h"
 #include <atomic>
 #include <type_traits>
+#include "weak_atomic.h"
 
 #if defined(__C11__) && defined(CPL_CLANG)
 #include <stdatomic.h>
@@ -236,11 +237,11 @@ namespace cpl
 		/// <summary>
 		/// If set, try to grow the freeElements queue
 		/// </summary>
-		std::atomic_bool enqueuedDataAllocations;
+		weak_atomic<bool> enqueuedDataAllocations;
 		/// <summary>
 		/// If set, try to grow the queue.
 		/// </summary>
-		std::atomic_bool enqueuedQueueAllocations;
+		weak_atomic<bool> enqueuedQueueAllocations;
 	};
 
 	template<typename T>
