@@ -72,6 +72,7 @@
 #include "lib/md5/md5.cpp"
 #include "process/Process.cpp"
 #include "Exceptions.cpp"
+#include "AudioStream.cpp"
 
 #if defined(CPL_HINT_FONT)
 #include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
