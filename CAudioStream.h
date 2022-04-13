@@ -400,8 +400,7 @@ namespace cpl
 		typedef typename cpl::CLIFOStream<T, storageAlignment> AudioBuffer;
 		typedef typename cpl::CLIFOStream<T, storageAlignment>::ProxyView AudioBufferView;
 		typedef T DataType;
-		typedef typename AudioBuffer::IteratorBase::iterator BufferIterator;
-		typedef typename AudioBuffer::IteratorBase::const_iterator CBufferIterator;
+		typedef typename AudioBuffer::IteratorBase::const_iterator BufferIterator;
 		typedef CAudioStream<T, PacketSize> StreamType;
 
 		struct Playhead
@@ -585,7 +584,7 @@ namespace cpl
 					return audioSource.addListener(this, force).second;
 				};
 
-				if (firstTry.second || (tryMore && Misc::WaitOnCondition(milisecondsToTryFor, functor, 100)))
+				if (firstTry.second || (tryMore && Misc::WaitOnCondition(milisecondsToTryFor, functor, 20)))
 				{
 					return true;
 				}
@@ -1601,14 +1600,18 @@ namespace cpl
 							{
 								if (signalChange)
 									rawListener->sourcePropertiesChangedAsync(*this, oldInfo);
-								// TODO: exception handling?
-								mask |= (unsigned)rawListener->onAsyncAudio
-								(
-									*this,
-									audioInput.pointer.data(),
-									channels,
-									audioInput.containedSamples
-								);
+
+								if (audioInput.containedSamples > 0)
+								{
+									// TODO: exception handling?
+									mask |= (unsigned)rawListener->onAsyncAudio
+									(
+										*this,
+										audioInput.pointer.data(),
+										channels,
+										audioInput.containedSamples
+									);
+								}
 							}
 						}
 

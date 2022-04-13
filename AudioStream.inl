@@ -205,6 +205,7 @@ namespace cpl
 				}
 
 				bufferPlayhead = playhead;
+				bufferInfo = info;
 			}
 			else
 			{

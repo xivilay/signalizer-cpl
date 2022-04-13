@@ -242,6 +242,8 @@ namespace cpl
 			AudioStreamInfo() = default;
 		};
 
+		using Info = AudioStreamInfo;
+
 	private:
 
 		typedef std::variant<ProducerInfo, AudioPacket, ArrangementData, TransportData, ChannelNameData> ProducerFrame;
@@ -406,8 +408,8 @@ namespace cpl
 			typedef typename AudioBuffer::IteratorBase::iterator iterator;
 			typedef typename AudioBuffer::IteratorBase::const_iterator const_iterator;
 
-			AudioBufferAccess(std::mutex& m, const std::vector<AudioBuffer>& audioChannels, const Playhead& ph)
-				: lock(m), audioChannels(audioChannels), playhead(ph)
+			AudioBufferAccess(std::mutex& m, const std::vector<AudioBuffer>& audioChannels, const Playhead& ph, const AudioStreamInfo& info)
+				: lock(m), audioChannels(audioChannels), playhead(ph), info(info)
 			{
 
 			}
@@ -416,6 +418,11 @@ namespace cpl
 			AudioBufferAccess& operator =(AudioBufferAccess&& other) = default;
 			AudioBufferAccess(const AudioBufferAccess &) = delete;
 			AudioBufferAccess& operator = (const AudioBufferAccess &) = delete;
+
+			const AudioStreamInfo& getInfo() const noexcept
+			{
+				return info;
+			}
 
 			AudioBufferView getView(std::size_t channel) const
 			{
@@ -461,9 +468,12 @@ namespace cpl
 
 		private:
 			const Playhead& playhead;
+			const AudioStreamInfo& info;
 			const std::vector<AudioBuffer>& audioChannels;
 			std::unique_lock<std::mutex> lock;
 		};
+
+		using BufferAccess = AudioBufferAccess;
 
 		struct ListenerContext;
 		class Reference;
@@ -595,7 +605,7 @@ namespace cpl
 			/// </summary>
 			AudioBufferAccess getAudioBufferViews()
 			{
-				return { aBufferMutex, audioHistoryBuffers, bufferPlayhead };
+				return { aBufferMutex, audioHistoryBuffers, bufferPlayhead, bufferInfo };
 			}
 
 			/// <summary>
@@ -653,7 +663,7 @@ namespace cpl
 			};
 
 			Playhead playhead, bufferPlayhead;
-			AudioStreamInfo info, oldInfo;
+			AudioStreamInfo info, oldInfo, bufferInfo;
 			ChannelMatrix audioInput;
 			std::vector<std::vector<T>> deferredAudioInput;
 			std::vector<AudioBuffer> audioHistoryBuffers;
@@ -810,7 +820,7 @@ namespace cpl
 			/// </summary>
 			AudioBufferAccess getAudioBufferViews()
 			{
-				return { parent.aBufferMutex, parent.audioHistoryBuffers, parent.bufferPlayhead };
+				return { parent.aBufferMutex, parent.audioHistoryBuffers, parent.bufferPlayhead, parent.bufferInfo };
 			}
 
 			const AudioStreamInfo& getInfo() const noexcept
