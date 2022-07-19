@@ -202,13 +202,11 @@ namespace cpl
 
 		struct ProducerInfo
 		{
-			ProducerInfo() = default;
+			double sampleRate {};
 
-			double sampleRate;
-
-			std::uint32_t anticipatedSize;
-			std::uint8_t channels;
-			bool isSuspended;
+			std::uint32_t anticipatedSize {};
+			std::uint8_t channels {};
+			bool isSuspended {};
 		};
 
 		struct ConsumerInfo
@@ -216,14 +214,14 @@ namespace cpl
 			ConsumerInfo() = default;
 
 			std::uint64_t
-				audioHistorySize,
-				audioHistoryCapacity;
+				audioHistorySize {},
+				audioHistoryCapacity {};
 
 			bool
 				/// <summary>
 				/// If true, stores the last audioHistorySize samples in a circular buffer.
 				/// </summary>
-				storeAudioHistory,
+				storeAudioHistory {},
 				/// <summary>
 				/// If set, the async subsystem will block on the audio history buffers until
 				/// they are released back into the stream - this blocks async audio updates,
@@ -231,7 +229,7 @@ namespace cpl
 				/// If not, samples will instead get queued up for insertion into the history
 				/// buffers
 				/// </summary>
-				blockOnHistoryBuffer;
+				blockOnHistoryBuffer {};
 		};
 
 		/// <summary>
@@ -490,17 +488,19 @@ namespace cpl
 			inline friend bool operator != (const Handle& left, const Handle& right)
 			{
 				return !(left == right);
+
 			}
 
 			inline friend bool operator < (const Handle& left, const Handle& right)
 			{
-				return left < right;
+				return left.handle < right.handle;
 			}
+
+			Handle(const Handle&) = default;
+			Handle& operator=(const Handle&) = default;
 
 		private:
 			Handle(AudioStream* stream) : handle(stream) {}
-			Handle(const Handle&) = default;
-			Handle& operator=(const Handle&) = default;
 			AudioStream* handle;
 		};
 
@@ -537,7 +537,7 @@ namespace cpl
 			std::shared_ptr<StreamType> stream;
 			Reference() = default;
 			Reference(Reference&& ref)
-				: stream(std::move(stream))
+				: stream(std::move(ref.stream))
 			{
 			}
 		public:
@@ -546,25 +546,28 @@ namespace cpl
 
 		struct ExclusiveDebugScope
 		{
-			ExclusiveDebugScope(ABoolFlag& flag)
+			ExclusiveDebugScope(std::atomic_flag& flag)
 				: flag(flag)
 			{
-				if (flag.cas(true) == true)
+				if (flag.test_and_set(std::memory_order_release))
 				{
-					flag.cas(false);
+					flag.clear();
 					CPL_RUNTIME_EXCEPTION("Re-entrancy / concurrency detected in audio stream producer");
 				}
 			}
 
 			~ExclusiveDebugScope() noexcept(false)
 			{
-				if (flag.cas(false) == false)
+				// TODO: use test() in C++20
+				if (!flag.test_and_set(std::memory_order_release))
 				{
 					CPL_RUNTIME_EXCEPTION("Re-entrancy / concurrency detected in audio stream producer");
 				}
+
+				flag.clear();
 			}
 
-			ABoolFlag& flag;
+			std::atomic_flag& flag;
 		};
 
 		class Output final : public Reference
@@ -685,23 +688,31 @@ namespace cpl
 
 		struct FrameBatch
 		{
-			FrameBatch(AudioStream& stream)
-				: FrameBatch(stream.output.lock(), &stream)
+			template <typename T>
+			bool isEmpty(const std::weak_ptr<T>& w) 
 			{
+				return w.owner_before(std::weak_ptr<T>{}) || std::weak_ptr<T>{}.owner_before(w);
 			}
 
-			FrameBatch(std::shared_ptr<Output> output, AudioStream* stream = nullptr)
-				: output(output), stream(stream)
+			FrameBatch(AudioStream& audioStream)
+				: stream(&audioStream)
 			{
-				if (output)
-					output->beginFrameProcessing();
+				if (!isEmpty(audioStream.output))
+				{
+					output = audioStream.output.lock();
+					// if the output died concurrently between the test and the lock.
+					if (output)
+						output->beginFrameProcessing();
+					else
+						stream = nullptr;
+				}
 			}
 
 			bool submitFrame(ProducerFrame&& frame)
 			{
 				if (output)
 					output->handleFrame(std::move(frame));
-				else
+				else if(stream)
 					return stream->publishFrame(std::move(frame));
 
 				return true;
@@ -754,18 +765,19 @@ namespace cpl
 				ExclusiveDebugScope scope(reentrancy);
 
 				func(internalInfo);
-
-				stream->publishFrame(ProducerFrame(internalInfo));
+				FrameBatch batch(*stream);
+				batch.submitFrame(ProducerFrame(internalInfo));
 			}
 
-			bool enqueueChannelName(std::size_t index, std::string&& name)
+			void enqueueChannelName(std::size_t index, std::string&& name)
 			{
 				ExclusiveDebugScope scope(reentrancy);
 
 				ProducerFrame frame;
 				frame.emplace<ChannelNameData>(ChannelNameData{ index, std::move(name) });
 
-				return stream->publishFrame(std::move(frame));
+				FrameBatch batch(*stream);
+				batch.submitFrame(std::move(frame));
 			}
 
 			~Input()
@@ -779,12 +791,32 @@ namespace cpl
 
 		private:
 
+			struct moveable_flag : public std::atomic_flag
+			{
+				moveable_flag(moveable_flag&& other)
+				{
+					// TODO: Fix in C++20 when we have test()
+					std::memcpy(this, &other, sizeof(*this));
+				}
+
+				moveable_flag& operator == (moveable_flag&& other)
+				{
+					// TODO: Fix in C++20 when we have test()
+					std::memcpy(this, &other, sizeof(*this));
+				}
+
+				moveable_flag()
+				{
+					clear();
+				}
+			};
+
 			Input() = default;
 
 			Playhead playhead;
 			ProducerInfo internalInfo;
-			bool framesWereDropped, problemsPushingPlayHead;
-			mutable ABoolFlag reentrancy;
+			bool framesWereDropped{}, problemsPushingPlayHead{};
+			mutable moveable_flag reentrancy;
 		};
 
 		struct ListenerContext
@@ -894,6 +926,7 @@ namespace cpl
 			old = newTime + coeff * old - newTime;
 		}
 		
+		// use FrameBatch unless internally calling.
 		bool publishFrame(ProducerFrame&& frame)
 		{
 			if (!audioFifo->pushElement(std::move(frame)))

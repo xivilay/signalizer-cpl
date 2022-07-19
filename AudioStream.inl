@@ -366,13 +366,7 @@ namespace cpl
 		// when it returns false, its time to quit this thread.
 		while (stream->audioFifo->popElementBlocking(recv))
 		{
-			auto shared = output.lock();
-			if (!shared)
-				return;
-
-			FrameBatch batch(shared);
-			// each time we get into here, it's very likely there's a bunch of messages waiting.
-			auto numExtraEntries = stream->audioFifo->enqueuededElements();
+			FrameBatch batch(*stream);
 
 			// always resize queue before emptying
 			if (pops++ > 10)
@@ -383,12 +377,19 @@ namespace cpl
 
 			batch.submitFrame(std::move(recv));
 
-			for (size_t i = 0; i < numExtraEntries; i++)
+			std::size_t numExtraEntries = 0;
+			do
 			{
-				if (!stream->audioFifo->popElementBlocking(recv))
-					return;
-				batch.submitFrame(std::move(recv));
-			}
+				// each time we get into here, it's very likely there's a bunch of messages waiting.
+				numExtraEntries = stream->audioFifo->enqueuededElements();
+
+				for (size_t i = 0; i < numExtraEntries; i++)
+				{
+					if (!stream->audioFifo->popElementBlocking(recv))
+						return;
+					batch.submitFrame(std::move(recv));
+				}
+			} while (numExtraEntries != 0);
 		}
 	}
 
