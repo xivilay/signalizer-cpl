@@ -91,7 +91,7 @@ namespace cpl
 			static_assert(PacketSize > data_alignment + sizeof(T), "Audio packet cannot hold a single element");
 
 			AudioPacket(PackingType channelConfiguration, std::uint8_t numChannels, std::uint16_t elementsUsed)
-				: size(elementsUsed), channels(numChannels)
+				: size(elementsUsed), channels(numChannels), packing(channelConfiguration)
 			{
 				static_assert(sizeof(AudioPacket) == PacketSize, "Wrong packing");
 			}
@@ -689,7 +689,7 @@ namespace cpl
 		struct FrameBatch
 		{
 			template <typename T>
-			bool isEmpty(const std::weak_ptr<T>& w) 
+			bool hasContents(const std::weak_ptr<T>& w) 
 			{
 				return w.owner_before(std::weak_ptr<T>{}) || std::weak_ptr<T>{}.owner_before(w);
 			}
@@ -697,7 +697,7 @@ namespace cpl
 			FrameBatch(AudioStream& audioStream)
 				: stream(&audioStream)
 			{
-				if (!isEmpty(audioStream.output))
+				if (hasContents(audioStream.output))
 				{
 					output = audioStream.output.lock();
 					// if the output died concurrently between the test and the lock.
@@ -706,6 +706,13 @@ namespace cpl
 					else
 						stream = nullptr;
 				}
+			}
+
+			FrameBatch(std::shared_ptr<Output>&& out)
+				: output(std::move(out)), stream(nullptr)
+			{
+				if (output)
+					output->beginFrameProcessing();
 			}
 
 			bool submitFrame(ProducerFrame&& frame)

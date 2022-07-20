@@ -102,23 +102,36 @@ namespace cpl
 	{
 		auto channels = audioInput.buffer.size();
 
-		bool signalChange = producerInfoChange || audioHistoryBuffers.size() != channels;
+		bool signalChange = producerInfoChange;
 		producerInfoChange = false;
 
 		ListenerContext ctx(*this);
 
-		if (inputChanges)
+		if (!inputChanges)
+		{
+			signalChange = signalChange || (info.storeAudioHistory && audioHistoryBuffers.size() != channels);
+		}
+		else
 		{
 			std::lock_guard<std::mutex> lock(inputCommandMutex);
 
-			signalChange = signalChange || consumerInfoChange;
+			if (consumerInfoChange)
+			{
+				signalChange = true;
+				static_cast<ConsumerInfo&>(info) = inputInfo;
+				consumerInfoChange = false;
+			}
+
+			signalChange = signalChange || (info.storeAudioHistory && audioHistoryBuffers.size() != channels);
 
 			for (auto& listenerCommand : inputListeners)
 			{
 				if (listenerCommand.wasAdded)
 				{
 					auto& newListener = listeners.emplace_back(std::move(listenerCommand.listener));
-					newListener->onStreamPropertiesChanged(ctx, info);
+					// otherwise, it will happen further down.
+					if(!signalChange)
+						newListener->onStreamPropertiesChanged(ctx, info);
 				}
 				else
 				{
@@ -301,6 +314,7 @@ namespace cpl
 		problemsPushingPlayHead = anyNewProblemsPushingPlayHeads;
 
 		std::size_t droppedSamples = 0;
+		bool didDropAnyFrames = false;
 
 		// publish all data to audio consumer thread
 		if (numChannels == 1)
@@ -317,7 +331,10 @@ namespace cpl
 					std::memcpy(packet.begin(), (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioPacket::element_size));
 
 					if (!batch.submitFrame(std::move(frame)))
-						framesWereDropped = true;
+					{
+						didDropAnyFrames = true;
+						stream->droppedFrames.fetch_add(aSamples);
+					}
 				}
 
 				n -= aSamples;
@@ -343,12 +360,18 @@ namespace cpl
 					}
 
 					if (!batch.submitFrame(std::move(frame)))
-						framesWereDropped = true;
+					{
+						didDropAnyFrames = true;
+						stream->droppedFrames.fetch_add(aSamples);
+					}
 				}
 
 				n -= aSamples;
 			}
 		}
+
+		if (didDropAnyFrames)
+			framesWereDropped = true;
 
 		// post new measures
 		lpFilterTimeToMeasurement(stream->producerOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
@@ -366,7 +389,7 @@ namespace cpl
 		// when it returns false, its time to quit this thread.
 		while (stream->audioFifo->popElementBlocking(recv))
 		{
-			FrameBatch batch(*stream);
+			FrameBatch batch(output.lock());
 
 			// always resize queue before emptying
 			if (pops++ > 10)
