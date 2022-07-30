@@ -619,6 +619,7 @@ namespace cpl
 			{
 				std::lock_guard<std::mutex> lock(inputCommandMutex);
 				func(inputInfo);
+				inputInfo.audioHistorySize = std::min(inputInfo.audioHistorySize, inputInfo.audioHistoryCapacity);
 				inputChanges = true;
 				consumerInfoChange = true;
 			}
