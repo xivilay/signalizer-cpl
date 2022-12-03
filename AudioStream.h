@@ -585,9 +585,11 @@ namespace cpl
 			void addListener(std::shared_ptr<Listener> listener)
 			{
 				std::lock_guard<std::mutex> lock(inputCommandMutex);
+				stream->outputListenerCount.fetch_add(1);
 				inputListeners.emplace_back(ListenerCommand{ std::move(listener), true });
 				inputChanges = true;
 			}
+
 			/// <summary>
 			/// Takes note to remove a particular listener when possible if it was previously
 			/// added, it might not happen instantly.
@@ -595,6 +597,8 @@ namespace cpl
 			void removeListener(std::shared_ptr<Listener> listener)
 			{
 				std::lock_guard<std::mutex> lock(inputCommandMutex);
+				stream->outputListenerCount.fetch_add(-1);
+
 				inputListeners.emplace_back(ListenerCommand{ std::move(listener), false });
 				inputChanges = true;
 			}
@@ -788,6 +792,24 @@ namespace cpl
 				batch.submitFrame(std::move(frame));
 			}
 
+			/// <summary>
+			/// Checks to see if there currently is anyone listening to the output.
+			/// If not, you're free to skip calling <see cref="processIncomingRTAudio"/>
+			/// until the next time this returns true, in which case the input will remember
+			/// to repush playheads.
+			/// 
+			/// This can save on overhead.
+			/// </summary>
+			bool isAnyoneListening()
+			{
+				int listenerCount = stream->outputListenerCount;
+				CPL_RUNTIME_ASSERTION(listenerCount >= 0);
+
+				haltedDueToNoListeners = listenerCount == 0;
+
+				return !haltedDueToNoListeners;
+			}
+
 			~Input()
 			{
 				if (stream)
@@ -823,7 +845,7 @@ namespace cpl
 
 			Playhead playhead;
 			ProducerInfo internalInfo;
-			bool framesWereDropped{}, problemsPushingPlayHead{};
+			bool framesWereDropped{}, problemsPushingPlayHead{}, haltedDueToNoListeners{};
 			mutable moveable_flag reentrancy;
 		};
 
@@ -958,6 +980,7 @@ namespace cpl
 
 		relaxed_atomic<double> producerOverhead{}, producerUsage{};
 		relaxed_atomic<std::size_t> droppedFrames{};
+		relaxed_atomic<int> outputListenerCount;
 
 		std::weak_ptr<Output> output;
 		std::unique_ptr<FrameQueue> audioFifo;

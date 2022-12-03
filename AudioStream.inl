@@ -251,12 +251,9 @@ namespace cpl
 	template<typename T, std::size_t PacketSize>
 	inline void AudioStream<T, PacketSize>::Output::ensureAudioHistoryStorage(std::size_t channels, std::size_t pSize, std::size_t pCapacity, const std::lock_guard<std::mutex>&)
 	{
-		// only add channels...
-		const auto nc = std::max(audioHistoryBuffers.size(), channels);
-
-		if (audioHistoryBuffers.size() != nc)
+		if (audioHistoryBuffers.size() != channels)
 		{
-			audioHistoryBuffers.resize(nc);
+			audioHistoryBuffers.resize(channels);
 		}
 		for (std::size_t i = 0; i < channels; ++i)
 		{
@@ -290,8 +287,9 @@ namespace cpl
 		ProducerFrame frame;
 
 		bool anyNewProblemsPushingPlayHeads = false;
+		bool discontinuity = framesWereDropped || problemsPushingPlayHead || haltedDueToNoListeners;
 
-		if (framesWereDropped || problemsPushingPlayHead || playhead.transport != oldPlayhead.transport)
+		if (discontinuity || playhead.transport != oldPlayhead.transport)
 		{
 			frame.emplace<TransportData>(playhead.transport);
 			if (!batch.submitFrame(std::move(frame)))
@@ -300,7 +298,7 @@ namespace cpl
 			}
 		}
 
-		if (framesWereDropped || problemsPushingPlayHead || playhead.arrangement != oldPlayhead.arrangement)
+		if (discontinuity || playhead.arrangement != oldPlayhead.arrangement)
 		{
 			frame.emplace<ArrangementData>(playhead.arrangement);
 			if (!batch.submitFrame(std::move(frame)))
