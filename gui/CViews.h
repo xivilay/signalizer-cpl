@@ -183,6 +183,8 @@ namespace cpl
 			graphicsStamp = juce::Time::getHighResolutionTicks();
 			openGLStamp = juce::Time::getHighResolutionTicks();
 			graphicsDelta = openGLDelta = 0.0;
+			openGlEndToEnd = 0;
+			graphicsEndToEnd = 0;
 		}
 
 		/// <summary>
