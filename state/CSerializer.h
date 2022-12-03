@@ -220,7 +220,7 @@ namespace cpl
 			}
 			// add one more byte to include the nullterminator
 			readPtr += size + 1;
-			if (size > 1)
+			if (size > 0)
 			{
 				// notice it reads size bytes from pointer, not
 				// [pointer .. pointer + size] which would be

@@ -218,6 +218,34 @@ namespace cpl
 			CView::detachFromOpenGL(ctx);
 			ctx.setRenderer(nullptr);
 		}
+
+		/// <summary>
+		/// Returns the time it took from the last frame started rendering, till this frame started rendering.
+		/// This can be used as a fraction of how much time you should proceed in this frame.
+		/// Time is in seconds.
+		/// </summary>
+		inline double openGLDeltaTime() const
+		{
+			return openGLDelta;
+		}
+
+		/// <summary>
+		/// Returns the end-to end time it takes between rendering the last openGL frames.
+		/// Can be used to calculate frames per second
+		/// </summary>
+		inline double openGlEndToEndTime() const
+		{
+			return openGlEndToEnd;
+		}
+
+		/// <summary>
+		/// Returns the time it took to render the last openGL frame.
+		/// </summary>
+		inline double openGLFrameTime() const
+		{
+			return openGLFrame;
+		}
+
 		/// <summary>
 		/// Returns the time it took from the last frame started rendering, till this frame started rendering
 		/// This can be used as a fraction of how much time you should proceed in this frame.
@@ -228,15 +256,22 @@ namespace cpl
 		{
 			return graphicsDelta;
 		}
+
 		/// <summary>
-		/// Returns the time it took from the last frame started rendering, till this frame started rendering.
-		/// This can be used as a fraction of how much time you should proceed in this frame.
-		/// Time is in seconds.
+		/// Returns the time it took to render the last 2d graphics frame.
 		/// </summary>
-		/// <returns></returns>
-		inline double openGLDeltaTime() const
+		inline double graphicsFrameTime() const
 		{
-			return openGLDelta;
+			return graphicsFrame;
+		}
+
+		/// <summary>
+		/// Returns the end-to end time it takes between rendering the last openGL frames.
+		/// Can be used to calculate frames per second
+		/// </summary>
+		inline double graphicsGlEndToEndTime() const
+		{
+			return graphicsEndToEnd;
 		}
 
 		void addOpenGLEventListener(OpenGLEventListener * listener)
@@ -257,13 +292,14 @@ namespace cpl
 		{
 			#ifdef CPL_TRACEGUARD_ENTRYPOINTS
 			CPL_TRACEGUARD_START
-				#endif
+			#endif
 			{
 				std::lock_guard<std::mutex> lock(hookMutex);
 				for (auto && l : oglEventListeners)
 					l->onOGLRendering(this);
 			}
-			juce::OpenGLHelpers::resetErrorState();
+			juce::OpenGLHelpers::resetErrorState();			
+			auto start = juce::Time::getHighResolutionTicks();
 			/// <summary>
 			/// If the stack gets corrupted, the next variable should not have been overwritten, and can be used
 			/// for debugging
@@ -272,7 +308,7 @@ namespace cpl
 			volatile CPL_THREAD_LOCAL COpenGLView * _stackSafeThis = this;
 			(void)_stackSafeThis;
 			#endif
-			openGLDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - openGLStamp);
+			openGLDelta = juce::Time::highResolutionTicksToSeconds(start - openGLStamp);
 
 			CPL_DEBUGCHECKGL();
 
@@ -280,8 +316,10 @@ namespace cpl
 
 			CPL_DEBUGCHECKGL();
 
+			auto oldStamp = openGLStamp;
 			openGLStamp = juce::Time::getHighResolutionTicks();
-
+			openGlEndToEnd = juce::Time::highResolutionTicksToSeconds(openGLStamp - oldStamp);
+			openGLFrame = juce::Time::highResolutionTicksToSeconds(openGLStamp - start);
 			#ifdef CPL_TRACEGUARD_ENTRYPOINTS
 			CPL_TRACEGUARD_STOP("OpenGL rendering entry");
 			#endif
@@ -289,9 +327,13 @@ namespace cpl
 
 		void paint(juce::Graphics & g) override final
 		{
-			graphicsDelta = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - graphicsStamp);
+			auto start = juce::Time::getHighResolutionTicks();
+			graphicsDelta = juce::Time::highResolutionTicksToSeconds(start - graphicsStamp);
 			onGraphicsRendering(g);
+			auto oldStamp = graphicsStamp;
 			graphicsStamp = juce::Time::getHighResolutionTicks();
+			graphicsFrame = juce::Time::highResolutionTicksToSeconds(graphicsStamp - start);
+			graphicsEndToEnd = juce::Time::highResolutionTicksToSeconds(graphicsStamp - oldStamp);
 		}
 
 		/// <summary>
@@ -355,8 +397,7 @@ namespace cpl
 		}
 
 	protected:
-		double graphicsDelta;
-		double openGLDelta;
+		cpl::relaxed_atomic<double> graphicsDelta, graphicsFrame, graphicsEndToEnd, openGLDelta, openGLFrame, openGlEndToEnd;
 
 		decltype(juce::Time::getHighResolutionTicks()) graphicsStamp;
 		decltype(juce::Time::getHighResolutionTicks()) openGLStamp;
