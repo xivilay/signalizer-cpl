@@ -22,7 +22,7 @@ namespace cpl
 
 
 	// Concecpt of Parameters: has T getValue(), setValue(T), std::string getName()
-	template<typename T, class TransformerType = VirtualTransformer<T>, class Restricter = ZeroOneClamper<T>, std::memory_order LoadOrdering = std::memory_order_acquire, std::memory_order StoreOrdering = std::memory_order_release>
+	template<typename T, class TransformerType = VirtualTransformer<T>, class Restricter = ZeroOneClamper<T>, std::memory_order LoadOrdering = std::memory_order_relaxed, std::memory_order StoreOrdering = std::memory_order_relaxed>
 	class /* alignas(CPL_CACHEALIGNMENT) */ ThreadedParameter : Utility::COnlyPubliclyMovable
 	{
 	public:
