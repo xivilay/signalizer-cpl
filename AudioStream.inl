@@ -64,6 +64,14 @@ namespace cpl
 		}
 		else
 		{
+			if (!audioInput.isEmpty())
+			{
+				// Potential discontinuity whilst we already batched up some samples.
+				// We have to end and begin to produce a monotonic stream for any listeners.
+				endFrameProcessing();
+				beginFrameProcessing();
+			}
+
 			std::visit(
 				[this](auto && arg)
 				{
@@ -254,6 +262,7 @@ namespace cpl
 		if (audioHistoryBuffers.size() != channels)
 		{
 			audioHistoryBuffers.resize(channels);
+			channelNames.resize(std::max(channelNames.size(), channels));
 		}
 		for (std::size_t i = 0; i < channels; ++i)
 		{

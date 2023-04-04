@@ -262,6 +262,8 @@ namespace cpl
 				}
 			}
 
+			bool isEmpty() const noexcept { return containedSamples == 0; }
+
 			void ensureChannels(std::size_t channels)
 			{
 				ensureSize(channels, buffer.size() ? buffer[0].size() : 0);
@@ -823,7 +825,7 @@ namespace cpl
 
 			struct moveable_flag : public std::atomic_flag
 			{
-				moveable_flag(moveable_flag&& other)
+				moveable_flag(moveable_flag&& other) noexcept
 				{
 					// TODO: Fix in C++20 when we have test()
 					std::memcpy(this, &other, sizeof(*this));
@@ -953,7 +955,7 @@ namespace cpl
 		{
 			const double coeff = std::pow(0.3, timeFraction);
 			newTime /= timeFraction;
-			old = newTime + coeff * old - newTime;
+			old = newTime + coeff * (old - newTime);
 		}
 		
 		// use FrameBatch unless internally calling.
