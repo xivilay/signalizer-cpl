@@ -265,6 +265,7 @@ namespace cpl
 			/// Copies the data from head into mem.
 			/// Safe for any bufSize, but it will wrap around, producing a circular output.
 			/// </summary>
+			template<bool Add = false>
 			void copyFromHead(T * mem, std::size_t bufSize) const noexcept
 			{
 				// TODO: if bufSize > size() only copy remainder
@@ -287,7 +288,18 @@ namespace cpl
 
 					if (part > 0)
 					{
-						std::memcpy(mem + bufSize - n, head, part * sizeof(T));
+						if constexpr (Add)
+						{
+							auto base = mem + bufSize - n;
+							for (ssize_t i = 0; i < part; ++i)
+							{
+								base[i] += head[i];
+							}
+						}
+						else
+						{
+							std::memcpy(mem + bufSize - n, head, part * sizeof(T));
+						}
 					}
 
 					it ^= 1;

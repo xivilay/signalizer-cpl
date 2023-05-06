@@ -61,12 +61,17 @@ namespace cpl
 			return *this;
 		}
 
-		T load() const 
+		T load() const noexcept
 		{ 
 			return value.load(std::memory_order_relaxed);
 		}
 
-		T fetch_add(T increment)
+		void store(const T& newValue) noexcept
+		{
+			return value.store(newValue, std::memory_order_relaxed);
+		}
+
+		T fetch_add(T increment) noexcept
 		{
 			return value.fetch_add(increment, std::memory_order_relaxed);
 		}
@@ -105,12 +110,17 @@ namespace cpl
 			return *this;
 		}
 
-		T load() const
+		T load() const noexcept
 		{
 			return value.load(std::memory_order_acquire);
 		}
 
-		T fetch_add(T increment)
+		void store(const T& newValue) noexcept
+		{
+			return value.store(newValue, std::memory_order_release);
+		}
+
+		T fetch_add(T increment) noexcept
 		{
 			return value.fetch_add(increment, std::memory_order_acquire);
 		}
