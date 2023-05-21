@@ -344,9 +344,6 @@
 		// sets a standard for packing structs.
 		// this is enforced on msvc by using #pragma pack()
 		#define PACKED __attribute__((packed))
-		// gives compability on gcc and llvm, and adds security on msvc
-		#define sprintf_s sprintf
-		#define strcpy_s strcpy
 	#else
 		#define PACKED
 	#endif

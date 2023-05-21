@@ -35,15 +35,21 @@
 
 namespace cpl
 {
-	template<typename ... Args>
-	std::string format(const cpl::string_ref& format, Args ... args)
+	template<typename... Args>
+	inline std::string format(const cpl::string_ref format, Args&& ... args)
 	{
 		using namespace std;
-		size_t size = snprintf(nullptr, 0, format.data(), args ...) + 1;
+		size_t size = snprintf(nullptr, 0, format.data(), std::forward<Args>(args)...) + 1;
 		string ret;
 		ret.resize(size);
-		snprintf(ret.data(), size, format.data(), args ...);
+		snprintf(ret.data(), size, format.data(), std::forward<Args>(args)...);
 		return move(ret);
+	}
+
+	template<std::size_t Size, typename... Args>
+	inline int sprintfs(char (&dest)[Size], const cpl::string_ref format, Args&&... args)
+	{
+		return std::snprintf(dest, Size, format.data(), std::forward<Args>(args)...);
 	}
 } 
 
