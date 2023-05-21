@@ -643,6 +643,15 @@ namespace cpl
 				return measures;
 			}
 
+			/// <summary>
+			/// Report how many samples are postponed for delivery in case the async system had to compete with locks on
+			/// <see cref="getAudioBufferViews"/> due to <see cref="ConsumerInfo::blockOnHistoryBuffer"/> being false.
+			/// </summary>
+			std::size_t getNumDeferredSamples() const noexcept
+			{
+				return numDeferredAsyncSamples;
+			}
+
 			std::size_t getApproximateInFlightPackets() const noexcept
 			{
 				return stream->audioFifo.get() ? stream->audioFifo->enqueuededElements() : 0;
