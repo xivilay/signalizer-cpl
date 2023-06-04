@@ -121,6 +121,7 @@
 #include "../Misc.h"
 #include "../ProgramVersion.h"
 #include "../Exceptions.h"
+#include "../lib/weak_atomic.h"
 
 namespace cpl
 {
@@ -701,6 +702,18 @@ namespace cpl
 			static_assert(delayed_error<T>::value, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
 		}
 
+		template<typename T>
+		CSerializer& operator << (const std::shared_ptr<T>& object)
+		{
+			static_assert(delayed_error<T>::value, "Serialization of std::shared_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+		}
+
+		template<typename T>
+		CSerializer& operator >> (std::shared_ptr<T>& object)
+		{
+			static_assert(delayed_error<T>::value, "Deserialization of std::shared_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+		}
+
 		/// <summary>
 		/// WARNING - if you serialize your OWN objects and the serializer is in BINARY mode,
 		/// please only use verifiable fixed-size objects (like std::uint64_t), IFF you want to
@@ -740,6 +753,36 @@ namespace cpl
 		CSerializer& operator << (const std::atomic<T> & object)
 		{
 			return (*this) << object.load(std::memory_order_acquire);
+		}
+
+		template<typename T>
+		CSerializer& operator >> (weak_atomic<T>& object)
+		{
+			T temp;
+			(*this) >> temp;
+			object = temp;
+			return *this;
+		}
+
+		template<typename T>
+		CSerializer& operator >> (relaxed_atomic<T>& object)
+		{
+			T temp;
+			(*this) >> temp;
+			object = temp;
+			return *this;
+		}
+
+		template<typename T>
+		CSerializer& operator << (const weak_atomic<T>& object)
+		{
+			return (*this) << object.load();
+		}
+
+		template<typename T>
+		CSerializer& operator << (const relaxed_atomic<T>& object)
+		{
+			return (*this) << object.load();
 		}
 
 		inline CSerializer & operator >> (Serializable * object)

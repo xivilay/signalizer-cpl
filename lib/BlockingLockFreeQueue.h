@@ -35,6 +35,8 @@
 #include "../CMutex.h"
 #include "../Utility.h"
 #include <atomic>
+#include <type_traits>
+#include "weak_atomic.h"
 
 #if defined(__C11__) && defined(CPL_CLANG)
 #include <stdatomic.h>
@@ -61,20 +63,19 @@ namespace cpl
 	/// is empty. 
 	/// </summary>
 	template<typename T>
-	class CBlockingLockFreeQueue
+	class CBlockingLockFreeQueueMovable
 	{
 	public:
 		struct ElementAccess;
 		friend struct ElementAccess;
 
-		CBlockingLockFreeQueue(std::size_t initialSize, std::size_t maxSize)
-			:
-			queue(new moodycamel::ReaderWriterQueue<T>(initialSize)),
-			oldQueue(nullptr),
-			currentNumElements(initialSize),
-			enqueuedDataAllocations(false),
-			enqueuedQueueAllocations(false),
-			maxElements(maxSize)
+		CBlockingLockFreeQueueMovable(std::size_t initialSize, std::size_t maxSize)
+			: queue(new moodycamel::ReaderWriterQueue<T>(initialSize))
+			, oldQueue(nullptr)
+			, currentNumElements(initialSize)
+			, enqueuedDataAllocations(false)
+			, enqueuedQueueAllocations(false)
+			, maxElements(maxSize)
 		{
 
 		}
@@ -86,11 +87,11 @@ namespace cpl
 		/// If enqueueNewAllocations is set, the consumer thread might increase the size at another time, if this call fails.
 		/// </summary>
 		template<bool allocOnFail = false, bool enqueueNewAllocations = true>
-		bool pushElement(const T & data)
+		bool pushElement(T && data)
 		{
 			if (allocOnFail)
 			{
-				if (queue.load()->enqueue(data))
+				if (queue.load()->enqueue(std::move(data)))
 				{
 					semaphore.signal();
 					return true;
@@ -98,7 +99,7 @@ namespace cpl
 			}
 			else
 			{
-				if (queue.load()->try_enqueue(data))
+				if (queue.load()->try_enqueue(std::move(data)))
 				{
 					semaphore.signal();
 					return true;
@@ -216,7 +217,7 @@ namespace cpl
 			return queue.load()->size_approx();
 		}
 
-		~CBlockingLockFreeQueue()
+		~CBlockingLockFreeQueueMovable()
 		{
 			auto * q = queue.load();
 			if (oldQueue)
@@ -224,11 +225,9 @@ namespace cpl
 				delete oldQueue;
 			}
 			delete q;
-
-
 		}
 
-	private:
+	protected:
 		moodycamel::spsc_sema::Semaphore semaphore;
 		std::atomic<moodycamel::ReaderWriterQueue<T> *> queue;
 		moodycamel::ReaderWriterQueue<T> * oldQueue;
@@ -238,11 +237,69 @@ namespace cpl
 		/// <summary>
 		/// If set, try to grow the freeElements queue
 		/// </summary>
-		volatile bool enqueuedDataAllocations;
+		weak_atomic<bool> enqueuedDataAllocations;
 		/// <summary>
 		/// If set, try to grow the queue.
 		/// </summary>
-		volatile bool enqueuedQueueAllocations;
+		weak_atomic<bool> enqueuedQueueAllocations;
 	};
+
+	template<typename T>
+	class CBlockingLockFreeQueueCopyable : public CBlockingLockFreeQueueMovable<T>
+	{
+	public:
+
+		using CBlockingLockFreeQueueMovable<T>::CBlockingLockFreeQueueMovable;
+
+		/// <summary>
+		/// PRODUCER ONLY.
+		/// Tries to enqueue the input data.
+		/// if allocOnFail is false, it will never allocate memory and the complexity is deterministic (wait-free).
+		/// If enqueueNewAllocations is set, the consumer thread might increase the size at another time, if this call fails.
+		/// </summary>
+		template<bool allocOnFail = false, bool enqueueNewAllocations = true>
+		bool pushElement(const T & data)
+		{
+			if (allocOnFail)
+			{
+				if (this->queue.load()->enqueue(data))
+				{
+					this->semaphore.signal();
+					return true;
+				}
+			}
+			else
+			{
+				if (this->queue.load()->try_enqueue(data))
+				{
+					this->semaphore.signal();
+					return true;
+				}
+			}
+			if (enqueueNewAllocations)
+			{
+				this->enqueuedDataAllocations = true;
+			}
+			return false;
+		}
+	};
+
+	template<typename T, typename Enable = void>
+	class CBlockingLockFreeQueue;
+
+	template<typename T>
+	class CBlockingLockFreeQueue<T, typename std::enable_if<std::is_copy_constructible<T>::value>::type>
+		: public CBlockingLockFreeQueueCopyable<T>
+	{
+		using CBlockingLockFreeQueueCopyable::CBlockingLockFreeQueueCopyable;
+	};
+
+	template<typename T>
+	class CBlockingLockFreeQueue<T, typename std::enable_if<!std::is_copy_constructible<T>::value>::type>
+		: public CBlockingLockFreeQueueMovable<T>
+	{
+		using CBlockingLockFreeQueueMovable::CBlockingLockFreeQueueMovable;
+	};
+
 };
 #endif

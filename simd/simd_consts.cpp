@@ -92,7 +92,7 @@ namespace cpl
 		DECLARE_SIMD_CONSTS(minus_one, -1.0);
 		DECLARE_SIMD_CONSTS(minus_two, -2.0);
 		DECLARE_SIMD_CONSTS(half, 0.5);
-		DECLARE_SIMD_CONSTS(quarter, 0.125);
+		DECLARE_SIMD_CONSTS(quarter, 0.25);
 		DECLARE_SIMD_CONSTS(sqrt_two, SQRT_TWO);
 		DECLARE_SIMD_CONSTS(sqrt_half_two, SQRT_HALF_TWO);
 		DECLARE_SIMD_CONSTS(sqrt_half_two_minus, -SQRT_HALF_TWO);

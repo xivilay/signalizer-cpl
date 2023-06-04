@@ -107,13 +107,6 @@ namespace cpl
 			inline const T * begin() const noexcept { return buffer; }
 			inline const T * end() const noexcept { return buffer + bsize; }
 
-			inline T * first() noexcept { return buffer + cursor; }
-			inline T * firstEnd() noexcept { return buffer + bsize; }
-			inline T * second() noexcept { return begin(); }
-			inline T * secondEnd() noexcept { return first(); }
-			inline T * begin() noexcept { return buffer; }
-			inline T * end() noexcept { return buffer + bsize; }
-
 			inline std::size_t size() const noexcept { return bsize; }
 			inline std::size_t cursorPosition() const noexcept { return cursor; }
 
@@ -123,11 +116,6 @@ namespace cpl
 			/// <param name="index"></param>
 			/// <returns></returns>
 			inline const T * getItIndex(std::size_t index) const noexcept
-			{
-				return buffer + (!index) * cursor;
-			}
-
-			inline T * getItIndex(std::size_t index) noexcept
 			{
 				return buffer + (!index) * cursor;
 			}
@@ -277,6 +265,7 @@ namespace cpl
 			/// Copies the data from head into mem.
 			/// Safe for any bufSize, but it will wrap around, producing a circular output.
 			/// </summary>
+			template<bool Add = false>
 			void copyFromHead(T * mem, std::size_t bufSize) const noexcept
 			{
 				// TODO: if bufSize > size() only copy remainder
@@ -299,7 +288,18 @@ namespace cpl
 
 					if (part > 0)
 					{
-						std::memcpy(mem + bufSize - n, head, part * sizeof(T));
+						if constexpr (Add)
+						{
+							auto base = mem + bufSize - n;
+							for (ssize_t i = 0; i < part; ++i)
+							{
+								base[i] += head[i];
+							}
+						}
+						else
+						{
+							std::memcpy(mem + bufSize - n, head, part * sizeof(T));
+						}
 					}
 
 					it ^= 1;
@@ -339,6 +339,19 @@ namespace cpl
 				parent = other.parent;
 				other.parent = other.ncParent = nullptr;
 			}
+
+			inline T* first() noexcept { return this->buffer + this->cursor; }
+			inline T* firstEnd() noexcept { return this->buffer + this->bsize; }
+			inline T* second() noexcept { return this->begin(); }
+			inline T* secondEnd() noexcept { return this->first(); }
+			inline T* begin() noexcept { return this->buffer; }
+			inline T* end() noexcept { return this->buffer + this->bsize; }
+
+			inline T* getItIndex(std::size_t index) noexcept
+			{
+				return this->buffer + (!index) * this->cursor;
+			}
+
 			/// <summary>
 			/// Copies the data from memory into buffer at the head.
 			/// Safe for any bufSize, but it will wrap around.

@@ -123,7 +123,7 @@ namespace cpl
 				if (length != 0)
 				{
 					for (auto elem = rbegin(); elem != rend(); ++elem)
-						(*elem).~T();
+						(void)(*elem).~T();
 				}
 
 				ThreadAllocator::get().free(buffer);

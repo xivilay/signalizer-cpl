@@ -137,7 +137,12 @@ namespace cpl
 		image.setPath(path);
 		if (!image.load())
 		{
-			Misc::MsgBox("Error loading resource " + path + ":" + newl + GetLastOSErrorMessage(), programInfo.name + " error!", Misc::MsgIcon::iStop);
+			Misc::MsgBox(
+				"Error loading resource " + path + ":" + newl + GetLastOSErrorMessage() + newl + 
+				"Perhaps you didn't include the folder the plugin arrived in?", 
+				programInfo.name + " error!", 
+				Misc::MsgIcon::iStop
+			);
 			CPL_BREAKIFDEBUGGED();
 			return nullptr;
 		}
