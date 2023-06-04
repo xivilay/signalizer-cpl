@@ -116,7 +116,7 @@ namespace cpl
 						switch (numVectors)
 						{
 							case 1:
-								internalWindowResonate<V, MultiVector, 1, 1>(data, numSamples); break;
+								internalWindowResonate1<V, MultiVector, 1>(data, numSamples); break;
 							case 3:
 								internalWindowResonate3<V, MultiVector, 1>(data, numSamples); break;
 							case 5:
@@ -131,7 +131,7 @@ namespace cpl
 						switch (numVectors)
 						{
 							case 1:
-								internalWindowResonate<V, MultiVector, 2, 1>(data, numSamples); break;
+								internalWindowResonate1<V, MultiVector, 2>(data, numSamples); break;
 							case 3:
 								internalWindowResonate3<V, MultiVector, 2>(data, numSamples); break;
 							case 5:
@@ -599,6 +599,69 @@ namespace cpl
 							store(state + sC * c + v * vC + k + nR * real, s_r[c][v]); // state: e^i*omega (real)
 							store(state + sC * c + v * vC + k + nR * imag, s_i[c][v]); // state: e^i*omega (imag)
 						}
+					}
+				}
+			}
+
+			template<typename V, class MultiVector, std::size_t inputDataChannels>
+			void internalWindowResonate1(const MultiVector& data, std::size_t numSamples)
+			{
+				using namespace cpl;
+				using namespace cpl::simd;
+
+				auto const vfactor = suitable_container<V>::size;
+				V t0;
+
+				std::size_t nR = numResonators;
+				std::size_t vC = nR * 2; // space filled by a vector buf
+				std::size_t sC = vC; // space filled by all vector bufs
+
+
+				 //  iterate over each filter for each sample for each channel for each vector.
+				for (Types::fint_t k = 0; k < numFilters; k += vfactor)
+				{
+
+					// pointer to current sample
+					typename scalar_of<V>::type* audioInputs[numChannels];
+
+					V p_r, p_i;
+					V s_r[inputDataChannels], s_i[inputDataChannels];
+
+					// and load them
+
+					p_r = load<V>(coeff + k + nR * real); // cos: e^i*omega (real)
+					p_i = load<V>(coeff + k + nR * imag); // sin: e^i*omega (imag)
+
+					for (Types::fint_t c = 0; c < inputDataChannels; ++c)
+					{
+						audioInputs[c] = &data[c][0];
+
+						s_r[c] = load<V>(state + sC * c + k + nR * real);
+						s_i[c] = load<V>(state + sC * c + k + nR * imag);
+					}
+
+					for (Types::fint_t sample = 0; sample < numSamples; ++sample)
+					{
+						for (Types::fint_t c = 0; c < inputDataChannels; ++c)
+						{
+							// combing stage
+							V input = broadcast<V>(audioInputs[c]);
+
+							// v stage (m) (fc +- v * bw)
+							t0 = s_r[c] * p_r - s_i[c] * p_i;
+							s_i[c] = s_r[c] * p_i + s_i[c] * p_r;
+							s_r[c] = t0 + input;
+
+							audioInputs[c]++;
+						}
+
+
+					}
+
+					for (Types::fint_t c = 0; c < inputDataChannels; ++c)
+					{
+						store(state + sC * c + k + nR * real, s_r[c]); // state: e^i*omega (real)
+						store(state + sC * c + k + nR * imag, s_i[c]); // state: e^i*omega (imag)
 					}
 				}
 			}
