@@ -602,7 +602,7 @@ namespace cpl
 					// until it is fixed, we'll just use the ultraspherical window, as 
 					// dolph-chebyshev windows are a special case of ultraspherical windows, with mu = 0
 
-					T xmu = 0;
+					double xmu = 0;
 					octave::signal::ultraspherical_window((int)N, &w[0], 0, std::abs(alpha), alpha < 0 ? octave::signal::uswpt_AttFirst : octave::signal::uswpt_AttLast, 0, &xmu);
 
 
@@ -687,7 +687,7 @@ namespace cpl
 				{
 					if (N == 0)
 						return;
-					T xmu = 0;
+					double xmu = 0;
 					beta = Math::confineTo(beta, -1.5, 6); // rough empirical testing, analytical success depends on N as well, but this should produce valid windows for every N
 					octave::signal::ultraspherical_window((int)N, &w[0], beta, std::abs(alpha), alpha < 0 ? octave::signal::uswpt_AttFirst : octave::signal::uswpt_AttLast, 0, &xmu);
 				}

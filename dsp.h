@@ -235,15 +235,29 @@ namespace cpl
 		}
 
 		template<bool precise>
+		typename std::enable_if<precise, float>::type
+			lzresponse(float x, int size)
+		{
+			return x ? (size * sinf(M_PI * x) * sinf(M_PI * x / size)) / (M_PI * M_PI * x * x) : 1;
+		}
+
+		template<bool precise>
 		typename std::enable_if<precise, double>::type
 			scresponse(double x)
 		{
 			return x ? (sin(M_PI * x)) / (M_PI * x) : 1;
 		}
 
-		template<bool precise>
+		template<typename T, bool precise>
 		typename std::enable_if<!precise, double>::type
 			lzresponse(double x, int size)
+		{
+			return x ? (size * cpl::Math::fastsine(M_PI * x) * cpl::Math::fastsine(M_PI * x / size)) / (TAU * x * x) : 1;
+		}
+
+		template<typename T, bool precise>
+		typename std::enable_if<!precise, float>::type
+			lzresponse(float x, int size)
 		{
 			return x ? (size * cpl::Math::fastsine(M_PI * x) * cpl::Math::fastsine(M_PI * x / size)) / (TAU * x * x) : 1;
 		}
@@ -290,7 +304,7 @@ namespace cpl
 		}
 
 		template<typename R, bool precise = true, typename T>
-		auto lfilter(T * vec, std::size_t asize, double x, signed int wsize) -> typename std::remove_reference<decltype(vec[0])>::type
+		auto lfilter(T* vec, std::size_t asize, T x, signed int wsize) -> typename std::remove_reference<decltype(vec[0])>::type
 		{
 			R resonance = 0;
 			signed start = static_cast<signed int>(floor(x));
@@ -306,8 +320,8 @@ namespace cpl
 			return resonance;
 		}
 
-		template<typename R, bool precise = true, typename T>
-		inline auto lanczosFilter(T * vec, Types::fsint_t asize, double x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
+		template<typename R, bool precise = true, typename T, typename Y>
+		inline auto lanczosFilter(T* vec, Types::fsint_t asize, Y x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
 		{
 			R resonance = 0;
 			Types::fsint_t start = cpl::Math::floorToNInf<Types::fsint_t>(x);
@@ -323,8 +337,8 @@ namespace cpl
 			return resonance;
 		}
 
-		template<typename R, bool precise = true, typename T>
-		inline auto sincFilter(T * vec, std::size_t asize, double x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
+		template<typename R, bool precise = true, typename T, typename Y>
+		inline auto sincFilter(T* vec, std::size_t asize, Y x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
 		{
 			R resonance = 0;
 			Types::fsint_t start = cpl::Math::floorToNInf<Types::fsint_t>(x);
@@ -340,8 +354,8 @@ namespace cpl
 			return resonance;
 		}
 
-		template<typename R, typename T>
-		inline auto linearFilter(T * vec, Types::fsint_t asize, double x) -> typename std::remove_reference<decltype(vec[0])>::type
+		template<typename R, typename T, typename Y>
+		inline auto linearFilter(T* vec, Types::fsint_t asize, Y x) -> typename std::remove_reference<decltype(vec[0])>::type
 		{
 			Types::fsint_t x1 = cpl::Math::floorToNInf<Types::fsint_t>(static_cast<Types::fsint_t>(x));
 			Types::fsint_t x2 = std::min(asize - 1, x1 + 1);
@@ -356,7 +370,7 @@ namespace cpl
 		}
 
 		template<typename T>
-		void fillWithFreq(T & vec, size_t size, double freq, double samplingRate, double initialPhase, double amplitude = 1)
+		void fillWithFreq(T& vec, size_t size, double freq, double samplingRate, double initialPhase, double amplitude = 1)
 		{
 			auto omega = 2 * M_PI * freq / samplingRate;
 			double phase = initialPhase;
@@ -500,7 +514,7 @@ namespace cpl
 		template<typename T>
 		inline void separateTransformsIPL(std::complex<T> * tsf, std::size_t N)
 		{
-			return separateTransformsIPL(reinterpret_cast<double*>(tsf), N);
+			return separateTransformsIPL(reinterpret_cast<T*>(tsf), N);
 		}
 
 

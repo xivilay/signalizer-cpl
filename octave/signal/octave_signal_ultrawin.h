@@ -12,7 +12,7 @@ namespace octave
 
 		bool ultraspherical_window(int n, double * w, double mu, double par, uswpt_t type, int even_norm, double *xmu_);
 
-		bool ultraspherical_window(int n, float * w, float mu, float par, uswpt_t type, int even_norm, float *xmu_);
+		bool ultraspherical_window(int n, float * w, double mu, double par, uswpt_t type, int even_norm, double*xmu_);
 
 
 	};

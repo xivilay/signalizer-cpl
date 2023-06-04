@@ -47,14 +47,15 @@ namespace octave
 	namespace signal
 	{
 
-		template<typename T>
-			void internal_ultraspherical_win(T * w, int n, T mu, T xmu)
+		template<typename TOut, typename T>
+			void internal_ultraspherical_win(TOut* w, int n, T mu, T xmu)
 			{
 			  int bad = n < 1 || xmu < XMU_MIN || (!mu && xmu == 1) ||
 				(n > BETA_MAX * 2 && xmu * std::cos((T)M_PI * (T)BETA_MAX / n) > 1);
 			  if (!bad && w) {
 				int i, j, k, l = 0, m = (n + 1) / 2, met;
-				T * divs = w + m - 1, c = 1 - 1 / (xmu * xmu), t, u, v[64], vp, s;
+				TOut* divs = w + m - 1;
+				T c = 1 - 1 / (xmu * xmu), t, u, v[64], vp, s;
 				for (i = 0; i < (int)(sizeof(v) / sizeof(v[0])); v[i++] = 0);
 				if (n > 1) for (i = 0; i < m; l = j - (j <= i++)) {
 				  vp = *v, s = *v = i? (*v + v[1]) * mu * (divs[i] = (T)1/i) : 1;
@@ -75,8 +76,8 @@ namespace octave
 			  }
 			}
 
-		template<typename T>
-			uspv_t<T> ultraspherical_polyval(int n, T mu, T x, T const *divs)
+		template<typename TOut, typename T>
+			uspv_t<T> ultraspherical_polyval(int n, T mu, T x, TOut const *divs)
 			{
 			  T fp = n > 0 ? 2 * x * mu : 1, fpp = 1, f;
 			  uspv_t<T> result;
@@ -94,9 +95,9 @@ namespace octave
 		#define EQ(mu,x)    (std::abs((mu)-(x)) < MU_EPSILON)
 
 
-		template<typename T>
+		template<typename TOut, typename T>
 			uspv_t<T> ultraspherical_polyval2(     /* With non-+ve integer protection */
-				int n, T mu, T x, T const * divs)
+				int n, T mu, T x, TOut const * divs)
 			{
 			  int sign = (~(int)std::floor(mu) & ~(~2u/2))? 1:-1; /* -ve if floor(mu) <0 & odd */
 			  uspv_t<T> r;
@@ -108,9 +109,9 @@ namespace octave
 			}
 
 
-		template<typename T>
+		template<typename TOut, typename T>
 		T find_zero(int n, T mu, int l, T extremum_mag, T ripple_ratio,
-				  T lower_bound, T const *divs)
+				  T lower_bound, TOut const *divs)
 		{
 		  T dx, x0, t, x, epsilon = (T)1e-10, one_over_deriv, target = 0;
 		  int i, met = 0;
@@ -176,11 +177,12 @@ namespace octave
 		#define DIVS make_divs(n, &divs, w)
 
 
-		template<typename T>
-		bool internal_ultraspherical_window(int n, T * w, T mu, T par, uswpt_t type, int even_norm, T *xmu_)
+		template<typename TOut, typename T>
+		bool internal_ultraspherical_window(int n, TOut* w, T mu, T par, uswpt_t type, int even_norm, T *xmu_)
 		{
 			auto ret = false;
-			T xmu = 0, * divs = 0, last_extremum_pos = 0;
+			T xmu = 0, last_extremum_pos = 0;
+			TOut* divs = 0;
 
 			if (n > 0 && fabs(mu) <= (8 * (1 + EPSILON)))
 			{
@@ -188,7 +190,7 @@ namespace octave
 				{
 				case uswpt_Beta:
 					xmu = mu == 1 && par == 1 ? 1 : par < .5 || par > BETA_MAX ? 0 :
-						find_zero<T>(n - 1, mu, 1, 0, 0, 0, DIVS) / std::cos((T)M_PI * par / n);
+						find_zero<TOut, T>(n - 1, mu, 1, 0, 0, 0, DIVS) / std::cos((T)M_PI * par / n);
 					break;
 
 				case uswpt_AttFirst: if (par < 0) break; /* Falling... */
@@ -199,12 +201,12 @@ namespace octave
 						int extremum_num =
 							type == uswpt_AttLast ? (int)((n - 2) / 2 + (T).5) : 1 + EQ(mu, (T)-1.5);
 						T extremum_pos =
-							find_zero<T>(n - 2, mu + 1, extremum_num, 0, 0, 0, DIVS);
+							find_zero<TOut, T>(n - 2, mu + 1, extremum_num, 0, 0, 0, DIVS);
 						T extremum_mag = !extremum_pos ? 0 :
-							fabs(ultraspherical_polyval2<T>(n - 1, mu, extremum_pos, DIVS).f);
+							fabs(ultraspherical_polyval2<TOut, T>(n - 1, mu, extremum_pos, DIVS).f);
 						T xmu_lower_bound = !extremum_mag ? 0 :
-							find_zero<T>(n - 1, mu, 1, 0, 0, 0, DIVS); /* 1st null */
-						xmu = !xmu_lower_bound ? 0 : find_zero<T>(
+							find_zero<TOut, T>(n - 1, mu, 1, 0, 0, 0, DIVS); /* 1st null */
+						xmu = !xmu_lower_bound ? 0 : find_zero<TOut, T>(
 							n - 1, mu, 0, extremum_mag, std::pow((T)10, (T)par / 20), xmu_lower_bound, DIVS);
 						last_extremum_pos =
 							type == uswpt_AttLast ? extremum_pos : last_extremum_pos;
@@ -224,7 +226,7 @@ namespace octave
 		  if (xmu > 0)
 		  {
 			  x = even_norm == 1 ? 0 : last_extremum_pos ?
-				  last_extremum_pos : find_zero<T>(n - 2, mu + 1, i, 0, 0, 0, DIVS);
+				  last_extremum_pos : find_zero<TOut, T>(n - 2, mu + 1, i, 0, 0, 0, DIVS);
 
 			  internal_ultraspherical_win(w, n, mu, xmu);
 			  ret = true;
@@ -255,12 +257,12 @@ namespace octave
 
 		bool ultraspherical_window(int n, double * w, double mu, double par, uswpt_t type, int even_norm, double *xmu_)
 		{
-			return internal_ultraspherical_window(n, w, mu, par, type, even_norm, xmu_);
+			return internal_ultraspherical_window<double, double>(n, w, mu, par, type, even_norm, xmu_);
 		}
 
-		bool ultraspherical_window(int n, float * w, float mu, float par, uswpt_t type, int even_norm, float *xmu_)
+		bool ultraspherical_window(int n, float * w, double mu, double par, uswpt_t type, int even_norm, double*xmu_)
 		{
-			return internal_ultraspherical_window(n, w, mu, par, type, even_norm, xmu_);
+			return internal_ultraspherical_window<float, double>(n, w, mu, par, type, even_norm, xmu_);
 		}
 
 
