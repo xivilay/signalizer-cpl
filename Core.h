@@ -30,6 +30,7 @@
 
 #include "MacroConstants.h"
 #include "lib/string_ref.h"
+#include "lib/uarray.h"
 #include <utility>
 #include <cstdio>
 
