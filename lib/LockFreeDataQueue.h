@@ -102,7 +102,11 @@ namespace cpl
 					}
 					else
 					{
-						if (!parent->queue.load()->try_enqueue(data))
+						if (allocate)
+						{
+							parent->queue.load()->enqueue(data);
+						}
+						else if (!parent->queue.load()->try_enqueue(data))
 						{
 							parent->enqueuedQueueAllocations = true;
 						}
@@ -111,7 +115,7 @@ namespace cpl
 			}
 		private:
 
-			void initialize(bool isPopped, T * dataToHold, CLockFreeDataQueue & parentQueue)
+			void initialize(bool isPopped, T * dataToHold, CLockFreeDataQueue & parentQueue, bool forceAllocation = false)
 			{
 				#if _DEBUG
 				if (dataToHold && parent)
@@ -125,6 +129,7 @@ namespace cpl
 				isPop = isPopped;
 				data = dataToHold;
 				parent = &parentQueue;
+				allocate = forceAllocation;
 			}
 
 			T * data;
@@ -136,6 +141,7 @@ namespace cpl
 			/// access is considered to be 'produced', thus it will be pushed to the producer queue.
 			/// </summary>
 			bool isPop;
+			bool allocate;
 		};
 
 		/// <summary>
@@ -144,7 +150,7 @@ namespace cpl
 		/// if allocOnFail is false (always is for now), it will never allocate memory and the complexity is deterministic (wait-free).
 		/// If enqueueNewAllocations is set, the consumer thread might increase the size at another time, if this call fails.
 		/// </summary>
-		template</*bool allocOnFail = false, */ bool enqueueNewAllocations = true>
+		template<bool allocOnFail = true, bool enqueueNewAllocations = true>
 		bool acquireFreeElement(ElementAccess & d)
 		{
 			T * data;
@@ -153,12 +159,11 @@ namespace cpl
 				d.initialize(false, data, *this);
 				return true;
 			}
-			/*else if(allocOnFail)
+			else if(allocOnFail)
 			{
-				// enqueue a new element
-				freeElements.enqueue(T());
-				return acquireFreeElement<allocOnFail, enqueueNewAllocations>(d);
-			}*/
+				d.initialize(false, new T(), *this, true);
+				return true;
+			}
 			else if (enqueueNewAllocations)
 			{
 				enqueuedDataAllocations = true;
