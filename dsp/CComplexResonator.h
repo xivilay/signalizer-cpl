@@ -62,7 +62,7 @@ namespace cpl
 					, numVectors(0)
 				{
 
-					setLinSpaceVectors(1);
+					reallocBuffers(0, 1);
 				}
 
 				std::size_t getNumFilters() const noexcept
@@ -102,9 +102,7 @@ namespace cpl
 					const auto minWindowSize = std::min(minNSize, maxNSize);
 					const auto maxWindowSize = std::max(minNSize, maxNSize);
 
-					setLinSpaceVectors(vectors);
-
-					const auto  newData = reallocBuffers(vSize);
+					const auto newData = reallocBuffers(vSize, vectors);
 
 					std::size_t nR = numResonators;
 					std::size_t vC = nR * 2; // space filled by a vector buf
@@ -181,19 +179,16 @@ namespace cpl
 				/// for computing more exotic window functions in the time domain.
 				/// </summary>
 				/// <param name="vectors">Has to be an odd number. The center filter is implicit. </param>
-				void setLinSpaceVectors(std::size_t vectors)
+				bool reallocBuffers(std::size_t minimumSize, std::size_t vectors)
 				{
+					if (std::tie(numFilters, numVectors) == std::tie(minimumSize, vectors))
+						return false;
+
 					if (!(vectors & 0x1))
 						CPL_RUNTIME_EXCEPTION("Invalid amount of vectors (even).");
 
 					numVectors = vectors;
 					centerFilter = (vectors - 1) >> 1;
-				}
-
-				bool reallocBuffers(std::size_t minimumSize)
-				{
-					if (numFilters == minimumSize)
-						return false;
 
 					numFilters = minimumSize;
 					// quantize to next multiple of 8, to ensure vectorization
@@ -491,7 +486,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename scalar_of<V>::type * audioInputs[numChannels];
+					typename const scalar_of<V>::type * audioInputs[numChannels];
 
 					V p_r[staticVectors], p_i[staticVectors];
 					V s_r[inputDataChannels][staticVectors], s_i[inputDataChannels][staticVectors];
@@ -560,7 +555,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename scalar_of<V>::type* audioInputs[numChannels];
+					typename const scalar_of<V>::type* audioInputs[numChannels];
 
 					V p_r, p_i;
 					V s_r[inputDataChannels], s_i[inputDataChannels];
@@ -620,7 +615,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename scalar_of<V>::type * audioInputs[numChannels];
+					typename const scalar_of<V>::type * audioInputs[numChannels];
 
 					V p_r[staticVectors], p_i[staticVectors];
 					V s_r[staticVectors], s_i[staticVectors];
@@ -683,7 +678,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename scalar_of<V>::type * audioInputs[numChannels];
+					typename const scalar_of<V>::type * audioInputs[numChannels];
 
 					// load coefficients
 					const V

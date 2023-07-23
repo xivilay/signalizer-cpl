@@ -48,13 +48,6 @@
 // io and stuff
 
 #include "CPresetManager.cpp"
-
-
-#endif
-
-#ifdef CPL_INC_KISS
-#include "ffts/kiss_fft/tools/kiss_fft.c"
-#include "ffts/kiss_fft/tools/kiss_fftr.c"
 #endif
 
 #include "CModule.cpp"
@@ -73,6 +66,7 @@
 #include "process/Process.cpp"
 #include "Exceptions.cpp"
 #include "AudioStream.cpp"
+#include "JobSystem.cpp"
 
 #if defined(CPL_HINT_FONT)
 #include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
