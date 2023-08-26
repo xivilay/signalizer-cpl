@@ -299,6 +299,8 @@ namespace cpl
 			/// </summary>
 			inline std::complex<Scalar> getResonanceAt(const Constant& c, std::size_t resonator, std::size_t channel) const
 			{
+				match(constant);
+
 				auto const gainCoeff = c.N.at(resonator) * 0.5; // bounds checking here.
 
 				std::size_t nR = constant.numResonators;
@@ -317,8 +319,10 @@ namespace cpl
 			/// If the window is larger than the amout of vectors, it will be truncated.
 			/// </summary>
 			template<WindowTypes win>
-			inline std::complex<Scalar> getWindowedResonanceAt(const Constant& c, std::size_t resonator, std::size_t channel) const
+			inline std::complex<Scalar> getWindowedResonanceAt(const Constant& c, std::size_t resonator, std::size_t channel)
 			{
+				match(constant);
+
 				Scalar gainCoeff = c.N.at(resonator) * 0.5; // 2^-3 (3 vectors)
 				Scalar scale = resonatorScales[(int)win];
 				Scalar realPart(0), imagPart(0);
@@ -362,7 +366,7 @@ namespace cpl
 			/// </param>
 			/// </summary>
 			template<typename V, class Vector>
-			void getWholeWindowedState(const Constant& c, WindowTypes win, Vector & out, std::size_t outChannels, std::size_t outSize) const
+			void getWholeWindowedState(const Constant& c, WindowTypes win, Vector & out, std::size_t outChannels, std::size_t outSize)
 			{
 				typedef WindowTypes w;
 				switch (win)
@@ -388,11 +392,6 @@ namespace cpl
 				}
 			}
 
-			void match(const Constant& constant)
-			{
-				state.resize((real + imag) * 2 * constant.numResonators * constant.numVectors * numChannels);
-			}
-
 			/// <summary>
 			/// Gets the windowed resonance at the specified index.
 			/// If the window is larger than the amout of vectors, it will be truncated.
@@ -401,8 +400,10 @@ namespace cpl
 			/// </param>
 			/// </summary>
 			template<WindowTypes win, typename V, class Vector>
-			void getWholeWindowedState(const Constant& constant, Vector & out, std::size_t outChannels, std::size_t outSize) const
+			void getWholeWindowedState(const Constant& constant, Vector & out, std::size_t outChannels, std::size_t outSize)
 			{
+				match(constant);
+
 				std::size_t maxResonators = std::min(constant.numResonators, outSize);
 				std::size_t maxChannels = std::min(numChannels, outChannels);
 
@@ -466,9 +467,15 @@ namespace cpl
 
 		private:
 
+			void match(const Constant& constant)
+			{
+				state.resize((real + imag) * 2 * constant.numResonators * constant.numVectors * numChannels);
+			}
+
 			template<typename V, class MultiVector, std::size_t inputDataChannels, std::size_t staticVectors>
 			void internalWindowResonate(const Constant& constant, const MultiVector & data, std::size_t numSamples)
 			{
+				match(constant);
 
 				using namespace cpl;
 				using namespace cpl::simd;
@@ -539,6 +546,8 @@ namespace cpl
 			template<typename V, class MultiVector, std::size_t inputDataChannels>
 			void internalWindowResonate1(const Constant& constant, const MultiVector& data, std::size_t numSamples)
 			{
+				match(constant);
+
 				using namespace cpl;
 				using namespace cpl::simd;
 
@@ -600,6 +609,7 @@ namespace cpl
 			template<typename V, class MultiVector, std::size_t staticVectors>
 			void internalWindowComplexResonate(const Constant& constant, const MultiVector & data, std::size_t numSamples)
 			{
+				match(constant);
 
 				using namespace cpl;
 				using namespace cpl::simd;
@@ -662,6 +672,7 @@ namespace cpl
 			template<typename V, class MultiVector, std::size_t inputDataChannels>
 			void internalWindowResonate3(const Constant& constant, const MultiVector & data, std::size_t numSamples)
 			{
+				match(constant);
 
 				using namespace cpl;
 				using namespace cpl::simd;
