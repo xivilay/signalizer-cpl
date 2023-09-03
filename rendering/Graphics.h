@@ -337,6 +337,18 @@ namespace cpl
 			ComponentType data[4];
 		};
 
+		inline GLenum orderToGlFormat(ComponentOrder order)
+		{
+			switch (order)
+			{
+			case ComponentOrder::RGB: return GL_RGB;
+			case ComponentOrder::BGR: return GL_BGR_EXT;
+			case ComponentOrder::RGBA: return GL_RGBA;
+			case ComponentOrder::BGRA: return GL_BGRA_EXT;
+			}
+
+			CPL_RUNTIME_EXCEPTION("unknown pixel mapping order");
+		}
 
 		/// <summary>
 		/// Unpremultiplied 32-bit ARGB pixel consisting of unsigned bytes, in correct endianness.
@@ -440,6 +452,12 @@ namespace cpl
 
 				return ret;
 			}
+
+			static GLenum glFormat() noexcept
+			{
+				return orderToGlFormat(order);
+			}
+
 			#ifdef CPL_JUCE
 			juce::Colour toJuceColour() const noexcept
 			{
@@ -453,7 +471,10 @@ namespace cpl
 		inline UPixel<to> component_cast(const UPixel<from> & other)
 		{
 			UPixel<to> ret;
-			ret.pixel.p = other.pixel.p;
+			ret.pixel.a = other.pixel.a;
+			ret.pixel.r = other.pixel.r;
+			ret.pixel.g = other.pixel.g;
+			ret.pixel.b = other.pixel.b;
 			return ret;
 		}
 
