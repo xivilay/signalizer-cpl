@@ -67,6 +67,8 @@
 #include "Exceptions.cpp"
 #include "AudioStream.cpp"
 #include "JobSystem.cpp"
+#include "ffts/pffft/pffft.c"
+#include "ffts/pffft/pffft_common.c"
 
 #if defined(CPL_HINT_FONT)
 #include "vf_lib/vf_gui/vf_FreeTypeFaces.cpp"
