@@ -83,16 +83,11 @@ namespace cpl
 			IteratorBase & operator = (const IteratorBase &) = delete;
 			IteratorBase(IteratorBase && other)
 			{
-				// TODO: refactor into absorb(), when clang starts not being weird
-				// (it wants to bind other to a l-value?)
-				cursor = other.cursor;
-				bsize = other.bsize;
-				buffer = other.buffer;
-				other.buffer = nullptr; other.ncParent = nullptr;
+				absorb(std::move(other));
 			}
 			IteratorBase & operator = (IteratorBase && other) noexcept
 			{
-				absorb(other);
+				absorb(std::move(other));
 			}
 
 			/// <summary>
@@ -158,6 +153,7 @@ namespace cpl
 				cursor = other.cursor;
 				bsize = other.bsize;
 				buffer = other.buffer;
+				ncParent = other.ncParent;
 				other.buffer = nullptr; other.ncParent = nullptr;
 			}
 
@@ -213,7 +209,8 @@ namespace cpl
 
 			ProxyView & operator = (ProxyView && other) noexcept
 			{
-				absorb(other);
+				absorb(std::move(other));				
+				return *this;
 			}
 
 			/// <summary>
@@ -335,9 +332,10 @@ namespace cpl
 
 			Writer & operator = (Writer && other) noexcept
 			{
-				absorb(other);
+				absorb(std::move(other));
 				parent = other.parent;
 				other.parent = other.ncParent = nullptr;
+				return *this;
 			}
 
 			inline T* first() noexcept { return this->buffer + this->cursor; }

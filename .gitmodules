@@ -1,0 +1,3 @@
+[submodule "ffts/pffft"]
+	path = ffts/pffft
+	url = https://github.com/marton78/pffft

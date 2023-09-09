@@ -160,7 +160,7 @@ namespace cpl
 			reinterpret() noexcept
 		{
 			static_assert((sizeof(T) / sizeof(Other)) * sizeof(Other) == sizeof(T), "Other is not divisble by T");
-			static_assert(alignof(T) <= alignof(Other), "Other is less aligned than T");
+			static_assert(alignof(T) >= alignof(Other), "Other is more aligned than T");
 
 			constexpr auto ratio = sizeof(T) / sizeof(Other);
 
@@ -172,7 +172,7 @@ namespace cpl
 			reinterpret() const noexcept
 		{
 			static_assert((sizeof(T) / sizeof(Other)) * sizeof(Other) == sizeof(T), "Other is not divisble by T");
-			static_assert(alignof(T) <= alignof(Other), "Other is less aligned than T");
+			static_assert(alignof(T) >= alignof(Other), "Other is more aligned than T");
 
 			constexpr auto ratio = sizeof(T) / sizeof(Other);
 

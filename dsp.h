@@ -37,6 +37,7 @@
 #include "Utility.h"
 #include <complex>
 #include "simd.h"
+#include "lib/uarray.h"
 
 namespace cpl
 {
@@ -338,6 +339,25 @@ namespace cpl
 		}
 
 		template<typename R, bool precise = true, typename T, typename Y>
+		inline R lanczosFilter(uarray<T> vec, Y x, Types::fsint_t wsize)
+		{
+			R resonance = 0;
+			Types::fsint_t start = cpl::Math::floorToNInf<Types::fsint_t>(x);
+			Types::fsint_t asize = static_cast<Types::fsint_t>(vec.size());
+
+			for (Types::fsint_t i = start - wsize + 1; i < (start + wsize + 1); ++i)
+			{
+				if (i >= 0 && i < asize)
+				{
+					auto impulse = vec[i];
+					auto response = lzresponse<precise>(x - i, wsize);
+					resonance += impulse * response;
+				}
+			}
+			return resonance;
+		}
+
+		template<typename R, bool precise = true, typename T, typename Y>
 		inline auto sincFilter(T* vec, std::size_t asize, Y x, Types::fsint_t wsize) -> typename std::remove_reference<decltype(vec[0])>::type
 		{
 			R resonance = 0;
@@ -366,7 +386,20 @@ namespace cpl
 			auto frac = x - x1;
 
 			return vec[x1] * (1 - frac) + vec[x2] * frac;
+		}
 
+		template<typename T, typename Y>
+		inline T linearFilter(cpl::uarray<T> vec, Y x)
+		{
+			Types::fsint_t x1 = cpl::Math::floorToNInf<Types::fsint_t>(static_cast<Types::fsint_t>(x));
+			Types::fsint_t x2 = std::min(static_cast<Types::fsint_t>(vec.size()) - 1, x1 + 1);
+
+			//if (x2 == asize - 1)
+			//	return vec[x1];
+
+			auto frac = x - x1;
+
+			return vec[x1] * (1 - frac) + vec[x2] * frac;
 		}
 
 		template<typename T>
@@ -465,8 +498,9 @@ namespace cpl
 		/// </param>
 		template<typename T>
 		inline typename std::enable_if<std::is_arithmetic<T>::value, void>::type
-			separateTransformsIPL(T * tsf, std::size_t N)
+			separateTransformsIPL(uarray<T> tsf)
 		{
+			auto N = tsf.size() >> 1;
 			auto N2 = N; // N = total size, N2 = half size
 			N <<= 1;
 			T x1, x2, y1, y2;
@@ -512,21 +546,14 @@ namespace cpl
 		/// The amount of complex number pairs in the array. Behaviour is undefined if N isn't a power of 2.
 		/// </param>
 		template<typename T>
-		inline void separateTransformsIPL(std::complex<T> * tsf, std::size_t N)
+		inline void separateTransformsIPL(uarray<std::complex<T>> tsf)
 		{
-			return separateTransformsIPL(reinterpret_cast<T*>(tsf), N);
+			return separateTransformsIPL(tsf.reinterpret<T>());
 		}
-
-
-
 
 		template<typename Scalar, class Vector, bool scale = false>
 		std::complex<Scalar> fourierTransform(const Vector & data, Scalar frequency, Scalar sampleRate, inttype a, inttype b)
 		{
-
-
-
-
 			// unpacked xmm registers
 			float unpreal[4];
 			float  unpimag[4];
