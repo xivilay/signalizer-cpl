@@ -421,6 +421,13 @@ namespace cpl
 				}
 			} while (numExtraEntries != 0);
 		}
+
+		if (auto sh = output.lock())
+		{
+			// one final batch to trigger non-frame processing
+			FrameBatch batch(std::move(sh));
+
+		}
 	}
 
 	template<>
