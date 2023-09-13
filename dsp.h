@@ -548,7 +548,7 @@ namespace cpl
 		template<typename T>
 		inline void separateTransformsIPL(uarray<std::complex<T>> tsf)
 		{
-			return separateTransformsIPL(tsf.reinterpret<T>());
+			return separateTransformsIPL(tsf.template reinterpret<T>());
 		}
 
 		template<typename Scalar, class Vector, bool scale = false>

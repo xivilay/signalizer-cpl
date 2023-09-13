@@ -453,7 +453,7 @@ namespace cpl
 	bool CColourControl::bValueToString(std::string & valueString, iCtrlPrec_t value) const
 	{
 		char text[30];
-		sprintf_s(text, "0x%.8X", static_cast<std::uint32_t>(value >= 1.0 ? 0xFFFFFFFF : value * 0x100000000ul));
+		sprintfs(text, "0x%.8X", static_cast<std::uint32_t>(value >= 1.0 ? 0xFFFFFFFF : value * 0x100000000ul));
 		valueString = text;
 		return true;
 	}

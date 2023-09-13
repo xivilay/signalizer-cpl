@@ -167,7 +167,7 @@ namespace std
 	std::string to_string(T * ptr_type)
 	{
 		char buf[100];
-		sprintf_s(buf, "0x%p", ptr_type);
+		sprintf(buf, "0x%p", ptr_type);
 		return buf;
 	}
 

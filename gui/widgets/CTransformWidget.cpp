@@ -110,7 +110,7 @@ namespace cpl
 			{
 				auto value = valueObject->getValueIndex((TransformValue::Aspect)x, (TransformValue::Index)y).getTransformedValue();
 				char text[50];
-				sprintf_s(text, "%.2f", static_cast<double>(value));
+				sprintfs(text, "%.2f", static_cast<double>(value));
 				labels[x][y].setText(text, false);
 			}
 		}

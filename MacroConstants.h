@@ -67,6 +67,7 @@
 	#elif defined (__MACH__) && (__APPLE__)
 		#define CPL_DIR_SEP '/'
 		#define CPL_MAC
+		#include <AvailabilityMacros.h>
 		#define CPL_UNIXC
 		#ifdef CPL_JUCE
 			#define CPL_PROG_EXTENSION ".component"

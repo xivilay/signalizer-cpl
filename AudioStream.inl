@@ -72,25 +72,49 @@ namespace cpl
 				beginFrameProcessing();
 			}
 
+#if defined(CPL_MAC) && MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_14
+			if (auto arg = std::get_if<TransportData>(&frame))
+			{
+				playhead.transport = *arg;
+			}
+			else if (auto arg = std::get_if<ArrangementData>(&frame))
+			{
+				playhead.arrangement = *arg;
+			}
+			else if (auto arg = std::get_if<ChannelNameData>(&frame))
+			{
+				channelNames.resize(std::max(channelNames.size(), arg->channelIndex + 1));
+				channelNames[arg->channelIndex] = std::move(arg->name);
+			}
+			else if (auto arg = std::get_if<ProducerInfo>(&frame))
+			{
+				static_cast<ProducerInfo&>(info) = *arg;
+				producerInfoChange = true;
+			}
+			else
+			{
+				CPL_RUNTIME_ASSERTION(false && "unknown frame type");
+			}
+#else
 			std::visit(
 				[this](auto && arg)
 				{
-					using T = std::decay_t<decltype(arg)>;
+					using TArg = std::decay_t<decltype(arg)>;
 
-					if constexpr (std::is_same_v<T, TransportData>)
+					if constexpr (std::is_same_v<TArg, TransportData>)
 					{
 						playhead.transport = arg;
 					}
-					else if constexpr (std::is_same_v<T, ArrangementData>)
+					else if constexpr (std::is_same_v<TArg, ArrangementData>)
 					{
 						playhead.arrangement = arg;
 					}
-					else if constexpr (std::is_same_v<T, ChannelNameData>)
+					else if constexpr (std::is_same_v<TArg, ChannelNameData>)
 					{
 						channelNames.resize(std::max(channelNames.size(), arg.channelIndex + 1));
 						channelNames[arg.channelIndex] = std::move(arg.name);
 					}
-					else if constexpr (std::is_same_v<T, ProducerInfo>)
+					else if constexpr (std::is_same_v<TArg, ProducerInfo>)
 					{
 						static_cast<ProducerInfo&>(info) = arg;
 						producerInfoChange = true;
@@ -102,6 +126,7 @@ namespace cpl
 				},
 				frame
 			);
+#endif
 		}
 	}
 
@@ -280,7 +305,7 @@ namespace cpl
 
 		CPL_RUNTIME_ASSERTION(numChannels == internalInfo.channels);
 
-		FrameBatch batch(*stream);
+		FrameBatch batch(*this->stream);
 
 		cpl::CProcessorTimer overhead, all;
 		overhead.start(); all.start();
@@ -300,7 +325,7 @@ namespace cpl
 
 		if (discontinuity || playhead.transport != oldPlayhead.transport)
 		{
-			frame.emplace<TransportData>(playhead.transport);
+			frame.template emplace<TransportData>(playhead.transport);
 			if (!batch.submitFrame(std::move(frame)))
 			{
 				anyNewProblemsPushingPlayHeads = true;
@@ -309,7 +334,7 @@ namespace cpl
 
 		if (discontinuity || playhead.arrangement != oldPlayhead.arrangement)
 		{
-			frame.emplace<ArrangementData>(playhead.arrangement);
+			frame.template emplace<ArrangementData>(playhead.arrangement);
 			if (!batch.submitFrame(std::move(frame)))
 			{
 				anyNewProblemsPushingPlayHeads = true;
@@ -320,7 +345,6 @@ namespace cpl
 
 		problemsPushingPlayHead = anyNewProblemsPushingPlayHeads;
 
-		std::size_t droppedSamples = 0;
 		bool didDropAnyFrames = false;
 
 		// publish all data to audio consumer thread
@@ -334,13 +358,13 @@ namespace cpl
 
 				if (aSamples > 0)
 				{
-					auto& packet = frame.emplace<AudioPacket>(AudioPacket::PackingType::AudioPacketSeparate, 1, static_cast<std::uint16_t>(aSamples));
+					auto& packet = frame.template emplace<AudioPacket>(AudioPacket::PackingType::AudioPacketSeparate, 1, static_cast<std::uint16_t>(aSamples));
 					std::memcpy(packet.begin(), (buffer[0] + numSamples - n), static_cast<std::size_t>(aSamples * AudioPacket::element_size));
 
 					if (!batch.submitFrame(std::move(frame)))
 					{
 						didDropAnyFrames = true;
-						stream->droppedFrames.fetch_add(aSamples);
+						this->stream->droppedFrames.fetch_add(aSamples);
 					}
 				}
 
@@ -357,7 +381,7 @@ namespace cpl
 
 				if (aSamples > 0)
 				{
-					auto& packet = frame.emplace<AudioPacket>(AudioPacket::PackingType::AudioPacketSeparate, static_cast<std::uint8_t>(numChannels), static_cast<std::uint16_t>(aSamples * numChannels));
+					auto& packet = frame.template emplace<AudioPacket>(AudioPacket::PackingType::AudioPacketSeparate, static_cast<std::uint8_t>(numChannels), static_cast<std::uint16_t>(aSamples * numChannels));
 
 					auto const byteSize = static_cast<std::size_t>(aSamples * AudioPacket::element_size);
 
@@ -369,7 +393,7 @@ namespace cpl
 					if (!batch.submitFrame(std::move(frame)))
 					{
 						didDropAnyFrames = true;
-						stream->droppedFrames.fetch_add(aSamples);
+						this->stream->droppedFrames.fetch_add(aSamples);
 					}
 				}
 
@@ -381,8 +405,8 @@ namespace cpl
 			framesWereDropped = true;
 
 		// post new measures
-		lpFilterTimeToMeasurement(stream->producerOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
-		lpFilterTimeToMeasurement(stream->producerUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
+		lpFilterTimeToMeasurement(this->stream->producerOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
+		lpFilterTimeToMeasurement(this->stream->producerUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
 	}
 
 	template<typename T, std::size_t PacketSize>

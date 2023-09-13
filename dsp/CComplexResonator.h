@@ -106,7 +106,6 @@ namespace cpl
 
 					std::size_t nR = numResonators;
 					std::size_t vC = nR * 2; // space filled by a vector buf
-					std::size_t sC = vC * numVectors; // space filled by all vector bufs
 
 					std::size_t k = 0;
 					if (vSize == 1)
@@ -299,18 +298,18 @@ namespace cpl
 			/// </summary>
 			inline std::complex<Scalar> getResonanceAt(const Constant& c, std::size_t resonator, std::size_t channel) const
 			{
-				match(constant);
+				match(c);
 
 				auto const gainCoeff = c.N.at(resonator) * 0.5; // bounds checking here.
 
-				std::size_t nR = constant.numResonators;
+				std::size_t nR = c.numResonators;
 				std::size_t vC = nR * 2; // space filled by a vector buf
-				std::size_t sC = vC * constant.numVectors; // space filled by all vector bufs
+				std::size_t sC = vC * c.numVectors; // space filled by all vector bufs
 
 				return std::complex<Scalar>
 					(
-						state[sC * channel + constant.centerFilter * vC + resonator + real * nR] / gainCoeff,
-						state[sC * channel + constant.centerFilter * vC + resonator + imag * nR] / gainCoeff
+						state[sC * channel + c.centerFilter * vC + resonator + real * nR] / gainCoeff,
+						state[sC * channel + c.centerFilter * vC + resonator + imag * nR] / gainCoeff
 						);
 			}
 
@@ -321,31 +320,31 @@ namespace cpl
 			template<WindowTypes win>
 			inline std::complex<Scalar> getWindowedResonanceAt(const Constant& c, std::size_t resonator, std::size_t channel)
 			{
-				match(constant);
+				match(c);
 
 				Scalar gainCoeff = c.N.at(resonator) * 0.5; // 2^-3 (3 vectors)
 				Scalar scale = resonatorScales[(int)win];
 				Scalar realPart(0), imagPart(0);
 
-				std::size_t nR = numResonators;
+				std::size_t nR = c.numResonators;
 				std::size_t vC = nR * 2; // space filled by a vector buf
-				std::size_t sC = vC * numVectors; // space filled by all vector bufs
+				std::size_t sC = vC * c.numVectors; // space filled by all vector bufs
 
 				auto extent = std::extent<decltype(Windows::DFTCoeffs<T, win>::coeffs)>::value;
 
 				std::size_t v = 0;
 				std::size_t off = 0;
 				// truncate window,
-				if (extent > numVectors)
+				if (extent > c.numVectors)
 				{
-					auto diff = extent - numVectors;
+					auto diff = extent - c.numVectors;
 					diff = (diff - 1) >> 1;
 					v = diff;
 					extent -= diff;
 				}
-				else if (numVectors > extent) // or select the middle vectors.
+				else if (c.numVectors > extent) // or select the middle vectors.
 				{
-					auto diff = numVectors - extent;
+					auto diff = c.numVectors - extent;
 					diff = (diff - 1) >> 1;
 					off = diff;
 				}
@@ -493,7 +492,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename const scalar_of<V>::type * audioInputs[numChannels];
+					const typename scalar_of<V>::type * audioInputs[numChannels];
 
 					V p_r[staticVectors], p_i[staticVectors];
 					V s_r[inputDataChannels][staticVectors], s_i[inputDataChannels][staticVectors];
@@ -564,7 +563,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename const scalar_of<V>::type* audioInputs[numChannels];
+					const typename scalar_of<V>::type* audioInputs[numChannels];
 
 					V p_r, p_i;
 					V s_r[inputDataChannels], s_i[inputDataChannels];
@@ -625,7 +624,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename const scalar_of<V>::type * audioInputs[numChannels];
+					const typename scalar_of<V>::type * audioInputs[numChannels];
 
 					V p_r[staticVectors], p_i[staticVectors];
 					V s_r[staticVectors], s_i[staticVectors];
@@ -689,7 +688,7 @@ namespace cpl
 				{
 
 					// pointer to current sample
-					typename const scalar_of<V>::type * audioInputs[numChannels];
+					const typename scalar_of<V>::type * audioInputs[numChannels];
 
 					// load coefficients
 					const V

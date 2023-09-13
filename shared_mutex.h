@@ -23,38 +23,43 @@
 
 	file:filesystem.h
 	
-		Provides a minimal working version of TS std::filesystem
+		Provides a minimal working version of std::shared_mutex
 	
 *************************************************************************************/
 
-#ifndef CPL_FILESYSTEM_H
-#define CPL_FILESYSTEM_H
+#ifndef CPL_SHARED_MUTEX_H
+#define CPL_SHARED_MUTEX_H
 #include "MacroConstants.h"
 
-// TODO: Find version macro to allow fs on deployment targer => 10.15
-#if defined(CPL_MAC) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_15
 
-	#include <filesystem>
-	namespace cpl { namespace fs = std::filesystem; }
+#if defined(CPL_MAC) && MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_12
 
-#elif !defined(CPL_MAC) && __has_include(<filesystem>)
+	#include <mutex>
 
-	#include <filesystem>
-	namespace cpl { namespace fs = std::filesystem; }
+	namespace cpl
+	{
+		template<typename TMutex>
+		using shared_lock = std::lock_guard<TMutex>;
 
-#elif !defined(CPL_MAC) && __has_include(<experimental/filesystem>)
+		template<typename TMutex>
+		using unique_lock = std::lock_guard<TMutex>;
 
-	#include <experimental/filesystem>
-	namespace cpl { namespace fs = std::experimental::filesystem; }
-
-#elif __has_include(<boost/filesystem.hpp>)
-
-	#include <boost/filesystem.hpp>
-	namespace cpl { namespace fs = boost::filesystem; }
+		using shared_mutex = std::mutex;
+	}
 
 #else
 
-	#error no <filesystem> implementation detected, update compiler or configure boost
+	#include <shared_mutex>
+	namespace cpl
+	{
+		template<typename TMutex>
+		using shared_lock = std::shared_lock<TMutex>;
+
+		template<typename TMutex>
+		using unique_lock = std::unique_lock<TMutex>;
+
+		using shared_mutex = std::shared_mutex;
+	}
 
 #endif
 

@@ -81,7 +81,7 @@ namespace cpl
 
 		char buf[100];
 
-		sprintf_s(buf, "0x%p %c 0x%p", base, sign, deltaAddress);
+		sprintfs(buf, "0x%p %c 0x%p", base, sign, deltaAddress);
 
 		return buf;
 	}

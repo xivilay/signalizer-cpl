@@ -37,6 +37,7 @@
 #define _CLIFOSTREAM_H
 
 #include "CDataBuffer.h"
+#include "../Mathext.h"
 
 #ifdef _DEBUG
 #define NOEXCEPT_RELEASE
@@ -138,7 +139,7 @@ namespace cpl
 			/// </summary>
 			void offset(ssize_t offset) noexcept
 			{
-				cursor = cpl::Math::mod((ssize_t)cursor + offset, (ssize_t)bsize);
+				cursor = Math::mod((ssize_t)cursor + offset, (ssize_t)bsize);
 			}
 
 			~IteratorBase()
@@ -209,7 +210,7 @@ namespace cpl
 
 			ProxyView & operator = (ProxyView && other) noexcept
 			{
-				absorb(std::move(other));				
+				this->absorb(std::move(other));
 				return *this;
 			}
 
@@ -332,7 +333,7 @@ namespace cpl
 
 			Writer & operator = (Writer && other) noexcept
 			{
-				absorb(std::move(other));
+				this->absorb(std::move(other));
 				parent = other.parent;
 				other.parent = other.ncParent = nullptr;
 				return *this;

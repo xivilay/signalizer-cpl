@@ -35,7 +35,6 @@
 #include "MacroConstants.h"
 #include <functional>
 #include <algorithm>
-#include <execution>
 #include <vector>
 #include <atomic>
 #include <memory>
@@ -46,6 +45,7 @@
 
 #ifndef CPL_MAC
 #define CPL_HAVE_PAR_STD_ALGORITHMS
+#include <execution>
 #endif
 
 namespace cpl

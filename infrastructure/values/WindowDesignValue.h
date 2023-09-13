@@ -3,6 +3,7 @@
 
 #include "ValueBase.h"
 #include "../../dsp/DSPWindows.h"
+#include "../../Core.h"
 
 namespace cpl
 {
@@ -72,7 +73,7 @@ namespace cpl
 			virtual bool format(const ValueType & val, std::string & buf) override
 			{
 				char buffer[1000];
-				sprintf_s(buffer, u8"%d dB (%.1f\u03B1)", int(std::round(val)), val / 20);
+				sprintfs(buffer, u8"%d dB (%.1f\u03B1)", int(std::round(val)), val / 20);
 				buf = buffer;
 				return true;
 			}

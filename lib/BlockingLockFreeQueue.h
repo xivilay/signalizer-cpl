@@ -291,14 +291,14 @@ namespace cpl
 	class CBlockingLockFreeQueue<T, typename std::enable_if<std::is_copy_constructible<T>::value>::type>
 		: public CBlockingLockFreeQueueCopyable<T>
 	{
-		using CBlockingLockFreeQueueCopyable::CBlockingLockFreeQueueCopyable;
+		using CBlockingLockFreeQueueCopyable<T>::CBlockingLockFreeQueueCopyable;
 	};
 
 	template<typename T>
 	class CBlockingLockFreeQueue<T, typename std::enable_if<!std::is_copy_constructible<T>::value>::type>
 		: public CBlockingLockFreeQueueMovable<T>
 	{
-		using CBlockingLockFreeQueueMovable::CBlockingLockFreeQueueMovable;
+		using CBlockingLockFreeQueueMovable<T>::CBlockingLockFreeQueueMovable;
 	};
 
 };

@@ -534,7 +534,7 @@ namespace cpl
 
 		class Reference : cpl::Utility::CNoncopyable
 		{
-			friend class StreamType;
+			friend class AudioStream<T, PacketSize>;
 		protected:
 			std::shared_ptr<StreamType> stream;
 			Reference() = default;
@@ -577,7 +577,7 @@ namespace cpl
 		public:
 
 			friend struct ListenerContext;
-			friend class StreamType;
+			friend class AudioStream<T, PacketSize>;
 
 			/// <summary>
 			/// Adds a listener that to receive callbacks going forward.
@@ -587,7 +587,7 @@ namespace cpl
 			void addListener(std::shared_ptr<Listener> listener)
 			{
 				std::lock_guard<std::mutex> lock(inputCommandMutex);
-				stream->outputListenerCount.fetch_add(1);
+				this->stream->outputListenerCount.fetch_add(1);
 				inputListeners.emplace_back(ListenerCommand{ std::move(listener), true });
 				inputChanges = true;
 			}
@@ -599,7 +599,7 @@ namespace cpl
 			void removeListener(std::shared_ptr<Listener> listener)
 			{
 				std::lock_guard<std::mutex> lock(inputCommandMutex);
-				stream->outputListenerCount.fetch_add(-1);
+				this->stream->outputListenerCount.fetch_add(-1);
 
 				inputListeners.emplace_back(ListenerCommand{ std::move(listener), false });
 				inputChanges = true;
@@ -621,7 +621,7 @@ namespace cpl
 			/// Safe to call from any thread. Changes will take effect when the next set of audio is processed
 			/// </summary>
 			template<class ModifierFunc>
-			void modifyConsumerInfo(ModifierFunc& func)
+			void modifyConsumerInfo(ModifierFunc&& func)
 			{
 				std::lock_guard<std::mutex> lock(inputCommandMutex);
 				func(inputInfo);
@@ -635,10 +635,10 @@ namespace cpl
 				PerformanceMeasurements measures;
 
 				measures.consumerOverhead = consumerOverhead;
-				measures.producerOverhead = stream->producerOverhead;
+				measures.producerOverhead = this->stream->producerOverhead;
 				measures.consumerUsage = consumerUsage;
-				measures.producerUsage = stream->producerUsage;
-				measures.droppedFrames = stream->droppedFrames;
+				measures.producerUsage = this->stream->producerUsage;
+				measures.droppedFrames = this->stream->droppedFrames;
 
 				return measures;
 			}
@@ -654,7 +654,7 @@ namespace cpl
 
 			std::size_t getApproximateInFlightPackets() const noexcept
 			{
-				return stream->audioFifo.get() ? stream->audioFifo->enqueuededElements() : 0;
+				return this->stream->audioFifo.get() ? this->stream->audioFifo->enqueuededElements() : 0;
 			}
 
 			Output(Output&& other) = default;
@@ -704,10 +704,10 @@ namespace cpl
 
 		struct FrameBatch
 		{
-			template <typename T>
-			bool hasContents(const std::weak_ptr<T>& w) 
+			template <typename Other>
+			bool hasContents(const std::weak_ptr<Other>& w)
 			{
-				return w.owner_before(std::weak_ptr<T>{}) || std::weak_ptr<T>{}.owner_before(w);
+				return w.owner_before(std::weak_ptr<Other>{}) || std::weak_ptr<Other>{}.owner_before(w);
 			}
 
 			FrameBatch(AudioStream& audioStream)
@@ -753,7 +753,7 @@ namespace cpl
 
 		class Input final : public Reference
 		{
-			friend class StreamType;
+			friend class AudioStream<T, PacketSize>;
 		public:
 #ifdef CPL_JUCE
 			void processIncomingRTAudio(T** buffer, std::size_t numChannels, std::size_t numSamples, juce::AudioPlayHead& ph)
@@ -783,12 +783,12 @@ namespace cpl
 			/// - decide on one thread, controlling it.
 			/// </summary>
 			template<typename ModifierFunc>
-			void initializeInfo(ModifierFunc& func)
+			void initializeInfo(ModifierFunc&& func)
 			{
 				ExclusiveDebugScope scope(reentrancy);
 
 				func(internalInfo);
-				FrameBatch batch(*stream);
+				FrameBatch batch(*this->stream);
 				batch.submitFrame(ProducerFrame(internalInfo));
 			}
 
@@ -797,9 +797,9 @@ namespace cpl
 				ExclusiveDebugScope scope(reentrancy);
 
 				ProducerFrame frame;
-				frame.emplace<ChannelNameData>(ChannelNameData{ index, std::move(name) });
+				frame.template emplace<ChannelNameData>(ChannelNameData{ index, std::move(name) });
 
-				FrameBatch batch(*stream);
+				FrameBatch batch(*this->stream);
 				batch.submitFrame(std::move(frame));
 			}
 
@@ -813,7 +813,7 @@ namespace cpl
 			/// </summary>
 			bool isAnyoneListening()
 			{
-				int listenerCount = stream->outputListenerCount;
+				int listenerCount = this->stream->outputListenerCount;
 				CPL_RUNTIME_ASSERTION(listenerCount >= 0);
 
 				haltedDueToNoListeners = listenerCount == 0;
@@ -823,8 +823,8 @@ namespace cpl
 
 			~Input()
 			{
-				if (stream)
-					stream->inputDestroyed();
+				if (this->stream)
+					this->stream->inputDestroyed();
 			}
 
 			Input(Input&&) = default;

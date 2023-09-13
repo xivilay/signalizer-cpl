@@ -126,9 +126,9 @@ namespace cpl
 
 				traits::transform_ordered(
 					const_cast<setup*>(sharedSetup), 
-					input.reinterpret<Scalar>().data(),
-					output.reinterpret<Scalar>().data(),
-					work.reinterpret<Scalar>().data(),
+					input.template reinterpret<Scalar>().data(),
+					output.template reinterpret<Scalar>().data(),
+					work.template reinterpret<Scalar>().data(),
 					PFFFT_FORWARD
 				);
 			}
@@ -143,7 +143,7 @@ namespace cpl
 				if (Scale)
 				{
 					Scalar scale = Scalar(1) / input.size();
-					auto cout = output.reinterpret<Complex>();
+					auto cout = output.template reinterpret<Complex>();
 
 					for (std::size_t i = 0; i < size() / 4; i += 4)
 					{
@@ -155,9 +155,9 @@ namespace cpl
 
 					traits::transform_ordered(
 						const_cast<setup*>(sharedSetup), 
-						cout.reinterpret<Scalar>().data(),
-						cout.reinterpret<Scalar>().data(),
-						work.reinterpret<Scalar>().data(),
+						cout.template reinterpret<Scalar>().data(),
+						cout.template reinterpret<Scalar>().data(),
+						work.template reinterpret<Scalar>().data(),
 						PFFFT_BACKWARD
 					);
 				}
@@ -165,9 +165,9 @@ namespace cpl
 				{
 					traits::transform_ordered(
 						const_cast<setup*>(sharedSetup), 
-						input.reinterpret<Scalar>().data(),
-						output.reinterpret<Scalar>().data(),
-						work.reinterpret<Scalar>().data(),
+						input.template reinterpret<Scalar>().data(),
+						output.template reinterpret<Scalar>().data(),
+						work.template reinterpret<Scalar>().data(),
 						PFFFT_BACKWARD
 					);
 				}
@@ -185,7 +185,7 @@ namespace cpl
 				return is_complex ? PFFFT_COMPLEX : PFFFT_REAL;
 			}
 
-			static typename const setup* getSetup(std::size_t n)
+			static const setup* getSetup(std::size_t n)
 			{
 				static std::mutex mutex;
 				static std::map<std::size_t, scoped_setup> setups;
