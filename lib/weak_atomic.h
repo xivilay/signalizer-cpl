@@ -42,7 +42,7 @@ namespace cpl
 	{
 	public:
 
-		relaxed_atomic() { }
+		relaxed_atomic() : value(T()) { }
 		template<typename U> relaxed_atomic(U&& x) : value(std::forward<U>(x)) {  }
 		relaxed_atomic(relaxed_atomic<T> const& other) : value(other.value.load(std::memory_order_relaxed)) {  }
 		relaxed_atomic(relaxed_atomic<T>&& other) : value(other.value.load(std::memory_order_relaxed)) {  }
@@ -91,7 +91,7 @@ namespace cpl
 	{
 	public:
 
-		weak_atomic() { }
+		weak_atomic() : value(T()) { }
 		template<typename U> weak_atomic(U&& x) : value(std::forward<U>(x)) {  }
 		weak_atomic(weak_atomic const& other) : value(other.value.load(std::memory_order_acquire)) {  }
 		weak_atomic(weak_atomic&& other) : value(std::move(other.value.load(std::memory_order_acquire))) {  }
