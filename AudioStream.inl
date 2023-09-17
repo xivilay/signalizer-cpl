@@ -235,23 +235,7 @@ namespace cpl
 
 			if (bufferLock.owns_lock())
 			{
-				for (std::size_t i = 0; i < channels; ++i)
-				{
-					{
-						auto&& w = audioHistoryBuffers[i].createWriter();
-						// first, insert all the old stuff that happened while this buffer was blocked
-						w.copyIntoHead(deferredAudioInput[i].data(), deferredAudioInput[i].size());
-						// next, insert current samples.
-						w.copyIntoHead(audioInput.buffer[i].data(), audioInput.containedSamples);
-					}
-					// clear up temporary deferred stuff
-					deferredAudioInput[i].clear();
-					// bit redundant, but ensures it will be called.
-					numDeferredAsyncSamples = 0;
-				}
-
-				bufferPlayhead = playhead;
-				bufferInfo = info;
+				mergeInputToBuffer(bufferLock, &audioInput, playhead, info);
 			}
 			else
 			{
@@ -268,6 +252,9 @@ namespace cpl
 
 				if (channels > 0)
 					numDeferredAsyncSamples = deferredAudioInput[0].size();
+
+				deferredCheckpointPlayhead = playhead;
+				deferredCheckpointBufferInfo = info;
 			}
 		}
 
@@ -279,6 +266,46 @@ namespace cpl
 			lpFilterTimeToMeasurement(consumerOverhead, overhead.clocksToCoreUsage(overhead.getTime()), timeFraction);
 			lpFilterTimeToMeasurement(consumerUsage, all.clocksToCoreUsage(all.getTime()), timeFraction);
 		}
+	}
+
+	template<typename T, std::size_t PacketSize>
+	inline void AudioStream<T, PacketSize>::Output::mergeInputToBuffer(const std::unique_lock<std::mutex>& lock, ChannelMatrix* realInputs, const Playhead& playheadToAssign, const AudioStreamInfo& infoToAssign)
+	{
+		const auto channels = deferredAudioInput.size();
+
+		CPL_RUNTIME_ASSERTION(channels == audioHistoryBuffers.size());
+		CPL_RUNTIME_ASSERTION(lock.owns_lock());
+
+		for (std::size_t i = 0; i < channels; ++i)
+		{
+			{
+				auto&& w = audioHistoryBuffers[i].createWriter();
+
+				// first, insert all the old stuff that happened while this buffer was blocked
+				if (numDeferredAsyncSamples)
+				{
+#ifdef _DEBUG
+					if (!realInputs)
+					{
+						// Just an interesting checkpoint.
+						numDeferredAsyncSamples = numDeferredAsyncSamples;
+					}
+#endif
+					w.copyIntoHead(deferredAudioInput[i].data(), deferredAudioInput[i].size());
+				}
+
+				// next, insert current samples (if any)
+				if(realInputs)
+					w.copyIntoHead(realInputs->buffer[i].data(), realInputs->containedSamples);
+			}
+			// clear up temporary deferred stuff
+			deferredAudioInput[i].clear();
+			// bit redundant, but ensures it will be called.
+			numDeferredAsyncSamples = 0;
+		}
+
+		deferredCheckpointPlayhead = bufferPlayhead = playheadToAssign;
+		deferredCheckpointBufferInfo = bufferInfo = infoToAssign;
 	}
 
 	template<typename T, std::size_t PacketSize>

@@ -247,7 +247,6 @@ namespace cpl
 		typedef std::variant<ProducerInfo, AudioPacket, ArrangementData, TransportData, ChannelNameData> ProducerFrame;
 		static_assert(std::is_move_constructible_v<ProducerFrame> && std::is_move_assignable_v<ProducerFrame>);
 
-		// TODO: use AuxMatrix
 		struct ChannelMatrix
 		{
 			void ensureSize(std::size_t channels, std::size_t samples)
@@ -408,8 +407,8 @@ namespace cpl
 			typedef typename AudioBuffer::IteratorBase::iterator iterator;
 			typedef typename AudioBuffer::IteratorBase::const_iterator const_iterator;
 
-			AudioBufferAccess(std::mutex& m, const std::vector<AudioBuffer>& audioChannels, const Playhead& ph, const AudioStreamInfo& info)
-				: lock(m), audioChannels(audioChannels), playhead(ph), info(info)
+			AudioBufferAccess(std::unique_lock<std::mutex>&& l, const std::vector<AudioBuffer>& audioChannels, const Playhead& ph, const AudioStreamInfo& info)
+				: lock(std::move(l)), audioChannels(audioChannels), playhead(ph), info(info)
 			{
 
 			}
@@ -614,7 +613,7 @@ namespace cpl
 			/// </summary>
 			AudioBufferAccess getAudioBufferViews()
 			{
-				return { aBufferMutex, audioHistoryBuffers, bufferPlayhead, bufferInfo };
+				return { std::unique_lock<std::mutex>(aBufferMutex), audioHistoryBuffers, bufferPlayhead, bufferInfo };
 			}
 
 			/// <summary>
@@ -674,6 +673,7 @@ namespace cpl
 			void handleFrame(ProducerFrame&& frame);
 			void endFrameProcessing();
 			void ensureAudioHistoryStorage(std::size_t channels, std::size_t pSize, std::size_t pCapacity, const std::lock_guard<std::mutex>&);
+			void mergeInputToBuffer(const std::unique_lock<std::mutex>&, ChannelMatrix* realInputs, const Playhead& playheadToAssign, const AudioStreamInfo& infoToAssign);
 
 			struct ListenerCommand
 			{
@@ -681,8 +681,8 @@ namespace cpl
 				bool wasAdded;
 			};
 
-			Playhead playhead, bufferPlayhead;
-			AudioStreamInfo info, oldInfo, bufferInfo;
+			Playhead playhead, bufferPlayhead, deferredCheckpointPlayhead;
+			AudioStreamInfo info, oldInfo, bufferInfo, deferredCheckpointBufferInfo;
 			ChannelMatrix audioInput;
 			std::vector<std::vector<T>> deferredAudioInput;
 			std::vector<AudioBuffer> audioHistoryBuffers;
@@ -891,9 +891,23 @@ namespace cpl
 			///
 			/// Ensures exclusive access while it is hold.
 			/// </summary>
-			AudioBufferAccess getAudioBufferViews()
+			/// <param name="consumeDeferredData">
+			/// If set, the playhead and circular audio data of the returned audio buffer is spooled to include
+			/// any input that is been deferred. This has no effect if <see cref="ConsumerInfo::blockOnHistoryBuffer"/> is set.
+			/// </param>
+			AudioBufferAccess getAudioBufferViews(bool consumeDeferredData)
 			{
-				return { parent.aBufferMutex, parent.audioHistoryBuffers, parent.bufferPlayhead, parent.bufferInfo };
+				std::unique_lock<std::mutex> lock(parent.aBufferMutex);
+
+				if (consumeDeferredData)
+				{
+					parent.mergeInputToBuffer(lock, nullptr, parent.deferredCheckpointPlayhead, parent.deferredCheckpointBufferInfo);
+					return { std::move(lock), parent.audioHistoryBuffers, parent.bufferPlayhead, parent.bufferInfo};
+				}
+				else
+				{
+					return { std::move(lock), parent.audioHistoryBuffers, parent.bufferPlayhead, parent.bufferInfo };
+				}
 			}
 
 			const AudioStreamInfo& getInfo() const noexcept
