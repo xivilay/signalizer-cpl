@@ -228,7 +228,7 @@ namespace cpl
 
             std::lock_guard<std::mutex> lk(mutex);
 
-            while (jobs.empty())
+            while (!jobs.empty())
             {
                 auto job = jobs.front();
                 job->execute(0);
