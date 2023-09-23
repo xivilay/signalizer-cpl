@@ -54,8 +54,8 @@
 
 #else
 
-	#error no <filesystem> implementation detected, update compiler or configure boost
-
+	#include "external/filesystem/include/ghc/filesystem.hpp"
+	namespace cpl { namespace fs = ghc::filesystem; }
 #endif
 
 #endif

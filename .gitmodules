@@ -1,3 +1,6 @@
 [submodule "ffts/pffft"]
 	path = ffts/pffft
 	url = https://github.com/marton78/pffft
+[submodule "external/filesystem"]
+	path = external/filesystem
+	url = https://github.com/gulrak/filesystem
