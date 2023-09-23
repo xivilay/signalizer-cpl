@@ -298,11 +298,13 @@ namespace cpl
 				if(realInputs)
 					w.copyIntoHead(realInputs->buffer[i].data(), realInputs->containedSamples);
 			}
+
 			// clear up temporary deferred stuff
 			deferredAudioInput[i].clear();
-			// bit redundant, but ensures it will be called.
-			numDeferredAsyncSamples = 0;
 		}
+
+		// bit redundant, but ensures it will be called.
+		numDeferredAsyncSamples = 0;
 
 		deferredCheckpointPlayhead = bufferPlayhead = playheadToAssign;
 		deferredCheckpointBufferInfo = bufferInfo = infoToAssign;
@@ -316,9 +318,13 @@ namespace cpl
 			audioHistoryBuffers.resize(channels);
 			channelNames.resize(std::max(channelNames.size(), channels));
 		}
+
+		auto cursor = channels > 0 ? audioHistoryBuffers[0].getCursor() : 0;
+
 		for (std::size_t i = 0; i < channels; ++i)
 		{
 			audioHistoryBuffers[i].setStorageRequirements(pSize, pCapacity, true, T());
+			audioHistoryBuffers[i].setCursor(cursor);
 		}
 	}
 

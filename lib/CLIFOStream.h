@@ -476,6 +476,7 @@ namespace cpl
 
 		ProxyView createProxyView() const
 		{
+			CPL_RUNTIME_ASSERTION(cursor < size);
 			#ifdef _DEBUG
 			proxyCount++;
 			#endif
@@ -489,6 +490,7 @@ namespace cpl
 
 		Writer createWriter()
 		{
+			CPL_RUNTIME_ASSERTION(cursor < size);
 			#ifdef _DEBUG
 			proxyCount++;
 			#endif
@@ -636,8 +638,16 @@ namespace cpl
 			memory = internalBuffer.data();
 		}
 
+		void setCursor(std::size_t newCursor) noexcept
+		{
+			newCursor %= size;
+			cursor = newCursor;
+		}
+
 		std::size_t getSize() const noexcept { return size; }
 		std::size_t getCapacity() const noexcept { return capacity; }
+		std::size_t getCursor() const noexcept { return cursor; }
+
 
 	private:
 		/// <summary>
