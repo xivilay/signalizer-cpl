@@ -31,6 +31,7 @@
 #define CPL_OPENGLRASTERIZERS_H
 #include "../Common.h"
 #include "OpenGLRendering.h"
+#include "Graphics.h"
 
 namespace cpl
 {
@@ -80,16 +81,100 @@ namespace cpl
 
 		};
 
-		template<std::size_t vertexBufferSize = 1024>
-		class PrimitiveDrawer
-			:
-			public COpenGLStack::Rasterizer
+		template<std::size_t VertexBufferSize = 1024>
+		struct PrimitiveDrawer : public COpenGLStack::Rasterizer
+		{
+			typedef GraphicsND::UPixel<GraphicsND::ComponentOrder::OpenGL> Colour;
+
+			PrimitiveDrawer(COpenGLStack& parentStack, GLFeatureType primitive) noexcept
+				: Rasterizer(parentStack), numVertices(0), lastColour(0x7f, 0xFF, 0x7F, 0x00), feature(primitive)
+			{
+				switch (primitive)
+				{
+				case GL_POINTS: case GL_LINES: case GL_LINE_STRIP: break;
+				default: CPL_RUNTIME_EXCEPTION("Unsupported batch primitive");
+				}
+
+				glInterleavedArrays(GL_C4UB_V3F, 0, vertexData);
+			}
+
+			~PrimitiveDrawer()
+			{
+				draw();
+				CPL_DEBUGCHECKGL();
+			}
+
+
+			void addColour(ColourType r, ColourType g, ColourType b, ColourType a = (ColourType)1) noexcept
+			{
+				lastColour = Colour::rounded( r, g, b, a );
+			}
+
+			void addColour(Colour colour) noexcept
+			{
+				lastColour = colour;
+			}
+
+			void addVertex(const GLfloat x, const GLfloat y, const GLfloat z) noexcept
+			{
+				addVertex(x, y, z, lastColour);
+			}
+
+			void addVertex(const GLfloat x, const GLfloat y, const GLfloat z, const Colour colour) noexcept
+			{
+				VertexInfo* const v = vertexData + numVertices;
+				v->colour = colour.pixel.p;
+				v->x = x;
+				v->y = y;
+				v->z = z;
+
+				numVertices++;
+
+				if (numVertices > VertexBufferSize - 1)
+					draw();
+			}
+
+
+		private:
+
+			struct VertexInfo
+			{
+				GLuint colour;
+				GLfloat x, y, z;
+			};
+
+			VertexInfo vertexData[VertexBufferSize];
+			Colour lastColour;
+			int numVertices;
+			GLFeatureType feature;
+
+			void draw() noexcept
+			{
+				if (numVertices <= 0)
+					return;
+
+				glDrawArrays(feature, 0, numVertices);
+
+				switch (feature)
+				{
+				case GL_LINE_STRIP:
+					vertexData[0] = vertexData[numVertices - 1];
+					numVertices = 1;
+					break;
+				default:
+					numVertices = 0;
+				}
+			}
+
+		};
+		template<>
+		class PrimitiveDrawer<0> : public COpenGLStack::Rasterizer
 		{
 
 		public:
 
 			PrimitiveDrawer(COpenGLStack & parentStack, GLFeatureType primitive)
-				: Rasterizer(parentStack), vertexPointer(0)
+				: Rasterizer(parentStack)
 			{
 				glBegin(primitive);
 			}
@@ -126,10 +211,6 @@ namespace cpl
 
 
 			}
-
-		protected:
-			std::size_t vertexPointer;
-			//CPL_ALIGNAS(32) Vertex vertices[vertexBufferSize * dimensions];
 		};
 
 

@@ -360,8 +360,19 @@ namespace cpl
 			typedef typename PixelData<order>::ComponentType ComponentType;
 			PixelData<order> pixel;
 
-			UPixel() noexcept
+			UPixel()
 			{
+			}
+
+			static constexpr UPixel rounded(GLfloat a, GLfloat r, GLfloat b, GLfloat g) noexcept
+			{
+				UPixel ret;
+				ret.pixel.a = static_cast<ComponentType>((a + 0.5f) * std::numeric_limits<ComponentType>::max());
+				ret.pixel.r = static_cast<ComponentType>((r + 0.5f) * std::numeric_limits<ComponentType>::max());
+				ret.pixel.g = static_cast<ComponentType>((g + 0.5f) * std::numeric_limits<ComponentType>::max());
+				ret.pixel.b = static_cast<ComponentType>((b + 0.5f) * std::numeric_limits<ComponentType>::max());
+
+				return ret;
 			}
 
 			UPixel(std::uint32_t pixel) noexcept
@@ -376,6 +387,7 @@ namespace cpl
 				pixel.g = g;
 				pixel.b = b;
 			}
+
 			#ifdef CPL_JUCE
 			UPixel(juce::PixelARGB pa)
 			{
