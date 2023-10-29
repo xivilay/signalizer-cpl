@@ -38,8 +38,8 @@
 #include "../Common.h"
 #include "../PlatformSpecific.h"
 #include "../Misc.h"
-#include "../CMutex.h"
 #include "../Exceptions.h"
+#include <mutex>
 
 namespace cpl
 {
@@ -59,12 +59,12 @@ namespace cpl
 			virtual ~EventListener() {};
 		};
 
-		virtual void addEventListener(EventListener * el) { cpl::CMutex lock(mutex); eventListeners.insert(el); }
-		virtual void removeEventListener(EventListener * el) { cpl::CMutex lock(mutex); eventListeners.erase(el); }
+		virtual void addEventListener(EventListener * el) { std::lock_guard<std::mutex> lock(mutex); eventListeners.insert(el); }
+		virtual void removeEventListener(EventListener * el) { std::lock_guard<std::mutex> lock(mutex); eventListeners.erase(el); }
 
 		void notifyDestruction()
 		{
-			cpl::CMutex lock(mutex);
+			std::lock_guard<std::mutex> lock(mutex);
 			for (auto listener : eventListeners)
 				listener->onServerDestruction(this);
 			eventListeners.clear();
@@ -82,7 +82,7 @@ namespace cpl
 
 
 	private:
-		cpl::CMutex::Lockable mutex;
+		std::mutex mutex;
 		std::set<EventListener *> eventListeners;
 	};
 

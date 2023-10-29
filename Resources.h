@@ -47,7 +47,7 @@ namespace cpl
 		RAII wrapper around images, loaded at runtime
 
 	*********************************************************************************************/
-	class CImage : public cpl::CMutex::Lockable
+	class CImage
 	{
 		std::string path;
 		juce::Image internalImage;
