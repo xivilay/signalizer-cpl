@@ -38,6 +38,8 @@
 #include <windows.h>
 #include <tchar.h>
 #include <intrin.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #elif defined(CPL_UNIXC)
 

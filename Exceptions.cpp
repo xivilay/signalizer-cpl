@@ -73,13 +73,80 @@ namespace cpl
 		return GetLastOSErrorMessage(GetLastOSError());
 	}
 
+	const std::string& GetExceptionLogFilePath()
+	{
+		using namespace cpl::Misc;
+		static const std::string path = GetDirectoryPath() + "/" + programInfo.name + " exceptions.log";
+
+		return path;
+	}
+
+	void CheckPruneExceptionLogFile()
+	{
+		static std::once_flag flag;
+
+		std::call_once(
+			flag,
+			[] {
+
+				const auto& path = GetExceptionLogFilePath();
+
+				std::int64_t size = -1;
+
+				{
+					FILE* f = std::fopen(path.c_str(), "r");
+
+					if (!f)
+						return;
+
+#ifdef CPL_WINDOWS
+					struct _stat fstatbuffer;
+					auto fd = _fileno(f);
+					if (_fstat(fd, &fstatbuffer) == 0)
+						size = fstatbuffer.st_size;
+#else
+					struct stat fstatbuffer;
+					auto fd = fileno(f);
+					if (fstat(fd, &fstatbuffer) == 0)
+						size = fstatbuffer.st_size;
+#endif
+
+					std::fclose(f);
+				}
+
+				// bigger than 2 megabytes?
+				if (size > 20e5)
+				{
+					char fsizebytes[256];
+
+					cpl::sprintfs(fsizebytes, "%.1f", size / 10e5);
+
+					auto answer = cpl::Misc::MsgBox(
+						std::string("A log file for this program is ") + fsizebytes + " MB big.\nDo you want to clean it (harmless unless you want to report issues)?",
+						programInfo.name + ": Large logfile detected",
+						Misc::MsgStyle::sYesNoCancel | Misc::MsgIcon::iQuestion,
+						nullptr,
+						true
+					);
+
+					if (answer == Misc::MsgButton::bYes)
+					{
+						FILE* f = std::fopen(path.c_str(), "w");
+						if (f != nullptr)
+							std::fclose(f);
+					}
+				}
+
+			}
+		);
+	}
 
 	void LogException(const string_ref errorMessage)
 	{
 		using namespace cpl::Misc;
 		CExclusiveFile exceptionLog;
 
-		exceptionLog.open(GetDirectoryPath() + "/" + programInfo.name + " exceptions.log",
+		exceptionLog.open(GetExceptionLogFilePath(),
 			exceptionLog.writeMode | exceptionLog.append, true);
 		exceptionLog.newline();
 		exceptionLog.write(("----------------" + GetDate() + ", " + GetTime() + "----------------").c_str());
