@@ -364,13 +364,13 @@ namespace cpl
 			{
 			}
 
-			static constexpr UPixel rounded(GLfloat a, GLfloat r, GLfloat b, GLfloat g) noexcept
+			static constexpr UPixel rounded(GLfloat r, GLfloat g, GLfloat b, GLfloat a) noexcept
 			{
 				UPixel ret;
-				ret.pixel.a = static_cast<ComponentType>((a + 0.5f) * std::numeric_limits<ComponentType>::max());
-				ret.pixel.r = static_cast<ComponentType>((r + 0.5f) * std::numeric_limits<ComponentType>::max());
-				ret.pixel.g = static_cast<ComponentType>((g + 0.5f) * std::numeric_limits<ComponentType>::max());
-				ret.pixel.b = static_cast<ComponentType>((b + 0.5f) * std::numeric_limits<ComponentType>::max());
+				ret.pixel.a = static_cast<ComponentType>(a * std::numeric_limits<ComponentType>::max() + 0.5f);
+				ret.pixel.r = static_cast<ComponentType>(r * std::numeric_limits<ComponentType>::max() + 0.5f);
+				ret.pixel.g = static_cast<ComponentType>(g * std::numeric_limits<ComponentType>::max() + 0.5f);
+				ret.pixel.b = static_cast<ComponentType>(b * std::numeric_limits<ComponentType>::max() + 0.5f);
 
 				return ret;
 			}

@@ -86,7 +86,7 @@ namespace cpl
 		{
 			typedef GraphicsND::UPixel<GraphicsND::ComponentOrder::OpenGL> Colour;
 
-			PrimitiveDrawer(COpenGLStack& parentStack, GLFeatureType primitive) noexcept
+			PrimitiveDrawer(COpenGLStack& parentStack, GLFeatureType primitive)
 				: Rasterizer(parentStack), numVertices(0), lastColour(0x7f, 0xFF, 0x7F, 0x00), feature(primitive)
 			{
 				switch (primitive)
@@ -103,7 +103,6 @@ namespace cpl
 				draw();
 				CPL_DEBUGCHECKGL();
 			}
-
 
 			void addColour(ColourType r, ColourType g, ColourType b, ColourType a = (ColourType)1) noexcept
 			{
@@ -143,7 +142,7 @@ namespace cpl
 				GLfloat x, y, z;
 			};
 
-			VertexInfo vertexData[VertexBufferSize];
+			alignas(32) VertexInfo vertexData[VertexBufferSize];
 			Colour lastColour;
 			int numVertices;
 			GLFeatureType feature;
