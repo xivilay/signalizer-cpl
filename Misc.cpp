@@ -263,7 +263,18 @@ namespace cpl
 			return path;
 		}
 
-
+		void TextEditFile(const std::string& path)
+		{
+#ifdef CPL_WINDOWS
+			std::system(("Notepad.exe \"" + path + "\"").c_str());
+#elif defined(CPL_MAC)
+			std::string cmdLine = "open \"" + path + "\"";
+			std::system((cmdLine).c_str());
+#else
+			std::string cmdLine = "gedit \"" + path + "\"";
+			std::system((cmdLine).c_str());
+#endif
+		}
 
 		std::int32_t AcquireInstanceCounter()
 		{

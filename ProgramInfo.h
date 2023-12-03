@@ -48,6 +48,10 @@ struct ProgramInfo
 	/// </summary>
 	std::string author;
 	/// <summary>
+	/// Your (company's) contact mail
+	/// </summary>
+	std::string mail;
+	/// <summary>
 	/// Abbreviation of the program's name for small spaces (and file extensions)
 	/// </summary>
 	std::string programAbbr;

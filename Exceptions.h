@@ -48,6 +48,7 @@ namespace cpl
 	std::string GetLastOSErrorMessage();
 	std::string GetLastOSErrorMessage(int errorToPrint);
 
+	const std::string& GetExceptionLogFilePath();
 	void CheckPruneExceptionLogFile();
 	void LogException(const string_ref errorMessage);
 	void CrashIfUserDoesntDebug(const string_ref errorMessage);

@@ -115,6 +115,8 @@ namespace cpl
 		const std::string & DirectoryPath();
 		const fs::path& DirFSPath();
 
+		void TextEditFile(const std::string& textFile);
+
 		long Round(double number);
 		long Delay(int ms);
 		void PreciseDelay(double msecs);
