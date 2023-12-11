@@ -139,7 +139,10 @@ namespace cpl
 			/// </summary>
 			void offset(ssize_t offset) noexcept
 			{
-				cursor = Math::mod((ssize_t)cursor + offset, (ssize_t)bsize);
+				if (bsize != 0)
+					cursor = Math::mod((ssize_t)cursor + offset, (ssize_t)bsize);
+				else
+					cursor = 0;
 			}
 
 			~IteratorBase()
