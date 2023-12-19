@@ -756,14 +756,14 @@ namespace cpl
 			friend class AudioStream<T, PacketSize>;
 		public:
 #ifdef CPL_JUCE
-			void processIncomingRTAudio(T** buffer, std::size_t numChannels, std::size_t numSamples, juce::AudioPlayHead& ph)
+			void processIncomingRTAudio(const T* const * buffer, std::size_t numChannels, std::size_t numSamples, juce::AudioPlayHead& ph)
 			{
 				juce::AudioPlayHead::CurrentPositionInfo cpi;
 				ph.getCurrentPosition(cpi);
 				processIncomingRTAudio(buffer, numChannels, numSamples, { cpi, internalInfo.sampleRate });
 			}
 #endif
-			void processIncomingRTAudio(T** buffer, std::size_t numChannels, std::size_t numSamples, const Playhead& ph);
+			void processIncomingRTAudio(const T* const * buffer, std::size_t numChannels, std::size_t numSamples, const Playhead& ph);
 
 			/// <summary>
 			/// Returns the playhead for the system.

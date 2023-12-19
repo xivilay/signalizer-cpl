@@ -329,7 +329,7 @@ namespace cpl
 	}
 
 	template<typename T, std::size_t PacketSize>
-	inline void AudioStream<T, PacketSize>::Input::processIncomingRTAudio(T** buffer, std::size_t numChannels, std::size_t numSamples, const AudioStream<T, PacketSize>::Playhead& ph)
+	inline void AudioStream<T, PacketSize>::Input::processIncomingRTAudio(const T* const* buffer, std::size_t numChannels, std::size_t numSamples, const AudioStream<T, PacketSize>::Playhead& ph)
 	{
 		ExclusiveDebugScope scope(reentrancy);
 
