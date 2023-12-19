@@ -57,8 +57,8 @@ namespace cpl
 		virtual void addListener(ValueEntityListener * listener) = 0;
 		virtual void removeListener(ValueEntityListener * listener) = 0;
 
-		virtual void serialize(CSerializer::Archiver & ar, Version version) { ar << getNormalizedValue(); }
-		virtual void deserialize(CSerializer::Builder & builder, Version version)
+		void serialize(CSerializer::Archiver & ar, Version version) override { ar << getNormalizedValue(); }
+		void deserialize(CSerializer::Builder & builder, Version version) override
 		{
 			ValueT value;
 			builder >> value;
@@ -80,6 +80,12 @@ namespace cpl
 		EnumT getAsTEnum() const noexcept
 		{
 			return enum_cast<EnumT>(getTransformedValue());
+		}
+
+		template<typename EnumT>
+		void setAsTEnum(EnumT value) 
+		{
+			return setTransformedValue(enum_cast<ValueT>(value));
 		}
 
 		std::string getFormattedValue()
