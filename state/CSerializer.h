@@ -116,6 +116,7 @@
 #include <exception>
 #include <stdexcept>
 #include <atomic>
+#include <optional>
 #include "../stdext.h"
 #include "../PlatformSpecific.h"
 #include "../Misc.h"
@@ -373,6 +374,89 @@ namespace cpl
 			/// version argument version.
 			/// </summary>
 			virtual void deserialize(Builder & ar, Version version) {};
+		};
+
+		enum class DeprecatedBinaryDeserialization {};
+
+		template<typename T>
+		class OptionalWrapper : public Serializable
+		{
+		public:
+
+			static_assert(std::is_standard_layout_v<T> && !std::is_pointer_v<T> && !std::is_array_v<T>, "Cannot serialize such objects");
+
+			OptionalWrapper(std::optional<T>& option) : option(option), deserializeBinary(false) {}
+			/// <summary>
+			/// Use this tag constructor if you've previously serialized optionals directly, which isn't supported going forward.
+			/// </summary>
+			OptionalWrapper(std::optional<T>& option, DeprecatedBinaryDeserialization _) : option(option), deserializeBinary(true) {}
+
+			void serialize(Archiver& ar, Version version) override
+			{
+				std::int8_t shouldHaveValue = option.has_value();
+
+				ar << shouldHaveValue;
+
+				if (shouldHaveValue)
+				{
+					ar << option.value();
+				}
+				else
+				{
+					std::aligned_storage<sizeof(T), alignof(T)>::type data{};
+					std::memset(&data, 0, sizeof(data));
+
+					ar << data;
+				}
+			}
+
+			void deserialize(Builder& builder, Version version) override
+			{
+				if (!deserializeBinary)
+				{
+					std::aligned_storage<sizeof(T), alignof(T)>::type data{};
+					std::memset(&data, 0, sizeof(data));
+
+					std::int8_t shouldHaveValue;
+					builder >> shouldHaveValue;
+
+					if (shouldHaveValue)
+					{
+						if (option.has_value())
+						{
+							builder >> option.value();
+						}
+						else
+						{
+							builder >> data;
+							// To deserialize optionals, please provide a (void*, size_t) constructor
+							option = T(&data, sizeof(T));
+						}
+					}
+					else
+					{
+						// just throwaway
+						builder >> data;
+						option = {};
+					}
+				}
+				else
+				{
+					std::aligned_storage<sizeof(std::optional<T>), alignof(std::optional<T>)>::type data{};
+
+					builder >> data;
+					std::memcpy(&option, &data, sizeof(data));
+
+					return;
+				}
+			}
+
+		private:
+			OptionalWrapper() = delete;
+			OptionalWrapper(const OptionalWrapper&) = delete;
+
+			std::optional<T>& option;
+			bool deserializeBinary;
 		};
 
 		enum class HeaderType : std::uint16_t
@@ -693,25 +777,37 @@ namespace cpl
 		template<typename T, typename D>
 		CSerializer & operator << (const std::unique_ptr<T, D> & object)
 		{
-			static_assert(delayed_error<T>::value, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+			static_assert(delayed_error<T>::value, "Serialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get())");
 		}
 
 		template<typename T, typename D>
 		CSerializer & operator >> (std::unique_ptr<T, D> & object)
 		{
-			static_assert(delayed_error<T>::value, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+			static_assert(delayed_error<T>::value, "Deserialization of std::unique_ptr is disabled (it is most likely NOT what you want; otherwise use .get())");
 		}
 
 		template<typename T>
 		CSerializer& operator << (const std::shared_ptr<T>& object)
 		{
-			static_assert(delayed_error<T>::value, "Serialization of std::shared_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+			static_assert(delayed_error<T>::value, "Serialization of std::shared_ptr is disabled (it is most likely NOT what you want; otherwise use .get())");
 		}
 
 		template<typename T>
 		CSerializer& operator >> (std::shared_ptr<T>& object)
 		{
-			static_assert(delayed_error<T>::value, "Deserialization of std::shared_ptr is disabled (it is most likely NOT what you want; otherwise use .get()");
+			static_assert(delayed_error<T>::value, "Deserialization of std::shared_ptr is disabled (it is most likely NOT what you want; otherwise use .get())");
+		}
+
+		template<typename T>
+		CSerializer& operator >> (std::optional<T>& object)
+		{
+			static_assert(delayed_error<T>::value, "Serialization of std::optional is disabled (don't count on it being binary stable)");
+		}
+
+		template<typename T>
+		CSerializer& operator << (std::optional<T>& object)
+		{
+			static_assert(delayed_error<T>::value, "Deserialization of std::optional is disabled (don't count on it being binary stable)");
 		}
 
 		/// <summary>
