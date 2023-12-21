@@ -381,6 +381,8 @@ namespace cpl
 		template<typename T>
 		class OptionalWrapper : public Serializable
 		{
+			typedef typename std::aligned_storage<sizeof(std::optional<T>), alignof(std::optional<T>)>::type binary_type;
+			
 		public:
 
 			static_assert(std::is_standard_layout_v<T> && !std::is_pointer_v<T> && !std::is_array_v<T>, "Cannot serialize such objects");
@@ -399,11 +401,11 @@ namespace cpl
 
 				if (shouldHaveValue)
 				{
-					ar << option.value();
+					ar << *option;
 				}
 				else
 				{
-					std::aligned_storage<sizeof(T), alignof(T)>::type data{};
+					binary_type data{};
 					std::memset(&data, 0, sizeof(data));
 
 					ar << data;
@@ -414,7 +416,7 @@ namespace cpl
 			{
 				if (!deserializeBinary)
 				{
-					std::aligned_storage<sizeof(T), alignof(T)>::type data{};
+					binary_type data{};
 					std::memset(&data, 0, sizeof(data));
 
 					std::int8_t shouldHaveValue;
@@ -424,7 +426,7 @@ namespace cpl
 					{
 						if (option.has_value())
 						{
-							builder >> option.value();
+							builder >> *option;
 						}
 						else
 						{
@@ -442,7 +444,7 @@ namespace cpl
 				}
 				else
 				{
-					std::aligned_storage<sizeof(std::optional<T>), alignof(std::optional<T>)>::type data{};
+					binary_type data{};
 
 					builder >> data;
 					std::memcpy(&option, &data, sizeof(data));
@@ -900,6 +902,18 @@ namespace cpl
 		}
 
 		inline CSerializer & operator << (Serializable & object)
+		{
+			object.serialize(*this, version);
+			return *this;
+		}
+		
+		inline CSerializer & operator >> (Serializable && object)
+		{
+			object.deserialize(*this, version);
+			return *this;
+		}
+
+		inline CSerializer & operator << (Serializable && object)
 		{
 			object.serialize(*this, version);
 			return *this;
