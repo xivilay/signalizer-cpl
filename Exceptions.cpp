@@ -146,8 +146,15 @@ namespace cpl
 		using namespace cpl::Misc;
 		CExclusiveFile exceptionLog;
 
-		exceptionLog.open(GetExceptionLogFilePath(),
-			exceptionLog.writeMode | exceptionLog.append, true);
+		auto result = cpl::Misc::WaitOnCondition(
+			1000,
+			[&]() { return exceptionLog.open(GetExceptionLogFilePath(), exceptionLog.writeMode | exceptionLog.append, true); },
+			10
+		);
+
+		if (!result)
+			return;
+
 		exceptionLog.newline();
 		exceptionLog.write(("----------------" + GetDate() + ", " + GetTime() + "----------------").c_str());
 		exceptionLog.newline();
