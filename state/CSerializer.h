@@ -381,8 +381,9 @@ namespace cpl
 		template<typename T>
 		class OptionalWrapper : public Serializable
 		{
-			typedef typename std::aligned_storage<sizeof(std::optional<T>), alignof(std::optional<T>)>::type binary_type;
-			
+			typedef typename std::aligned_storage<sizeof(std::optional<T>), alignof(std::optional<T>)>::type binary_option_type;
+			typedef typename std::aligned_storage<sizeof(T), alignof(T)>::type binary_type;
+
 		public:
 
 			static_assert(std::is_standard_layout_v<T> && !std::is_pointer_v<T> && !std::is_array_v<T>, "Cannot serialize such objects");
@@ -432,6 +433,7 @@ namespace cpl
 						{
 							builder >> data;
 							// To deserialize optionals, please provide a (void*, size_t) constructor
+							static_assert(sizeof(data) == sizeof(T), "Mismatched types");
 							option = T(&data, sizeof(T));
 						}
 					}
@@ -444,9 +446,10 @@ namespace cpl
 				}
 				else
 				{
-					binary_type data{};
+					binary_option_type data{};
 
 					builder >> data;
+					static_assert(sizeof(std::remove_cv<decltype(option)>::type) == sizeof(binary_option_type), "Mismatched option types");
 					std::memcpy(&option, &data, sizeof(data));
 
 					return;
