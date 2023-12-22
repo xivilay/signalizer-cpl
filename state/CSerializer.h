@@ -449,7 +449,7 @@ namespace cpl
 					binary_option_type data{};
 
 					builder >> data;
-					static_assert(sizeof(std::remove_cv<decltype(option)>::type) == sizeof(binary_option_type), "Mismatched option types");
+					static_assert(sizeof(typename std::remove_cv<decltype(option)>::type) == sizeof(binary_option_type), "Mismatched option types");
 					std::memcpy(&option, &data, sizeof(data));
 
 					return;
