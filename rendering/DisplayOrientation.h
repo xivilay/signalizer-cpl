@@ -47,6 +47,9 @@ namespace cpl
 
 		inline Orientation RadsToOrientation(double radians)
 		{
+			if (!std::isnormal(radians) && radians != 0.0)
+				radians = 0;
+
 			radians = std::fmod(radians, 2 * M_PI);
 
 			if (radians >= 0.f && radians < M_PI / 2)
