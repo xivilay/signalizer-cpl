@@ -58,8 +58,6 @@
 #include <mach/mach_time.h>
 #include "MacSupport.h"
 #include <IOKit/graphics/IOGraphicsLib.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
 
 #endif
 

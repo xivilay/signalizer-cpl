@@ -351,7 +351,7 @@ namespace cpl
 
 	juce::LowLevelGraphicsContext * CLookAndFeel_CPL::createGraphicsContext(
 		const Image &imageToRenderOn,
-		const Point< int > &origin,
+		const juce::Point< int > &origin,
 		const RectangleList< int > &initialClip)
 	{
 		if (tryToRenderSubpixel/* && imageToRenderOn.getFormat() == imageToRenderOn.RGB*/)

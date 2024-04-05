@@ -39,7 +39,7 @@ namespace cpl
 {
 	#ifdef CPL_JUCE
 	typedef juce::Colour CColour;
-	typedef juce::Colours CColours;
+	namespace CColours = juce::Colours;
 	typedef juce::Point<int> CPoint;
 	typedef juce::Rectangle<int> CRect;
 	typedef juce::Component GraphicComponent;
@@ -118,8 +118,8 @@ namespace cpl
 		juce::Typeface::Ptr getTypefaceForFont(juce::Font const& font) override;
 		virtual juce::LowLevelGraphicsContext * createGraphicsContext(
 			const Image &imageToRenderOn,
-			const Point< int > &origin,
-			const RectangleList< int > &initialClip) override;
+			const juce::Point< int > &origin,
+			const RectangleList< int > &initialClip);
 		juce::Font getPopupMenuFont() override;
 		juce::Font getComboBoxFont(ComboBox &) override;
 		void drawComboBox(

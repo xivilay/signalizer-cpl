@@ -161,7 +161,7 @@ namespace cpl
 			// obtain transform
 			auto & transform = stack->transform;
 			// starting point
-			Point<float> pos(z.getTranslationX(), z.getTranslationY());
+			juce::Point<float> pos(z.getTranslationX(), z.getTranslationY());
 
 			// find what display our glyph resides on.
 			// Note this is wrong - need to somehow figure out the global position
@@ -206,7 +206,7 @@ namespace cpl
 					// increase cache locality
 					glyphRef->lastAccessCount++;
 
-					outlines.reset(glyphRef->edgeTable);
+					outlines.reset(glyphRef->edgeTable.get());
 					// dont delete this instance - manged by the glyphcache
 					outlines.get_deleter().shared = true;
 				}

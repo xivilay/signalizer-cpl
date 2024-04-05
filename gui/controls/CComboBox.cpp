@@ -176,7 +176,7 @@ namespace cpl
 		for (const auto & str : values)
 		{
 			counter++;
-			if (currentIndex == str)
+			if (currentIndex.toStdString() == str)
 				newIndex = counter;
 			arr.add(str);
 		}

@@ -30,6 +30,7 @@
 // i dont know why. i seriously dont.
 // but all hell breaks loose if this is not here.
 //#define Point CarbonDummyPointName
+#include <juce_opengl/juce_opengl.h>
 
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/NSString.h>

@@ -32,6 +32,7 @@
 #ifndef CPL_COMMON_H
 #define CPL_COMMON_H
 
+#include "PlatformSpecific.h"
 #include "ProgramInfo.h"
 #include <cstdint>
 
@@ -39,10 +40,12 @@
 
 #ifdef CPL_JUCE
 #ifndef CPL_JUCE_HEADER_PATH
-#include "../JuceLibraryCode/JuceHeader.h"
+#include <JuceHeader.h>
 #else
 #include CPL_JUCE_HEADER_PATH
 #endif
 #endif
+
+using namespace ::juce::gl;
 
 #endif

@@ -62,7 +62,7 @@ namespace cpl
 
 			bool tryToDrawGlyph(int glyphNumber, const AffineTransform & z);
 			static float maxHeight;
-			Point<int> origin;
+			juce::Point<int> origin;
 			const juce::Image & buffer;
 			const RectangleList<int> & startingClip;
 			CDisplaySetup & displayInfo;

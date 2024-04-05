@@ -63,8 +63,8 @@ namespace cpl
 		// handle scalable vector graphics
 		if (f.getFileExtension() == ".svg")
 		{
-			internalImage = juce::Image::null;
-			juce::ScopedPointer<juce::XmlElement> element = juce::XmlDocument::parse(f);
+			internalImage = juce::Image();
+			std::unique_ptr<XmlElement> element = juce::XmlDocument::parse(f);
 			if (element.get())
 			{
 				drawableImage = juce::Drawable::createFromSVG(*element);
@@ -73,8 +73,8 @@ namespace cpl
 			else
 			{
 				auto drawable = new juce::DrawableImage();
-				drawable->setImage(juce::Image::null);
-				drawableImage = drawable;
+				drawable->setImage(juce::Image());
+				drawableImage = std::unique_ptr<juce::Drawable>(drawable);
 			}
 		}
 		else
@@ -84,7 +84,7 @@ namespace cpl
 			if (internalImage.isValid()) {
 				auto drawable = new juce::DrawableImage();
 				drawable->setImage(internalImage);
-				drawableImage = drawable;
+				drawableImage = std::unique_ptr<juce::Drawable>(drawable);
 				return true;
 			}
 			else
@@ -92,8 +92,8 @@ namespace cpl
 				// set a default image?
 
 				auto drawable = new juce::DrawableImage();
-				drawable->setImage(juce::Image::null);
-				drawableImage = drawable;
+				drawable->setImage(juce::Image());
+				drawableImage = std::unique_ptr<juce::Drawable>(drawable);
 			}
 		}
 		return false;
