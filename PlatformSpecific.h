@@ -47,7 +47,6 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <fcntl.h>
