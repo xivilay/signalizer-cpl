@@ -48,6 +48,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits>
+#include <climits>
 #include <unistd.h>
 #include <sys/time.h>
 #include <fcntl.h>
